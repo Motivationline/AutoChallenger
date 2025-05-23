@@ -1,1 +1,19 @@
-console.info("%cTo start scripting, run the typescript compiler in PROJECTFOLDER/Script/Source/. This is also where your code should be. Use any IDE you like.", "color: green; font-weight: bold;");
+"use strict";
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    ƒ.Debug.info("Main Program Template running!");
+    let viewport;
+    document.addEventListener("interactiveViewportStarted", start);
+    function start(_event) {
+        viewport = _event.detail;
+        ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
+        // ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
+    }
+    function update(_event) {
+        // ƒ.Physics.simulate();  // if physics is included and used
+        viewport.draw();
+        ƒ.AudioManager.default.update();
+    }
+})(Script || (Script = {}));
+//# sourceMappingURL=Script.js.map
