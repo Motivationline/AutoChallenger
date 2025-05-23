@@ -1,0 +1,21 @@
+{
+  "Fudge.ResourceFolder": {
+    "name": "Resources",
+    "entries": [
+      {
+        "name": "GameScenes",
+        "entries": [
+          {
+            "idResource": "Graph|2025-05-23T08:50:56.485Z|83150"
+          },
+          {
+            "idResource": "Graph|2025-05-23T08:51:59.177Z|75197"
+          },
+          {
+            "idResource": "Graph|2025-05-23T08:52:13.386Z|08098"
+          }
+        ]
+      }
+    ]
+  }
+}

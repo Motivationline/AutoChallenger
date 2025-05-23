@@ -1,0 +1,32 @@
+{
+  "Graph|2025-05-23T08:50:56.485Z|83150": {
+    "ƒ.Graph": {
+      "name": "map",
+      "active": true,
+      "components": {},
+      "children": [],
+      "idResource": "Graph|2025-05-23T08:50:56.485Z|83150",
+      "type": "Graph"
+    }
+  },
+  "Graph|2025-05-23T08:51:59.177Z|75197": {
+    "ƒ.Graph": {
+      "name": "fight",
+      "active": true,
+      "components": {},
+      "children": [],
+      "idResource": "Graph|2025-05-23T08:51:59.177Z|75197",
+      "type": "Graph"
+    }
+  },
+  "Graph|2025-05-23T08:52:13.386Z|08098": {
+    "ƒ.Graph": {
+      "name": "empty",
+      "active": true,
+      "components": {},
+      "children": [],
+      "idResource": "Graph|2025-05-23T08:52:13.386Z|08098",
+      "type": "Graph"
+    }
+  }
+}
