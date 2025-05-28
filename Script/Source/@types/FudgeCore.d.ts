@@ -1,6 +1,31 @@
 /// <reference path="OimoPhysics.d.ts" />
 /// <reference types="webxr" />
 declare namespace FudgeCore {
+    interface PerformanceMeasurement {
+        start?: number;
+        frameTimeMin: number;
+        frameTimeMax: number;
+        frameTimeAvg: number;
+        callsPerFrame: number;
+        time: number;
+        calls: number;
+    }
+    class PerformanceMonitor {
+        static display: HTMLPreElement;
+        static measurements: {
+            [key: string]: PerformanceMeasurement;
+        };
+        private static readonly framesToAverage;
+        static startMeasure(_label: string): void;
+        static endMeasure(_label: string): number;
+        static startFrame(): void;
+        static endFrame(): void;
+    }
+    class PerformanceDisplay extends HTMLPreElement {
+        constructor();
+    }
+}
+declare namespace FudgeCore {
     /**
      * Base class for the different DebugTargets, mainly for technical purpose of inheritance
      */
@@ -138,8 +163,8 @@ declare namespace FudgeCore {
     }
 }
 declare namespace FudgeCore {
-    interface MapEventTypeToListener {
-        [eventType: string]: EventListenerUnified[];
+    interface MapEventTypeToListeners {
+        [eventType: string]: Set<EventListenerUnified>;
     }
     /**
      * Types of events specific to FUDGE, in addition to the standard DOM/Browser-Types and custom strings
@@ -249,6 +274,85 @@ declare namespace FudgeCore {
 }
 declare namespace FudgeCore {
     /**
+     * A subclass of {@link Event} that can be (re)used via {@link RecyclableEvent.get} and {@link RecyclableEvent.store} to avoid garbage collection.
+     * If dispatched repeatedly without recycling through get/store, call {@link recycle} manually before each dispatch.
+     * Exposes some readonly properties of the event class as writable properties for the event system.
+     *
+     * **Example get/store**:
+     * ```typescript
+     * import f = FudgeCore;
+     * const node: f.Node = new f.Node("Node");
+     * const event: f.RecyclableEvent = f.RecyclableEvent.get("myevent", true); // get event from depot
+     * node.dispatchEvent(event);
+     * f.RecyclableEvent.store(event); // store event in depot for reuse
+     * ```
+     *
+     * **Example manual recycle**:
+     * ```typescript
+     * import f = FudgeCore;
+     * const node: f.Node = new f.Node("Node");
+     * const event: f.RecyclableEvent = f.RecyclableEvent.get("myevent", true); // get event and cache it
+     *
+     * // called repeatedly, e.g. in a loop
+     * function update(): void {
+     *   node.dispatchEvent(event.recycle()); // recycle the event before each dispatch
+     * }
+     * ```
+     * @author Jonas Plotzky, HFU, 2025
+     */
+    class RecyclableEvent extends Event {
+        #private;
+        readonly path: EventTarget[];
+        constructor(_type: string, _bubbles?: boolean, _cancelable?: boolean);
+        /**
+         * Fetches an event of the requested type and initialization from the depot. If the depot for the requested type is empty it returns a new instance.
+         * Use {@link RecyclableEvent.store} after dispatching the event to store it for reuse.
+         */
+        static get(_type: string, _bubbles?: boolean, _cancelable?: boolean): RecyclableEvent;
+        /**
+         * Stores the event in the depot for later reuse.
+         */
+        static store(_event: RecyclableEvent): void;
+        /**
+         * Emptys the depot of a given type, leaving the events for the garbage collector.
+         */
+        static dump(_type: string, _bubbles?: boolean, _cancelable?: boolean): void;
+        /**
+         * Emptys all depots, leaving all events to the garbage collector.
+         */
+        static dumpAll(): void;
+        static [Symbol.hasInstance](_instance: unknown): boolean;
+        /**
+         * Flag for fast type checking.
+         */
+        get isRecyclableEvent(): boolean;
+        get target(): EventTarget;
+        get currentTarget(): EventTarget;
+        get eventPhase(): Event["eventPhase"];
+        /**
+         * Set the target of the event. Used by the event system.
+         * @returns A reference to this event.
+         */
+        setTarget(_target: EventTarget): RecyclableEvent;
+        /**
+         * Set the current target of the event. Used by the event system.
+         * @returns A reference to this event.
+         */
+        setCurrentTarget(_currentTarget: EventTarget): RecyclableEvent;
+        /**
+         * Set the event phase of the event. Used by the event system.
+         * @returns A reference to this event.
+         */
+        setEventPhase(_eventPhase: Event["NONE"] | Event["CAPTURING_PHASE"] | Event["AT_TARGET"] | Event["BUBBLING_PHASE"]): RecyclableEvent;
+        /**
+         * Reset the event to default values. Used by the event system.
+         * @returns A reference to this event.
+         */
+        recycle(): RecyclableEvent;
+    }
+}
+declare namespace FudgeCore {
+    /**
      * Interface describing the datatypes of the attributes a mutator as strings
      */
     interface MutatorAttributeTypes {
@@ -274,7 +378,7 @@ declare namespace FudgeCore {
      * Association of an attribute with its specified type (constructor).
      * @see {@link Metadata}.
      */
-    type MetaAttributeTypes = Record<string | symbol, Function | Object>;
+    type MetaAttributeTypes = Record<PropertyKey, Function | Object>;
     /**
      * Metadata for classes extending {@link Mutable}. Metadata needs to be explicitly specified using decorators.
      * @see {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#decorator-metadata | type script 5.2 feature "decorator metadata"} for additional information.
@@ -284,7 +388,7 @@ declare namespace FudgeCore {
          * The specified types of the attributes of a class. Use the {@link type} decorator to add type information to the metadata of a class.
          */
         attributeTypes?: MetaAttributeTypes;
-        enumerateKeys?: string[];
+        enumerateKeys?: PropertyKey[];
         /**
          * Map of property names to the type of serialization that should be used for that property.
          */
@@ -395,7 +499,12 @@ declare namespace FudgeCore {
          * The mutation may be restricted to a subset of the mutator and the event dispatching suppressed.
          * Uses mutateBase, but can be overwritten in subclasses
          */
-        mutate(_mutator: Mutator, _selection?: string[], _dispatchMutate?: boolean): Promise<void>;
+        mutate(_mutator: Mutator, _selection?: string[], _dispatchMutate?: boolean): void | Promise<void>;
+        /**
+         * Synchronous implementation of {@link mutate}.
+         * Override {@link mutate} with a sync implementation and call this method from it to mutate synchronously.
+         */
+        protected mutateSync(_mutator: Mutator, _dispatchMutate?: boolean): void;
         /**
          * Base method for mutation, always available to subclasses. Do not overwrite in subclasses!
          */
@@ -616,289 +725,20 @@ declare namespace FudgeCore {
     }
 }
 declare namespace FudgeCore {
-    interface MapClassToComponents {
-        [className: string]: Component[];
-    }
-    /**
-     * Represents a node in the scenetree.
-     * @authors Jascha Karagöl, HFU, 2019 | Jirka Dell'Oro-Friedl, HFU, 2019
-     * @link https://github.com/hs-furtwangen/FUDGE/wiki/Graph
-     */
-    class Node extends EventTargetUnified implements Serializable {
-        #private;
-        name: string;
-        readonly mtxWorld: Matrix4x4;
-        timestampUpdate: number;
-        /** The number of nodes of the whole branch including this node and all successors */
-        nNodesInBranch: number;
-        /** The radius of the bounding sphere in world dimensions enclosing the geometry of this node and all successors in the branch */
-        radius: number;
-        private parent;
-        private children;
-        private components;
-        private listeners;
-        private captures;
-        private active;
-        /**
-         * Creates a new node with a name and initializes all attributes
-         */
-        constructor(_name: string);
-        /**
-         * Return the mutator-like path string to get from one node to another or null if no path is found e.g.:
-         * ```typescript
-         * "node/parent/children/1/components/ComponentSkeleton/0"
-         * ```
-         */
-        static PATH_FROM_TO(_from: Node | Component, _to: Node | Component): string | null;
-        /**
-         * Return the {@link Node} or {@link Component} found at the given path starting from the given node or undefined if not found
-         */
-        static FIND<T = Node | Component>(_from: Node | Component, _path: string): T;
-        get isActive(): boolean;
-        /**
-         * Shortcut to retrieve this nodes {@link ComponentTransform}
-         */
-        get cmpTransform(): ComponentTransform;
-        /**
-         * Shortcut to retrieve the local {@link Matrix4x4} attached to this nodes {@link ComponentTransform}
-         * Fails if no {@link ComponentTransform} is attached
-         */
-        get mtxLocal(): Matrix4x4;
-        get mtxWorldInverse(): Matrix4x4;
-        /**
-         * Returns the number of children attached to this
-         */
-        get nChildren(): number;
-        /**
-         * Generator yielding the node and all decendants in the graph below for iteration
-         * Inactive nodes and their descendants can be filtered
-         */
-        getIterator(_active?: boolean): IterableIterator<Node>;
-        /**
-         * Returns an iterator over this node and all its descendants in the graph below
-         */
-        [Symbol.iterator](): IterableIterator<Node>;
-        /**
-         * De- / Activate this node. Inactive nodes will not be processed by the renderer.
-         */
-        activate(_on: boolean): void;
-        /**
-         * Returns a reference to this nodes parent node
-         */
-        getParent(): Node | null;
-        /**
-         * Traces back the ancestors of this node and returns the first
-         */
-        getAncestor(): Node | null;
-        /**
-         * Traces the hierarchy upwards to the first ancestor and returns the path through the graph to this node
-         */
-        getPath(): Node[];
-        /**
-         * Returns child at the given index in the list of children
-         */
-        getChild(_index: number): Node;
-        /**
-         * Returns a clone of the list of children
-         */
-        getChildren(): Node[];
-        /**
-         * Returns an array of references to childnodes with the supplied name.
-         */
-        getChildrenByName(_name: string): Node[];
-        /**
-         * Simply calls {@link addChild}. This reference is here solely because appendChild is the equivalent method in DOM.
-         * See and preferably use {@link addChild}
-         */
-        readonly appendChild: (_child: Node) => void;
-        /**
-         * Adds the given reference to a node to the list of children, if not already in
-         * @throws Error when trying to add an ancestor of this
-         */
-        addChild(_child: Node): void;
-        /**
-         * Adds the given reference to a node to the list of children at the given index. If it is already a child, it is moved to the new position.
-         */
-        addChild(_child: Node, _index: number): void;
-        /**
-         * Removes the reference to the give node from the list of children
-         */
-        removeChild(_child: Node): void;
-        /**
-         * Removes all references in the list of children
-         */
-        removeAllChildren(): void;
-        /**
-         * Returns the position of the node in the list of children or -1 if not found
-         */
-        findChild(_search: Node): number;
-        /**
-         * Replaces a child node with another, preserving the position in the list of children
-         */
-        replaceChild(_replace: Node, _with: Node): boolean;
-        /**
-         * Returns true if the given timestamp matches the last update timestamp this node underwent, else false
-         */
-        isUpdated(_timestampUpdate: number): boolean;
-        /**
-         * Returns true if this node is a descendant of the given node, directly or indirectly, else false
-         */
-        isDescendantOf(_ancestor: Node): boolean;
-        /**
-         * Applies a Mutator from {@link Animation} to all its components and transfers it to its children.
-         */
-        applyAnimation(_mutator: Mutator): void;
-        /**
-         * Returns a list of all components attached to this node, independent of type.
-         */
-        getAllComponents(): Component[];
-        /**
-         * Returns a clone of the list of components of the given class attached to this node.
-         */
-        getComponents<T extends Component>(_class: new () => T): T[];
-        /**
-         * Returns the first compontent found of the given class attached this node or null, if list is empty or doesn't exist
-         */
-        getComponent<T extends Component>(_class: new () => T): T;
-        /**
-         * Attach the given component to this node. Identical to {@link addComponent}
-         */
-        attach(_component: Component): void;
-        /**
-         * Attach the given component to this node
-         */
-        addComponent(_component: Component): void;
-        /**
-         * Detach the given component from this node. Identical to {@link removeComponent}
-         */
-        detach(_component: Component): void;
-        /**
-         * Removes all components of the given class attached to this node.
-         */
-        removeComponents(_class: new () => Component): void;
-        /**
-         * Removes the given component from the node, if it was attached, and sets its parent to null.
-         */
-        removeComponent(_component: Component): void;
-        serialize(): Serialization;
-        deserialize(_serialization: Serialization): Promise<Serializable>;
-        toString(): string;
-        /**
-         * Creates a string as representation of this node and its descendants
-         */
-        toHierarchyString(_node?: Node, _level?: number): string;
-        /**
-         * Adds an event listener to the node. The given handler will be called when a matching event is passed to the node.
-         * Deviating from the standard EventTarget, here the _handler must be a function and _capture is the only option.
-         */
-        addEventListener(_type: EVENT | string, _handler: EventListenerUnified, _capture?: boolean): void;
-        /**
-         * Removes an event listener from the node. The signature must match the one used with addEventListener
-         */
-        removeEventListener(_type: EVENT | string, _handler: EventListenerUnified, _capture?: boolean): void;
-        /**
-         * Dispatches a synthetic event to target. This implementation always returns true (standard: return true only if either event's cancelable attribute value is false or its preventDefault() method was not invoked)
-         * The event travels into the hierarchy to this node dispatching the event, invoking matching handlers of the nodes ancestors listening to the capture phase,
-         * than the matching handler of the target node in the target phase, and back out of the hierarchy in the bubbling phase, invoking appropriate handlers of the anvestors
-         */
-        dispatchEvent(_event: Event): boolean;
-        /**
-         * Dispatches a synthetic event to target without travelling through the graph hierarchy neither during capture nor bubbling phase
-         */
-        dispatchEventToTargetOnly(_event: Event): boolean;
-        /**
-         * Broadcasts a synthetic event to this node and from there to all nodes deeper in the hierarchy,
-         * invoking matching handlers of the nodes listening to the capture phase. Watch performance when there are many nodes involved
-         */
-        broadcastEvent(_event: Event): void;
-        private broadcastEventRecursive;
-        private callListeners;
-    }
 }
 declare namespace FudgeCore {
-    /**
-     * Superclass for all {@link Component}s that can be attached to {@link Node}s.
-     * @authors Jirka Dell'Oro-Friedl, HFU, 2020 | Jascha Karagöl, HFU, 2019
-     * @link https://github.com/hs-furtwangen/FUDGE/wiki/Component
-     */
-    abstract class Component extends Mutable implements Serializable, Gizmo {
-        #private;
-        /** subclasses get a iSubclass number for identification */
-        static readonly iSubclass: number;
-        /** refers back to this class from any subclass e.g. in order to find compatible other resources*/
-        static readonly baseClass: typeof Component;
-        /** list of all the subclasses derived from this class, if they registered properly*/
-        static readonly subclasses: typeof Component[];
-        protected singleton: boolean;
-        protected active: boolean;
-        constructor();
-        protected static registerSubclass(_subclass: typeof Component): number;
-        get isActive(): boolean;
-        /**
-         * Is true, when only one instance of the component class can be attached to a node
-         */
-        get isSingleton(): boolean;
-        /**
-         * Retrieves the node, this component is currently attached to
-         */
-        get node(): Node | null;
-        /**
-         * De- / Activate this component. Inactive components will not be processed by the renderer.
-         */
-        activate(_on: boolean): void;
-        /**
-         * Tries to attach the component to the given node, removing it from the node it was attached to if applicable
-         */
-        attachToNode(_container: Node | null): void;
-        /**
-         * Override this to draw visual aids for this component inside the editors render view. Use {@link Gizmos} inside the override to draw stuff.
-         */
-        drawGizmos?(_cmpCamera?: ComponentCamera): void;
-        /**
-         * See {@link drawGizmos}. Only displayed while the corresponding node is selected.
-         */
-        drawGizmosSelected?(_cmpCamera?: ComponentCamera): void;
-        serialize(): Serialization;
-        deserialize(_serialization: Serialization): Promise<Serializable>;
-        mutate(_mutator: Mutator, _selection?: string[], _dispatchMutate?: boolean): Promise<void>;
-        protected reduceMutator(_mutator: Mutator): void;
-    }
 }
 declare namespace FudgeCore {
-    /**
-     * Wraps a regular Javascript Array and offers very limited functionality geared solely towards avoiding garbage colletion.
-     * @author Jirka Dell'Oro-Friedl, HFU, 2021
-     * @link https://github.com/hs-furtwangen/FUDGE/wiki/Recycler
-     */
-    class RecycableArray<T> {
-        #private;
-        get length(): number;
-        /**
-         * Sets the virtual length of the array to zero but keeps the entries beyond.
-         */
-        reset(): void;
-        /**
-         * Recycle this array
-         */
-        recycle(): void;
-        /**
-         * Appends a new entry to the end of the array, and returns the new length of the array.
-         */
-        push(_entry: T): number;
-        /**
-         * Removes the last entry from the array and returns it.
-         */
-        pop(): T;
-        /**
-         * Recycles the object following the last in the array and increases the array length
-         * It must be assured, that none of the objects in the array is still in any use of any kind!
-         */
-        [Symbol.iterator](): IterableIterator<T>;
-        /**
-         * Returns a copy of the array sorted according to the given compare function
-         */
-        getSorted(_sort: (a: T, b: T) => number): T[];
-    }
+}
+declare namespace FudgeCore {
+}
+declare namespace FudgeCore {
+}
+declare namespace FudgeCore {
+}
+declare namespace FudgeCore {
+}
+declare namespace FudgeCore {
 }
 declare namespace FudgeCore {
 }
@@ -967,10 +807,6 @@ declare namespace FudgeCore {
          */
         static store(_instance: Object): void;
         /**
-         * Stores the provided objects using the {@link Recycler.store} method
-         */
-        static storeMultiple(..._instances: Object[]): void;
-        /**
          * Emptys the depot of a given type, leaving the objects for the garbage collector. May result in a short stall when many objects were in
          * @param _t
          */
@@ -988,7 +824,7 @@ declare namespace FudgeCore {
      *            +y
      *             |__ +x
      * ```
-     * @authors Lukas Scheuerle, Jirka Dell'Oro-Friedl, HFU, 2019
+     * @authors Lukas Scheuerle, Jirka Dell'Oro-Friedl, HFU, 2019 | Jonas Plotzky, HFU, 2025
      */
     class Vector2 extends Mutable implements Serializable, Recycable {
         x: number;
@@ -1018,24 +854,34 @@ declare namespace FudgeCore {
         static Y(_scale?: number): Vector2;
         /**
          * Creates and returns a vector through transformation of the given vector by the given matrix
+         * @param _out Optional vector to store the result in.
          */
-        static TRANSFORMATION(_vector: Vector2, _mtxTransform: Matrix3x3, _includeTranslation?: boolean): Vector2;
+        static TRANSFORMATION(_vector: Vector2, _mtxTransform: Matrix3x3, _includeTranslation?: boolean, _out?: Vector2): Vector2;
         /**
          * Creates and returns a vector which is a copy of the given vector scaled to the given length.
+         * @param _out Optional vector to store the result in.
          */
-        static NORMALIZATION(_vector: Vector2, _length?: number): Vector2;
+        static NORMALIZATION(_vector: Vector2, _length?: number, _out?: Vector2): Vector2;
         /**
          * Returns a new vector representing the given vector scaled by the given scaling factor
+         * @param _out Optional vector to store the result in.
          */
-        static SCALE(_vector: Vector2, _scale: number): Vector2;
+        static SCALE(_vector: Vector2, _scale: number, _out?: Vector2): Vector2;
         /**
-         * Returns the resulting vector attained by addition of all given vectors.
+         * Returns the result of the addition of two vectors.
+         * @param _out Optional vector to store the result in.
          */
-        static SUM(..._vectors: Vector2[]): Vector2;
+        static SUM(_a: Vector2, _b: Vector2, _out?: Vector2): Vector2;
         /**
          * Returns the result of the subtraction of two vectors.
+         * @param _out Optional vector to store the result in.
          */
-        static DIFFERENCE(_minuend: Vector2, _subtrahend: Vector2): Vector2;
+        static DIFFERENCE(_minuend: Vector2, _subtrahend: Vector2, _out?: Vector2): Vector2;
+        /**
+         * Returns a new vector representing the given vector scaled by the given scaling factor.
+         * @param _out Optional vector to store the result in.
+         */
+        static NEGATION(_vector: Vector2, _out?: Vector2): Vector2;
         /**
          * Calculates the cross product of two Vectors. Due to them being only 2 Dimensional, the result is a single number,
          * which implicitly is on the Z axis. It is also the signed magnitude of the result.
@@ -1052,13 +898,15 @@ declare namespace FudgeCore {
          * ```
          * @param _vector Vector to get the orthogonal equivalent of
          * @param _clockwise Should the rotation be clockwise instead of the default counterclockwise? default: false
+         * @param _out Optional vector to store the result in.
          * @returns A Vector that is orthogonal to and has the same magnitude as the given Vector.
          */
-        static ORTHOGONAL(_vector: Vector2, _clockwise?: boolean): Vector2;
+        static ORTHOGONAL(_vector: Vector2, _clockwise?: boolean, _out?: Vector2): Vector2;
         /**
-         * Creates a cartesian vector from polar coordinates
+         * Creates a cartesian vector from polar coordinates.
+         * @param _out Optional vector to store the result in.
          */
-        static GEO(_angle?: number, _magnitude?: number): Vector2;
+        static GEO(_angle?: number, _magnitude?: number, _out?: Vector2): Vector2;
         /**
          * Returns the length of the vector
          */
@@ -1068,12 +916,10 @@ declare namespace FudgeCore {
          */
         get magnitudeSquared(): number;
         /**
-         * Returns a polar representation of this vector
+         * - get: Returns a polar representation of this vector
+         * - set: Adjusts the cartesian values of this vector to represent the given as polar coordinates
          */
         get geo(): Geo2;
-        /**
-         * Adjust the cartesian values of this vector to represent the given as polar coordinates
-         */
         set geo(_geo: Geo2);
         /**
          * Creates and returns a clone of this vector.
@@ -1081,8 +927,14 @@ declare namespace FudgeCore {
         get clone(): Vector2;
         /**
          * Copies the components of the given vector into this vector.
+         * @returns A reference to this vector.
          */
         copy(_original: Vector2): Vector2;
+        /**
+         * Sets the components of this vector.
+         * @returns A reference to this vector.
+         */
+        set(_x?: number, _y?: number): Vector2;
         recycle(): void;
         /**
          * Returns true if the coordinates of this and the given vector are to be considered identical within the given tolerance
@@ -1090,60 +942,84 @@ declare namespace FudgeCore {
          */
         equals(_compare: Vector2, _tolerance?: number): boolean;
         /**
-         * Adds the given vector to the executing vector, changing the executor.
-         * @param _addend The vector to add.
+         * Returns the distance bewtween this vector and the given vector.
+         */
+        getDistance(_to: Vector2): number;
+        /**
+         * Adds the given vector to this vector.
+         * @returns A reference to this vector.
          */
         add(_addend: Vector2): Vector2;
         /**
-         * Subtracts the given vector from the executing vector, changing the executor.
-         * @param _subtrahend The vector to subtract.
+         * Subtracts the given vector from this vector.
+         * @returns A reference to this vector.
          */
         subtract(_subtrahend: Vector2): Vector2;
         /**
          * Scales the Vector by the given _scalar.
+         * @returns A reference to this vector.
          */
         scale(_scalar: number): Vector2;
         /**
+         * Negates this vector by flipping the signs of its components
+         * @returns A reference to this vector.
+         */
+        negate(): Vector2;
+        /**
          * Normalizes this to the given length, 1 by default
+         * @returns A reference to this vector.
          */
         normalize(_length?: number): Vector2;
         /**
-         * Sets the components of this vector.
+         * Transforms this vector by the given matrix, including or exluding the translation.
+         * Including is the default, excluding will only rotate and scale this vector.
+         * @returns A reference to this vector.
          */
-        set(_x?: number, _y?: number): Vector2;
+        transform(_mtxTransform: Matrix3x3, _includeTranslation?: boolean): Vector2;
+        /**
+         * For each dimension, moves the component to the minimum of this and the given vector.
+         * @returns A reference to this vector.
+         */
+        min(_compare: Vector2): Vector2;
+        /**
+         * For each dimension, moves the component to the maximum of this and the given vector.
+         * @returns A reference to this vector.
+         */
+        max(_compare: Vector2): Vector2;
+        /**
+         * Calls a defined callback function on each component of the vector, and returns a new vector that contains the results. Similar to {@link Array.map}.
+         * @param _out Optional vector to store the result in.
+         */
+        map(_function: (_value: number, _index: number, _component: "x" | "y", _vector: Vector2) => number, _out?: Vector2): Vector2;
+        /**
+         * Calls a defined callback function on each component of the vector and assigns the result to the component. Similar to {@link Vector2.map} but mutates this vector instead of creating a new one.
+         * @returns A reference to this vector.
+         */
+        apply(_function: (_value: number, _index: number, _component: "x" | "y", _vector: Vector2) => number): Vector2;
         /**
          * Returns an array of the components of this vector.
          */
         get(): Float32Array;
         /**
-         * Transforms this vector by the given matrix, including or exluding the translation.
-         * Including is the default, excluding will only rotate and scale this vector.
+         * Copys the elements of this vector into the given array starting at the given offset.
+         * @returns A reference to the given array.
          */
-        transform(_mtxTransform: Matrix3x3, _includeTranslation?: boolean): Vector2;
+        toArray<T extends {
+            [n: number]: number;
+        }>(_out: T, _offset?: number): T;
         /**
-         * For each dimension, moves the component to the minimum of this and the given vector
+         * Adds a z-component of the given magnitude (default=0) to the vector and returns a new Vector3.
+         * @param _out Optional vector to store the result in.
          */
-        min(_compare: Vector2): Vector2;
+        toVector3(_z?: number, _out?: Vector3): Vector3;
         /**
-         * For each dimension, moves the component to the maximum of this and the given vector
-         */
-        max(_compare: Vector2): Vector2;
-        /**
-         * Adds a z-component of the given magnitude (default=0) to the vector and returns a new Vector3
-         */
-        toVector3(_z?: number): Vector3;
-        /**
-         * Returns a formatted string representation of this vector
+         * Returns a formatted string representation of this vector.
          */
         toString(): string;
-        /**
-         * Uses the standard array.map functionality to perform the given function on all components of this vector
-         * and return a new vector with the results
-         */
-        map(_function: (value: number, index: number, array: ArrayLike<number>) => number): Vector2;
         serialize(): Serialization;
         deserialize(_serialization: Serialization): Promise<Vector2>;
         getMutator(): Mutator;
+        mutate(_mutator: Mutator): void;
         protected reduceMutator(_mutator: Mutator): void;
     }
 }
@@ -1171,71 +1047,86 @@ declare namespace FudgeCore {
         size: Vector2;
         constructor(_x?: number, _y?: number, _width?: number, _height?: number, _origin?: ORIGIN2D);
         /**
-         * Returns a new rectangle created with the given parameters
+         * Returns a new rectangle created with the given parameters.
+         * @param _out Optional rectangle to store the result in.
          */
-        static GET(_x?: number, _y?: number, _width?: number, _height?: number, _origin?: ORIGIN2D): Rectangle;
+        static GET(_x?: number, _y?: number, _width?: number, _height?: number, _origin?: ORIGIN2D, _out?: Rectangle): Rectangle;
         get x(): number;
+        set x(_x: number);
         get y(): number;
+        set y(_y: number);
         get width(): number;
+        set width(_width: number);
         get height(): number;
+        set height(_height: number);
         /**
-         * Return the leftmost expansion, respecting also negative values of width
+         * Get/set the leftmost expansion, respecting also negative values of width
          */
         get left(): number;
+        set left(_value: number);
         /**
-         * Return the topmost expansion, respecting also negative values of height
+         * Get/set the topmost expansion, respecting also negative values of height
          */
         get top(): number;
+        set top(_value: number);
         /**
-         * Return the rightmost expansion, respecting also negative values of width
+         * Get/set the rightmost expansion, respecting also negative values of width
          */
         get right(): number;
+        set right(_value: number);
         /**
-         * Return the lowest expansion, respecting also negative values of height
+         * Get/set the lowest expansion, respecting also negative values of height
          */
         get bottom(): number;
-        set x(_x: number);
-        set y(_y: number);
-        set width(_width: number);
-        set height(_height: number);
-        set left(_value: number);
-        set top(_value: number);
-        set right(_value: number);
         set bottom(_value: number);
         get clone(): Rectangle;
         recycle(): void;
         /**
-         * Set this rectangle to the values given by the rectangle provided
+         * Returns true if this rectangle is equal to the given rectagnle within the given tolerance.
          */
-        copy(_rect: Rectangle): void;
+        equals(_compare: Rectangle, _tolerance?: number): boolean;
         /**
-         * Sets the position and size of the rectangle according to the given parameters
+         * Set this rectangle to the values given by the rectangle provided.
+         * @returns A reference to this rectangle.
          */
-        setPositionAndSize(_x?: number, _y?: number, _width?: number, _height?: number, _origin?: ORIGIN2D): void;
+        copy(_rect: Rectangle): Rectangle;
         /**
-         * Transforms the given point from this rectangles space to the target rectangles space
+         * Sets the position and size of the rectangle according to the given parameters.
+         * @param _origin The origin of the rectangle. The default is {@link ORIGIN2D.TOPLEFT}.
+         * @returns A reference to this rectangle.
+         * @deprecated Use {@link set} instead.
          */
-        pointToRect(_point: Vector2, _target: Rectangle): Vector2;
+        setPositionAndSize(_x?: number, _y?: number, _width?: number, _height?: number, _origin?: ORIGIN2D): Rectangle;
         /**
-         * Returns true if the given point is inside of this rectangle or on the border
-         * @param _point
+         * Sets the position and size of the rectangle according to the given parameters.
+         * @param _origin The origin of the rectangle. The default is {@link ORIGIN2D.TOPLEFT}.
+         * @returns A reference to this rectangle.
+         */
+        set(_x?: number, _y?: number, _width?: number, _height?: number, _origin?: ORIGIN2D): Rectangle;
+        /**
+         * Transforms the given point from this rectangles space to the target rectangles space.
+         * @param _out Optional vector to store the result in.
+         */
+        pointToRect(_point: Vector2, _target: Rectangle, _out?: Vector2): Vector2;
+        /**
+         * Returns true if the given point is inside of this rectangle or on the border.
          */
         isInside(_point: Vector2): boolean;
         /**
-         * Returns true if this rectangle collides with the rectangle given
-         * @param _rect
+         * Returns true if this rectangle collides with the given rectangle.
          */
         collides(_rect: Rectangle): boolean;
         /**
-         * Returns the rectangle created by the intersection of this and the given rectangle or null, if they don't collide
+         * Returns true if this rectangle completely encloses the given rectangle.
          */
-        getIntersection(_rect: Rectangle): Rectangle;
-        /**
-     * Returns the rectangle created by the intersection of this and the given rectangle or null, if they don't collide
-     */
         covers(_rect: Rectangle): boolean;
         /**
-         * Creates a string representation of this rectangle
+         * Returns the rectangle created by the intersection of this and the given rectangle or null, if they don't collide.
+         * @param _out Optional rectangle to store the result in.
+         */
+        getIntersection(_rect: Rectangle, _out?: Rectangle): Rectangle;
+        /**
+         * Creates a string representation of this rectangle.
          */
         toString(): string;
         protected reduceMutator(_mutator: Mutator): void;
@@ -1260,18 +1151,39 @@ declare namespace FudgeCore {
         GREATER_EQUAL = 6,
         ALWAYS = 7
     }
-    const UNIFORM_BLOCKS: {
-        LIGHTS: {
-            NAME: string;
-            BINDING: number;
+    enum SHADER_ATTRIBUTE {
+        POSITION = 0,
+        NORMAL = 1,
+        TEXCOORDS = 2,
+        COLOR = 3,
+        TANGENT = 4,
+        BONES = 5,
+        WEIGHTS = 6
+    }
+    const UNIFORM_BLOCK: {
+        readonly LIGHTS: {
+            readonly NAME: "Lights";
+            readonly BINDING: 0;
         };
-        SKIN: {
-            NAME: string;
-            BINDING: number;
+        readonly CAMERA: {
+            readonly NAME: "Camera";
+            readonly BINDING: 1;
         };
-        FOG: {
-            NAME: string;
-            BINDING: number;
+        readonly MATERIAL: {
+            readonly NAME: "Material";
+            readonly BINDING: 2;
+        };
+        readonly NODE: {
+            readonly NAME: "Node";
+            readonly BINDING: 3;
+        };
+        readonly SKIN: {
+            readonly NAME: "Skin";
+            readonly BINDING: 4;
+        };
+        readonly FOG: {
+            readonly NAME: "Fog";
+            readonly BINDING: 5;
         };
     };
     const TEXTURE_LOCATION: {
@@ -1306,23 +1218,19 @@ declare namespace FudgeCore {
      * Methods and attributes of this class should not be called directly, only through {@link Render}
      */
     abstract class RenderWebGL extends EventTargetStatic {
-        protected static crc3: WebGL2RenderingContext;
+        static texColor: WebGLTexture;
+        static texPosition: WebGLTexture;
+        static texNormal: WebGLTexture;
+        static texDepthStencil: WebGLTexture;
+        private static crc3;
+        /** The area of the offscreen-canvas in CSS pixels. */
+        private static rectCanvas;
+        /** The area on the offscreen-canvas to render to. */
         private static rectRender;
-        private static fboMain;
-        private static fboPost;
-        private static fboTarget;
-        private static texColor;
-        private static texPosition;
-        private static texNormal;
-        private static texNoise;
-        private static texDepthStencil;
-        private static texBloomSamples;
-        private static fboPick;
-        private static texPick;
-        private static texDepthPick;
-        private static uboLights;
-        private static uboLightsOffsets;
-        private static uboFog;
+        private static fboScene;
+        private static fboOut;
+        private static readonly attachmentsColorPositionNormal;
+        private static readonly attachmentsColor;
         /**
          * Initializes offscreen-canvas, renderingcontext and hardware viewport. Call once before creating any resources like meshes or shaders
          */
@@ -1334,7 +1242,11 @@ declare namespace FudgeCore {
         */
         static assert<T>(_value: T | null, _message?: string): T;
         /**
-         * Return a reference to the offscreen-canvas
+         * Return a reference to the offscreen-canvas.
+         *
+         * - Do not read or modify the canvas dimensions directly.
+         * - Use {@link getCanvasRectangle} to retrieve the size of the offscreen-canvas.
+         * - Use {@link setCanvasSize} to set the size of the offscreen-canvas.
          */
         static getCanvas(): HTMLCanvasElement;
         /**
@@ -1342,16 +1254,25 @@ declare namespace FudgeCore {
          */
         static getRenderingContext(): WebGL2RenderingContext;
         /**
-         * Return a rectangle describing the size of the offscreen-canvas. x,y are 0 at all times.
+         * Returns a reference to the rectangle describing the size of the offscreen-canvas. x,y are 0 at all times.
+         *
+         * Do not modify the rectangle directly, use {@link setCanvasSize} instead.
          */
-        static getCanvasRect(): Rectangle;
+        static getCanvasRectangle(): Rectangle;
         /**
          * Set the size of the offscreen-canvas.
+         *
+         * ⚠️ CAUTION: If size changes invokes {@link adjustAttachments} which is an expensive operation.
          */
         static setCanvasSize(_width: number, _height: number): void;
         /**
+         * Retrieve the area on the offscreen-canvas the camera image gets rendered to.
+         *
+         * Do not modify the rectangle directly, use {@link setRenderRectangle} instead.
+         */
+        static getRenderRectangle(): Rectangle;
+        /**
          * Set the area on the offscreen-canvas to render the camera image to.
-         * @param _rect
          */
         static setRenderRectangle(_rect: Rectangle): void;
         /**
@@ -1367,10 +1288,6 @@ declare namespace FudgeCore {
          * Reset the framebuffer to the main color buffer.
          */
         static resetFramebuffer(): void;
-        /**
-         * Retrieve the area on the offscreen-canvas the camera image gets rendered to.
-         */
-        static getRenderRectangle(): Rectangle;
         /**
          * Enable / Disable WebGLs depth test.
          */
@@ -1405,57 +1322,335 @@ declare namespace FudgeCore {
          */
         static initializeAttachments(): void;
         /**
-         * Adjusts the size of the different texture attachments (render targets) to the canvas size
-         * ⚠️ CAUTION: Expensive operation, use only when canvas size changed
+         * Adjusts the size of the different texture attachments (render targets) to the canvas size.
+         *
+         * ⚠️ CAUTION: Expensive operation, use only when canvas size changed.
          */
         static adjustAttachments(): void;
+        static createTexture(_filter: number, _wrap: number): WebGLTexture;
+        static bindTexture(_shader: ShaderInterface, _texture: WebGLTexture, _unit: number, _uniform: string): void;
+        static useNodeUniforms(_shader: ShaderInterface, _mtxWorld: Matrix4x4, _mtxPivot: Matrix3x3, _color: Color, _id?: number): void;
+        /**
+         * Draw a mesh buffer using the given infos and the complete projection matrix
+        */
+        static drawNode(_node: Node, _cmpCamera: ComponentCamera): void;
         /**
          * Used with a {@link Picker}-camera, this method renders one pixel with picking information
-         * for each pickable object in the line of sight and returns that as an unsorted array of {@link Pick}s.
-         * The function to render the objects into the pick buffer must be provided by the caller.
-         * @param _pick The function which renders objects into the pick buffer. Returns a {@link Pick} for each rendered object.
-         * **MUST** use {@link ShaderPick} or {@link ShaderPickTextured} to render objects.
+         * for each node in the line of sight and return that as an unsorted {@link Pick}-array
          */
-        static pickFrom<T>(_from: T[], _cmpCamera: ComponentCamera, _pick: (_from: T[], _cmpCamera: ComponentCamera) => Pick[]): Pick[];
+        static pick(_nodes: readonly Node[], _cmpCamera: ComponentCamera): Pick[];
         /**
          * The render function for picking nodes.
          * A cameraprojection with extremely narrow focus is used, so each pixel of the buffer would hold the same information from the node,
          * but the fragment shader renders only 1 pixel for each node into the render buffer, 1st node to 1st pixel, 2nd node to second pixel etc.
          */
-        protected static pick(_nodes: Node[], _cmpCamera: ComponentCamera): Pick[];
-        protected static initializeFog(): void;
-        /**
-         * Buffer the fog parameters into the fog ubo
-         */
-        protected static bufferFog(_cmpFog: ComponentFog): void;
-        protected static initializeLights(): void;
-        /**
-         * Buffer the data from the lights in the scenegraph into the lights ubo
-         */
-        protected static bufferLights(_lights: MapLightTypeToLightList): void;
+        protected static pickNodes(_nodes: readonly Node[], _cmpCamera: ComponentCamera): Pick[];
         /**
          * Draws the given nodes using the given camera and the post process components attached to the same node as the camera
          * The opaque nodes are drawn first, then ssao is applied, then bloom is applied, then nodes alpha (sortForAlpha) are drawn.
          */
         protected static drawNodes(_nodesOpaque: Iterable<Node>, _nodesAlpha: Iterable<Node>, _cmpCamera: ComponentCamera): void;
-        /**
-         * Draws the occlusion over the color-buffer, using the given ambient-occlusion-component
-         */
-        protected static drawAmbientOcclusion(_cmpCamera: ComponentCamera, _cmpAmbientOcclusion: ComponentAmbientOcclusion): void;
-        /**
-         * Draws the bloom-effect over the color-buffer, using the given bloom-component
-         */
-        protected static drawBloom(_cmpBloom: ComponentBloom): void;
-        /**
-         * Draw a mesh buffer using the given infos and the complete projection matrix
-        */
-        protected static drawNode(_node: Node, _cmpCamera: ComponentCamera): void;
-        protected static drawParticles(_cmpParticleSystem: ComponentParticleSystem, _shader: ShaderInterface, _renderBuffers: RenderBuffers, _cmpFaceCamera: ComponentFaceCamera): void;
-        private static calcMeshToView;
-        private static bindTexture;
+        private static drawParticles;
+        private static faceCamera;
     }
 }
 declare namespace FudgeCore {
+}
+declare namespace FudgeCore {
+    interface MapClassToComponents {
+        [className: string]: Component[];
+    }
+    /**
+     * Represents a node in the scenetree.
+     * @authors Jascha Karagöl, HFU, 2019 | Jirka Dell'Oro-Friedl, HFU, 2019
+     * @link https://github.com/hs-furtwangen/FUDGE/wiki/Graph
+     */
+    class Node extends EventTargetUnified implements Serializable {
+        #private;
+        name: string;
+        readonly mtxWorld: Matrix4x4;
+        timestampUpdate: number;
+        /** The number of nodes of the whole branch including this node and all successors */
+        nNodesInBranch: number;
+        /** The radius of the bounding sphere in world dimensions enclosing the geometry of this node and all successors in the branch */
+        radius: number;
+        private parent;
+        private children;
+        private components;
+        private active;
+        /**
+         * Creates a new node with a name and initializes all attributes
+         */
+        constructor(_name: string);
+        /**
+         * Return the mutator-like path string to get from one node to another or null if no path is found e.g.:
+         * ```typescript
+         * "node/parent/children/1/components/ComponentSkeleton/0"
+         * ```
+         */
+        static PATH_FROM_TO(_from: Node | Component, _to: Node | Component): string | null;
+        /**
+         * Return the {@link Node} or {@link Component} found at the given path starting from the given node or undefined if not found
+         */
+        static FIND<T = Node | Component>(_from: Node | Component, _path: string): T;
+        get isActive(): boolean;
+        /**
+         * Shortcut to retrieve this nodes {@link ComponentTransform}
+         */
+        get cmpTransform(): ComponentTransform;
+        /**
+         * Shortcut to retrieve the local {@link Matrix4x4} attached to this nodes {@link ComponentTransform}
+         * Fails if no {@link ComponentTransform} is attached
+         */
+        get mtxLocal(): Matrix4x4;
+        get mtxWorldInverse(): Matrix4x4;
+        /**
+         * Returns the number of children attached to this
+         */
+        get nChildren(): number;
+        /**
+         * Generator yielding the node and all decendants in the graph below for iteration
+         * Inactive nodes and their descendants can be filtered
+         */
+        getIterator(_active?: boolean): IterableIterator<Node>;
+        /**
+         * Returns an iterator over this node and all its descendants in the graph below
+         */
+        [Symbol.iterator](): IterableIterator<Node>;
+        /** Called by the render system during {@link Render.prepare}. Override this to provide the render system with additional render data. */
+        updateRenderData(_cmpMesh: ComponentMesh, _cmpMaterial: ComponentMaterial, _cmpFaceCamera: ComponentFaceCamera, _cmpParticleSystem: ComponentParticleSystem): void;
+        /** Called by the render system during {@link Render.draw}. Override this to provide the render system with additional render data. */
+        useRenderData(_mtxWorldOverride?: Matrix4x4): void;
+        /**
+         * De- / Activate this node. Inactive nodes will not be processed by the renderer.
+         */
+        activate(_on: boolean): void;
+        /**
+         * Returns a reference to this nodes parent node
+         */
+        getParent(): Node | null;
+        /**
+         * Traces back the ancestors of this node and returns the first.
+         */
+        getAncestor(): Node | null;
+        /**
+         * Traces the hierarchy upwards to the root and returns the path from the root to this node.
+         */
+        getPath(_out?: Node[], _offset?: number): Node[];
+        /**
+         * Returns child at the given index in the list of children
+         */
+        getChild(_index: number): Node;
+        /**
+         * Returns the readonly list of children. Create a copy to modify it.
+         */
+        getChildren(): readonly Node[];
+        /**
+         * Returns the first child with the supplied name.
+         */
+        getChildByName(_name: string): Node;
+        /**
+         * Returns an array of references to childnodes with the supplied name.
+         */
+        getChildrenByName(_name: string): Node[];
+        /**
+         * Simply calls {@link addChild}. This reference is here solely because appendChild is the equivalent method in DOM.
+         * See and preferably use {@link addChild}
+         */
+        readonly appendChild: (_child: Node) => void;
+        /**
+         * Adds the given reference to a node to the list of children, if not already in
+         * @throws Error when trying to add an ancestor of this
+         */
+        addChild(_child: Node): void;
+        /**
+         * Adds the given reference to a node to the list of children at the given index. If it is already a child, it is moved to the new position.
+         */
+        addChild(_child: Node, _index: number): void;
+        /**
+         * Removes the reference to the give node from the list of children
+         */
+        removeChild(_child: Node): void;
+        /**
+         * Removes all references in the list of children
+         */
+        removeAllChildren(): void;
+        /**
+         * Returns the position of the node in the list of children or -1 if not found
+         */
+        findChild(_search: Node): number;
+        /**
+         * Replaces a child node with another, preserving the position in the list of children
+         */
+        replaceChild(_replace: Node, _with: Node): boolean;
+        /**
+         * Returns true if the given timestamp matches the last update timestamp this node underwent, else false
+         */
+        isUpdated(_timestampUpdate: number): boolean;
+        /**
+         * Returns true if this node is a descendant of the given node, directly or indirectly, else false
+         */
+        isDescendantOf(_ancestor: Node): boolean;
+        /**
+         * Applies a Mutator from {@link Animation} to all its components and transfers it to its children.
+         */
+        applyAnimation(_mutator: Mutator): void;
+        /**
+         * Returns a list of all components attached to this node, independent of type.
+         */
+        getAllComponents(): Component[];
+        /**
+         * Returns the list of components of the given class attached to this node. If no components of this type are attached, an empty array is returned.
+         * @returns A **readonly** array of components.
+         */
+        getComponents<T extends Component>(_class: new () => T): readonly T[];
+        /**
+         * Returns the first compontent found of the given class attached this node or null, if list is empty or doesn't exist
+         */
+        getComponent<T extends Component>(_class: new () => T): T;
+        /**
+         * Attach the given component to this node. Identical to {@link addComponent}
+         */
+        attach(_component: Component): void;
+        /**
+         * Attach the given component to this node
+         */
+        addComponent(_component: Component): void;
+        /**
+         * Detach the given component from this node. Identical to {@link removeComponent}
+         */
+        detach(_component: Component): void;
+        /**
+         * Removes all components of the given class attached to this node.
+         */
+        removeComponents(_class: new () => Component): void;
+        /**
+         * Removes the given component from the node, if it was attached, and sets its parent to null.
+         */
+        removeComponent(_component: Component): void;
+        serialize(): Serialization;
+        deserialize(_serialization: Serialization): Promise<Serializable>;
+        toString(): string;
+        /**
+         * Creates a string as representation of this node and its descendants
+         */
+        toHierarchyString(_node?: Node, _level?: number): string;
+        /**
+         * Adds an event listener to the node. The given handler will be called when a matching event is passed to the node.
+         * Deviating from the standard EventTarget, here the _handler must be a function and _capture is the only option.
+         */
+        addEventListener(_type: EVENT | string, _handler: EventListenerUnified, _capture?: boolean): void;
+        /**
+         * Removes an event listener from the node. The signature must match the one used with addEventListener
+         */
+        removeEventListener(_type: EVENT | string, _handler: EventListenerUnified, _capture?: boolean): void;
+        /**
+         * Dispatches a synthetic event to target. This implementation always returns true (standard: return true only if either event's cancelable attribute value is false or its preventDefault() method was not invoked)
+         * The event travels into the hierarchy to this node dispatching the event, invoking matching handlers of the nodes ancestors listening to the capture phase,
+         * than the matching handler of the target node in the target phase, and back out of the hierarchy in the bubbling phase, invoking appropriate handlers of the anvestors
+         */
+        dispatchEvent(_event: Event): boolean;
+        /**
+         * Dispatches a synthetic event to target without travelling through the graph hierarchy neither during capture nor bubbling phase
+         */
+        dispatchEventToTargetOnly(_event: Event): boolean;
+        /**
+         * Broadcasts a synthetic event to this node and from there to all nodes deeper in the hierarchy,
+         * invoking matching handlers of the nodes listening to the capture phase. Watch performance when there are many nodes involved
+         */
+        broadcastEvent(_event: Event): void;
+        private broadcastEventRecursive;
+        /**
+         * Calls the listeners with the given event. The listeners are called in the order they were added. Handles listeners removing themselves or other listeners from the list during execution.
+         */
+        private callListeners;
+    }
+}
+declare namespace FudgeCore {
+    /**
+     * Superclass for all {@link Component}s that can be attached to {@link Node}s.
+     * @authors Jirka Dell'Oro-Friedl, HFU, 2020 | Jascha Karagöl, HFU, 2019
+     * @link https://github.com/hs-furtwangen/FUDGE/wiki/Component
+     */
+    abstract class Component extends Mutable implements Serializable, Gizmo {
+        #private;
+        /** subclasses get a iSubclass number for identification */
+        static readonly iSubclass: number;
+        /** refers back to this class from any subclass e.g. in order to find compatible other resources*/
+        static readonly baseClass: typeof Component;
+        /** list of all the subclasses derived from this class, if they registered properly*/
+        static readonly subclasses: typeof Component[];
+        protected singleton: boolean;
+        protected active: boolean;
+        constructor();
+        protected static registerSubclass(_subclass: typeof Component): number;
+        get isActive(): boolean;
+        /**
+         * Is true, when only one instance of the component class can be attached to a node
+         */
+        get isSingleton(): boolean;
+        /**
+         * Retrieves the node, this component is currently attached to
+         */
+        get node(): Node | null;
+        /**
+         * De- / Activate this component. Inactive components will not be processed by the renderer.
+         */
+        activate(_on: boolean): void;
+        /**
+         * Tries to attach the component to the given node, removing it from the node it was attached to if applicable
+         */
+        attachToNode(_container: Node | null): void;
+        /**
+         * Override this to draw visual aids for this component inside the editors render view. Use {@link Gizmos} inside the override to draw stuff.
+         */
+        drawGizmos?(_cmpCamera?: ComponentCamera): void;
+        /**
+         * See {@link drawGizmos}. Only displayed while the corresponding node is selected.
+         */
+        drawGizmosSelected?(_cmpCamera?: ComponentCamera): void;
+        serialize(): Serialization;
+        deserialize(_serialization: Serialization): Promise<Serializable>;
+        mutate(_mutator: Mutator, _selection?: string[], _dispatchMutate?: boolean): void | Promise<void>;
+        protected mutateSync(_mutator: Mutator, _dispatchMutate?: boolean): void;
+        protected reduceMutator(_mutator: Mutator): void;
+    }
+}
+declare namespace FudgeCore {
+    /**
+     * Wraps a regular Javascript Array and offers very limited functionality geared solely towards avoiding garbage colletion.
+     * @author Jirka Dell'Oro-Friedl, HFU, 2021
+     * @link https://github.com/hs-furtwangen/FUDGE/wiki/Recycler
+     */
+    class RecycableArray<T> {
+        #private;
+        get length(): number;
+        /**
+         * Sets the virtual length of the array to zero but keeps the entries beyond.
+         */
+        reset(): void;
+        /**
+         * Recycle this array
+         */
+        recycle(): void;
+        /**
+         * Appends a new entry to the end of the array, and returns the new length of the array.
+         */
+        push(_entry: T): number;
+        /**
+         * Removes the last entry from the array and returns it.
+         */
+        pop(): T;
+        /**
+         * Recycles the object following the last in the array and increases the array length
+         * It must be assured, that none of the objects in the array is still in any use of any kind!
+         */
+        [Symbol.iterator](): IterableIterator<T>;
+        /**
+         * Returns a copy of the array sorted according to the given compare function
+         */
+        getSorted(_sort: (a: T, b: T) => number): T[];
+    }
 }
 declare namespace FudgeCore {
     const enum EVENT_PHYSICS {
@@ -2044,10 +2239,7 @@ declare namespace FudgeCore {
         /** The name to call the Material by. */
         name: string;
         idResource: string;
-        /**
-         * Clipping threshold for alpha values, every pixel with alpha < alphaClip will be discarded.
-         */
-        alphaClip: number;
+        timestampUpdate: number;
         private shaderType;
         constructor(_name: string, _shader?: typeof Shader, _coat?: Coat);
         /**
@@ -2169,7 +2361,8 @@ declare namespace FudgeCore {
         protected renderBuffer: unknown;
         protected singleton: boolean;
         /** Contains the bone transformations applicable to the vertices of a {@link Mesh} */
-        protected readonly mtxBones: Matrix4x4[];
+        protected mtxBones: Matrix4x4[];
+        protected mtxBonesData: Float32Array;
         constructor(_bones?: Node[], _mtxBoneInverses?: Matrix4x4[]);
         /**
          * Adds a node as a bone with its bind inverse matrix
@@ -2184,10 +2377,6 @@ declare namespace FudgeCore {
          */
         indexOf(_node: Node): number;
         /**
-         * Updates the bone matrices to be used by the shader
-         */
-        update(): void;
-        /**
          * Resets the pose of this skeleton to the default pose
          */
         resetPose(): void;
@@ -2199,26 +2388,10 @@ declare function ifNumber(_check: number, _default: number): number;
 declare namespace FudgeCore {
     /**
      * Holds information about the AnimationStructure that the Animation uses to map the Sequences to the Attributes.
-     * Built out of a {@link Node}'s serialsation, it swaps the values with {@link AnimationSequence}s.
+     * Built out of a {@link Node}'s serialsation, it swaps the values with {@link AnimationSequenceNumber}s.
      */
     interface AnimationStructure {
         [attribute: string]: AnimationStructure[] | AnimationStructure | AnimationSequence;
-    }
-    interface AnimationSequenceVector3 extends AnimationStructure {
-        x?: AnimationSequence;
-        y?: AnimationSequence;
-        z?: AnimationSequence;
-    }
-    interface AnimationSequenceVector4 extends AnimationStructure {
-        x?: AnimationSequence;
-        y?: AnimationSequence;
-        z?: AnimationSequence;
-        w?: AnimationSequence;
-    }
-    interface AnimationSequenceMatrix4x4 extends AnimationStructure {
-        rotation?: AnimationSequenceVector3 | AnimationSequenceVector4;
-        scale?: AnimationSequenceVector3;
-        translation?: AnimationSequenceVector3;
     }
     /**
     * An associative array mapping names of lables to timestamps.
@@ -2261,9 +2434,9 @@ declare namespace FudgeCore {
     }
     /**
      * Describes and controls and animation by yielding mutators
-     * according to the stored {@link AnimationStructure} and {@link AnimationSequence}s
+     * according to the stored {@link AnimationStructure} and {@link AnimationSequenceNumber}s
      * Applied to a {@link Node} directly via script or {@link ComponentAnimation}.
-     * @author Lukas Scheuerle, HFU, 21019 | Jirka Dell'Oro-Friedl, HFU, 2021-2023
+     * @authors Lukas Scheuerle, HFU, 2019 | Jirka Dell'Oro-Friedl, HFU, 2021-2023 | Jonas Plotzky, HFU, 2025
      */
     class Animation extends Mutable implements SerializableResource {
         #private;
@@ -2273,6 +2446,7 @@ declare namespace FudgeCore {
         name: string;
         totalTime: number;
         labels: AnimationLabel;
+        sampled: boolean;
         animationStructure: AnimationStructure;
         events: AnimationEventTrigger;
         protected framesPerSecond: number;
@@ -2306,13 +2480,13 @@ declare namespace FudgeCore {
          * Generates and returns a {@link Mutator} with the information to apply to the {@link Node} to animate
          * in the state the animation is in at the given time, direction and quantization
          */
-        getState(_time: number, _direction: number, _quantization: ANIMATION_QUANTIZATION): Mutator;
+        getState(_time: number, _direction: number, _quantization: ANIMATION_QUANTIZATION, _mutatorOut?: Mutator): Mutator;
         /**
          * Returns a list of the names of the events the {@link ComponentAnimation} needs to fire between _min and _max input values.
          * @param _direction The direction the animation is supposed to run in. >0 == forward, 0 == stop, <0 == backwards
          * @returns a list of strings with the names of the custom events to fire.
          */
-        getEventsToFire(_min: number, _max: number, _quantization: ANIMATION_QUANTIZATION, _direction: number): string[];
+        getEventsToFire(_min: number, _max: number, _quantization: ANIMATION_QUANTIZATION, _direction: number): string[] | null;
         /**
          * Adds an Event to the List of events.
          * @param _name The name of the event (needs to be unique per Animation).
@@ -2358,7 +2532,7 @@ declare namespace FudgeCore {
          */
         private getCorrectEventList;
         /**
-         * Traverses an {@link AnimationStructure} and returns a {@link Mutator} describing the state at the given time
+         * Traverses an {@link AnimationStructure} and returns a {@link Mutator} describing the state at the given time.
          */
         private traverseStructureForMutator;
         /**
@@ -2366,8 +2540,9 @@ declare namespace FudgeCore {
          * @param _structure The structure to traverse
          */
         private traverseStructureForTime;
+        private getAnimationStructure;
         /**
-         * Ensures the existance of the requested {@link AnimationStrcuture} and returns it.
+         * Ensures the existance of the requested {@link AnimationStructure} and returns it.
          * @param _type the type of the structure to get
          * @returns the requested [[@link AnimationStructure]]
          */
@@ -2392,11 +2567,15 @@ declare namespace FudgeCore {
          */
         private calculateReverseSequence;
         /**
-         * Creates a rastered {@link AnimationSequence} out of a given sequence.
+         * Creates a rastered {@link AnimationSequenceNumber} out of a given sequence.
          * @param _sequence The sequence to calculate the new sequence out of
          * @returns the rastered sequence.
          */
         private calculateRasteredSequence;
+        /**
+         * Creates a {@link AnimationSequenceSampled} out of a given sequence.
+         */
+        private calculateSampledSequence;
         /**
          * Creates a new reversed {@link AnimationEventTrigger} object based on the given one.
          * @param _events the event object to calculate the new one out of
@@ -2411,52 +2590,63 @@ declare namespace FudgeCore {
         private calculateRasteredEventTriggers;
         /**
          * Checks which events lay between two given times and returns the names of the ones that do.
-         * @param _eventTriggers The event object to check the events inside of
-         * @param _min the minimum of the range to check between (inclusive)
-         * @param _max the maximum of the range to check between (exclusive)
-         * @returns an array of the names of the events in the given range.
+         * @param _eventTriggers The event object to check the events inside of.
+         * @param _min the minimum of the range to check between (inclusive).
+         * @param _max the maximum of the range to check between (exclusive).
+         * @param _events the array to add the names of the events to.
+         * @returns an given array of the events appended with the events in the given range.
          */
-        private checkEventsBetween;
+        private addEventsBetween;
     }
 }
 declare namespace FudgeCore {
     /**
-     * Calculates the values between {@link AnimationKey}s.
+     * Calculates the values between {@link AnimationKeyNumber}s.
      * Represented internally by a cubic function (`f(x) = ax³ + bx² + cx + d`).
      * Only needs to be recalculated when the keys change, so at runtime it should only be calculated once.
-     * @author Lukas Scheuerle, HFU, 2019
+     * @authors Lukas Scheuerle, HFU, 2019 | Jonas Plotzky, HFU, 2025
      */
-    class AnimationFunction {
-        private a;
-        private b;
-        private c;
-        private d;
-        private keyIn;
-        private keyOut;
-        constructor(_keyIn: AnimationKey, _keyOut?: AnimationKey);
-        set setKeyIn(_keyIn: AnimationKey);
-        set setKeyOut(_keyOut: AnimationKey);
+    abstract class AnimationFunction<T extends AnimationReturnType = AnimationReturnType> {
+        protected a: T;
+        protected b: T;
+        protected c: T;
+        protected d: T;
+        protected keyIn: AnimationKey<T>;
+        protected keyOut: AnimationKey<T>;
+        constructor(_keyIn: AnimationKey<T>, _keyOut?: AnimationKey<T>);
         /**
          * Returns the parameter values of this cubic function. `f(x) = ax³ + bx² + cx + d`
          * Used by editor.
          */
         getParameters(): {
-            a: number;
-            b: number;
-            c: number;
-            d: number;
+            a: T;
+            b: T;
+            c: T;
+            d: T;
         };
         /**
          * Calculates the value of the function at the given time.
          * @param _time the point in time at which to evaluate the function in milliseconds. Will be corrected for offset internally.
          * @returns the value at the given time
          */
-        evaluate(_time: number): number;
+        abstract evaluate(_time: number, _mutatorOut: AnimationReturnType): T;
         /**
          * (Re-)Calculates the parameters of the cubic function.
          * See https://math.stackexchange.com/questions/3173469/calculate-cubic-equation-from-two-points-and-two-slopes-variably
          * and https://jirkadelloro.github.io/FUDGE/Documentation/Logs/190410_Notizen_LS
          */
+        abstract calculate(): void;
+    }
+    class AnimationFunctionNumber extends AnimationFunction<number> {
+        evaluate(_time: number): number;
+        calculate(): void;
+    }
+    class AnimationFunctionVector3 extends AnimationFunction<MutatorVector3> {
+        evaluate(_time: number, _out?: MutatorVector3): MutatorVector3;
+        calculate(): void;
+    }
+    class AnimationFunctionQuaternion extends AnimationFunction<MutatorQuaternion> {
+        evaluate(_time: number, _out?: MutatorQuaternion): MutatorQuaternion;
         calculate(): void;
     }
 }
@@ -2484,32 +2674,30 @@ declare namespace FudgeCore {
      * Also holds a reference to the {@link AnimationFunction}s that come in and out of the sides.
      * The {@link AnimationFunction}s are handled by the {@link AnimationSequence}s.
      * If the property constant is true, the value does not change and wil not be interpolated between this and the next key in a sequence
-     * @author Lukas Scheuerle, HFU, 2019
+     * @authors Lukas Scheuerle, HFU, 2019 | Jonas Plotzky, HFU, 2025
      */
-    class AnimationKey extends Mutable implements Serializable {
+    class AnimationKey<T extends AnimationReturnType = AnimationReturnType> extends Mutable implements Serializable {
         #private;
         /**Don't modify this unless you know what you're doing.*/
-        functionIn: AnimationFunction;
-        /**Don't modify this unless you know what you're doing.*/
-        functionOut: AnimationFunction;
-        constructor(_time?: number, _value?: number, _interpolation?: ANIMATION_INTERPOLATION, _slopeIn?: number, _slopeOut?: number);
+        functionOut: AnimationFunction<T>;
+        constructor(_time?: number, _value?: T, _interpolation?: ANIMATION_INTERPOLATION, _slopeIn?: T, _slopeOut?: T);
         /**
          * Static comparation function to use in an array sort function to sort the keys by their time.
          * @param _a the animation key to check
          * @param _b the animation key to check against
          * @returns >0 if a>b, 0 if a=b, <0 if a<b
          */
-        static compare(_a: AnimationKey, _b: AnimationKey): number;
+        static compare<T extends AnimationReturnType, K extends AnimationKey<T>>(_a: K, _b: K): number;
         get time(): number;
         set time(_time: number);
-        get value(): number;
-        set value(_value: number);
+        get value(): T;
+        set value(_value: T);
         get interpolation(): ANIMATION_INTERPOLATION;
         set interpolation(_interpolation: ANIMATION_INTERPOLATION);
-        get slopeIn(): number;
-        set slopeIn(_slope: number);
-        get slopeOut(): number;
-        set slopeOut(_slope: number);
+        get slopeIn(): T;
+        set slopeIn(_slope: T);
+        get slopeOut(): T;
+        set slopeOut(_slope: T);
         serialize(): Serialization;
         deserialize(_serialization: Serialization): Promise<Serializable>;
         getMutator(): Mutator;
@@ -2675,64 +2863,90 @@ declare namespace FudgeCore {
     }
 }
 declare namespace FudgeCore {
+    interface MutatorVector3 {
+        x?: number;
+        y?: number;
+        z?: number;
+    }
+    interface MutatorQuaternion {
+        x: number;
+        y: number;
+        z: number;
+        w: number;
+    }
+    type AnimationReturnType = number | MutatorVector3 | MutatorQuaternion;
+    type AnimationClassType<T extends AnimationReturnType = AnimationReturnType> = T extends number ? NumberConstructor : T extends MutatorQuaternion ? typeof Quaternion : T extends MutatorVector3 ? typeof Vector3 : never;
     /**
      * A sequence of {@link AnimationKey}s that is mapped to an attribute of a {@link Node} or its {@link Component}s inside the {@link Animation}.
      * Provides functions to modify said keys
-     * @authors Lukas Scheuerle, HFU, 2019 | Jonas Plotzky, HFU, 2022
+     * @authors Lukas Scheuerle, HFU, 2019 | Jonas Plotzky, HFU, 2022-2025
      */
-    class AnimationSequence extends Mutable implements Serializable {
-        private keys;
-        constructor(_keys?: AnimationKey[]);
+    class AnimationSequence<T extends AnimationReturnType = AnimationReturnType, C extends AnimationClassType<T> = AnimationClassType<T>> extends Mutable implements Serializable {
+        #private;
+        protected keys: AnimationKey<T>[];
+        constructor(_keys: AnimationKey<T>[], _valueType: C);
         get length(): number;
+        get classType(): C;
+        private set classType(value);
         /**
          * Evaluates the sequence at the given point in time.
          * @param _time the point in time at which to evaluate the sequence in milliseconds.
          * @returns the value of the sequence at the given time. undefined if there are no keys.
          */
-        evaluate(_time: number): number;
+        evaluate(_time: number, _frame?: number, _out?: AnimationReturnType): T;
         /**
          * Adds a new key to the sequence.
          * @param _key the key to add
          */
-        addKey(_key: AnimationKey): void;
+        addKey(_key: AnimationKey<T>): void;
         /**
          * Modifys a given key in the sequence.
          * @param _key the key to add
          */
-        modifyKey(_key: AnimationKey, _time?: number, _value?: number): void;
+        modifyKey(_key: AnimationKey<T>, _time?: number, _value?: T): void;
         /**
          * Removes a given key from the sequence.
          * @param _key the key to remove
          */
-        removeKey(_key: AnimationKey): void;
+        removeKey(_key: AnimationKey<T>): void;
         /**
          * Find a key in the sequence exactly matching the given time.
          */
-        findKey(_time: number): AnimationKey;
+        findKey(_time: number): AnimationKey<T>;
         /**
          * Removes the Animation Key at the given index from the keys.
          * @param _index the zero-based index at which to remove the key
          * @returns the removed AnimationKey if successful, null otherwise.
          */
-        removeKeyAtIndex(_index: number): AnimationKey;
+        removeKeyAtIndex(_index: number): AnimationKey<T>;
         /**
          * Gets a key from the sequence at the desired index.
          * @param _index the zero-based index at which to get the key
          * @returns the AnimationKey at the index if it exists, null otherwise.
          */
-        getKey(_index: number): AnimationKey;
+        getKey(_index: number): AnimationKey<T>;
         /**
          * Returns this sequence's keys. This is not a copy, but the actual array used internally. Handle with care!
          * Used by Editor.
          */
-        getKeys(): AnimationKey[];
+        getKeys(): AnimationKey<T>[];
         serialize(): Serialization;
         deserialize(_serialization: Serialization): Promise<Serializable>;
-        protected reduceMutator(_mutator: Mutator): void;
         /**
          * Utility function that (re-)generates all functions in the sequence.
          */
-        private regenerateFunctions;
+        protected regenerateFunctions(_keys?: AnimationKey<T>[]): void;
+        protected reduceMutator(_mutator: Mutator): void;
+    }
+    /**
+     * A sequence of {@link AnimationKeyNumber}s sampled from an original sequence. In a sampled sequence, the keys are stored at indices corresponding to discrete frames in accordance with the {@link Animation}'s frames per second.
+     * Keys from the original sequence may be referenced repeated times in a sampled sequence. Sampled sequences allow O(1) access to keys based on the desired frame.
+     * @authors Jonas Plotzky, HFU, 2025
+     */
+    class AnimationSequenceSampled extends AnimationSequence {
+        /** Evaluates the sequence at the given frame and time. */
+        evaluate(_time: number, _frame?: number, _out?: AnimationReturnType): AnimationReturnType;
+        protected regenerateFunctions(_keys?: AnimationKey[]): void;
     }
 }
 declare namespace FudgeCore {
@@ -2871,17 +3085,18 @@ declare namespace FudgeCore {
 declare namespace FudgeCore {
     /**
      * Holds a reference to an {@link Animation} and controls it. Controls quantization and playmode as well as speed.
-     * @authors Lukas Scheuerle, HFU, 2019 | Jirka Dell'Oro-Friedl, HFU, 2021 | Jonas Plotzky, HFU, 2022
+     * @authors Lukas Scheuerle, HFU, 2019 | Jirka Dell'Oro-Friedl, HFU, 2021 | Jonas Plotzky, HFU, 2022-2025
      */
     class ComponentAnimation extends Component {
         #private;
         static readonly iSubclass: number;
-        animation: Animation;
         playmode: ANIMATION_PLAYMODE;
         quantization: ANIMATION_QUANTIZATION;
         scaleWithGameTime: boolean;
         animateInEditor: boolean;
         constructor(_animation?: Animation, _playmode?: ANIMATION_PLAYMODE, _quantization?: ANIMATION_QUANTIZATION);
+        get animation(): Animation;
+        set animation(_animation: Animation);
         set scale(_scale: number);
         get scale(): number;
         /**
@@ -3117,26 +3332,16 @@ declare namespace FudgeCore {
     }
     /**
      * The camera component holds the projection-matrix and other data needed to render a scene from the perspective of the node it is attached to.
-     * @authors Jascha Karagöl, HFU, 2019 | Jirka Dell'Oro-Friedl, HFU, 2019
+     * @authors Jascha Karagöl, HFU, 2019 | Jirka Dell'Oro-Friedl, HFU, 2019 | Jonas Plotzky, HFU, 2025
      */
     class ComponentCamera extends Component {
         #private;
         static readonly iSubclass: number;
         mtxPivot: Matrix4x4;
+        readonly mtxWorld: Matrix4x4;
         clrBackground: Color;
-        private projection;
-        private fieldOfView;
-        private aspectRatio;
-        private direction;
-        private near;
-        private far;
-        private backgroundEnabled;
         /**
-         * Returns the cameras worldtransformation matrix i.e. the transformation relative to the root of the graph
-         */
-        get mtxWorld(): Matrix4x4;
-        /**
-         * Returns the multiplication of the worldtransformation of the camera container, the pivot of this camera and the inversion of the projection matrix
+         * Returns {@link mtxProjection} * {@link mtxCameraInverse}
          * yielding the worldspace to viewspace matrix
          */
         get mtxWorldToView(): Matrix4x4;
@@ -3145,39 +3350,70 @@ declare namespace FudgeCore {
          */
         get mtxCameraInverse(): Matrix4x4;
         /**
-         * Returns the projectionmatrix of this camera
+         * Returns the projectionmatrix of this camera.
          */
         get mtxProjection(): Matrix4x4;
         /**
-         * Resets this cameras {@link mtxWorldToView} and {@link mtxCameraInverse} matrices
+         * Returns true if the background of the camera should be rendered, false if not.
          */
-        resetWorldToView(): void;
+        get backgroundEnabled(): boolean;
         /**
-         * Returns the cameras {@link PROJECTION} mode
+         * Returns the cameras {@link PROJECTION} mode.
+         */
+        get projection(): PROJECTION;
+        /**
+         * Returns the cameras aspect ratio.
+         */
+        get aspectRatio(): number;
+        /**
+         * Returns the cameras field of view in degrees.
+         */
+        get fieldOfView(): number;
+        /**
+         * Returns the cameras direction i.e. the plane on which the fieldOfView-Angle is given.
+         */
+        get direction(): FIELD_OF_VIEW;
+        /**
+         * Returns the cameras near value i.e. the minimum distance to render objects at.
+         */
+        get near(): number;
+        /**
+         * Returns the cameras far value i.e. the maximum distance to render objects at.
+         */
+        get far(): number;
+        /**
+         * Returns the cameras {@link PROJECTION} mode.
+         * @deprecated Use {@link projection} instead.
          */
         getProjection(): PROJECTION;
         /**
-         * Returns true if the background of the camera should be rendered, false if not
+         * Returns true if the background of the camera should be rendered, false if not.
+         * @deprecated Use {@link backgroundEnabled} instead.
          */
         getBackgroundEnabled(): boolean;
         /**
-         * Returns the cameras aspect ratio
+         * Returns the cameras aspect ratio.
+         * @deprecated Use {@link aspectRatio} instead.
          */
         getAspect(): number;
         /**
-         * Returns the cameras field of view in degrees
+         * Returns the cameras field of view in degrees.
+         * @deprecated Use {@link fieldOfView} instead.
          */
         getFieldOfView(): number;
         /**
-         * Returns the cameras direction i.e. the plane on which the fieldOfView-Angle is given
+         * Returns the cameras direction i.e. the plane on which the fieldOfView-Angle is given.
+         * @deprecated Use {@link direction} instead.
          */
         getDirection(): FIELD_OF_VIEW;
         /**
-         * Returns the cameras near value i.e. the minimum distance to render objects at
+         * Returns the cameras near value i.e. the minimum distance to render objects at.
+         * @deprecated Use {@link near} instead.
          */
         getNear(): number;
         /**
-         * Returns the cameras far value i.e. the maximum distance to render objects at
+         * Returns the cameras far value i.e. the maximum distance to render objects at.
+         * @deprecated Use {@link far} instead.
          */
         getFar(): number;
         /**
@@ -3196,17 +3432,20 @@ declare namespace FudgeCore {
          */
         projectOrthographic(_left?: number, _right?: number, _bottom?: number, _top?: number): void;
         /**
-         * Return the calculated dimension of a projection surface in the hypothetical distance of 1 to the camera
+         * Returns a (recycled) rectangle of the calculated dimension of a projection surface in the hypothetical distance of 1 to the camera.
+         * @param _out Optional rectangle to store the result in.
          */
-        getProjectionRectangle(): Rectangle;
+        getProjectionRectangle(_out?: Rectangle): Rectangle;
         /**
-         * Transforms the given point from world space to clip space
+         * Transforms the given point from world space to clip space.
+         * @param _out Optional vector to store the result in.
          */
-        pointWorldToClip(_pointInWorldSpace: Vector3): Vector3;
+        pointWorldToClip(_pointInWorldSpace: Vector3, _out?: Vector3): Vector3;
         /**
-         * Transforms the given point from clip space to world space
+         * Transforms the given point from clip space to world space.
+         * @param _out Optional vector to store the result in.
          */
-        pointClipToWorld(_pointInClipSpace: Vector3): Vector3;
+        pointClipToWorld(_pointInClipSpace: Vector3, _out?: Vector3): Vector3;
         /**
          * Returns a scaling factor that, given a position in world space,
          * scales an object at that position so that one unit equals one (logical) pixel on the screen
@@ -3216,7 +3455,6 @@ declare namespace FudgeCore {
         getWorldToPixelScale(_posWorld: Vector3): number;
         serialize(): Serialization;
         deserialize(_serialization: Serialization): Promise<Serializable>;
-        getMutatorAttributeTypes(_mutator: Mutator): MutatorAttributeTypes;
         mutate(_mutator: Mutator, _selection?: string[], _dispatchMutate?: boolean): Promise<void>;
         drawGizmos(): void;
         drawGizmosSelected(): void;
@@ -3267,71 +3505,6 @@ declare namespace FudgeCore {
     }
 }
 declare namespace FudgeCore {
-    type TypeOfLight = new () => Light;
-    /**
-     * Baseclass for different kinds of lights.
-     * @authors Jirka Dell'Oro-Friedl, HFU, 2019
-     */
-    abstract class Light extends Mutable implements Serializable {
-        color: Color;
-        intensity: number;
-        constructor(_color?: Color, _intensity?: number);
-        /**
-         * Returns the {@link TypeOfLight} of this light.
-         */
-        getType(): TypeOfLight;
-        serialize(): Serialization;
-        deserialize(_serialization: Serialization): Promise<Serializable>;
-        protected reduceMutator(): void;
-    }
-    /**
-     * Ambient light, coming from all directions, illuminating everything with its color independent of position and orientation (like a foggy day or in the shades)
-     * Attached to a node by {@link ComponentLight}, the pivot matrix is ignored.
-     * ```text
-     * ~ ~ ~
-     *  ~ ~ ~
-     * ```
-     */
-    class LightAmbient extends Light {
-    }
-    /**
-     * Directional light, illuminating everything from a specified direction with its color (like standing in bright sunlight)
-     * Attached to a node by {@link ComponentLight}, the pivot matrix specifies the direction of the light only.
-     * ```text
-     * --->
-     * --->
-     * --->
-     * ```
-     */
-    class LightDirectional extends Light {
-    }
-    /**
-     * Omnidirectional light emitting from its position, illuminating objects depending on their position and distance with its color (like a colored light bulb)
-     * Attached to a node by {@link ComponentLight}, the pivot matrix specifies the position of the light, it's shape and rotation.
-     * So with uneven scaling, other shapes than a perfect sphere, such as an oval or a disc, are possible, which creates a visible effect of the rotation too.
-     * The intensity of the light drops linearly from 1 in the center to 0 at the perimeter of the shape.
-     * ```text
-     *         .\|/.
-     *        -- o --
-     *         ´/|\`
-     * ```
-     */
-    class LightPoint extends Light {
-    }
-    /**
-     * Spot light emitting within a specified angle from its position, illuminating objects depending on their position and distance with its color
-     * Attached to a node by {@link ComponentLight}, the pivot matrix specifies the position of the light, the direction and the size and angles of the cone.
-     * The intensity of the light drops linearly from 1 in the center to 0 at the outer limits of the cone.
-     * ```text
-     *          o
-     *         /|\
-     *        / | \
-     * ```
-     */
-    class LightSpot extends Light {
-    }
-}
-declare namespace FudgeCore {
     /**
      * Defines identifiers for the various types of light this component can provide.
      */
@@ -3348,18 +3521,13 @@ declare namespace FudgeCore {
       */
     class ComponentLight extends Component {
         static readonly iSubclass: number;
+        lightType: LIGHT_TYPE;
         mtxPivot: Matrix4x4;
-        light: Light;
-        constructor(_light?: Light);
-        /**
-         * Set the type of {@link Light} used by this component.
-         */
-        setType<T extends Light>(_class: new () => T): void;
+        color: Color;
+        intensity: number;
+        constructor(_lightType?: LIGHT_TYPE, _color?: Color, _intensity?: number);
         serialize(): Serialization;
         deserialize(_serialization: Serialization): Promise<Serializable>;
-        getMutator(): Mutator;
-        getMutatorAttributeTypes(_mutator: Mutator): MutatorAttributeTypes;
-        mutate(_mutator: Mutator, _selection?: string[], _dispatchMutate?: boolean): Promise<void>;
         drawGizmos(): void;
         drawGizmosSelected(): void;
     }
@@ -3388,16 +3556,30 @@ declare namespace FudgeCore {
      * @authors Jirka Dell'Oro-Friedl, HFU, 2019
      */
     class ComponentMesh extends Component {
+        #private;
         static readonly iSubclass: number;
-        mtxPivot: Matrix4x4;
         readonly mtxWorld: Matrix4x4;
         mesh: Mesh;
         skeleton: ComponentSkeleton;
         constructor(_mesh?: Mesh, _skeleton?: ComponentSkeleton);
+        get mtxPivot(): Matrix4x4;
+        set mtxPivot(_mtx: Matrix4x4);
         get radius(): number;
         serialize(): Serialization;
         deserialize(_serialization: Serialization): Promise<Serializable>;
         drawGizmosSelected(): void;
+    }
+}
+declare namespace FudgeCore {
+    /**
+     * Attached to a {@link Node} with an attached {@link ComponentCamera} this causes all nodes in {@link selection} to be drawn with a 1px outline.
+     * @authors Jonas Plotzky, HFU, 2025
+     */
+    class ComponentOutline extends Component {
+        color: Color;
+        colorOccluded: Color;
+        selection: Iterable<Node>;
+        constructor(_selection?: Node[], _color?: Color, _colorOccluded?: Color);
     }
 }
 declare namespace FudgeCore {
@@ -3530,6 +3712,7 @@ declare namespace FudgeCore {
         transform(_mtxTransform: Matrix4x4, _base?: BASE, _node?: Node): void;
         serialize(): Serialization;
         deserialize(_serialization: Serialization): Promise<Serializable>;
+        mutate(_mutator: Mutator, _selection?: string[], _dispatchMutate?: boolean): void;
         protected reduceMutator(_mutator: Mutator): void;
     }
 }
@@ -4121,6 +4304,14 @@ declare namespace FudgeCore {
      * The method useRenderData will be injected by {@link RenderInjector} at runtime, extending the functionality of this class to deal with the renderer.
      */
     class Coat extends Mutable implements Serializable {
+        /**
+         * Clipping threshold for alpha values, every pixel with alpha < alphaClip will be discarded.
+         */
+        alphaClip: number;
+        /** Called by the render system during {@link Render.prepare}. Override this to provide the render system with additional render data. */
+        updateRenderData(): void;
+        /** Called by the render system during {@link Render.draw}. Override this to provide the render system with additional render data. */
+        useRenderData(): void;
         serialize(): Serialization;
         deserialize(_serialization: Serialization): Promise<Serializable>;
         protected reduceMutator(_mutator: Mutator): void;
@@ -4219,104 +4410,186 @@ declare namespace FudgeCore {
      * Defines a color as values in the range of 0 to 1 for the four channels red, green, blue and alpha (for opacity)
      */
     class Color extends Mutable implements Serializable, Recycable {
-        private static crc2;
+        #private;
+        static crc2: CanvasRenderingContext2D;
         r: number;
         g: number;
         b: number;
         a: number;
         constructor(_r?: number, _g?: number, _b?: number, _a?: number);
         /**
-         * Returns a {@link Uint8ClampedArray} with the 8-bit color channels in the order RGBA.
+         * Converts the given HSL values to RGB and returns the result in the given object.
+         * @param _hue Hue as an angle in degrees in range [0, 360].
+         * @param _saturation Saturation in range [0, 1]
+         * @param _lightness Lightness in range [0, 1]
+         * @param _out Optional color to store the result in.
+         * @returns The RGB values in range [0, 1].
+         * @source https://www.w3.org/TR/css-color-4/#hsl-to-rgb
          */
-        static getBytesFromCSS(_keyword: string): Uint8ClampedArray;
+        static hsl2rgb<T extends {
+            r: number;
+            g: number;
+            b: number;
+        } = {
+            r: number;
+            g: number;
+            b: number;
+        }>(_hue: number, _saturation: number, _lightness: number, _out: T): T;
+        /**
+         * @param _red Red value  [0, 1]
+         * @param _green Green component [0, 1]
+         * @param _blue Blue component [0, 1]
+         * @param _out Optional color to store the result in.
+         * @returns The HSL values. Hue as an angle in degrees in range [0, 360]. Saturation and lightness in range [0, 1].
+         * @source https://www.w3.org/TR/css-color-4/#rgb-to-hsl
+         */
+        static rgb2hsl<T extends {
+            h: number;
+            s: number;
+            l: number;
+        } = {
+            h: number;
+            s: number;
+            l: number;
+        }>(_red: number, _green: number, _blue: number, _out: T): T;
         /**
          * Returns a new {@link Color} object created from the given css color keyword.
          * Passing an _alpha value will override the alpha value specified in the keyword.
+         * Supported color formats are:
+         * - named colors (e.g. "red", "blue", "green")
+         * - hex colors (e.g. "#f00" "#ff0000", "#ff0000ff")
+         * - srgb colors (e.g. "rgb(255 0 0 / 1)", "rgb(255, 0, 0)", "rgba(0, 0, 255, 1))
+         * - hsl colors (e.g. "hsl(90deg 100% 50% / 1)", "hsl(90, 100%, 50%)", hsla(90, 100%, 50%, 1))
+         *
+         * **Note:** If possibile try to avoid invoking this method frequently, as it might cause major garbage collection depending on the keyword and browser.
+         * @param _out Optional color to store the result in.
          */
-        static CSS(_keyword: string, _alpha?: number): Color;
+        static CSS(_keyword: string, _alpha?: number, _out?: Color): Color;
         /**
-         * Computes and retruns the product of two colors.
+         * Computes and returns the sum of two colors.
+         * @param _out Optional color to store the result in.
          */
-        static PRODUCT(_clrA: Color, _clrB: Color): Color;
+        static SUM(_clrA: Color, _clrB: Color, _out?: Color): Color;
         /**
-         * Computes and retruns the product of a color with a scalar value.
+         * Computes and returns the sum of two colors.
+         * @param _out Optional color to store the result in.
          */
-        static PRODUCT(_color: Color, _scalar: number): Color;
+        static DIFFERENCE(_clrA: Color, _clrB: Color, _out?: Color): Color;
+        /**
+         * Computes and returns the product of two colors.
+         * @param _out Optional color to store the result in.
+         */
+        static PRODUCT(_clrA: Color, _clrB: Color, _out?: Color): Color;
+        /**
+         * Returns a new color representing the given color scaled by the given scaling factor.
+         * @param _out Optional color to store the result in.
+         */
+        static SCALE(_vector: Color, _scaling: number, _out?: Color): Color;
         /**
          * Creates and returns a clone of this color.
          */
         get clone(): Color;
         /**
          * Copies the color channels of the given color into this color and returns it.
+         * @returns A reference to this color.
          */
         copy(_color: Color): Color;
+        /**
+         * Sets the color channels of this color.
+         * @returns A reference to this color.
+         */
+        set(_r: number, _g: number, _b: number, _a: number): Color;
         recycle(): void;
         /**
+         * Returns true if this vector is equal to the given vector within the given tolerance.
+         */
+        equals(_compare: Color, _tolerance?: number): boolean;
+        /**
          * Sets this color from the given css color keyword. Optinally sets the alpha value to the given value.
+         * @returns A reference to this color.
          */
         setCSS(_keyword: string, _alpha?: number): Color;
         /**
-         * Sets this color from the given 8-bit values for the color channels.
-         */
-        setBytes(_r: number, _g: number, _b: number, _a: number): Color;
-        /**
-         * Sets this color from the given {@link Uint8ClampedArray}.
-         */
-        setBytes(_rgba: Uint8ClampedArray): Color;
-        /**
          * Sets the color channels of this color and clamps them between 0 and 1.
+         * @returns A reference to this color.
          */
         setClamped(_r: number, _g: number, _b: number, _a: number): Color;
         /**
-         * Sets this color from the given {@link Float32Array} while clamping the values between 0 and 1.
+         * Sets this color from the given hsl values.
          */
-        setClamped(_rgba: Float32Array): Color;
+        setHSL(_hue: number, _saturation: number, _lightness: number, _alpha?: number): Color;
         /**
-         * Sets the color channels of this color.
+         * Sets this color from the given 8-bit values for the color channels.
+         * @returns A reference to this color.
          */
-        set(_r: number, _g: number, _b: number, _a: number): Color;
+        setBytes(_r: number, _g: number, _b: number, _a: number): Color;
+        /**
+         * Sets this color from the given hex string color.
+         * @returns A reference to this color.
+         */
+        setHex(_hex: string): Color;
         /**
          * Returns an array of the color channels of this color.
          */
         get(): Float32Array;
         /**
-         * Returns a {@link Uint8ClampedArray} of the color channels of this color.
-         */
-        getBytes(): Uint8ClampedArray;
-        /**
          * Returns the css color keyword representing this color.
+         * @deprecated Use {@link toCSS} instead.
          */
         getCSS(): string;
         /**
          * Returns the hex string representation of this color.
+         * @deprecated Use {@link toHex} instead.
          */
         getHex(): string;
-        /**
-         * Sets this color from the given hex string color.
-         */
-        setHex(_hex: string): Color;
         /**
          * Adds the given color to this.
          */
         add(_color: Color): Color;
         /**
+         * Adds the given color to this.
+         */
+        subtract(_color: Color): Color;
+        /**
          * Multiplies this with the given color.
          */
         multiply(_color: Color): Color;
         /**
-         * Multiplies this with the given scalar.
+         * Scales this color by the given factor.
          */
-        multiply(_scalar: number): Color;
+        scale(_scaling: number): Color;
         /**
-         * Returns true if the channels of this and the given color are to be considered identical within the given tolerance
+         * Calls a defined callback function on each channel of the color, and returns a new color that contains the results. Similar to {@link Array.map}.
+         * @param _out Optional color to store the result in.
          */
-        equals(_compare: Color, _tolerance?: number): boolean;
+        map(_function: (_value: number, _index: number, _channel: "r" | "g" | "b" | "a", _color: Color) => number, _out?: Color): Color;
+        /**
+         * Calls a defined callback function on each channel of the color and assigns the result to the channel. Similar to {@link Color.map} but mutates this color instead of creating a new one.
+         * @returns A reference to this color.
+         */
+        apply(_function: (_value: number, _index: number, _channel: "r" | "g" | "b" | "a", _color: Color) => number): Color;
+        /**
+         * Copies the channels of this color into the given array starting at the given offset.
+         * @returns A reference to the given array.
+         */
+        toArray<T extends {
+            [n: number]: number;
+        }>(_out: T, _offset?: number): T;
         /**
          * Returns a formatted string representation of this color
          */
         toString(): string;
+        /**
+         * Returns the hex string representation of this color. // TODO: maybe this should return a number instead of a string?
+         */
+        toHex(): string;
+        /**
+         * Returns the css color keyword representing this color.
+         */
+        toCSS(): string;
         serialize(): Serialization;
         deserialize(_serialization: Serialization): Promise<Serializable>;
+        mutate(_mutator: Mutator): void;
         protected reduceMutator(_mutator: Mutator): void;
     }
 }
@@ -4341,18 +4614,19 @@ declare namespace FudgeCore {
         /** factor multiplied with angle in radian yields the angle in degrees */
         static readonly rad2deg: number;
         /**
-         * Returns one of the values passed in, either _value if within _min and _max or the boundary being exceeded by _value
+         * Returns one of the values passed in, either _value if within _min and _max or the boundary being exceeded by _value.
          */
         static clamp<T>(_value: T, _min: T, _max: T, _isSmaller?: (_value1: T, _value2: T) => boolean): T;
         /**
-         * Returns the linear interpolation between two values (_a, _b) for the given interpolation factor (_f). f is clamped between 0 and 1.
+         * Returns the linear interpolation between two values. When t is 0 the result is a, when t is 1 the result is b. Clamps t between 0 and 1.
          */
-        static lerp(_a: number, _b: number, _f: number): number;
+        static lerp(_a: number, _b: number, _t: number): number;
         /**
          * Rounds the given value to the nearest multiple of the given increment using the given rounding function.
          * Default rounding function is {@link Math.round}, use {@link Math.floor} or {@link Math.ceil} to round down or up.
          */
         static snap(_value: number, _increment: number, _round?: (_value: number) => number): number;
+        private static isSmaller;
     }
 }
 declare namespace FudgeCore {
@@ -4385,8 +4659,9 @@ declare namespace FudgeCore {
         /**
          * Takes a rectangle as the frame and creates a new rectangle according to the framing
          * @param _rectFrame
+         * @param _rectOut Optional rectangle to store the result in.
          */
-        abstract getRect(_rectFrame: Rectangle): Rectangle;
+        abstract getRect(_rectFrame: Rectangle, _rectOut?: Rectangle): Rectangle;
     }
     /**
      * The resulting rectangle has a fixed width and height and display should scale to fit the frame
@@ -4402,7 +4677,7 @@ declare namespace FudgeCore {
         setSize(_width: number, _height: number): void;
         getPoint(_pointInFrame: Vector2, _rectFrame: Rectangle): Vector2;
         getPointInverse(_point: Vector2, _rect: Rectangle): Vector2;
-        getRect(_rectFrame: Rectangle): Rectangle;
+        getRect(_rectFrame: Rectangle, _rectOut?: Rectangle): Rectangle;
     }
     /**
      * Width and height of the resulting rectangle are fractions of those of the frame, scaled by normed values normWidth and normHeight.
@@ -4417,7 +4692,7 @@ declare namespace FudgeCore {
         setScale(_normWidth: number, _normHeight: number): void;
         getPoint(_pointInFrame: Vector2, _rectFrame: Rectangle): Vector2;
         getPointInverse(_point: Vector2, _rect: Rectangle): Vector2;
-        getRect(_rectFrame: Rectangle): Rectangle;
+        getRect(_rectFrame: Rectangle, _rectOut?: Rectangle): Rectangle;
     }
     /**
      * The resulting rectangle fits into a margin given as fractions of the size of the frame given by normAnchor
@@ -4428,7 +4703,7 @@ declare namespace FudgeCore {
         padding: Border;
         getPoint(_pointInFrame: Vector2, _rectFrame: Rectangle): Vector2;
         getPointInverse(_point: Vector2, _rect: Rectangle): Vector2;
-        getRect(_rectFrame: Rectangle): Rectangle;
+        getRect(_rectFrame: Rectangle, _rectOut?: Rectangle): Rectangle;
         getMutator(): Mutator;
     }
 }
@@ -4447,7 +4722,7 @@ declare namespace FudgeCore {
         /**
          * Set the properties of this instance at once
          */
-        set(_angle?: number, _magnitude?: number): void;
+        set(_angle?: number, _magnitude?: number): Geo2;
         recycle(): void;
         /**
          * Returns a pretty string representation
@@ -4472,7 +4747,7 @@ declare namespace FudgeCore {
         /**
          * Set the properties of this instance at once
          */
-        set(_longitude?: number, _latitude?: number, _magnitude?: number): void;
+        set(_longitude?: number, _latitude?: number, _magnitude?: number): Geo3;
         recycle(): void;
         /**
          * Returns a pretty string representation
@@ -4487,44 +4762,54 @@ declare namespace FudgeCore {
 declare namespace FudgeCore {
     /**
      * Simple class for 3x3 matrix operations
-     * @authors Jascha Karagöl, HFU, 2019 | Jirka Dell'Oro-Friedl, HFU, 2020
+     * @authors Jascha Karagöl, HFU, 2019 | Jirka Dell'Oro-Friedl, HFU, 2020 | Jonas Plotzky, HFU, 2025
      */
     class Matrix3x3 extends Mutable implements Serializable, Recycable {
+        #private;
         private data;
         private mutator;
-        private vectors;
         constructor();
         /** TODO: describe! */
-        static PROJECTION(_width: number, _height: number): Matrix3x3;
+        static PROJECTION(_width: number, _height: number, _mtxOut?: Matrix3x3): Matrix3x3;
         /**
          * Retrieve a new identity matrix.
          */
         static IDENTITY(): Matrix3x3;
         /**
-         * Returns a matrix that translates coordinates along the x- and y-axis according to the given {@link Vector2}.
+         * Composes a new matrix according to the given translation, rotation and scaling.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static TRANSLATION(_translate: Vector2): Matrix3x3;
+        static COMPOSITION(_translation?: Vector2, _rotation?: number, _scaling?: Vector2, _mtxOut?: Matrix3x3): Matrix3x3;
+        /**
+         * Returns a matrix that translates coordinates along the x- and y-axis according to the given {@link Vector2}.
+         * @param _mtxOut Optional matrix to store the result in.
+         */
+        static TRANSLATION(_translate: Vector2, _mtxOut?: Matrix3x3): Matrix3x3;
         /**
          * Returns a matrix that rotates coordinates on the z-axis when multiplied by.
          * @param _angleInDegrees The value of the rotation.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static ROTATION(_angleInDegrees: number): Matrix3x3;
+        static ROTATION(_angleInDegrees: number, _mtxOut?: Matrix3x3): Matrix3x3;
         /**
-         * Returns a matrix that scales coordinates along the x- and y-axis according to the given {@link Vector2}
+         * Returns a matrix that scales coordinates along the x- and y-axis according to the given {@link Vector2}.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static SCALING(_scalar: Vector2): Matrix3x3;
+        static SCALING(_scalar: Vector2, _mtxOut?: Matrix3x3): Matrix3x3;
         /**
          * Computes and returns the product of two passed matrices.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static PRODUCT(_mtxLeft: Matrix3x3, _mtxRight: Matrix3x3): Matrix3x3;
+        static PRODUCT(_mtxLeft: Matrix3x3, _mtxRight: Matrix3x3, _mtxOut?: Matrix3x3): Matrix3x3;
         /**
          * Computes and returns the inverse of a passed matrix.
          * @param _mtx The matrix to compute the inverse of.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static INVERSE(_mtx: Matrix3x3): Matrix3x3;
+        static INVERSE(_mtx: Matrix3x3, _mtxOut?: Matrix3x3): Matrix3x3;
         /**
          * - get: return a vector representation of the translation {@link Vector2}.
-         * **Caution!** Use immediately, since the vector is going to be reused by Recycler. Create a clone to keep longer and manipulate.
+         * **Caution!** Use immediately and readonly, since the vector is going to be reused internally. Create a clone to keep longer and manipulate.
          * - set: effect the matrix ignoring its rotation and scaling
          */
         get translation(): Vector2;
@@ -4556,46 +4841,68 @@ declare namespace FudgeCore {
         reset(): void;
         /**
          * Adds a translation by the given {@link Vector2} to this matrix.
+         * @returns A reference to this matrix.
          */
         translate(_by: Vector2): Matrix3x3;
         /**
          * Adds a translation along the x-axis to this matrix.
+         * @returns A reference to this matrix.
          */
-        translateX(_x: number): Matrix3x3;
+        translateX(_by: number): Matrix3x3;
         /**
          * Adds a translation along the y-axis to this matrix.
+         * @returns A reference to this matrix.
          */
-        translateY(_y: number): Matrix3x3;
+        translateY(_by: number): Matrix3x3;
         /**
          * Adds a rotation around the z-Axis to this matrix
+         * @returns A reference to this matrix.
          */
         rotate(_angleInDegrees: number): Matrix3x3;
         /**
          * Adds a scaling by the given {@link Vector2} to this matrix.
+         * @returns A reference to this matrix.
          */
         scale(_by: Vector2): Matrix3x3;
         /**
          * Adds a scaling along the x-Axis to this matrix.
+         * @returns A reference to this matrix.
          */
         scaleX(_by: number): Matrix3x3;
         /**
          * Adds a scaling along the y-Axis to this matrix.
+         * @returns A reference to this matrix.
          */
         scaleY(_by: number): Matrix3x3;
         /**
-         * Multiply this matrix with the given matrix
+         * Multiply this matrix with the given matrix.
+         * @returns A reference to this matrix.
          */
         multiply(_mtxRight: Matrix3x3): Matrix3x3;
         /**
-         * Calculates and returns the euler-angles representing the current rotation of this matrix
+         * Premultiply this matrix with the given matrix.
+         * @returns A reference to this matrix.
          */
-        getEulerAngle(): number;
+        premultiply(_mtxLeft: Matrix3x3): Matrix3x3;
         /**
-         * Sets the elements of this matrix to the given array.
+         * (Re-)Compose this matrix from the given translation, rotation and scaling.
+         * Missing values will be decompsed from the current matrix state if necessary.
+         * @returns A reference to this matrix.
          */
-        set(_array: ArrayLike<number>): Matrix3x3;
+        compose(_translation?: Partial<Vector2>, _rotation?: number, _scaling?: Partial<Vector2>): Matrix3x3;
+        /**
+         * Sets the elements of this matrix to the given array starting at the given offset.
+         * @returns A reference to this matrix.
+         */
+        setArray(_array: ArrayLike<number>, _offset?: number): Matrix3x3;
+        /**
+         * Sets the elements of this matrix to the given values.
+         * @returns A reference to this matrix.
+         */
+        set(_m00: number, _m01: number, _m02: number, _m10: number, _m11: number, _m12: number, _m20: number, _m21: number, _m22: number): Matrix3x3;
         /**
          * Copies the elements of the given matrix into this matrix.
+         * @returns A reference to this matrix.
          */
         copy(_original: Matrix3x3): Matrix3x3;
         /**
@@ -4603,13 +4910,21 @@ declare namespace FudgeCore {
          */
         toString(): string;
         /**
-         * Returns an array of the elements of this matrix.
+         * Copys the elements of this matrix into the given array starting at the given offset.
+         * @returns A reference to the given array.
          */
-        get(): Float32Array;
+        toArray<T extends {
+            [n: number]: number;
+        }>(_out: T, _offset?: number): T;
+        /**
+         * Returns the array of the elements of this matrix.
+         * @returns A readonly view of the internal array.
+         */
+        getArray(): ArrayLike<number> & Iterable<number> & ArrayBufferView;
         serialize(): Serialization;
         deserialize(_serialization: Serialization): Promise<Serializable>;
         getMutator(): Mutator;
-        mutate(_mutator: Mutator): Promise<void>;
+        mutate(_mutator: Mutator): void;
         getMutatorAttributeTypes(_mutator: Mutator): MutatorAttributeTypes;
         protected reduceMutator(_mutator: Mutator): void;
         private resetCache;
@@ -4625,79 +4940,98 @@ declare namespace FudgeCore {
      * [12,13,14,15 ] ← translation
      *            ↑  homogeneous column
      * ```
-     * @authors Jascha Karagöl, HFU, 2019 | Jirka Dell'Oro-Friedl, HFU, 2019 | Jonas Plotzky, HFU, 2023
+     * @authors Jascha Karagöl, HFU, 2019 | Jirka Dell'Oro-Friedl, HFU, 2019 | Jonas Plotzky, HFU, 2023-2025
      */
     class Matrix4x4 extends Mutable implements Serializable, Recycable {
         #private;
         private data;
         private mutator;
-        constructor();
+        constructor(_data?: Float32Array);
         /**
          * Retrieve a new identity matrix
          */
         static IDENTITY(): Matrix4x4;
         /**
          * Composes a new matrix according to the given translation, rotation and scaling.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static COMPOSITION(_translation?: Vector3, _rotation?: Vector3 | Quaternion, _scaling?: Vector3): Matrix4x4;
+        static COMPOSITION(_translation?: Vector3, _rotation?: Vector3 | Quaternion, _scaling?: Vector3, _mtxOut?: Matrix4x4): Matrix4x4;
         /**
          * Computes and returns the product of two passed matrices.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static PRODUCT(_mtxLeft: Matrix4x4, _mtxRight: Matrix4x4): Matrix4x4;
+        static PRODUCT(_mtxLeft: Matrix4x4, _mtxRight: Matrix4x4, _mtxOut?: Matrix4x4): Matrix4x4;
         /**
          * Computes and returns the transpose of a passed matrix.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static TRANSPOSE(_mtx: Matrix4x4): Matrix4x4;
+        static TRANSPOSE(_mtx: Matrix4x4, _mtxOut?: Matrix4x4): Matrix4x4;
         /**
          * Computes and returns the inverse of a passed matrix.
-         * @param _mtx The matrix to compute the inverse of.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static INVERSE(_mtx: Matrix4x4): Matrix4x4;
+        static INVERSE(_mtx: Matrix4x4, _mtxOut?: Matrix4x4): Matrix4x4;
         /**
          * Computes and returns a matrix with the given translation, its z-axis pointing directly at the given target,
          * and a minimal angle between its y-axis and the given up-{@link Vector3}, respetively calculating yaw and pitch.
-         * The pitch may be restricted to the up-vector to only calculate yaw.
+         * The pitch may be restricted to the up-vector to only calculate yaw. Optionally pass a desired scaling.
+         * @param _up A unit vector indicating the up-direction.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static LOOK_AT(_translation: Vector3, _target: Vector3, _up?: Vector3, _restrict?: boolean): Matrix4x4;
+        static LOOK_AT(_translation: Vector3, _target: Vector3, _up?: Vector3, _restrict?: boolean, _scaling?: Vector3, _mtxOut?: Matrix4x4): Matrix4x4;
         /**
-         * Computes and returns a matrix with the given translation, its z-axis pointing directly in the given direction,
-         * and a minimal angle between its y-axis and the given up-{@link Vector3}. Ideally up should be perpendicular to the given direction.
+         * Computes and returns a matrix with its z-axis pointing directly in the given forward direction,
+         * and a minimal angle between its y-axis and the given up direction. The pitch may be restricted to the up-vector to only calculate yaw.
+         * Optionally pass a desired translation and/or scaling.
+         * @param _forward A unit vector indicating the desired forward-direction.
+         * @param _up A unit vector indicating the up-direction.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static LOOK_IN(_translation: Vector3, _direction: Vector3, _up?: Vector3): Matrix4x4;
-        /**
-         * Computes and returns a matrix with the given translation, its y-axis matching the given up-{@link Vector3}
-         * and its z-axis facing towards the given target at a minimal angle, respetively calculating yaw only.
-         */
+        static LOOK_IN(_forward: Vector3, _up?: Vector3, _restrict?: boolean, _translation?: Vector3, _scaling?: Vector3, _mtxOut?: Matrix4x4): Matrix4x4;
         /**
          * Returns a matrix that translates coordinates along the x-, y- and z-axis according to the given {@link Vector3}.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static TRANSLATION(_translate: Vector3): Matrix4x4;
+        static TRANSLATION(_translate: Vector3, _mtxOut?: Matrix4x4): Matrix4x4;
         /**
          * Returns a matrix that rotates coordinates on the x-axis when multiplied by.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static ROTATION_X(_angleInDegrees: number): Matrix4x4;
+        static ROTATION_X(_angleInDegrees: number, _mtxOut?: Matrix4x4): Matrix4x4;
         /**
          * Returns a matrix that rotates coordinates on the y-axis when multiplied by.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static ROTATION_Y(_angleInDegrees: number): Matrix4x4;
+        static ROTATION_Y(_angleInDegrees: number, _mtxOut?: Matrix4x4): Matrix4x4;
         /**
          * Returns a matrix that rotates coordinates on the z-axis when multiplied by.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static ROTATION_Z(_angleInDegrees: number): Matrix4x4;
+        static ROTATION_Z(_angleInDegrees: number, _mtxOut?: Matrix4x4): Matrix4x4;
         /**
          * Returns a matrix that rotates coordinates when multiplied by, using the rotation euler angles or unit quaternion given.
          * Rotation occurs around the axis in the order Z-Y-X.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static ROTATION(_rotation: Vector3 | Quaternion): Matrix4x4;
+        static ROTATION(_rotation: Vector3 | Quaternion, _mtxOut?: Matrix4x4): Matrix4x4;
         /**
-         * Returns a matrix that scales coordinates along the x-, y- and z-axis according to the given {@link Vector3}
+         * Returns a matrix that rotates coordinates around an arbitrary axis when multiplied by.
+         * @param _axis The axis to rotate around as a unit vector.
+         * @param _angle The angle in degrees.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static SCALING(_scalar: Vector3): Matrix4x4;
+        static ROTATION_AXIS_ANGLE(_axis: Vector3, _angle: number, _mtxOut?: Matrix4x4): Matrix4x4;
+        /**
+         * Returns a matrix that scales coordinates along the x-, y- and z-axis according to the given {@link Vector3}.
+         * @param _mtxOut Optional matrix to store the result in.
+         */
+        static SCALING(_scalar: Vector3, _mtxOut?: Matrix4x4): Matrix4x4;
         /**
          * Returns a representation of the given matrix relative to the given base.
-         * If known, pass the inverse of the base to avoid unneccesary calculation
+         * If known, pass the inverse of the base to avoid unneccesary calculation.
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static RELATIVE(_mtx: Matrix4x4, _mtxBase: Matrix4x4, _mtxInverse?: Matrix4x4): Matrix4x4;
+        static RELATIVE(_mtx: Matrix4x4, _mtxBase: Matrix4x4, _mtxInverse?: Matrix4x4, _mtxOut?: Matrix4x4): Matrix4x4;
         /**
          * Computes and returns a matrix that applies perspective to an object, if its transform is multiplied by it.
          * @param _aspect The aspect ratio between width and height of projectionspace.(Default = canvas.clientWidth / canvas.ClientHeight)
@@ -4705,8 +5039,9 @@ declare namespace FudgeCore {
          * @param _near The near clipspace border on the z-axis.
          * @param _far The far clipspace border on the z-axis.
          * @param _direction The plane on which the fieldOfView-Angle is given
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static PROJECTION_CENTRAL(_aspect: number, _fieldOfViewInDegrees: number, _near: number, _far: number, _direction: FIELD_OF_VIEW): Matrix4x4;
+        static PROJECTION_CENTRAL(_aspect: number, _fieldOfViewInDegrees: number, _near: number, _far: number, _direction: FIELD_OF_VIEW, _mtxOut?: Matrix4x4): Matrix4x4;
         /**
          * Computes and returns a matrix that applies orthographic projection to an object, if its transform is multiplied by it.
          * @param _left The positionvalue of the projectionspace's left border.
@@ -4715,12 +5050,9 @@ declare namespace FudgeCore {
          * @param _top The positionvalue of the projectionspace's top border.
          * @param _near The positionvalue of the projectionspace's near border.
          * @param _far The positionvalue of the projectionspace's far border
+         * @param _mtxOut Optional matrix to store the result in.
          */
-        static PROJECTION_ORTHOGRAPHIC(_left: number, _right: number, _bottom: number, _top: number, _near?: number, _far?: number): Matrix4x4;
-        /**
-         * Set the rotation part of the given matrixes data array to the given rotation.
-         */
-        private static setRotation;
+        static PROJECTION_ORTHOGRAPHIC(_left: number, _right: number, _bottom: number, _top: number, _near?: number, _far?: number, _mtxOut?: Matrix4x4): Matrix4x4;
         /**
          * - get: return a vector representation of the translation {@link Vector3}.
          * **Caution!** Use immediately and readonly, since the vector is going to be reused internally. Create a clone to keep longer and manipulate.
@@ -4751,18 +5083,22 @@ declare namespace FudgeCore {
         set quaternion(_quaternion: Quaternion);
         /**
          * Returns the determinant of this matrix. Computational heavy operation, not cached so use with care.
+         * @deprecated Use {@link Matrix4x4.getDeterminant} instead.
          */
         get determinant(): number;
         /**
          * Returns the normalized cardinal x-axis.
+         * @deprecated use {@link getRight} instead.
          */
         get right(): Vector3;
         /**
          * Returns the normalized cardinal y-axis.
+         * @deprecated use {@link getUp} instead.
          */
         get up(): Vector3;
         /**
          * Returns the normalized cardinal z-axis.
+         * @deprecated use {@link getForward} instead.
          */
         get forward(): Vector3;
         /**
@@ -4775,91 +5111,129 @@ declare namespace FudgeCore {
         recycle(): void;
         /**
          * Resets the matrix to the identity-matrix and clears cache.
+         * @returns A reference to this matrix.
          */
-        reset(): void;
+        reset(): Matrix4x4;
         /**
-         * Transpose this matrix
+         * Transpose this matrix.
+         * @returns A reference to this matrix.
          */
         transpose(): Matrix4x4;
         /**
-         * Invert this matrix
+         * Invert this matrix.
+         * @returns A reference to this matrix.
          */
         invert(): Matrix4x4;
         /**
          * Adds a translation by the given {@link Vector3} to this matrix.
          * If _local is true, the translation occurs according to the current rotation and scaling of this matrix,
          * otherwise, it occurs according to the parent.
+         * @returns A reference to this matrix.
          */
         translate(_by: Vector3, _local?: boolean): Matrix4x4;
         /**
          * Adds a translation along the x-axis to this matrix.
+         * @returns A reference to this matrix.
          */
         translateX(_x: number, _local?: boolean): Matrix4x4;
         /**
          * Adds a translation along the y-axis to this matrix.
+         * @returns A reference to this matrix.
          */
         translateY(_y: number, _local?: boolean): Matrix4x4;
         /**
          * Adds a translation along the z-axis to this matrix.
+         * @returns A reference to this matrix.
          */
         translateZ(_z: number, _local?: boolean): Matrix4x4;
         /**
          * Rotates this matrix by given {@link Vector3} in the order Z, Y, X. Right hand rotation is used, thumb points in axis direction, fingers curling indicate rotation
          * The rotation is appended to already applied transforms, thus multiplied from the right. Set _fromLeft to true to switch and put it in front.
+         * @returns A reference to this matrix.
          */
         rotate(_by: Vector3 | Quaternion, _fromLeft?: boolean): Matrix4x4;
         /**
          * Adds a rotation around the x-axis to this matrix.
+         * @returns A reference to this matrix.
          */
         rotateX(_angleInDegrees: number, _fromLeft?: boolean): Matrix4x4;
         /**
          * Adds a rotation around the y-axis to this matrix.
+         * @returns A reference to this matrix.
          */
         rotateY(_angleInDegrees: number, _fromLeft?: boolean): Matrix4x4;
         /**
          * Adds a rotation around the z-axis to this matrix.
+         * @returns A reference to this matrix.
          */
         rotateZ(_angleInDegrees: number, _fromLeft?: boolean): Matrix4x4;
         /**
          * Adjusts the rotation of this matrix to point the z-axis directly at the given target and tilts it to accord with the given up-{@link Vector3},
          * respectively calculating yaw and pitch. If no up-{@link Vector3} is given, the previous up-{@link Vector3} is used.
          * The pitch may be restricted to the up-vector to only calculate yaw.
-         */
-        lookAt(_target: Vector3, _up?: Vector3, _restrict?: boolean): Matrix4x4;
+         * @param _up A unit vector indicating the up-direction.
+         * @returns A reference to this matrix.
+         */ lookAt(_target: Vector3, _up?: Vector3, _restrict?: boolean): Matrix4x4;
         /**
-         * Adjusts the rotation of this matrix to align the z-axis with the given direction and tilts it to accord with the given up-{@link Vector3}.
-         * Up should be perpendicular to the given direction. If no up-vector is provided, {@link up} is used.
-         */
-        lookIn(_direction: Vector3, _up?: Vector3): Matrix4x4;
+         * Adjusts the rotation of this matrix to align the z-axis with the given forward-direction and tilts it to accord with the given up-{@link Vector3}.
+         * If no up-vector is provided, the local {@link Matrix4x4.getUp} is used.
+         * The pitch may be restricted to the up-vector to only calculate yaw.
+         * @param _forward A unit vector indicating the desired forward-direction.
+         * @param _up A unit vector indicating the up-direction.
+         * @returns A reference to this matrix.
+         */ lookIn(_forward: Vector3, _up?: Vector3, _restrict?: boolean): Matrix4x4;
         /**
          * Same as {@link Matrix4x4.lookAt}, but optimized and needs testing
          */
         /**
          * Adds a scaling by the given {@link Vector3} to this matrix.
+         * @returns A reference to this matrix.
          */
         scale(_by: Vector3, _fromLeft?: boolean): Matrix4x4;
         /**
          * Adds a scaling along the x-axis to this matrix.
+         * @returns A reference to this matrix.
          */
         scaleX(_by: number): Matrix4x4;
         /**
          * Adds a scaling along the y-axis to this matrix.
+         * @returns A reference to this matrix.
          */
         scaleY(_by: number): Matrix4x4;
         /**
          * Adds a scaling along the z-axis to this matrix.
+         * @returns A reference to this matrix.
          */
         scaleZ(_by: number): Matrix4x4;
         /**
          * Multiply this matrix by the given matrix.
+         * @returns A reference to this matrix.
          */
         multiply(_matrix: Matrix4x4, _fromLeft?: boolean): Matrix4x4;
         /**
-         * Sets the elements of this matrix to the given array.
+         * Premultiply this matrix with the given matrix.
+         * @returns A reference to this matrix.
          */
-        set(_array: ArrayLike<number>): Matrix4x4;
+        premultiply(_mtxLeft: Matrix4x4): Matrix4x4;
+        /**
+         * (Re-)Compose this matrix from the given translation, rotation and scaling.
+         * Missing values will be decompsed from the current matrix state if necessary.
+         * @returns A reference to this matrix.
+         */
+        compose(_translation?: Partial<Vector3>, _rotation?: Partial<Vector3> | Partial<Quaternion>, _scaling?: Partial<Vector3>): Matrix4x4;
+        /**
+         * Sets the elements of this matrix to the given array starting at the given offset.
+         * @returns A reference to this matrix.
+         */
+        setArray(_array: ArrayLike<number>, _offset?: number): Matrix4x4;
+        /**
+         * Sets the elements of this matrix to the given values.
+         * @returns A reference to this matrix.
+         */
+        set(_m00: number, _m01: number, _m02: number, _m03: number, _m10: number, _m11: number, _m12: number, _m13: number, _m20: number, _m21: number, _m22: number, _m23: number, _m30: number, _m31: number, _m32: number, _m33: number): Matrix4x4;
         /**
          * Copies the state of the given matrix into this matrix.
+         * @returns A reference to this matrix.
          */
         copy(_original: Matrix4x4): Matrix4x4;
         /**
@@ -4867,21 +5241,51 @@ declare namespace FudgeCore {
          */
         toString(): string;
         /**
-         * Returns an array of the elements of this matrix.
+         * Copys the elements of this matrix into the given array starting at the given offset.
+         * @returns A reference to the given array.
          */
-        get(): Float32Array;
+        toArray<T extends {
+            [n: number]: number;
+        }>(_out: T, _offset?: number): T;
         /**
-         * Return cardinal x-axis
+         * Returns the array of the elements of this matrix.
+         * @returns A readonly view of the internal array.
          */
-        getX(): Vector3;
+        getArray(): ArrayLike<number> & Iterable<number> & ArrayBufferView;
         /**
-         * Return cardinal y-axis
-         */
-        getY(): Vector3;
+          * Returns the determinant of this matrix.
+          */
+        getDeterminant(): number;
         /**
-         * Return cardinal z-axis
+         * Return cardinal x-axis.
+         * @param _vctOut Optional vector to store the result in.
          */
-        getZ(): Vector3;
+        getX(_vctOut?: Vector3): Vector3;
+        /**
+         * Return cardinal y-axis.
+         * @param _vctOut Optional vector to store the result in.
+         */
+        getY(_vctOut?: Vector3): Vector3;
+        /**
+         * Return cardinal z-axis.
+         * @param _vctOut Optional vector to store the result in.
+         */
+        getZ(_vctOut?: Vector3): Vector3;
+        /**
+         * Returns the normalized cardinal x-axis.
+         * @param _vctOut Optional vector to store the result in.
+         */
+        getRight(_vctOut?: Vector3): Vector3;
+        /**
+         * Returns the normalized cardinal y-axis.
+         * @param _vctOut Optional vector to store the result in.
+         */
+        getUp(_vctOut?: Vector3): Vector3;
+        /**
+         * Returns the normalized cardinal z-axis.
+         * @param _vctOut Optional vector to store the result in.
+         */
+        getForward(_vctOut?: Vector3): Vector3;
         /**
          * Swaps the two cardinal axis and reverses the third, effectively rotating the transform 180 degrees around one and 90 degrees around a second axis
          */
@@ -4895,13 +5299,14 @@ declare namespace FudgeCore {
          */
         swapYZ(): void;
         /**
-         * Returns the tranlation from this matrix to the target matrix
+         * Returns the tranlation from this matrix to the target matrix.
+         * @param _vctOut Optional vector to store the result in.
          */
-        getTranslationTo(_mtxTarget: Matrix4x4): Vector3;
+        getTranslationTo(_mtxTarget: Matrix4x4, _vctOut?: Vector3): Vector3;
         serialize(): Serialization;
         deserialize(_serialization: Serialization): Promise<Serializable>;
         getMutator(): Mutator;
-        mutate(_mutator: Mutator): Promise<void>;
+        mutate(_mutator: Mutator): void;
         getMutatorAttributeTypes(_mutator: Mutator): MutatorAttributeTypes;
         protected reduceMutator(_mutator: Mutator): void;
         private resetCache;
@@ -5000,54 +5405,93 @@ declare namespace FudgeCore {
         y: number;
         z: number;
         w: number;
-        private mutator;
         constructor(_x?: number, _y?: number, _z?: number, _w?: number);
         /**
          * Retrieve a new identity quaternion
          */
         static IDENTITY(): Quaternion;
         /**
-         * Returns a quaternion which is a copy of the given quaternion scaled to length 1.
+         * Returns a copy of the given quaternion scaled to length 1 (a unit quaternion) making it a valid rotation representation.
+         * @param _out Optional quaternion to store the result in.
          */
-        static NORMALIZATION(_q: Quaternion): Quaternion;
+        static NORMALIZATION(_quaternion: Quaternion, _out?: Quaternion): Quaternion;
         /**
          * Returns a quaternion that rotates coordinates when multiplied by, using the angles given.
          * Rotation occurs around the axis in the order Z-Y-X.
+         * @param _out Optional quaternion to store the result in.
+         */
+        static ROTATION_EULER_ANGLES(_eulerAngles: Vector3, _out?: Quaternion): Quaternion;
+        /**
+         * Returns a quaternion that rotates coordinates when multiplied by, using the axis and angle given.
+         * Axis must be normalized. Angle is in degrees.
+         * @param _out Optional quaternion to store the result in.
+         */
+        static ROTATION_AXIS_ANGLE(_axis: Vector3, _angle: number, _out?: Quaternion): Quaternion;
+        /**
+         * Returns a quaternion with the given forward and up direction.
+         * @param _forward A unit vector indicating the desired forward-direction.
+         * @param _up A unit vector indicating the up-direction.
+         * @param _out Optional quaternion to store the result in.
+         */
+        static ROTATION_LOOK_IN(_forward: Vector3, _up: Vector3, _out?: Quaternion): Quaternion;
+        /**
+         * Returns a quaternion that will rotate one vector to align with another.
+         * @param _from The normalized direction vector to rotate from.
+         * @param _to The normalized direction vector to rotate to.
+         * @param _out Optional quaternion to store the result in.
+         */
+        static ROTATION_FROM_TO(_from: Vector3, _to: Vector3, _out?: Quaternion): Quaternion;
+        /**
+         * Returns a quaternion that rotates coordinates when multiplied by, using the angles given.
+         * Rotation occurs around the axis in the order Z-Y-X.
+         * @deprecated Use {@link ROTATION_EULER_ANGLES} instead.
          */
         static ROTATION(_eulerAngles: Vector3): Quaternion;
         /**
          * Returns a quaternion that rotates coordinates when multiplied by, using the axis and angle given.
          * Axis must be normalized. Angle is in degrees.
+         * @deprecated Use {@link ROTATION_AXIS_ANGLE} instead.
          */
         static ROTATION(_axis: Vector3, _angle: number): Quaternion;
         /**
          * Returns a quaternion that rotates coordinates when multiplied by, using the forward and up direction given.
+         * @deprecated Use {@link ROTATION_LOOK_IN} instead.
          */
         static ROTATION(_forward: Vector3, _up: Vector3): Quaternion;
         /**
          * Computes and returns the product of two passed quaternions.
+         * @param _out Optional quaternion to store the result in.
          */
-        static PRODUCT(_qLeft: Quaternion, _qRight: Quaternion): Quaternion;
+        static PRODUCT(_left: Quaternion, _right: Quaternion, _out?: Quaternion): Quaternion;
         /**
          * Computes and returns the inverse of a passed quaternion.
+         * Quaternion is assumed to be normalized.
+         * @param _out Optional quaternion to store the result in.
          */
-        static INVERSE(_q: Quaternion): Quaternion;
+        static INVERSE(_quaternion: Quaternion, _out?: Quaternion): Quaternion;
         /**
          * Computes and returns the conjugate of a passed quaternion.
+         * @param _out Optional quaternion to store the result in.
          */
-        static CONJUGATION(_q: Quaternion): Quaternion;
+        static CONJUGATE(_quaternion: Quaternion, _out?: Quaternion): Quaternion;
         /**
          * Returns the dot product of two quaternions.
          */
-        static DOT(_q1: Quaternion, _q2: Quaternion): number;
+        static DOT(_a: Quaternion, _b: Quaternion): number;
         /**
-         * Returns the normalized linear interpolation between two quaternions based on the given _factor. When _factor is 0 the result is _from, when _factor is 1 the result is _to.
+         * Returns the normalized linear interpolation between two quaternions. When t is 0 the result is a, when t is 1 the result is b. Clamps t between 0 and 1.
+         * @param _out Optional quaternion to store the result in.
          */
-        static LERP(_from: Quaternion, _to: Quaternion, _factor: number): Quaternion;
+        static LERP(_a: Quaternion, _b: Quaternion, _t: number, _out?: Quaternion): Quaternion;
         /**
-         * Returns the spherical linear interpolation between two quaternions based on the given _factor. When _factor is 0 the result is _from, when _factor is 1 the result is _to.
+         * Returns the spherical linear interpolation between two quaternions. When t is 0 the result is a, when t is 1 the result is b.
+         * @param _out Optional quaternion to store the result in.
          */
-        static SLERP(_from: Quaternion, _to: Quaternion, _factor: number): Quaternion;
+        static SLERP(_a: Quaternion, _b: Quaternion, _t: number, _out?: Quaternion): Quaternion;
+        /**
+         * Return the angle in degrees between the two given quaternions.
+         */
+        static ANGLE(_from: Quaternion, _to: Quaternion): number;
         /**
          * Negates the given quaternion.
          */
@@ -5064,50 +5508,61 @@ declare namespace FudgeCore {
         get eulerAngles(): Vector3;
         set eulerAngles(_eulerAngles: Vector3);
         /**
-         * Normalizes this quaternion to a length of 1 (a unit quaternion) making it a valid rotation representation
+         * Copies the given quaternion.
+         * @returns A reference to this quaternion.
          */
-        normalize(): Quaternion;
-        /**
-         * Negate this quaternion and returns it
-         */
-        negate(): Quaternion;
+        copy(_original: Quaternion): Quaternion;
         /**
          * Resets the quaternion to the identity-quaternion and clears cache. Used by the recycler to reset.
          */
         recycle(): void;
         /**
+         * Sets the components of this quaternion.
+         * @returns A reference to this quaternion.
+         */
+        set(_x: number, _y: number, _z: number, _w: number): Quaternion;
+        /**
+         * Returns true if this quaternion is equal to the given quaternion within the given tolerance.
+         */
+        equals(_compare: Quaternion, _tolerance?: number): boolean;
+        /**
+         * Normalizes this quaternion to a length of 1 (a unit quaternion) making it a valid rotation representation.
+         * @returns A reference to this quaternion.
+         */
+        normalize(): Quaternion;
+        /**
+         * Negates this quaternion.
+         * @returns A reference to this quaternion.
+         */
+        negate(): Quaternion;
+        /**
          * Invert this quaternion.
+         * Quaternion is assumed to be normalized.
+         * @returns A reference to this quaternion.
          */
         invert(): Quaternion;
         /**
          * Conjugates this quaternion and returns it.
+         * @returns A reference to this quaternion.
          */
         conjugate(): Quaternion;
         /**
-         * Rotates this quaternion around the given axis by the given angle.
-         * The rotation is appended to already applied rotations, thus multiplied from the right. Set _fromLeft to true to switch and put it in front.
+         * Multiply this quaternion with the given quaternion.
+         * @returns A reference to this quaternion.
          */
-        rotate(_axis: Vector3, _angle: number, _fromLeft?: boolean): Quaternion;
+        multiply(_quaternion: Quaternion, _fromLeft?: boolean): Quaternion;
         /**
-         * Multiply this quaternion with the given quaternion
+         * Premultiply this quaternion with the given quaternion.
+         * @returns A reference to this quaternion.
          */
-        multiply(_other: Quaternion, _fromLeft?: boolean): Quaternion;
-        /**
-         * Sets the components of this quaternion.
-         */
-        set(_x: number, _y: number, _z: number, _w: number): Quaternion;
-        /**
-         * Copies the state of the given quaternion into this quaternion.
-         */
-        copy(_original: Quaternion): Quaternion;
+        premultiply(_quaternion: Quaternion): Quaternion;
         /**
          * Returns a formatted string representation of this quaternion
          */
         toString(): string;
         serialize(): Serialization;
         deserialize(_serialization: Serialization): Promise<Quaternion>;
-        getMutator(): Mutator;
-        mutate(_mutator: Mutator): Promise<void>;
+        mutate(_mutator: Mutator): void;
         protected reduceMutator(_mutator: Mutator): void;
         private resetCache;
     }
@@ -5180,6 +5635,10 @@ declare namespace FudgeCore {
          * Returns a random two-dimensional vector in the limits of the rectangle defined by the vectors given as [_corner0, _corner1[
          */
         getVector2(_corner0: Vector2, _corner1: Vector2): Vector2;
+        /**
+         * Returns a color with its r, g, b values set to random numbers in the range of [0, 1[.
+         */
+        getColor(): Color;
     }
     /**
      * Standard {@link Random}-instance using Math.random().
@@ -5198,6 +5657,10 @@ declare namespace FudgeCore {
      * @authors Jascha Karagöl, HFU, 2019 | Jirka Dell'Oro-Friedl, HFU, 2019-2022 | Jonas Plotzky, HFU, 2023
      */
     class Vector3 extends Mutable implements Serializable, Recycable {
+        /**
+         * Array of the keys of a vector. Allows to translate an index (0, 1, 2) to a key ("x", "y", "z") or to iterate over a vector.
+         */
+        static readonly keys: readonly ["x", "y", "z"];
         x: number;
         y: number;
         z: number;
@@ -5224,62 +5687,79 @@ declare namespace FudgeCore {
         static ONE(_scale?: number): Vector3;
         /**
          * Creates and returns a vector through transformation of the given vector by the given matrix or rotation quaternion.
+         * @param _out Optional vector to store the result in.
          */
-        static TRANSFORMATION(_vector: Vector3, _transform: Matrix4x4 | Quaternion, _includeTranslation?: boolean): Vector3;
+        static TRANSFORMATION(_vector: Vector3, _transform: Matrix4x4 | Quaternion, _includeTranslation?: boolean, _out?: Vector3): Vector3;
         /**
-         * Creates and returns a vector which is a copy of the given vector scaled to the given length
+         * Creates and returns a vector which is a copy of the given vector scaled to the given length.
+         * @param _out Optional vector to store the result in.
          */
-        static NORMALIZATION(_vector: Vector3, _length?: number): Vector3;
+        static NORMALIZATION(_vector: Vector3, _length?: number, _out?: Vector3): Vector3;
         /**
-         * Returns the resulting vector attained by addition of all given vectors.
+         * Returns the result of the addition of two vectors.
+         * @param _out Optional vector to store the result in.
          */
-        static SUM(..._vectors: Vector3[]): Vector3;
+        static SUM(_a: Vector3, _b: Vector3, _out?: Vector3): Vector3;
         /**
          * Returns the result of the subtraction of two vectors.
+         * @param _out Optional vector to store the result in.
          */
-        static DIFFERENCE(_minuend: Vector3, _subtrahend: Vector3): Vector3;
+        static DIFFERENCE(_minuend: Vector3, _subtrahend: Vector3, _out?: Vector3): Vector3;
         /**
-         * Returns a new vector representing the given vector scaled by the given scaling factor
+         * Returns a new vector representing the given vector scaled by the given scaling factor.
+         * @param _out Optional vector to store the result in.
          */
-        static SCALE(_vector: Vector3, _scaling: number): Vector3;
+        static SCALE(_vector: Vector3, _scaling: number, _out?: Vector3): Vector3;
+        /**
+         * Returns a new vector representing the given vector scaled by the given scaling factor.
+         * @param _out Optional vector to store the result in.
+         */
+        static NEGATION(_vector: Vector3, _out?: Vector3): Vector3;
+        /**
+         * Divides the dividend by the divisor component by component and returns the result.
+         * @param _out Optional vector to store the result in.
+         */
+        static RATIO(_dividend: Vector3, _divisor: Vector3, _out?: Vector3): Vector3;
         /**
          * Computes the crossproduct of 2 vectors.
+         * @param _out Optional vector to store the result in.
          */
-        static CROSS(_a: Vector3, _b: Vector3): Vector3;
+        static CROSS(_a: Vector3, _b: Vector3, _out?: Vector3): Vector3;
         /**
          * Computes the dotproduct of 2 vectors.
          */
         static DOT(_a: Vector3, _b: Vector3): number;
         /**
          * Calculates and returns the reflection of the incoming vector at the given normal vector. The length of normal should be 1.
-         *     __________________
+         * ```text
+         * _________________________
          *           /|\
          * incoming / | \ reflection
          *         /  |  \
          *          normal
-         *
+         * ```
+         * @param _out Optional vector to store the result in.
          */
-        static REFLECTION(_incoming: Vector3, _normal: Vector3): Vector3;
+        static REFLECTION(_incoming: Vector3, _normal: Vector3, _out?: Vector3): Vector3;
         /**
-         * Divides the dividend by the divisor component by component and returns the result
+         * Creates a cartesian vector from geographic coordinates.
+         * @param _out Optional vector to store the result in.
          */
-        static RATIO(_dividend: Vector3, _divisor: Vector3): Vector3;
+        static GEO(_longitude?: number, _latitude?: number, _magnitude?: number, _out?: Vector3): Vector3;
         /**
-         * Creates a cartesian vector from geographic coordinates
-         */
-        static GEO(_longitude?: number, _latitude?: number, _magnitude?: number): Vector3;
-        /**
-         * Return the angle in degrees between the two given vectors
+         * Return the angle in degrees between the two given vectors.
          */
         static ANGLE(_from: Vector3, _to: Vector3): number;
         /**
-         * Return the projection of a onto b
+         * Return the projection of a onto b.
+         * @param _out Optional vector to store the result in.
          */
-        static PROJECTION(_a: Vector3, _b: Vector3): Vector3;
+        static PROJECTION(_a: Vector3, _b: Vector3, _out?: Vector3): Vector3;
         /**
-         * Returns the linear interpolation of two vectors. Clamps the factor between 0 and 1.
+         * Returns the linear interpolation between two vectors. When t is 0 the result is a, when t is 1 the result is b. Clamps t between 0 and 1.
+         * @param _out Optional vector to store the result in.
          */
-        static LERP(_a: Vector3, _b: Vector3, _factor: number): Vector3;
+        static LERP(_a: Vector3, _b: Vector3, _t: number, _out?: Vector3): Vector3;
         /**
          * Smoothly interpolates between two vectors based on a critically damped spring model.
          * Allows to smooth toward a moving target with an ease-in/ease-out motion maintaining a continuous velocity.
@@ -5290,9 +5770,10 @@ declare namespace FudgeCore {
          * @param _smoothTime - The time it would take for the value to reach the target if it were moving at maximum velocity for the entire duration. When following a moving target the smooth time equals the lag time allowing to calculate the `lag distance = target velocity * smooth time`.
          * @param _timeFrame - The elapsed time since the last call to the function.
          * @param _maxSpeed - An optional maximum speed that limits the velocity of the value. Defaults to Infinity.
+         * @param _out Optional vector to store the result in.
          * @source from Andrew Kirmse, Game Programming Gems 4, Chapter 1.10
          */
-        static SMOOTHDAMP(_current: Vector3, _target: Vector3, _velocity: Vector3, _smoothTime: number, _timeFrame: number, _maxSpeed?: number): Vector3;
+        static SMOOTHDAMP(_current: Vector3, _target: Vector3, _velocity: Vector3, _smoothTime: number, _timeFrame: number, _maxSpeed?: number, _out?: Vector3): Vector3;
         /**
          * Returns the length of the vector
          */
@@ -5302,19 +5783,25 @@ declare namespace FudgeCore {
          */
         get magnitudeSquared(): number;
         /**
-         * - get: returns a geographic representation of this vector
-         * - set: adjust the cartesian values of this vector to represent the given as geographic coordinates
+         * - get: Returns a geographic representation of this vector
+         * - set: Adjusts the cartesian values of this vector to represent the given as geographic coordinates
          */
-        set geo(_geo: Geo3);
         get geo(): Geo3;
+        set geo(_geo: Geo3);
         /**
          * Creates and returns a clone of this vector.
          */
         get clone(): Vector3;
         /**
          * Copies the components of the given vector into this vector.
+         * @returns A reference to this vector.
          */
         copy(_original: Vector3): Vector3;
+        /**
+         * Sets the components of this vector and returns it.
+         * @returns A reference to this vector.
+         */
+        set(_x?: number, _y?: number, _z?: number): Vector3;
         recycle(): void;
         /**
          * Returns true if the coordinates of this and the given vector are to be considered identical within the given tolerance
@@ -5322,91 +5809,107 @@ declare namespace FudgeCore {
          */
         equals(_compare: Vector3, _tolerance?: number): boolean;
         /**
-         * Returns true if the position described by this is within a cube with the opposite corners 1 and 2
+         * Returns true if the position described by this is within a cube with the opposite corners 1 and 2.
          */
         isInsideCube(_corner1: Vector3, _corner2: Vector3): boolean;
         /**
-         * Returns true if the position described by this is within a sphere with the given center and radius
+         * Returns true if the position described by this is within a sphere with the given center and radius.
          */
         isInsideSphere(_center: Vector3, _radius: number): boolean;
         /**
+         * Returns the distance bewtween this vector and the given vector.
+         */
+        getDistance(_to: Vector3): number;
+        /**
          * Adds the given vector to this vector.
+         * @returns A reference to this vector.
          */
         add(_addend: Vector3): Vector3;
         /**
          * Subtracts the given vector from this vector.
+         * @returns A reference to this vector.
          */
         subtract(_subtrahend: Vector3): Vector3;
         /**
          * Scales this vector by the given scalar.
+         * @returns A reference to this vector.
          */
         scale(_scalar: number): Vector3;
         /**
-         * Normalizes this to the given length, 1 by default
-         */
-        normalize(_length?: number): Vector3;
-        /**
          * Negates this vector by flipping the signs of its components
+         * @returns A reference to this vector.
          */
         negate(): Vector3;
         /**
-         * Projects this vector onto the given vector
+         * Normalizes this to the given length, 1 by default
+         * @returns A reference to this vector.
+         */
+        normalize(_length?: number): Vector3;
+        /**
+         * Reflects this vector at a given normal. See {@link Vector3.REFLECTION}.
+         * @returns A reference to this vector.
+         */
+        reflect(_normal: Vector3): Vector3;
+        /**
+         * Projects this vector onto the given vector.
+         * @returns A reference to this vector.
          */
         project(_on: Vector3): Vector3;
         /**
-         * Sets the components of this vector and returns it.
+         * Transforms this vector by the given matrix or rotation quaternion.
+         * Including or exluding the translation if a matrix is passed.
+         * Including is the default, excluding will only rotate and scale this vector.
+         * @returns A reference to this vector.
          */
-        set(_x?: number, _y?: number, _z?: number): Vector3;
+        transform(_transform: Matrix4x4 | Quaternion, _includeTranslation?: boolean): Vector3;
+        /**
+         * Shuffles the components of this vector.
+         * @returns A reference to this vector.
+         */
+        shuffle(): Vector3;
+        /**
+         * For each dimension, moves the component to the minimum of this and the given vector.
+         * @returns A reference to this vector.
+         */
+        min(_compare: Vector3): Vector3;
+        /**
+         * For each dimension, moves the component to the maximum of this and the given vector.
+         * @returns A reference to this vector.
+         */
+        max(_compare: Vector3): Vector3;
+        /**
+         * Calls a defined callback function on each component of the vector, and returns a new vector that contains the results. Similar to {@link Array.map}.
+         * @param _out Optional vector to store the result in.
+         */
+        map(_function: (_value: number, _index: number, _component: "x" | "y" | "z", _vector: Vector3) => number, _out?: Vector3): Vector3;
+        /**
+         * Calls a defined callback function on each component of the vector and assigns the result to the component. Similar to {@link Vector3.map} but mutates this vector instead of creating a new one.
+         * @returns A reference to this vector.
+         */
+        apply(_function: (_value: number, _index: number, _component: "x" | "y" | "z", _vector: Vector3) => number): Vector3;
         /**
          * Returns an array of the components of this vector.
          */
         get(): Float32Array;
         /**
-         * Transforms this vector by the given matrix or rotation quaternion.
-         * Including or exluding the translation if a matrix is passed.
-         * Including is the default, excluding will only rotate and scale this vector.
+         * Copys the elements of this vector into the given array starting at the given offset.
+         * @returns A reference to the given array.
          */
-        transform(_transform: Matrix4x4 | Quaternion, _includeTranslation?: boolean): Vector3;
+        toArray<T extends {
+            [n: number]: number;
+        }>(_out: T, _offset?: number): T;
         /**
-         * Drops the z-component and returns a Vector2 consisting of the x- and y-components
+         * Drops the z-component and returns a Vector2 consisting of the x- and y-components.
+         * @param _out Optional vector to store the result in.
          */
-        toVector2(): Vector2;
-        /**
-         * Reflects this vector at a given normal. See {@link Vector3.REFLECTION}
-         */
-        reflect(_normal: Vector3): Vector3;
-        /**
-         * Shuffles the components of this vector
-         */
-        shuffle(): Vector3;
-        /**
-         * Returns the distance bewtween this vector and the given vector
-         */
-        getDistance(_to: Vector3): number;
-        /**
-         * For each dimension, moves the component to the minimum of this and the given vector
-         */
-        min(_compare: Vector3): Vector3;
-        /**
-         * For each dimension, moves the component to the maximum of this and the given vector
-         */
-        max(_compare: Vector3): Vector3;
-        /**
-         * Uses the standard array.map functionality to perform the given function on all components of this vector
-         * and return a new vector with the results
-         */
-        map(_function: (_value: number, _index: number, _array: ArrayLike<number>) => number): Vector3;
-        /**
-         * Applies the given function to all components of this vector (modifying it) and returns it.
-         */
-        apply(_function: (_value: number, _index: number, _component: "x" | "y" | "z") => number): Vector3;
+        toVector2(_out?: Vector2): Vector2;
         /**
          * Returns a formatted string representation of this vector
          */
         toString(): string;
         serialize(): Serialization;
         deserialize(_serialization: Serialization): Promise<Vector3>;
-        mutate(_mutator: Mutator): Promise<void>;
+        mutate(_mutator: Mutator): void;
         getMutator(): Mutator;
         protected reduceMutator(_mutator: Mutator): void;
     }
@@ -5423,6 +5926,35 @@ declare namespace FudgeCore {
         w: number;
         constructor(_x?: number, _y?: number, _z?: number, _w?: number);
         /**
+         * Creates and returns a vector which is a copy of the given vector scaled to the given length.
+         * @param _out Optional vector to store the result in.
+         */
+        static NORMALIZATION(_vector: Vector4, _length?: number, _out?: Vector4): Vector4;
+        /**
+         * Returns the result of the addition of two vectors.
+         * @param _out Optional vector to store the result in.
+         */
+        static SUM(_a: Vector4, _b: Vector4, _out?: Vector4): Vector4;
+        /**
+         * Returns the result of the subtraction of two vectors.
+         * @param _out Optional vector to store the result in.
+         */
+        static DIFFERENCE(_minuend: Vector4, _subtrahend: Vector4, _out?: Vector4): Vector4;
+        /**
+         * Returns a new vector representing the given vector scaled by the given scaling factor.
+         * @param _out Optional vector to store the result in.
+         */
+        static SCALE(_vector: Vector4, _scaling: number, _out?: Vector4): Vector4;
+        /**
+         * Returns a new vector representing the given vector scaled by the given scaling factor.
+         * @param _out Optional vector to store the result in.
+         */
+        static NEGATION(_vector: Vector4, _out?: Vector4): Vector4;
+        /**
+         * Computes the dotproduct of 2 vectors.
+         */
+        static DOT(_a: Vector4, _b: Vector4): number;
+        /**
          * The magnitude (length) of the vector.
          */
         get magnitude(): number;
@@ -5436,39 +5968,92 @@ declare namespace FudgeCore {
         get clone(): Vector4;
         /**
          * Copies the components of the given vector into this vector.
+         * @returns A reference to this vector.
          */
         copy(_original: Vector4): Vector4;
         /**
          * Sets the components of this vector and returns it.
+         * @returns A reference to this vector.
          */
         set(_x: number, _y: number, _z: number, _w: number): Vector4;
         /**
-         * Returns an array of the components of this vector.
+         * Returns an array of the components of this vector. // TODO: remove this
          */
         get(): [number, number, number, number];
+        recycle(): void;
+        /**
+         * Returns true if this vector is equal to the given vector within the given tolerance.
+         */
+        equals(_compare: Vector4, _tolerance?: number): boolean;
         /**
          * Adds the given vector to this vector.
+         * @returns A reference to this vector.
          */
         add(_addend: Vector4): Vector4;
         /**
          * Subtracts the given vector from this vector.
+         * @returns A reference to this vector.
          */
         subtract(_subtrahend: Vector4): Vector4;
         /**
          * Scales this vector by the given scalar.
+         * @returns A reference to this vector.
          */
         scale(_scalar: number): Vector4;
         /**
+         * Negates this vector by flipping the signs of its components
+         * @returns A reference to this vector.
+         */
+        negate(): Vector4;
+        /**
          * Normalizes this vector to the given length, 1 by default.
+         * @returns A reference to this vector.
          */
         normalize(_length?: number): Vector4;
         /**
-         * Calculates the dot product of this instance and another vector.
+         * For each dimension, moves the component to the minimum of this and the given vector.
+         * @returns A reference to this vector.
          */
-        dot(_other: Vector4): number;
-        recycle(): void;
+        min(_compare: Vector4): Vector4;
+        /**
+         * For each dimension, moves the component to the maximum of this and the given vector.
+         * @returns A reference to this vector.
+         */
+        max(_compare: Vector4): Vector4;
+        /**
+         * Calls a defined callback function on each component of the vector, and returns a new vector that contains the results. Similar to {@link Array.map}.
+         * @param _out Optional vector to store the result in.
+         */
+        map(_function: (_value: number, _index: number, _component: "x" | "y" | "z" | "w", _vector: Vector4) => number, _out?: Vector4): Vector4;
+        /**
+         * Calls a defined callback function on each component of the vector and assigns the result to the component. Similar to {@link Vector4.map} but mutates this vector instead of creating a new one.
+         * @returns A reference to this vector.
+         */
+        apply(_function: (_value: number, _index: number, _component: "x" | "y" | "z" | "w", _vector: Vector4) => number): Vector4;
+        /**
+         * Copys the elements of this vector into the given array starting at the given offset.
+         * @returns A reference to the given array.
+         */
+        toArray<T extends {
+            [n: number]: number;
+        }>(_out: T, _offset?: number): T;
+        /**
+         * Drops the z-component and w-component and returns a Vector2 consisting of the x- and y-components.
+         * @param _out Optional vector to store the result in.
+         */
+        toVector2(_out?: Vector2): Vector2;
+        /**
+         * Drops the w-component and returns a Vector3 consisting of the x-, y- and z-components.
+         * @param _out Optional vector to store the result in.
+         */
+        toVector3(_out?: Vector3): Vector3;
+        /**
+         * Returns a formatted string representation of this vector.
+         */
+        toString(): string;
         serialize(): Serialization;
         deserialize(_serialization: Serialization): Promise<Vector4>;
+        mutate(_mutator: Mutator): void;
         protected reduceMutator(_mutator: Mutator): void;
     }
 }
@@ -6993,14 +7578,14 @@ declare namespace FudgeCore {
          * Takes a ray plus min and max values for the near and far planes to construct the picker-camera,
          * then renders the pick-texture and returns an unsorted {@link Pick}-array with information about the hits of the ray.
          */
-        static pickRay(_nodes: Node[], _ray: Ray, _min: number, _max: number): Pick[];
-        static pickRay(_gizmos: Gizmo[], _ray: Ray, _min: number, _max: number): Pick[];
+        static pickRay(_nodes: readonly Node[], _ray: Ray, _min: number, _max: number): Pick[];
+        static pickRay(_gizmos: readonly Gizmo[], _ray: Ray, _min: number, _max: number): Pick[];
         /**
          * Takes a camera and a point on its virtual normed projection plane (distance 1) to construct the picker-camera,
          * then renders the pick-texture and returns an unsorted {@link Pick}-array with information about the hits of the ray.
          */
-        static pickCamera(_nodes: Node[], _cmpCamera: ComponentCamera, _posProjection: Vector2): Pick[];
-        static pickCamera(_nodes: Gizmo[], _cmpCamera: ComponentCamera, _posProjection: Vector2): Pick[];
+        static pickCamera(_nodes: readonly Node[], _cmpCamera: ComponentCamera, _posProjection: Vector2): Pick[];
+        static pickCamera(_nodes: readonly Gizmo[], _cmpCamera: ComponentCamera, _posProjection: Vector2): Pick[];
         /**
          * Takes the camera of the given viewport and a point the client surface to construct the picker-camera,
          * then renders the pick-texture and returns an unsorted {@link Pick}-array with information about the hits of the ray.
@@ -7071,7 +7656,6 @@ declare namespace FudgeCore {
          */
         private static alphaOccluded;
         private static readonly arrayBuffer;
-        private static readonly indexBuffer;
         private static pickId;
         private static readonly posIcons;
         private static get wireCircle();
@@ -7085,7 +7669,7 @@ declare namespace FudgeCore {
         /**
          * Picks all gizmos in the line of sight and returns an unsorted array of {@link Pick}s each associated with the gizmo the pick ray hit.
          */
-        static pick(_gizmos: Gizmos[], _cmpCamera: ComponentCamera): Pick[];
+        static pick(_gizmos: readonly Gizmos[], _cmpCamera: ComponentCamera): Pick[];
         /**
          * Draws a camera frustum for the given parameters. The frustum is oriented along the z-axis, with the tip of the truncated pyramid at the origin.
          */
@@ -7116,10 +7700,12 @@ declare namespace FudgeCore {
          */
         static drawWireMesh(_mesh: Mesh, _mtxWorld: Matrix4x4, _color: Color, _alphaOccluded?: number): void;
         /**
-         * Draws an arrow at the given world position, facing in the given direction with the given length and width.
+         * Draws an arrow at the given world position, facing in the given forward-direction with the given length and width.
          * Size refers to the size of the arrow head: the height of the pyramid; the size of the cube; the diameter of the sphere.
+         * @param _forward A unit vector indicating the desired forward-direction.
+         * @param _up A unit vector indicating the up-direction.
          */
-        static drawArrow(_position: Vector3, _color: Color, _direction: Vector3, _up: Vector3, _length: number, _width: number, _size: number, _head?: typeof MeshCube | typeof MeshPyramid | typeof MeshSphere | null, _alphaOccluded?: number): void;
+        static drawArrow(_position: Vector3, _color: Color, _forward: Vector3, _up: Vector3, _length: number, _width: number, _size: number, _head?: typeof MeshCube | typeof MeshPyramid | typeof MeshSphere | null, _alphaOccluded?: number): void;
         /**
          * Draws a solid cube.
          */
@@ -7148,7 +7734,6 @@ declare namespace FudgeCore {
          * Draws an icon from a {@link Texture} on a {@link MeshQuad}. The icon is affected by the given transform and color.
          */
         static drawIcon(_texture: Texture, _mtxWorld: Matrix4x4, _color: Color, _alphaOccluded?: number): void;
-        private static bufferPositions;
         private static bufferColor;
         private static bufferMatrix;
         private static drawGizmos;
@@ -7156,10 +7741,11 @@ declare namespace FudgeCore {
         private static drawElementsLines;
         private static drawArrays;
         private static getMesh;
+        private static pickGizmos;
     }
 }
 declare namespace FudgeCore {
-    type MapLightTypeToLightList = Map<TypeOfLight, RecycableArray<ComponentLight>>;
+    type MapLightTypeToLightList = Map<LIGHT_TYPE, RecycableArray<ComponentLight>>;
     interface RenderPrepareOptions {
         ignorePhysics?: boolean;
     }
@@ -7167,6 +7753,7 @@ declare namespace FudgeCore {
      * The main interface to the render engine, here WebGL (see superclass {@link RenderWebGL} and the RenderInjectors
      */
     abstract class Render extends RenderWebGL {
+        #private;
         static rectClip: Rectangle;
         static pickBuffer: Int32Array;
         static readonly nodesPhysics: RecycableArray<Node>;
@@ -7178,32 +7765,30 @@ declare namespace FudgeCore {
         private static timestampUpdate;
         /**
          * Recursively iterates over the branch starting with the node given, recalculates all world transforms,
-         * collects all lights and feeds all shaders used in the graph with these lights. Sorts nodes for different
+         * collects all lights and feeds the renderbuffers with the neccessary node and component data to draw a frame. Sorts nodes for different
          * render passes.
+         * @param _recalculate - set true to force recalculation of all world transforms in the given branch, even if their local transforms haven't changed
          */
-        static prepare(_branch: Node, _options?: RenderPrepareOptions, _mtxWorld?: Matrix4x4, _shadersUsed?: (ShaderInterface)[]): void;
-        static addLights(_cmpLights: ComponentLight[]): void;
-        /**
-         * Used with a {@link Picker}-camera, this method renders one pixel with picking information
-         * for each node in the line of sight and return that as an unsorted {@link Pick}-array
-         */
-        static pick(_nodes: Node[], _cmpCamera: ComponentCamera): Pick[];
+        static prepare(_branch: Node, _options?: RenderPrepareOptions, _recalculate?: boolean): void;
+        static addLights(_cmpLights: readonly ComponentLight[]): void;
         /**
          * Draws the scene from the point of view of the given camera
          */
         static draw(_cmpCamera: ComponentCamera): void;
+        private static prepareBranch;
         private static transformByPhysics;
     }
 }
 declare namespace FudgeCore {
     interface RenderBuffers {
-        vertices?: WebGLBuffer;
+        vao?: WebGLVertexArrayObject;
         indices?: WebGLBuffer;
-        textureUVs?: WebGLBuffer;
+        positions?: WebGLBuffer;
         normals?: WebGLBuffer;
+        textureUVs?: WebGLBuffer;
         colors?: WebGLBuffer;
-        bones?: WebGLBuffer;
         tangents?: WebGLBuffer;
+        bones?: WebGLBuffer;
         weights?: WebGLBuffer;
         nIndices?: number;
     }
@@ -7215,8 +7800,8 @@ declare namespace FudgeCore {
         buffers: RenderBuffers;
         mesh: Mesh;
         constructor(_mesh: Mesh);
-        get vertices(): Float32Array;
-        set vertices(_vertices: Float32Array);
+        get positions(): Float32Array;
+        set positions(_vertices: Float32Array);
         get indices(): Uint16Array;
         set indices(_indices: Uint16Array);
         get normals(): Float32Array;
@@ -7279,15 +7864,35 @@ declare namespace FudgeCore {
          */
         get context(): CanvasRenderingContext2D;
         /**
+         * The rectangle of the canvas area in CSS pixels. Use this to access the canvas width and height,
+         * but without incuring browser internal garbage collection.
+         *
+         * Adjusted internally by {@link adjustFrames}, do not modify.
+         */
+        get rectCanvas(): Rectangle;
+        /**
+         * The rectangle of the canvas area as displayed (considering css). Use this to access canvas clientWidth and clientHeight,
+         * but without incuring browser internal garbage collection.
+         *
+         * Adjusted automatically on canvas resize, do not modify.
+         */
+        get rectClient(): Rectangle;
+        /**
          * Connects the viewport to the given canvas to render the given branch to using the given camera-component, and names the viewport as given.
          */
         initialize(_name: string, _branch: Node, _camera: ComponentCamera, _canvas: HTMLCanvasElement): void;
         /**
-         * Retrieve the size of the destination canvas as a rectangle, x and y are always 0
+         * Disconnect the resize observer from the canvas to allow garbage collection of the viewport.
+         */
+        disconnect(): void;
+        /**
+         * Retrieve the size of the destination canvas as a rectangle, x and y are always 0.
+         * @deprecated Use {@link rectCanvas} instead.
          */
         getCanvasRectangle(): Rectangle;
         /**
-         * Retrieve the client rectangle the canvas is displayed and fit in, x and y are always 0
+         * Retrieve the client rectangle the canvas is displayed and fit in, x and y are always 0.
+         * @deprecated Use {@link rectClient} instead.
          */
         getClientRectangle(): Rectangle;
         /**
@@ -7308,7 +7913,7 @@ declare namespace FudgeCore {
         */
         prepare(_prepareBranch?: boolean): void;
         /**
-         * Prepares all nodes in the branch for rendering by updating their world transforms etc.
+         * Prepares all nodes in the branch for rendering by updating their world transforms and supplying the gpu renderbuffers with the neccessary node and component data to draw a frame.
          */
         prepareBranch(): void;
         /**
@@ -7320,11 +7925,11 @@ declare namespace FudgeCore {
          */
         dispatchPointerEvent(_event: PointerEvent): void;
         /**
-         * Adjust all frames involved in the rendering process from the display area in the client up to the renderer canvas
+         * Adjust all frames involved in the rendering process from the display area in the client up to the renderer canvas.
          */
         adjustFrames(): void;
         /**
-         * Adjust the camera parameters to fit the rendering into the render viewport
+         * Adjust the camera parameters to fit the rendering into the render viewport.
          */
         adjustCamera(): void;
         /**
@@ -7482,7 +8087,7 @@ declare namespace FudgeCore {
         /**
          * Mutate the elements of this array defined by the _mutator by invoking {@link Mutable.mutate} on it
          */
-        mutate(_mutator: Mutator): Promise<void>;
+        mutate(_mutator: Mutator): void | Promise<void>;
         /**
          * Updates the values of the given mutator according to the current state of the instance
          */
@@ -7499,7 +8104,7 @@ declare namespace FBX {
     class BufferReader {
         offset: number;
         readonly view: DataView;
-        constructor(_buffer: ArrayBuffer);
+        constructor(_buffer: ArrayBufferLike);
         getChar(_offset?: number): string;
         getBool(_offset?: number): boolean;
         getUint8(_offset?: number): number;
@@ -8497,7 +9102,7 @@ declare namespace GLTF {
 declare namespace FudgeCore {
     /**
      * Asset loader for gl Transfer Format files.
-     * @authors Matthias Roming, HFU, 2022 | Jonas Plotzky, HFU, 2023
+     * @authors Matthias Roming, HFU, 2022 | Jonas Plotzky, HFU, 2023-2025
      */
     class GLTFLoader {
         #private;
@@ -8528,22 +9133,6 @@ declare namespace FudgeCore {
          */
         getGraph(_iScene?: number): Promise<Graph>;
         /**
-         * Returns the first {@link Node} with the given name.
-         */
-        getNode(_name: string): Promise<Node>;
-        /**
-         * Returns the {@link Node} for the given index.
-         */
-        getNodeByIndex(_iNode: number): Promise<Node>;
-        /**
-         * Returns the first {@link ComponentCamera} with the given camera name.
-         */
-        getCamera(_name: string): Promise<ComponentCamera>;
-        /**
-         * Returns the {@link ComponentCamera} for the given camera index.
-         */
-        getCameraByIndex(_iCamera: number): Promise<ComponentCamera>;
-        /**
          * Returns the first {@link Animation} with the given animation name.
          */
         getAnimation(_name: string): Promise<Animation>;
@@ -8571,20 +9160,24 @@ declare namespace FudgeCore {
          * Returns the {@link Texture} for the given texture index.
          */
         getTexture(_iTexture: number): Promise<Texture>;
-        /**
-        * Returns the first {@link ComponentSkeleton} with the given skeleton name.
-        */
-        getSkeleton(_name: string): Promise<ComponentSkeleton>;
-        /**
-         * Returns the {@link ComponentSkeleton} for the given skeleton index.
-         */
-        getSkeletonByIndex(_iSkeleton: number): Promise<ComponentSkeleton>;
         toString(): string;
+        /**
+         * Returns the {@link Node} for the given index.
+         */
+        private getNodeByIndex;
+        /**
+        * Returns the {@link ComponentSkeleton} for the given skeleton index.
+        */
+        private getSkeletonByIndex;
+        /**
+         * Returns the {@link ComponentCamera} for the given camera index.
+         */
+        private getCameraByIndex;
         private getIndex;
         private getBufferData;
         private getBufferViewData;
         private getBuffer;
-        private getAnimationSequenceVector;
+        private getAnimationSequence;
         private toInternInterpolation;
     }
 }
@@ -8608,9 +9201,6 @@ declare namespace FudgeCore {
     interface ShaderInterface {
         define: string[];
         program: WebGLProgram;
-        attributes: {
-            [name: string]: number;
-        };
         uniforms: {
             [name: string]: WebGLUniformLocation;
         };
@@ -8630,9 +9220,6 @@ declare namespace FudgeCore {
         static readonly subclasses: typeof Shader[];
         static define: string[];
         static program: WebGLProgram;
-        static attributes: {
-            [name: string]: number;
-        };
         static uniforms: {
             [name: string]: WebGLUniformLocation;
         };
@@ -8761,6 +9348,13 @@ declare namespace FudgeCore {
         static readonly iSubclass: number;
         static define: string[];
         static getCoat(): typeof Coat;
+    }
+}
+declare namespace FudgeCore {
+    abstract class ShaderOutline extends Shader {
+        static define: string[];
+        static getVertexShaderSource(): string;
+        static getFragmentShaderSource(): string;
     }
 }
 declare namespace FudgeCore {
