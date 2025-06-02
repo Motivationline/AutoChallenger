@@ -201,6 +201,60 @@ namespace Script {
                         }
                     }
                 ]
+            },
+            {
+                id: "cactusCrawler", // doesn't attack but gets thorns after moving
+                health: 1,
+                moves: { direction: DIRECTION_RELATIVE.FORWARD, distance: 1 },
+                startDirection: 6, // down
+                abilities: [
+                    {   // gain thorns 1 after moving
+                        on: EVENT.ENTITY_MOVED,
+                        conditions: [
+                            {
+                                target: TARGET.SELF,
+                                value: {
+                                    min: 1
+                                }
+                            }
+                        ],
+                        target: TARGET.SELF,
+                        spell: {
+                            type: SPELL_TYPE.THORNS,
+                            level: 1,
+                        }
+                    }
+                ]
+            },
+            {
+                id: "flameFlinger", // low hp but massive single target damage
+                health: 1,
+                attacks: {
+                    baseDamage: 2,
+                    target: {
+                        side: TARGET_SIDE.OPPONENT,
+                        area: {
+                            position: AREA_POSITION.RELATIVE_MIRRORED,
+                            shape: AREA_SHAPE.SINGLE,
+                        },
+                    }
+                }
+            },
+            {
+                id: "worriedWall", // very strong wall, which dies when others die
+                health: 6,
+                abilities:[
+                    {   // if an ally dies, deal 6 damage to self
+                        on: EVENT.ENTITY_DIED,
+                        conditions: [{
+                            target: { side: TARGET_SIDE.ALLY, entity: {}, excludeSelf: true }
+                        }],
+                        target: TARGET.SELF,
+                        attack: {
+                            baseDamage: 6,
+                        }
+                    },
+                ]
             }
         ]
     }
