@@ -5,12 +5,12 @@ namespace Script {
     }
 
     export class VisualizeGridNull implements IVisualizeGrid {
-        #grid: Grid<iEntity>
-        constructor(_grid: Grid<iEntity>) {
+        #grid: Grid<IVisualizeEntity>
+        constructor(_grid: Grid<IVisualizeEntity>) {
             this.#grid = _grid;
         }
         updateVisuals(): void {
-            Utils.forEachElement(this.#grid, (element) => {
+            this.#grid.forEachElement((element) => {
                 element.updateVisuals();
             });
         }

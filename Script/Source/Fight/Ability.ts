@@ -9,7 +9,7 @@ namespace Script {
         otherOptions?: any;
     }
 
-    export interface iAbility {
+    export interface AbilityData {
         /** When should this ability happen? */
         on: EVENT[] | EVENT,
         /** Single condition or a list of conditions that need to be met for this ability to trigger.
@@ -25,8 +25,8 @@ namespace Script {
         */
         // requirements?: string[][],
         /** Who should be targeted with this ability? */
-        target: "target" | "cause" | Target;
-        attack?: AttackNoTarget,
-        spell?: SpellNoTarget,
+        target: "target" | "cause" | Target,
+        attack?: AttackDataNoTarget,
+        spell?: SpellDataNoTarget,
     }
 }

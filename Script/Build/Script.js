@@ -3,10 +3,10 @@ var Script;
 (function (Script) {
     let DIRECTION_RELATIVE;
     (function (DIRECTION_RELATIVE) {
-        DIRECTION_RELATIVE[DIRECTION_RELATIVE["FORWARD"] = 0] = "FORWARD";
-        DIRECTION_RELATIVE[DIRECTION_RELATIVE["BACKWARD"] = 1] = "BACKWARD";
-        DIRECTION_RELATIVE[DIRECTION_RELATIVE["LEFT"] = 2] = "LEFT";
-        DIRECTION_RELATIVE[DIRECTION_RELATIVE["RIGHT"] = 3] = "RIGHT";
+        DIRECTION_RELATIVE["FORWARD"] = "forward";
+        DIRECTION_RELATIVE["BACKWARD"] = "backward";
+        DIRECTION_RELATIVE["LEFT"] = "left";
+        DIRECTION_RELATIVE["RIGHT"] = "right";
     })(DIRECTION_RELATIVE = Script.DIRECTION_RELATIVE || (Script.DIRECTION_RELATIVE = {}));
 })(Script || (Script = {}));
 var Script;
@@ -15,34 +15,34 @@ var Script;
     let SELECTION_ORDER;
     (function (SELECTION_ORDER) {
         /** Selects options in order, loops around when found */
-        SELECTION_ORDER[SELECTION_ORDER["SEQUENTIAL"] = 1] = "SEQUENTIAL";
+        SELECTION_ORDER["SEQUENTIAL"] = "sequential";
         /** Chooses random options for the entire fight */
-        SELECTION_ORDER[SELECTION_ORDER["RANDOM_EACH_FIGHT"] = 2] = "RANDOM_EACH_FIGHT";
+        SELECTION_ORDER["RANDOM_EACH_FIGHT"] = "randomEachFight";
         /** Chooses random options for each round */
-        SELECTION_ORDER[SELECTION_ORDER["RANDOM_EACH_ROUND"] = 3] = "RANDOM_EACH_ROUND";
+        SELECTION_ORDER["RANDOM_EACH_ROUND"] = "randomEachRound";
         /** Chooses all options, always starting from the first */
-        SELECTION_ORDER[SELECTION_ORDER["ALL"] = 4] = "ALL";
+        SELECTION_ORDER["ALL"] = "all";
     })(SELECTION_ORDER = Script.SELECTION_ORDER || (Script.SELECTION_ORDER = {}));
     //#region Area
     let AREA_SHAPE_PATTERN;
     (function (AREA_SHAPE_PATTERN) {
         /** Choose your own pattern */
-        AREA_SHAPE_PATTERN[AREA_SHAPE_PATTERN["PATTERN"] = 99] = "PATTERN";
+        AREA_SHAPE_PATTERN["PATTERN"] = "pattern";
     })(AREA_SHAPE_PATTERN = Script.AREA_SHAPE_PATTERN || (Script.AREA_SHAPE_PATTERN = {}));
     let AREA_SHAPE_OTHERS;
     (function (AREA_SHAPE_OTHERS) {
         /** Target a single Slot */
-        AREA_SHAPE_OTHERS[AREA_SHAPE_OTHERS["SINGLE"] = 1] = "SINGLE";
+        AREA_SHAPE_OTHERS["SINGLE"] = "single";
         /** Target an entire row */
-        AREA_SHAPE_OTHERS[AREA_SHAPE_OTHERS["ROW"] = 2] = "ROW";
+        AREA_SHAPE_OTHERS["ROW"] = "row";
         /** Target an entire column */
-        AREA_SHAPE_OTHERS[AREA_SHAPE_OTHERS["COLUMN"] = 3] = "COLUMN";
+        AREA_SHAPE_OTHERS["COLUMN"] = "column";
         /** Target enemies in a plus shape, so basically column + row */
-        AREA_SHAPE_OTHERS[AREA_SHAPE_OTHERS["PLUS"] = 4] = "PLUS";
+        AREA_SHAPE_OTHERS["PLUS"] = "plus";
         /** Target enemies in an X shape, so all the corners but not the center */
-        AREA_SHAPE_OTHERS[AREA_SHAPE_OTHERS["DIAGONALS"] = 5] = "DIAGONALS";
+        AREA_SHAPE_OTHERS["DIAGONALS"] = "diagonals";
         /** Target all enemies except in the center position */
-        AREA_SHAPE_OTHERS[AREA_SHAPE_OTHERS["SQUARE"] = 6] = "SQUARE";
+        AREA_SHAPE_OTHERS["SQUARE"] = "square";
     })(AREA_SHAPE_OTHERS = Script.AREA_SHAPE_OTHERS || (Script.AREA_SHAPE_OTHERS = {}));
     Script.AREA_SHAPE = Object.assign({}, AREA_SHAPE_PATTERN, AREA_SHAPE_OTHERS);
     let AREA_POSITION_ABSOLUTE;
@@ -67,9 +67,9 @@ var Script;
     let TARGET_SIDE;
     (function (TARGET_SIDE) {
         /** Your own side */
-        TARGET_SIDE[TARGET_SIDE["ALLY"] = 1] = "ALLY";
+        TARGET_SIDE["ALLY"] = "ally";
         /** Your opponents side */
-        TARGET_SIDE[TARGET_SIDE["OPPONENT"] = 2] = "OPPONENT";
+        TARGET_SIDE["OPPONENT"] = "opponent";
     })(TARGET_SIDE = Script.TARGET_SIDE || (Script.TARGET_SIDE = {}));
     let TARGET_SORT;
     (function (TARGET_SORT) {
@@ -97,7 +97,7 @@ var Script;
         const side = _target.side === TARGET_SIDE.ALLY ? _allies : _opponents;
         // entity selector
         if ("entity" in _target) {
-            Script.Utils.forEachElement(side, (entity) => {
+            side.forEachElement((entity) => {
                 if (entity)
                     targets.push(entity);
             });
@@ -107,7 +107,7 @@ var Script;
                     break;
                 }
                 case "strongest": {
-                    targets.sort((a, b) => a.getDamage() - b.getDamage());
+                    targets.sort((a, b) => a.getOwnDamage() - b.getOwnDamage());
                     break;
                 }
                 case "healthiest": {
@@ -135,7 +135,7 @@ var Script;
             switch (_target.area.position) {
                 case Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW: {
                     for (let i = 0; i < 3; i++) {
-                        if (side[i][_self.position[1]]) {
+                        if (side.get([i, _self.position[1]])) {
                             pos = [i, _self.position[1]];
                             break;
                         }
@@ -144,7 +144,7 @@ var Script;
                 }
                 case Script.AREA_POSITION.RELATIVE_LAST_IN_ROW: {
                     for (let i = 2; i >= 0; i--) {
-                        if (side[i][_self.position[1]]) {
+                        if (side.get([i, _self.position[1]])) {
                             pos = [i, _self.position[1]];
                             break;
                         }
@@ -168,51 +168,66 @@ var Script;
             }
             if (!pos)
                 return [];
-            let pattern = Script.Grid.EMPTY();
+            let pattern = new Script.Grid();
             let patternIsRelative = true;
             switch (_target.area.shape) {
                 case Script.AREA_SHAPE.SINGLE:
-                    pattern[pos[0]][pos[1]] = true;
+                    pattern.set(pos, true);
+                    patternIsRelative = false;
                     break;
                 case Script.AREA_SHAPE.ROW:
-                    pattern[0][pos[1]] = true;
-                    pattern[1][pos[1]] = true;
-                    pattern[2][pos[1]] = true;
+                    pattern.set([0, pos[1]], true);
+                    pattern.set([1, pos[1]], true);
+                    pattern.set([2, pos[1]], true);
                     patternIsRelative = false;
                     break;
                 case Script.AREA_SHAPE.COLUMN:
-                    pattern[pos[0]][0] = true;
-                    pattern[pos[0]][1] = true;
-                    pattern[pos[0]][2] = true;
+                    pattern.set([pos[0], 0], true);
+                    pattern.set([pos[0], 1], true);
+                    pattern.set([pos[0], 2], true);
                     patternIsRelative = false;
                     break;
                 case Script.AREA_SHAPE.PLUS:
-                    pattern[1][0] = true;
-                    pattern[0][1] = true;
-                    pattern[1][1] = true;
-                    pattern[2][1] = true;
-                    pattern[1][2] = true;
+                    pattern.set([1, 0], true);
+                    pattern.set([0, 1], true);
+                    pattern.set([1, 1], true);
+                    pattern.set([2, 1], true);
+                    pattern.set([1, 2], true);
                     break;
                 case Script.AREA_SHAPE.DIAGONALS:
-                    pattern[0][0] = true;
-                    pattern[2][0] = true;
-                    pattern[0][2] = true;
-                    pattern[2][2] = true;
+                    pattern.set([0, 0], true);
+                    pattern.set([2, 0], true);
+                    pattern.set([0, 2], true);
+                    pattern.set([2, 2], true);
                     break;
                 case Script.AREA_SHAPE.SQUARE:
-                    pattern = [[true, true, true], [true, false, true], [true, true, true]];
+                    pattern = new Script.Grid([[true, true, true], [true, false, true], [true, true, true]]);
                     break;
                 case Script.AREA_SHAPE.PATTERN: {
-                    pattern = Script.Grid.EMPTY();
                     if (_target.area.shape === Script.AREA_SHAPE.PATTERN) { // only so that TS doesn't complain.
-                        Script.Utils.forEachElement(_target.area.pattern, (element, pos) => {
-                            pattern[pos[0]][pos[1]] = !!element;
+                        new Script.Grid(_target.area.pattern).forEachElement((element, pos) => {
+                            pattern.set(pos, !!element);
                         });
                     }
                 }
             }
-            if (patternIsRelative) {
+            if (patternIsRelative && (pos[0] !== 1 || pos[1] !== 1)) {
+                // 1, 1 is the center, so the difference to that is how much the pattern is supposed to be moved
+                let delta = [pos[0] - 1, pos[1] - 1];
+                let movedPattern = new Script.Grid();
+                pattern.forEachElement((el, pos) => {
+                    let newPos = [pos[0] + delta[0], pos[1] + delta[1]];
+                    movedPattern.set(newPos, !!el);
+                });
+                pattern = movedPattern;
             }
+            // final pattern achieved, get the actual entities in these areas now
+            side.forEachElement((el) => {
+                if (!el)
+                    return;
+                targets.push(el);
+            });
+            return targets;
         }
         return targets;
     }
@@ -225,29 +240,28 @@ var Script;
     (function (SPELL_TYPE) {
         // positive buffs
         /** Blocks 1 damage per shield, destroyed after */
-        SPELL_TYPE[SPELL_TYPE["SHIELD"] = 0] = "SHIELD";
+        SPELL_TYPE["SHIELD"] = "shield";
         /** Reflects damage back to attacker once, shields from damage. */
-        SPELL_TYPE[SPELL_TYPE["MIRROR"] = 1] = "MIRROR";
+        SPELL_TYPE["MIRROR"] = "mirror";
         /** Doubles damage of next attack, destroyed after. Max 1 used per attack. */
-        SPELL_TYPE[SPELL_TYPE["STRENGTH"] = 2] = "STRENGTH";
+        SPELL_TYPE["STRENGTH"] = "strength";
         /** Deals 1 damage to attacker once, destroyed after. */
-        SPELL_TYPE[SPELL_TYPE["THORNS"] = 3] = "THORNS";
+        SPELL_TYPE["THORNS"] = "thorns";
         // negative
         /** Takes double damage from next attack. Max 1 used per attack */
-        SPELL_TYPE[SPELL_TYPE["VULNERABLE"] = 4] = "VULNERABLE";
+        SPELL_TYPE["VULNERABLE"] = "vulnerable";
         /** Next attack doesn't deal any damage. Max 1 used per attack */
-        SPELL_TYPE[SPELL_TYPE["WEAKNESS"] = 5] = "WEAKNESS";
+        SPELL_TYPE["WEAKNESS"] = "weakness";
         /** Deals 1 damage at the end of the round per poison stack. Removes 1 per round. */
-        SPELL_TYPE[SPELL_TYPE["POISON"] = 6] = "POISON";
+        SPELL_TYPE["POISON"] = "poison";
         /** Deals 1 damage at the end of the round. Removes 1 per round. */
-        SPELL_TYPE[SPELL_TYPE["FIRE"] = 7] = "FIRE";
+        SPELL_TYPE["FIRE"] = "fire";
         // not fight related
-        SPELL_TYPE[SPELL_TYPE["GOLD"] = 8] = "GOLD";
+        SPELL_TYPE["GOLD"] = "gold";
     })(SPELL_TYPE = Script.SPELL_TYPE || (Script.SPELL_TYPE = {}));
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
-    //#region Misc
     //#endregion
     //#region Events
     let EVENT;
@@ -272,6 +286,8 @@ var Script;
         EVENT["ENTITY_MOVED"] = "entityMoved";
         EVENT["TRIGGERED_ABILITY"] = "triggeredAbility";
     })(EVENT = Script.EVENT || (Script.EVENT = {}));
+    //#endregion
+    //#region Fight
     //#endregion
     // interface RunManager {
     //     eumlinge: Eumling, // iEntity / Entity implementation
@@ -309,7 +325,7 @@ var Script;
                 id: "moveMultiple",
                 health: 5,
                 moves: {
-                    moves: [
+                    options: [
                         { direction: Script.DIRECTION_RELATIVE.FORWARD, distance: 1 },
                         { rotateBy: 2, direction: Script.DIRECTION_RELATIVE.FORWARD, distance: 1 },
                     ],
@@ -322,7 +338,7 @@ var Script;
             },
             {
                 id: "attackRandomEnemy",
-                health: 2,
+                health: 10,
                 attacks: {
                     target: {
                         side: Script.TARGET_SIDE.OPPONENT,
@@ -336,9 +352,9 @@ var Script;
             },
             {
                 id: "multipleAttacksOnlyOnePerRound",
-                health: 1,
+                health: 10,
                 attacks: {
-                    attacks: [
+                    options: [
                         {
                             target: Script.TARGET.RANDOM_ENEMY,
                             baseDamage: 1,
@@ -359,7 +375,7 @@ var Script;
                         }
                     ],
                     selection: {
-                        order: Script.SELECTION_ORDER.RANDOM_EACH_ROUND,
+                        order: Script.SELECTION_ORDER.ALL,
                         amount: 1,
                     }
                 }
@@ -387,7 +403,7 @@ var Script;
             {
                 id: "spells",
                 spells: {
-                    spells: [
+                    options: [
                         {
                             target: Script.TARGET.SELF, // shortcut
                             type: Script.SPELL_TYPE.SHIELD,
@@ -492,6 +508,60 @@ var Script;
                         }
                     }
                 ]
+            },
+            {
+                id: "cactusCrawler", // doesn't attack but gets thorns after moving
+                health: 1,
+                moves: { direction: Script.DIRECTION_RELATIVE.FORWARD, distance: 1 },
+                startDirection: 6, // down
+                abilities: [
+                    {
+                        on: Script.EVENT.ENTITY_MOVED,
+                        conditions: [
+                            {
+                                target: Script.TARGET.SELF,
+                                value: {
+                                    min: 1
+                                }
+                            }
+                        ],
+                        target: Script.TARGET.SELF,
+                        spell: {
+                            type: Script.SPELL_TYPE.THORNS,
+                            level: 1,
+                        }
+                    }
+                ]
+            },
+            {
+                id: "flameFlinger", // low hp but massive single target damage
+                health: 1,
+                attacks: {
+                    baseDamage: 2,
+                    target: {
+                        side: Script.TARGET_SIDE.OPPONENT,
+                        area: {
+                            position: Script.AREA_POSITION.RELATIVE_MIRRORED,
+                            shape: Script.AREA_SHAPE.SINGLE,
+                        },
+                    }
+                }
+            },
+            {
+                id: "worriedWall", // very strong wall, which dies when others die
+                health: 6,
+                abilities: [
+                    {
+                        on: Script.EVENT.ENTITY_DIED,
+                        conditions: [{
+                                target: { side: Script.TARGET_SIDE.ALLY, entity: {}, excludeSelf: true }
+                            }],
+                        target: Script.TARGET.SELF,
+                        attack: {
+                            baseDamage: 6,
+                        }
+                    },
+                ]
             }
         ];
     })(DataContent = Script.DataContent || (Script.DataContent = {}));
@@ -503,7 +573,7 @@ var Script;
         DataContent.fights = [
             {
                 rounds: 3,
-                entities: [[, , ,], [, "test", ,], [, , ,]]
+                entities: [[, , ,], [, "attackRandomEnemy", ,], [, , ,]],
             }
         ];
     })(DataContent = Script.DataContent || (Script.DataContent = {}));
@@ -559,17 +629,42 @@ var Script;
 var Script;
 (function (Script) {
     class Fight {
-        constructor(_fight) {
+        constructor(_fight, _home) {
             this.rounds = _fight.rounds;
             this.arena = {
-                away: Script.Grid.EMPTY(),
-                home: Script.Grid.EMPTY(),
+                away: Script.initEntitiesInGrid(_fight.entities, Script.Entity),
+                home: _home,
             };
-            let data = Script.Provider.data;
-            Script.Utils.forEachElement(_fight.entities, (entityId, pos) => {
-                if (!entityId)
+        }
+        async run() {
+            // TODO: add eventlisteners
+            // run actual round
+            for (let r = 0; r < this.rounds; r++) {
+                await this.runOneSide(this.arena.home, this.arena.away);
+                await this.runOneSide(this.arena.away, this.arena.home);
+                // check if round is over
+                if (this.arena.home.occupiedSpots === 0) {
+                    return console.log("Player lost");
+                }
+                if (this.arena.away.occupiedSpots === 0) {
+                    return console.log("Player won");
+                }
+            }
+            return console.log("Player survived");
+        }
+        async runOneSide(_active, _passive) {
+            // TODO: moves
+            // spells
+            await _active.forEachElementAsync(async (el) => {
+                if (!el)
                     return;
-                this.arena.away[pos[0]][pos[1]] = new Script.Entity(data.getEntity(entityId), Script.Provider.visualizer);
+                await el.useSpell(_active, _passive);
+            });
+            // attacks
+            await _active.forEachElementAsync(async (el) => {
+                if (!el)
+                    return;
+                await el.useAttack(_active, _passive);
             });
         }
     }
@@ -636,82 +731,157 @@ var Script;
         ƒ.AudioManager.default.update();
     }
     async function run() {
+        let eumlings = new Script.Grid();
+        eumlings.set([1, 1], new Script.Entity(Script.Provider.data.getEntity("multipleAttacksOnlyOnePerRound"), Script.Provider.visualizer));
         let fightData = Script.Provider.data.fights[0];
-        let fight = new Script.Fight(fightData);
-        console.log(fight);
+        let fight = new Script.Fight(fightData, eumlings);
+        await fight.run();
     }
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
     class Entity {
-        #visualizer;
         constructor(_entity, _vis) {
             this.id = _entity.id;
             this.health = _entity.health ?? 1;
             this.currentHealth = this.health;
             // this.moves = _entity.moves instanceof ;
             if (_entity.moves)
-                this.moves = "moves" in _entity.moves ? _entity.moves : { moves: [_entity.moves], selection: { order: Script.SELECTION_ORDER.ALL, amount: 1 } };
+                this.moves = "selection" in _entity.moves ? _entity.moves : { options: [_entity.moves], selection: { order: Script.SELECTION_ORDER.ALL, amount: 1 } };
             if (_entity.spells)
-                this.spells = "spells" in _entity.spells ? _entity.spells : { spells: [_entity.spells], selection: { order: Script.SELECTION_ORDER.ALL, amount: 1 } };
+                this.spells = "selection" in _entity.spells ? _entity.spells : { options: [_entity.spells], selection: { order: Script.SELECTION_ORDER.ALL, amount: 1 } };
             if (_entity.attacks)
-                this.attacks = "attacks" in _entity.attacks ? _entity.attacks : { attacks: [_entity.attacks], selection: { order: Script.SELECTION_ORDER.ALL, amount: 1 } };
-            this.#visualizer = _vis.getEntity(this);
+                this.attacks = "selection" in _entity.attacks ? _entity.attacks : { options: [_entity.attacks], selection: { order: Script.SELECTION_ORDER.ALL, amount: 1 } };
+            this.visualizer = _vis.getEntity(this);
         }
-        getDamage() {
+        damage(_amt) {
             throw new Error("Method not implemented.");
         }
-        useSpell(_arena) {
-            throw new Error("Method not implemented.");
+        async move() {
+            ;
         }
-        useAttack(_arena) {
-            throw new Error("Method not implemented.");
+        async useSpell(_friendly, _opponent) {
+            const spells = this.select(this.spells);
+            for (let spell of spells) {
+                await this.visualizer.spell(spell);
+            }
         }
-        move() {
+        async useAttack(_friendly, _opponent) {
+            const attacks = this.select(this.attacks);
+            for (let attack of attacks) {
+                // get the target(s)
+                let target = Script.getTargets(attack.target, _friendly, _opponent);
+                // execute the attacks
+                await this.visualizer.attack(attack);
+            }
+        }
+        getOwnDamage() {
             throw new Error("Method not implemented.");
         }
         updateVisuals() {
             // 
+        }
+        select(_options) {
+            if (!_options)
+                return [];
+            const selection = [];
+            if ("options" in _options) {
+                if (!_options.selection.amount)
+                    _options.selection.amount = Infinity;
+                switch (_options.selection.order) {
+                    case Script.SELECTION_ORDER.ALL:
+                        _options.counter = 0;
+                    case Script.SELECTION_ORDER.SEQUENTIAL:
+                        if (!_options.counter)
+                            _options.counter = 0;
+                        for (let i = 0; i < _options.selection.amount && i < _options.options.length; i++) {
+                            selection.push(_options.options[(i + _options.counter) % _options.options.length]);
+                            _options.counter = (_options.counter + 1) % _options.options.length;
+                        }
+                        break;
+                    case Script.SELECTION_ORDER.RANDOM_EACH_FIGHT:
+                    case Script.SELECTION_ORDER.RANDOM_EACH_ROUND:
+                }
+                return selection;
+            }
+            return [_options];
         }
     }
     Script.Entity = Entity;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
-    let Utils;
-    (function (Utils) {
-        function forEachElement(_grid, callback) {
-            callback(_grid[0][0], [0, 0]);
-            callback(_grid[1][0], [1, 0]);
-            callback(_grid[2][0], [2, 0]);
-            callback(_grid[0][1], [0, 1]);
-            callback(_grid[1][1], [1, 1]);
-            callback(_grid[2][1], [2, 1]);
-            callback(_grid[0][2], [0, 2]);
-            callback(_grid[1][2], [1, 2]);
-            callback(_grid[2][2], [2, 2]);
+    class Grid {
+        constructor(_content = Grid.EMPTY()) {
+            this.grid = _content;
         }
-        Utils.forEachElement = forEachElement;
-        async function forEachElementAsync(_grid, callback) {
-            await callback(_grid[0][0], [0, 0]);
-            await callback(_grid[1][0], [1, 0]);
-            await callback(_grid[2][0], [2, 0]);
-            await callback(_grid[0][1], [0, 1]);
-            await callback(_grid[1][1], [1, 1]);
-            await callback(_grid[2][1], [2, 1]);
-            await callback(_grid[0][2], [0, 2]);
-            await callback(_grid[1][2], [1, 2]);
-            await callback(_grid[2][2], [2, 2]);
-        }
-        Utils.forEachElementAsync = forEachElementAsync;
-    })(Utils = Script.Utils || (Script.Utils = {}));
-    let Grid;
-    (function (Grid) {
-        function EMPTY() {
+        ;
+        static EMPTY() {
             return [[, , ,], [, , ,], [, , ,]];
         }
-        Grid.EMPTY = EMPTY;
-    })(Grid = Script.Grid || (Script.Grid = {}));
+        get(_pos) {
+            if (this.outOfBounds(_pos))
+                return undefined;
+            return this.grid[_pos[0]][_pos[1]];
+        }
+        set(_pos, _el) {
+            if (this.outOfBounds(_pos))
+                return undefined;
+            return this.grid[_pos[0]][_pos[1]] = _el;
+        }
+        forEachElement(callback) {
+            callback(this.grid[0][0], [0, 0]);
+            callback(this.grid[1][0], [1, 0]);
+            callback(this.grid[2][0], [2, 0]);
+            callback(this.grid[0][1], [0, 1]);
+            callback(this.grid[1][1], [1, 1]);
+            callback(this.grid[2][1], [2, 1]);
+            callback(this.grid[0][2], [0, 2]);
+            callback(this.grid[1][2], [1, 2]);
+            callback(this.grid[2][2], [2, 2]);
+        }
+        async forEachElementAsync(callback) {
+            await callback(this.grid[0][0], [0, 0]);
+            await callback(this.grid[1][0], [1, 0]);
+            await callback(this.grid[2][0], [2, 0]);
+            await callback(this.grid[0][1], [0, 1]);
+            await callback(this.grid[1][1], [1, 1]);
+            await callback(this.grid[2][1], [2, 1]);
+            await callback(this.grid[0][2], [0, 2]);
+            await callback(this.grid[1][2], [1, 2]);
+            await callback(this.grid[2][2], [2, 2]);
+        }
+        get occupiedSpots() {
+            let total = 0;
+            this.forEachElement((el) => {
+                if (el)
+                    total++;
+            });
+            return total;
+        }
+        outOfBounds(_pos) {
+            return _pos[0] < 0 || _pos[0] > 2 || _pos[1] < 0 || _pos[1] > 2;
+        }
+    }
+    Script.Grid = Grid;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    function initEntitiesInGrid(_grid, _entity) {
+        const grid = new Script.Grid(_grid);
+        const newGrid = new Script.Grid();
+        const data = Script.Provider.data;
+        grid.forEachElement((entityId, pos) => {
+            if (!entityId)
+                return;
+            let entityData = data.getEntity(entityId);
+            if (!entityData)
+                throw new Error(`Entity ${entityId} not found.`);
+            newGrid.set(pos, new _entity(entityData, Script.Provider.visualizer));
+        });
+        return newGrid;
+    }
+    Script.initEntitiesInGrid = initEntitiesInGrid;
     async function waitMS(_ms) {
         return new Promise((resolve) => {
             setTimeout(resolve, _ms);
@@ -724,20 +894,20 @@ var Script;
     class VisualizeEntityNull {
         #entity;
         constructor(_entity) { this.#entity = _entity; }
-        async attack() {
-            console.log("entity visualizer null: attack", this.#entity);
+        async attack(_attack) {
+            console.log("entity visualizer null: attack", _attack);
             await Script.waitMS(200);
         }
-        async move() {
-            console.log("entity visualizer null: move", this.#entity);
+        async move(_move) {
+            console.log("entity visualizer null: move", _move);
             await Script.waitMS(200);
         }
         async hurt() {
             console.log("entity visualizer null: hurt", this.#entity);
             await Script.waitMS(200);
         }
-        async spell() {
-            console.log("entity visualizer null: buff", this.#entity);
+        async spell(_spell) {
+            console.log("entity visualizer null: spell", _spell);
             await Script.waitMS(200);
         }
         async showPreview() {
@@ -763,7 +933,7 @@ var Script;
             this.#grid = _grid;
         }
         updateVisuals() {
-            Script.Utils.forEachElement(this.#grid, (element) => {
+            this.#grid.forEachElement((element) => {
                 element.updateVisuals();
             });
         }

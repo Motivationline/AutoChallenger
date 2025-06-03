@@ -31,8 +31,10 @@ namespace Script {
   }
 
   async function run(){
+    let eumlings: Grid<IEntity> = new Grid();
+    eumlings.set([1,1], new Entity(Provider.data.getEntity("multipleAttacksOnlyOnePerRound"), Provider.visualizer));
     let fightData = Provider.data.fights[0];
-    let fight = new Fight(fightData);
-    console.log(fight);
+    let fight = new Fight(fightData, eumlings);
+    await fight.run();
   }
 }

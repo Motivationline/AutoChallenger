@@ -1,32 +1,32 @@
 namespace Script {
     export interface IVisualizeEntity {
-        attack(_attack: Attack): Promise<void>;
-        move(): Promise<void>;
+        attack(_attack: AttackData): Promise<void>;
+        move(_move: MoveData): Promise<void>;
         hurt(): Promise<void>;
-        spell(_spell: Spell): Promise<void>;
+        spell(_spell: SpellData): Promise<void>;
         showPreview(): Promise<void>;
         hidePreview(): Promise<void>;
         /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
-        updateVisuals(): Promise<void>;
+        updateVisuals(): void;
     }
 
     export class VisualizeEntityNull implements IVisualizeEntity {
-        #entity: iEntity;
-        constructor(_entity: iEntity) { this.#entity = _entity; }
-        async attack(): Promise<void> {
-            console.log("entity visualizer null: attack", this.#entity);
+        #entity: IEntity;
+        constructor(_entity: IEntity) { this.#entity = _entity; }
+        async attack(_attack: AttackData): Promise<void> {
+            console.log("entity visualizer null: attack", _attack);
             await waitMS(200);
         }
-        async move(): Promise<void> {
-            console.log("entity visualizer null: move", this.#entity);
+        async move(_move: MoveData): Promise<void> {
+            console.log("entity visualizer null: move", _move);
             await waitMS(200);
         }
         async hurt(): Promise<void> {
             console.log("entity visualizer null: hurt", this.#entity);
             await waitMS(200);
         }
-        async spell(): Promise<void> {
-            console.log("entity visualizer null: buff", this.#entity);
+        async spell(_spell: SpellData): Promise<void> {
+            console.log("entity visualizer null: spell", _spell);
             await waitMS(200);
         }
         async showPreview(): Promise<void> {

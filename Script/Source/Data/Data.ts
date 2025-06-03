@@ -4,14 +4,14 @@
 
 namespace Script {
 
-    export interface iData {
-        fights: iFight[],
-        entities: IEntityData[],
-        entityMap: { [id: string]: IEntityData },
+    export interface DataData {
+        fights: FightData[],
+        entities: EntityData[],
+        entityMap: { [id: string]: EntityData },
     }
 
     export class Data {
-        private data: Partial<iData> = {};
+        private data: Partial<DataData> = {};
         public async load() {
             this.data.fights = DataContent.fights;
             this.data.entities = DataContent.entities;
@@ -33,17 +33,17 @@ namespace Script {
             }
         }
 
-        public get fights(): readonly iFight[] {
+        public get fights(): readonly FightData[] {
             return this.data.fights;
         }
-        public get entities(): readonly IEntityData[] {
+        public get entities(): readonly EntityData[] {
             return this.data.entities;
         }
 
-        public getEntity(_id: string): Readonly<IEntityData> | undefined {
+        public getEntity(_id: string): Readonly<EntityData> | undefined {
             return this.data.entityMap[_id];
         }
-        private resolveParent(_entity: IEntityData): IEntityData | undefined {
+        private resolveParent(_entity: EntityData): EntityData | undefined {
             if (!_entity.parent) return _entity;
             let parent = this.getEntity(_entity.parent);
             if (!parent) return _entity;

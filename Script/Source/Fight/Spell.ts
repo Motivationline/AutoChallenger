@@ -4,40 +4,35 @@ namespace Script {
         // positive buffs
 
         /** Blocks 1 damage per shield, destroyed after */
-        SHIELD,
+        SHIELD = "shield",
         /** Reflects damage back to attacker once, shields from damage. */
-        MIRROR,
+        MIRROR = "mirror",
         /** Doubles damage of next attack, destroyed after. Max 1 used per attack. */
-        STRENGTH,
+        STRENGTH = "strength",
         /** Deals 1 damage to attacker once, destroyed after. */
-        THORNS,
+        THORNS = "thorns",
 
         // negative
         /** Takes double damage from next attack. Max 1 used per attack */
-        VULNERABLE,
+        VULNERABLE = "vulnerable",
         /** Next attack doesn't deal any damage. Max 1 used per attack */
-        WEAKNESS,
+        WEAKNESS = "weakness",
         /** Deals 1 damage at the end of the round per poison stack. Removes 1 per round. */
-        POISON,
+        POISON = "poison",
         /** Deals 1 damage at the end of the round. Removes 1 per round. */
-        FIRE,
+        FIRE = "fire",
 
         // not fight related
-        GOLD,
+        GOLD = "gold",
     }
 
-    export interface SpellNoTarget {
+    export interface SpellDataNoTarget {
         type: SPELL_TYPE,
         /** Strength of the spell. Default: 1 */
         level?: number,
     }
-    export interface Spell extends SpellNoTarget {
+    export interface SpellData extends SpellDataNoTarget {
         target: Target,
-    }
-
-    export interface Spells {
-        spells: Spell[],
-        selection: Selection,
     }
 
     

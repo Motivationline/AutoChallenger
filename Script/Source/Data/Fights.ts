@@ -1,9 +1,9 @@
 namespace Script {   
     export namespace DataContent {
-        export const fights: iFight[] = [
+        export const fights: FightData[] = [
             {
                 rounds: 3,
-                entities: [[,,,],[,"test",,],[,,,]]
+                entities: [[,,,],[,"attackRandomEnemy",,],[,,,]],
             }
         ]
     }

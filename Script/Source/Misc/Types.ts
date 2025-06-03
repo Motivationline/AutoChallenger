@@ -1,13 +1,11 @@
 namespace Script {
 
     //#region Misc
-
-    export type Grid<T> = [[T, T, T], [T, T, T], [T, T, T]]
     /**
      * ```
-     * [0, 0] [1, 0] [2, 0]  
-     * [0, 1] [1, 1] [2, 1]  
-     * [0, 2] [1, 2] [2, 2]  
+     * OPPONENT | [0, 0] [1, 0] [2, 0]  
+     * OPPONENT | [0, 1] [1, 1] [2, 1]  
+     * OPPONENT | [0, 2] [1, 2] [2, 2]  
      * ```
      */
     export type Position = [number, number];
@@ -51,30 +49,19 @@ namespace Script {
         /** What kind of event happened? */
         type: EVENT,
         /** Who sent this event? */
-        target: iEntity,
+        target: IEntity,
         /** Who or what caused the event? Might be empty. */
-        cause?: iEntity,
+        cause?: IEntity,
         /** Optional value field for relevant events. Might be empty. */
         value?: number,
         /** Optional value for whatever triggered this event. */
-        trigger?: Attack | Spell | Move,
+        trigger?: AttackData | SpellData | MoveData,
     }
 
     //#endregion
 
     //#region Fight
 
-    export interface iFight {
-        /** How many rounds this fight should take until it's considered "passed" even if not all enemies are defeated. */
-        rounds: number,
-        /** Use the string identifiers from the entities to define what goes where. */
-        entities: Grid<string>,
-    }
-
-    export interface Arena {
-        home: Grid<iEntity>;
-        away: Grid<iEntity>;
-    }
 
     //#endregion
 

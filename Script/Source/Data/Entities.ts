@@ -5,7 +5,7 @@
 
 namespace Script {
     export namespace DataContent {
-        export const entities: IEntityData[] = [
+        export const entities: EntityData[] = [
             {
                 id: "parent",
                 health: 5,
@@ -19,7 +19,7 @@ namespace Script {
                 id: "moveMultiple",
                 health: 5,
                 moves: {
-                    moves: [
+                    options: [
                         { direction: DIRECTION_RELATIVE.FORWARD, distance: 1 },
                         { rotateBy: 2, direction: DIRECTION_RELATIVE.FORWARD, distance: 1 },
                     ],
@@ -32,7 +32,7 @@ namespace Script {
             },
             {
                 id: "attackRandomEnemy",
-                health: 2,
+                health: 10,
                 attacks: {
                     target: { // can also use TARGET.RANDOM_ENEMY preset
                         side: TARGET_SIDE.OPPONENT,
@@ -46,9 +46,9 @@ namespace Script {
             },
             {
                 id: "multipleAttacksOnlyOnePerRound",
-                health: 1,
+                health: 10,
                 attacks: {
-                    attacks: [
+                    options: [
                         {
                             target: TARGET.RANDOM_ENEMY,
                             baseDamage: 1,
@@ -69,7 +69,7 @@ namespace Script {
                         }
                     ],
                     selection: {
-                        order: SELECTION_ORDER.RANDOM_EACH_ROUND,
+                        order: SELECTION_ORDER.ALL,
                         amount: 1,
                     }
                 }
@@ -96,7 +96,7 @@ namespace Script {
             {
                 id: "spells",
                 spells: {
-                    spells: [
+                    options: [
                         {   // Shield yourself
                             target: TARGET.SELF, // shortcut
                             type: SPELL_TYPE.SHIELD,
@@ -191,7 +191,7 @@ namespace Script {
                             side: TARGET_SIDE.ALLY,
                             area: {
                                 position: AREA_POSITION.ABSOLUTE,
-                                absolutePosition: [0,0],
+                                absolutePosition: [0, 0],
                                 shape: AREA_SHAPE.COLUMN,
                             }
                         },
@@ -243,7 +243,7 @@ namespace Script {
             {
                 id: "worriedWall", // very strong wall, which dies when others die
                 health: 6,
-                abilities:[
+                abilities: [
                     {   // if an ally dies, deal 6 damage to self
                         on: EVENT.ENTITY_DIED,
                         conditions: [{

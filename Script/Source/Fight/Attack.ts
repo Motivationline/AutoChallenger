@@ -1,18 +1,13 @@
 namespace Script {
    
-    export interface AttackNoTarget {
+    export interface AttackDataNoTarget {
         baseDamage: number,
         /** default: 0 */
         baseCritChance?: number,
     }
 
-    export interface Attack extends AttackNoTarget {
+    export interface AttackData extends AttackDataNoTarget {
         target: Target,
-    }
-
-    export interface Attacks {
-        attacks: Attack[],
-        selection: Selection
     }
  
 }

@@ -3,13 +3,13 @@ namespace Script {
 
     export enum SELECTION_ORDER {
         /** Selects options in order, loops around when found */
-        SEQUENTIAL = 1,
+        SEQUENTIAL = "sequential",
         /** Chooses random options for the entire fight */
-        RANDOM_EACH_FIGHT,
+        RANDOM_EACH_FIGHT = "randomEachFight",
         /** Chooses random options for each round */
-        RANDOM_EACH_ROUND,
+        RANDOM_EACH_ROUND = "randomEachRound",
         /** Chooses all options, always starting from the first */
-        ALL,
+        ALL = "all",
     }
 
     export interface Selection {
@@ -18,24 +18,29 @@ namespace Script {
         amount?: number,
     }
 
+    export type Selectable<T> = T | {
+        options: T[],
+        selection: Selection,
+    }
+
     //#region Area
     export enum AREA_SHAPE_PATTERN {
         /** Choose your own pattern */
-        PATTERN = 99,
+        PATTERN = "pattern",
     }
     export enum AREA_SHAPE_OTHERS {
         /** Target a single Slot */
-        SINGLE = 1,
+        SINGLE = "single",
         /** Target an entire row */
-        ROW,
+        ROW = "row",
         /** Target an entire column */
-        COLUMN,
+        COLUMN = "column",
         /** Target enemies in a plus shape, so basically column + row */
-        PLUS,
+        PLUS = "plus",
         /** Target enemies in an X shape, so all the corners but not the center */
-        DIAGONALS,
+        DIAGONALS = "diagonals",
         /** Target all enemies except in the center position */
-        SQUARE,
+        SQUARE = "square",
     }
 
     export const AREA_SHAPE = Object.assign({}, AREA_SHAPE_PATTERN, AREA_SHAPE_OTHERS);
@@ -105,7 +110,7 @@ namespace Script {
          * [[,,,],[,,,],[,,,]]
          * ```
          */
-        pattern: Grid<any>,
+        pattern: GridData<any>,
     }
 
     type AreaTargetOthers = {
@@ -133,9 +138,9 @@ namespace Script {
 
     export enum TARGET_SIDE {
         /** Your own side */
-        ALLY = 1,
+        ALLY = "ally",
         /** Your opponents side */
-        OPPONENT,
+        OPPONENT = "opponent",
     }
 
     type TargetBase = {
@@ -194,13 +199,13 @@ namespace Script {
 
     //#region Implementation
 
-    export function getTargets(_target: Target, _allies: Grid<iEntity>, _opponents: Grid<iEntity>, _self?: iEntity): iEntity[] {
-        const targets: iEntity[] = [];
-        const side: Grid<iEntity> = _target.side === TARGET_SIDE.ALLY ? _allies : _opponents;
+    export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self?: IEntity): IEntity[] {
+        const targets: IEntity[] = [];
+        const side: Grid<IEntity> = _target.side === TARGET_SIDE.ALLY ? _allies : _opponents;
 
         // entity selector
         if ("entity" in _target) {
-            Utils.forEachElement(side, (entity) => {
+            side.forEachElement((entity) => {
                 if (entity) targets.push(entity);
             })
 
@@ -210,7 +215,7 @@ namespace Script {
                     break;
                 }
                 case "strongest": {
-                    targets.sort((a, b) => a.getDamage() - b.getDamage());
+                    targets.sort((a, b) => a.getOwnDamage() - b.getOwnDamage());
                     break;
                 }
                 case "healthiest": {
@@ -242,7 +247,7 @@ namespace Script {
             switch (_target.area.position) {
                 case AREA_POSITION.RELATIVE_FIRST_IN_ROW: {
                     for (let i: number = 0; i < 3; i++) {
-                        if (side[i][_self.position[1]]) {
+                        if (side.get([i, _self.position[1]])) {
                             pos = [i, _self.position[1]]
                             break;
                         }
@@ -251,7 +256,7 @@ namespace Script {
                 }
                 case AREA_POSITION.RELATIVE_LAST_IN_ROW: {
                     for (let i: number = 2; i >= 0; i--) {
-                        if (side[i][_self.position[1]]) {
+                        if (side.get([i, _self.position[1]])) {
                             pos = [i, _self.position[1]]
                             break;
                         }
@@ -275,52 +280,68 @@ namespace Script {
             }
             if (!pos) return [];
 
-            let pattern: Grid<boolean> = Grid.EMPTY();
+            let pattern: Grid<boolean> = new Grid();
             let patternIsRelative: boolean = true;
             switch (_target.area.shape) {
                 case AREA_SHAPE.SINGLE:
-                    pattern[pos[0]][pos[1]] = true;
+                    pattern.set(pos, true);
+                    patternIsRelative = false;
                     break;
                 case AREA_SHAPE.ROW:
-                    pattern[0][pos[1]] = true;
-                    pattern[1][pos[1]] = true;
-                    pattern[2][pos[1]] = true;
+                    pattern.set([0, pos[1]], true);
+                    pattern.set([1, pos[1]], true);
+                    pattern.set([2, pos[1]], true);
                     patternIsRelative = false;
                     break;
                 case AREA_SHAPE.COLUMN:
-                    pattern[pos[0]][0] = true;
-                    pattern[pos[0]][1] = true;
-                    pattern[pos[0]][2] = true;
+                    pattern.set([pos[0], 0], true);
+                    pattern.set([pos[0], 1], true);
+                    pattern.set([pos[0], 2], true);
                     patternIsRelative = false;
                     break;
                 case AREA_SHAPE.PLUS:
-                    pattern[1][0] = true;
-                    pattern[0][1] = true;
-                    pattern[1][1] = true;
-                    pattern[2][1] = true;
-                    pattern[1][2] = true;
+                    pattern.set([1, 0], true);
+                    pattern.set([0, 1], true);
+                    pattern.set([1, 1], true);
+                    pattern.set([2, 1], true);
+                    pattern.set([1, 2], true);
                     break;
                 case AREA_SHAPE.DIAGONALS:
-                    pattern[0][0] = true;
-                    pattern[2][0] = true;
-                    pattern[0][2] = true;
-                    pattern[2][2] = true;
+                    pattern.set([0, 0], true);
+                    pattern.set([2, 0], true);
+                    pattern.set([0, 2], true);
+                    pattern.set([2, 2], true);
                     break;
                 case AREA_SHAPE.SQUARE:
-                    pattern = [[true, true, true], [true, false, true], [true, true, true]]
+                    pattern = new Grid([[true, true, true], [true, false, true], [true, true, true]]);
                     break;
                 case AREA_SHAPE.PATTERN: {
-                    pattern = Grid.EMPTY();
                     if (_target.area.shape === AREA_SHAPE.PATTERN) { // only so that TS doesn't complain.
-                        Utils.forEachElement(_target.area.pattern, (element, pos) => {
-                            pattern[pos[0]][pos[1]] = !!element;
+                        new Grid(_target.area.pattern).forEachElement((element, pos) => {
+                            pattern.set(pos, !!element);
                         });
                     }
                 }
             }
-            if (patternIsRelative) {
+            if (patternIsRelative && (pos[0] !== 1 || pos[1] !== 1)) {
+                // 1, 1 is the center, so the difference to that is how much the pattern is supposed to be moved
+                let delta: Position = [pos[0] - 1, pos[1] - 1];
+                let movedPattern: Grid<boolean> = new Grid();
+                pattern.forEachElement((el, pos) => {
+                    let newPos: Position = [pos[0] + delta[0], pos[1] + delta[1]];
 
+                    movedPattern.set(newPos, !!el);
+                });
+                pattern = movedPattern;
             }
+
+            // final pattern achieved, get the actual entities in these areas now
+            side.forEachElement((el) => {
+                if (!el) return;
+                targets.push(el);
+            });
+
+            return targets;
         }
 
         return targets;

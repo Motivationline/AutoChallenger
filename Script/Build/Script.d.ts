@@ -1,56 +1,63 @@
 declare namespace Script {
     enum DIRECTION_RELATIVE {
-        FORWARD = 0,
-        BACKWARD = 1,
-        LEFT = 2,
-        RIGHT = 3
+        FORWARD = "forward",
+        BACKWARD = "backward",
+        LEFT = "left",
+        RIGHT = "right"
     }
-    interface Move {
+    interface MoveData {
         /** rotates the unit _clockwise_ by 45° per increment of this value.
          * **rotation occurs before movement** and is entirely mechanical, not visual.
          */
         rotateBy?: number;
         direction: DIRECTION_RELATIVE;
         distance: number;
-    }
-    interface Moves {
-        moves: Move[];
-        selection: Selection;
+        /** If this unit is blocked from moving in the desired direction, what should it do? */
+        blocked?: {
+            /** how many increments of 45° should it rotate _(clockwise)_ to try again? */
+            rotateBy: number;
+            /** How many attempts should it make to rotate and move again? default: 1, max 8 */
+            attempts?: number;
+        };
     }
 }
 declare namespace Script {
     export enum SELECTION_ORDER {
         /** Selects options in order, loops around when found */
-        SEQUENTIAL = 1,
+        SEQUENTIAL = "sequential",
         /** Chooses random options for the entire fight */
-        RANDOM_EACH_FIGHT = 2,
+        RANDOM_EACH_FIGHT = "randomEachFight",
         /** Chooses random options for each round */
-        RANDOM_EACH_ROUND = 3,
+        RANDOM_EACH_ROUND = "randomEachRound",
         /** Chooses all options, always starting from the first */
-        ALL = 4
+        ALL = "all"
     }
     export interface Selection {
         order: SELECTION_ORDER;
         /** how many should be selected. Leave blank or 0 to select all. */
         amount?: number;
     }
+    export type Selectable<T> = T | {
+        options: T[];
+        selection: Selection;
+    };
     export enum AREA_SHAPE_PATTERN {
         /** Choose your own pattern */
-        PATTERN = 99
+        PATTERN = "pattern"
     }
     export enum AREA_SHAPE_OTHERS {
         /** Target a single Slot */
-        SINGLE = 1,
+        SINGLE = "single",
         /** Target an entire row */
-        ROW = 2,
+        ROW = "row",
         /** Target an entire column */
-        COLUMN = 3,
+        COLUMN = "column",
         /** Target enemies in a plus shape, so basically column + row */
-        PLUS = 4,
+        PLUS = "plus",
         /** Target enemies in an X shape, so all the corners but not the center */
-        DIAGONALS = 5,
+        DIAGONALS = "diagonals",
         /** Target all enemies except in the center position */
-        SQUARE = 6
+        SQUARE = "square"
     }
     export const AREA_SHAPE: typeof AREA_SHAPE_PATTERN & typeof AREA_SHAPE_OTHERS;
     export enum AREA_POSITION_ABSOLUTE {
@@ -112,7 +119,7 @@ declare namespace Script {
          * [[,,,],[,,,],[,,,]]
          * ```
          */
-        pattern: Grid<any>;
+        pattern: GridData<any>;
     };
     type AreaTargetOthers = {
         /** ### Option 1: Choose one of the predefined shapes */
@@ -133,9 +140,9 @@ declare namespace Script {
     type Area = AreaTarget & AreaPositioned;
     export enum TARGET_SIDE {
         /** Your own side */
-        ALLY = 1,
+        ALLY = "ally",
         /** Your opponents side */
-        OPPONENT = 2
+        OPPONENT = "opponent"
     }
     type TargetBase = {
         /** Which side to target on, your own or the opponents */
@@ -182,49 +189,44 @@ declare namespace Script {
         const RANDOM_ENEMY: Readonly<Target>;
         const RANDOM_ALLY: Readonly<Target>;
     }
-    export function getTargets(_target: Target, _allies: Grid<iEntity>, _opponents: Grid<iEntity>, _self?: iEntity): iEntity[];
+    export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self?: IEntity): IEntity[];
     export {};
 }
 declare namespace Script {
     enum SPELL_TYPE {
         /** Blocks 1 damage per shield, destroyed after */
-        SHIELD = 0,
+        SHIELD = "shield",
         /** Reflects damage back to attacker once, shields from damage. */
-        MIRROR = 1,
+        MIRROR = "mirror",
         /** Doubles damage of next attack, destroyed after. Max 1 used per attack. */
-        STRENGTH = 2,
+        STRENGTH = "strength",
         /** Deals 1 damage to attacker once, destroyed after. */
-        THORNS = 3,
+        THORNS = "thorns",
         /** Takes double damage from next attack. Max 1 used per attack */
-        VULNERABLE = 4,
+        VULNERABLE = "vulnerable",
         /** Next attack doesn't deal any damage. Max 1 used per attack */
-        WEAKNESS = 5,
+        WEAKNESS = "weakness",
         /** Deals 1 damage at the end of the round per poison stack. Removes 1 per round. */
-        POISON = 6,
+        POISON = "poison",
         /** Deals 1 damage at the end of the round. Removes 1 per round. */
-        FIRE = 7,
-        GOLD = 8
+        FIRE = "fire",
+        GOLD = "gold"
     }
-    interface SpellNoTarget {
+    interface SpellDataNoTarget {
         type: SPELL_TYPE;
         /** Strength of the spell. Default: 1 */
         level?: number;
     }
-    interface Spell extends SpellNoTarget {
+    interface SpellData extends SpellDataNoTarget {
         target: Target;
-    }
-    interface Spells {
-        spells: Spell[];
-        selection: Selection;
     }
 }
 declare namespace Script {
-    type Grid<T> = [[T, T, T], [T, T, T], [T, T, T]];
     /**
      * ```
-     * [0, 0] [1, 0] [2, 0]
-     * [0, 1] [1, 1] [2, 1]
-     * [0, 2] [1, 2] [2, 2]
+     * OPPONENT | [0, 0] [1, 0] [2, 0]
+     * OPPONENT | [0, 1] [1, 1] [2, 1]
+     * OPPONENT | [0, 2] [1, 2] [2, 2]
      * ```
      */
     type Position = [number, number];
@@ -259,65 +261,69 @@ declare namespace Script {
         /** What kind of event happened? */
         type: EVENT;
         /** Who sent this event? */
-        target: iEntity;
+        target: IEntity;
         /** Who or what caused the event? Might be empty. */
-        cause?: iEntity;
+        cause?: IEntity;
         /** Optional value field for relevant events. Might be empty. */
         value?: number;
         /** Optional value for whatever triggered this event. */
-        trigger?: Attack | Spell | Move;
-    }
-    interface iFight {
-        /** How many rounds this fight should take until it's considered "passed" even if not all enemies are defeated. */
-        rounds: number;
-        /** Use the string identifiers from the entities to define what goes where. */
-        entities: Grid<string>;
-    }
-    interface Arena {
-        home: Grid<iEntity>;
-        away: Grid<iEntity>;
+        trigger?: AttackData | SpellData | MoveData;
     }
 }
 declare namespace Script {
     namespace DataContent {
-        const entities: IEntityData[];
+        const entities: EntityData[];
     }
 }
 declare namespace Script {
     namespace DataContent {
-        const fights: iFight[];
+        const fights: FightData[];
     }
 }
 declare namespace Script {
-    interface iData {
-        fights: iFight[];
-        entities: IEntityData[];
+    interface DataData {
+        fights: FightData[];
+        entities: EntityData[];
         entityMap: {
-            [id: string]: IEntityData;
+            [id: string]: EntityData;
         };
     }
     class Data {
         private data;
         load(): Promise<void>;
-        get fights(): readonly iFight[];
-        get entities(): readonly IEntityData[];
-        getEntity(_id: string): Readonly<IEntityData> | undefined;
+        get fights(): readonly FightData[];
+        get entities(): readonly EntityData[];
+        getEntity(_id: string): Readonly<EntityData> | undefined;
         private resolveParent;
     }
 }
 declare namespace Script {
+    interface FightData {
+        /** How many rounds this fight should take until it's considered "passed" even if not all enemies are defeated. */
+        rounds: number;
+        /** Use the string identifiers from the entities to define what goes where. */
+        entities: GridData<string>;
+        /** Difficulty rating for the fight. Unused for now */
+        difficulty?: number;
+    }
+    interface Arena {
+        home: Grid<IEntity>;
+        away: Grid<IEntity>;
+    }
     class Fight {
         rounds: number;
         arena: Arena;
-        constructor(_fight: iFight);
+        constructor(_fight: FightData, _home: Grid<IEntity>);
+        run(): Promise<void>;
+        private runOneSide;
     }
 }
 declare namespace Script {
     interface IVisualizer {
-        getEntity(_entity: iEntity): IVisualizeEntity;
+        getEntity(_entity: IEntity): IVisualizeEntity;
     }
     class VisualizerNull implements IVisualizer {
-        getEntity(_entity: iEntity): IVisualizeEntity;
+        getEntity(_entity: IEntity): IVisualizeEntity;
     }
 }
 declare namespace Script {
@@ -331,7 +337,10 @@ declare namespace Script {
 declare namespace Script {
 }
 declare namespace Script {
-    interface IEntityData {
+    type SelectableWithData<T> = Selectable<T> & {
+        counter?: number;
+    };
+    export interface EntityData {
         id: string;
         parent?: string;
         /** The amount of health the entity starts with. _Default: 1_ */
@@ -342,9 +351,9 @@ declare namespace Script {
          * Default: 0
          */
         startDirection?: number;
-        moves?: Moves | Move;
-        spells?: Spells | Spell;
-        attacks?: Attacks | Attack;
+        moves?: Selectable<MoveData>;
+        spells?: Selectable<SpellData>;
+        attacks?: Selectable<AttackData>;
         /** Modifiers to protect against Spells. It's a multiplier.
          *
          * 0 => no effect
@@ -353,36 +362,41 @@ declare namespace Script {
          * 2 => twice as powerful
         */
         resistances?: [SPELL_TYPE, number][];
-        abilities?: iAbility[];
+        abilities?: AbilityData[];
     }
-    interface iEntity extends IEntityData {
+    export interface IEntity extends EntityData {
         currentHealth: number;
         position: Position;
-        move(): Promise<void>;
-        useSpell(_arena: Arena): Promise<void>;
-        useAttack(_arena: Arena): Promise<void>;
-        getDamage(): number;
-        updateVisuals(): void;
+        move(_friendly: Grid<IEntity>): Promise<void>;
+        useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
+        useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
+        damage(_amt: number): number;
+        getOwnDamage(): number;
+        updateVisuals(_arena: Arena): void;
     }
-    class Entity implements iEntity {
-        #private;
+    export class Entity implements IEntity {
         currentHealth: number;
         position: Position;
         id: string;
         parent?: string;
         health?: number;
-        moves?: Moves;
-        spells?: Spells;
-        attacks?: Attacks;
+        moves?: Selectable<MoveData>;
+        spells?: Selectable<SpellData>;
+        attacks?: Selectable<AttackData>;
+        abilities?: AbilityData[];
         resistances?: [SPELL_TYPE, number][];
         startDirection?: number;
-        constructor(_entity: IEntityData, _vis: IVisualizer);
-        getDamage(): number;
-        useSpell(_arena: Arena): Promise<void>;
-        useAttack(_arena: Arena): Promise<void>;
+        protected visualizer: IVisualizeEntity;
+        constructor(_entity: EntityData, _vis: IVisualizer);
+        damage(_amt: number): number;
         move(): Promise<void>;
+        useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
+        useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
+        getOwnDamage(): number;
         updateVisuals(): void;
+        protected select<T extends Object>(_options: SelectableWithData<T>): T[];
     }
+    export {};
 }
 declare namespace Script {
     interface AbilityCondition {
@@ -397,7 +411,7 @@ declare namespace Script {
         /** placeholder for other stuff, like testing whether it's a crit or not. Not sure how it's supposed to be implemented yet. */
         otherOptions?: any;
     }
-    interface iAbility {
+    interface AbilityData {
         /** When should this ability happen? */
         on: EVENT[] | EVENT;
         /** Single condition or a list of conditions that need to be met for this ability to trigger.
@@ -413,54 +427,56 @@ declare namespace Script {
         */
         /** Who should be targeted with this ability? */
         target: "target" | "cause" | Target;
-        attack?: AttackNoTarget;
-        spell?: SpellNoTarget;
+        attack?: AttackDataNoTarget;
+        spell?: SpellDataNoTarget;
     }
 }
 declare namespace Script {
-    interface AttackNoTarget {
+    interface AttackDataNoTarget {
         baseDamage: number;
         /** default: 0 */
         baseCritChance?: number;
     }
-    interface Attack extends AttackNoTarget {
+    interface AttackData extends AttackDataNoTarget {
         target: Target;
     }
-    interface Attacks {
-        attacks: Attack[];
-        selection: Selection;
+}
+declare namespace Script {
+    type GridData<T> = [[T, T, T], [T, T, T], [T, T, T]];
+    class Grid<T> {
+        grid: GridData<T>;
+        constructor(_content?: GridData<T>);
+        static EMPTY<T>(): GridData<T | undefined>;
+        get(_pos: Position): T;
+        set(_pos: Position, _el: T): T;
+        forEachElement(callback: (element?: T, pos?: Position) => void): void;
+        forEachElementAsync(callback: (element?: T, pos?: Position) => Promise<void>): Promise<void>;
+        get occupiedSpots(): number;
+        private outOfBounds;
     }
 }
 declare namespace Script {
-}
-declare namespace Script {
-    namespace Utils {
-        function forEachElement<T>(_grid: Grid<T>, callback: (element?: T, pos?: Position) => void): void;
-        function forEachElementAsync<T>(_grid: Grid<T>, callback: (element?: T, pos?: Position) => Promise<void>): Promise<void>;
-    }
-    namespace Grid {
-        function EMPTY<T>(): Grid<T | undefined>;
-    }
+    function initEntitiesInGrid<T extends IEntity>(_grid: GridData<string>, _entity: new (...data: any) => T): Grid<T>;
     function waitMS(_ms: number): Promise<void>;
 }
 declare namespace Script {
     interface IVisualizeEntity {
-        attack(_attack: Attack): Promise<void>;
-        move(): Promise<void>;
+        attack(_attack: AttackData): Promise<void>;
+        move(_move: MoveData): Promise<void>;
         hurt(): Promise<void>;
-        spell(_spell: Spell): Promise<void>;
+        spell(_spell: SpellData): Promise<void>;
         showPreview(): Promise<void>;
         hidePreview(): Promise<void>;
         /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
-        updateVisuals(): Promise<void>;
+        updateVisuals(): void;
     }
     class VisualizeEntityNull implements IVisualizeEntity {
         #private;
-        constructor(_entity: iEntity);
-        attack(): Promise<void>;
-        move(): Promise<void>;
+        constructor(_entity: IEntity);
+        attack(_attack: AttackData): Promise<void>;
+        move(_move: MoveData): Promise<void>;
         hurt(): Promise<void>;
-        spell(): Promise<void>;
+        spell(_spell: SpellData): Promise<void>;
         showPreview(): Promise<void>;
         hidePreview(): Promise<void>;
         updateVisuals(): Promise<void>;
@@ -473,7 +489,7 @@ declare namespace Script {
     }
     class VisualizeGridNull implements IVisualizeGrid {
         #private;
-        constructor(_grid: Grid<iEntity>);
+        constructor(_grid: Grid<IVisualizeEntity>);
         updateVisuals(): void;
         getRealPosition(_pos: Position): Position;
     }
