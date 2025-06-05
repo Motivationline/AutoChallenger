@@ -7,7 +7,7 @@ namespace Script {
             if (!entityId) return;
             let entityData = data.getEntity(entityId);
             if (!entityData) throw new Error(`Entity ${entityId} not found.`);
-            newGrid.set(pos, new _entity(entityData, Provider.visualizer));
+            newGrid.set(pos, new _entity(entityData, Provider.visualizer, pos));
         })
         return newGrid;
 

@@ -7,6 +7,63 @@ namespace Script {
     export namespace DataContent {
         export const entities: EntityData[] = [
             {
+                id: "e1",
+                health: 10,
+            },
+            {
+                id: "e2",
+                health: 10,
+            },
+            {
+                id: "e3",
+                health: 10,
+            },
+            {
+                id: "e4",
+                health: 10,
+            },
+            {
+                id: "e5",
+                health: 10,
+            },
+            {
+                id: "e6",
+                health: 10,
+            },
+            {
+                id: "e7",
+                health: 10,
+            },
+            {
+                id: "e8",
+                health: 10,
+            },
+            {
+                id: "e9",
+                health: 10,
+            },
+            {
+                id: "attackTests",
+                attacks: {
+                    options: [
+                        {
+                            target: {
+                                area: {
+                                    shape: AREA_SHAPE.COLUMN,
+                                    // pattern: [[0, 0, 1], [0, 0, 0], [0, 0, 0]],
+                                    position: AREA_POSITION.RELATIVE_MIRRORED,
+                                },
+                                side: TARGET_SIDE.OPPONENT,
+                            },
+                            baseDamage: 1,
+                        }
+                    ],
+                    selection: {
+                        order: SELECTION_ORDER.ALL,
+                    }
+                }
+            },
+            {
                 id: "parent",
                 health: 5,
             },
@@ -69,8 +126,8 @@ namespace Script {
                         }
                     ],
                     selection: {
-                        order: SELECTION_ORDER.ALL,
-                        amount: 1,
+                        order: SELECTION_ORDER.SEQUENTIAL,
+                        amount: 2,
                     }
                 }
             },

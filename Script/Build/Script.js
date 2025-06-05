@@ -154,7 +154,7 @@ var Script;
                 case Script.AREA_POSITION.RELATIVE_SAME: {
                     // intuitively for the designer "same" means "the same spot on the opposite side".
                     // But because the own side is mirrored internally, "SAME" internally means mirrored and vice versa
-                    pos = [_self.position[0], 2 - _self.position[1]];
+                    pos = [2 - _self.position[0], _self.position[1]];
                     break;
                 }
                 case Script.AREA_POSITION.RELATIVE_MIRRORED: {
@@ -222,10 +222,11 @@ var Script;
                 pattern = movedPattern;
             }
             // final pattern achieved, get the actual entities in these areas now
-            side.forEachElement((el) => {
+            side.forEachElement((el, pos) => {
                 if (!el)
                     return;
-                targets.push(el);
+                if (pattern.get(pos))
+                    targets.push(el);
             });
             return targets;
         }
@@ -313,6 +314,63 @@ var Script;
     (function (DataContent) {
         DataContent.entities = [
             {
+                id: "e1",
+                health: 10,
+            },
+            {
+                id: "e2",
+                health: 10,
+            },
+            {
+                id: "e3",
+                health: 10,
+            },
+            {
+                id: "e4",
+                health: 10,
+            },
+            {
+                id: "e5",
+                health: 10,
+            },
+            {
+                id: "e6",
+                health: 10,
+            },
+            {
+                id: "e7",
+                health: 10,
+            },
+            {
+                id: "e8",
+                health: 10,
+            },
+            {
+                id: "e9",
+                health: 10,
+            },
+            {
+                id: "attackTests",
+                attacks: {
+                    options: [
+                        {
+                            target: {
+                                area: {
+                                    shape: Script.AREA_SHAPE.COLUMN,
+                                    // pattern: [[0, 0, 1], [0, 0, 0], [0, 0, 0]],
+                                    position: Script.AREA_POSITION.RELATIVE_MIRRORED,
+                                },
+                                side: Script.TARGET_SIDE.OPPONENT,
+                            },
+                            baseDamage: 1,
+                        }
+                    ],
+                    selection: {
+                        order: Script.SELECTION_ORDER.ALL,
+                    }
+                }
+            },
+            {
                 id: "parent",
                 health: 5,
             },
@@ -375,8 +433,8 @@ var Script;
                         }
                     ],
                     selection: {
-                        order: Script.SELECTION_ORDER.ALL,
-                        amount: 1,
+                        order: Script.SELECTION_ORDER.SEQUENTIAL,
+                        amount: 2,
                     }
                 }
             },
@@ -572,8 +630,32 @@ var Script;
     (function (DataContent) {
         DataContent.fights = [
             {
+                // test eumlings
+                rounds: 3, // ignore this
+                // remember, opponents are usually to the left of this, so the eumling grid is mirrored internally.
+                // But for your convenience right now during the test it's the way you'd see it ingame.
+                entities: [
+                    ["attackTests", , ,],
+                    [, , ,],
+                    [, , ,]
+                ],
+            },
+            {
+                // test opponent
                 rounds: 3,
-                entities: [[, , ,], [, "attackRandomEnemy", ,], [, , ,]],
+                entities: [
+                    ["e1", "e2", "e3",],
+                    ["e4", "e5", "e6",],
+                    ["e7", "e8", "e9",]
+                ],
+            },
+            {
+                rounds: 3,
+                entities: [
+                    [, , ,],
+                    [, "attackRandomEnemy", ,],
+                    [, , ,]
+                ],
             }
         ];
     })(DataContent = Script.DataContent || (Script.DataContent = {}));
@@ -731,9 +813,23 @@ var Script;
         ƒ.AudioManager.default.update();
     }
     async function run() {
-        let eumlings = new Script.Grid();
-        eumlings.set([1, 1], new Script.Entity(Script.Provider.data.getEntity("multipleAttacksOnlyOnePerRound"), Script.Provider.visualizer));
-        let fightData = Script.Provider.data.fights[0];
+        const eumlingData = Script.Provider.data.fights[0].entities;
+        // rotate entities in first fight around because they're meant to be testing eumlings for now
+        // TODO: remove this once this sort of testing is obsolete.
+        [eumlingData[0][0], eumlingData[0][2]] = [eumlingData[0][2], eumlingData[0][0]];
+        [eumlingData[1][0], eumlingData[1][2]] = [eumlingData[1][2], eumlingData[1][0]];
+        [eumlingData[2][0], eumlingData[2][2]] = [eumlingData[2][2], eumlingData[2][0]];
+        let eumlings = Script.initEntitiesInGrid(eumlingData, Script.Entity);
+        // let tmp = eumlings.get([0, 0]);
+        // eumlings.set([0, 0], eumlings.get([2, 0]));
+        // eumlings.set([2, 0], tmp);
+        // tmp = eumlings.get([0, 0]);
+        // eumlings.set([0, 0], eumlings.get([2, 0]));
+        // eumlings.set([2, 0], tmp);
+        // tmp = eumlings.get([0, 0]);
+        // eumlings.set([0, 0], eumlings.get([2, 0]));
+        // eumlings.set([2, 0], tmp);
+        let fightData = Script.Provider.data.fights[1];
         let fight = new Script.Fight(fightData, eumlings);
         await fight.run();
     }
@@ -741,10 +837,12 @@ var Script;
 var Script;
 (function (Script) {
     class Entity {
-        constructor(_entity, _vis) {
+        constructor(_entity, _vis, _pos = [0, 0]) {
+            this.activeEffects = new Map();
             this.id = _entity.id;
             this.health = _entity.health ?? 1;
             this.currentHealth = this.health;
+            this.position = _pos;
             // this.moves = _entity.moves instanceof ;
             if (_entity.moves)
                 this.moves = "selection" in _entity.moves ? _entity.moves : { options: [_entity.moves], selection: { order: Script.SELECTION_ORDER.ALL, amount: 1 } };
@@ -754,34 +852,49 @@ var Script;
                 this.attacks = "selection" in _entity.attacks ? _entity.attacks : { options: [_entity.attacks], selection: { order: Script.SELECTION_ORDER.ALL, amount: 1 } };
             this.visualizer = _vis.getEntity(this);
         }
-        damage(_amt) {
-            throw new Error("Method not implemented.");
+        damage(_amt, _critChance) {
+            let wasCrit = false;
+            if (_critChance > Math.random()) {
+                _amt *= 2;
+                wasCrit = true;
+            }
+            this.currentHealth -= _amt;
+            this.visualizer.hurt(_amt, wasCrit);
+            //TODO add Event
+            if (this.currentHealth <= 0) {
+                //TODO this entity died, handle that.
+            }
+            return this.currentHealth;
         }
         async move() {
             ;
         }
         async useSpell(_friendly, _opponent) {
-            const spells = this.select(this.spells);
+            const spells = this.select(this.spells, true);
             for (let spell of spells) {
                 await this.visualizer.spell(spell);
             }
         }
         async useAttack(_friendly, _opponent) {
-            const attacks = this.select(this.attacks);
+            const attacks = this.select(this.attacks, true);
             for (let attack of attacks) {
                 // get the target(s)
-                let target = Script.getTargets(attack.target, _friendly, _opponent);
+                let targets = Script.getTargets(attack.target, _friendly, _opponent, this);
                 // execute the attacks
-                await this.visualizer.attack(attack);
+                await this.visualizer.attack(attack, targets);
+                let attackDmg = this.getDamageOfAttacks([attack], true);
+                targets.forEach((target) => { target.damage(attackDmg, attack.baseCritChance); });
             }
         }
         getOwnDamage() {
-            throw new Error("Method not implemented.");
+            const attacks = this.select(this.attacks, false);
+            let total = this.getDamageOfAttacks(attacks, false);
+            return total;
         }
         updateVisuals() {
-            // 
+            this.visualizer.updateVisuals();
         }
-        select(_options) {
+        select(_options, _use) {
             if (!_options)
                 return [];
             const selection = [];
@@ -806,6 +919,28 @@ var Script;
             }
             return [_options];
         }
+        getDamageOfAttacks(_attacks, _consumeEffects) {
+            let weaknesses = this.activeEffects.get(Script.SPELL_TYPE.WEAKNESS) ?? 0;
+            let strengths = this.activeEffects.get(Script.SPELL_TYPE.STRENGTH) ?? 0;
+            let totalDamage = 0;
+            for (let atk of _attacks) {
+                let atkDmg = atk.baseDamage;
+                if (strengths > 0) {
+                    atkDmg *= 2;
+                    strengths--;
+                }
+                if (weaknesses > 0) {
+                    atkDmg = 0;
+                    weaknesses--;
+                }
+                totalDamage += atkDmg;
+            }
+            if (_consumeEffects) {
+                this.activeEffects.set(Script.SPELL_TYPE.WEAKNESS, weaknesses);
+                this.activeEffects.set(Script.SPELL_TYPE.STRENGTH, strengths);
+            }
+            return totalDamage;
+        }
     }
     Script.Entity = Entity;
 })(Script || (Script = {}));
@@ -813,7 +948,26 @@ var Script;
 (function (Script) {
     class Grid {
         constructor(_content = Grid.EMPTY()) {
-            this.grid = _content;
+            /*
+            gotta rotate the grid because when entered like this:
+                [[e1, e2, e3] <- x: 0
+                 [e4, e4, e6] <- x: 1
+                 [e7, e8, e9]]<- x: 2
+                 y:0 y:1 y:2
+                
+            the IDs would be the opposite of what you expect through Position:
+             [0, 0] [0, 1] [0, 2]
+             [1, 0] [1, 1] [1, 2]
+             [2, 0] [2, 1] [2, 2]
+
+             thus, we're rotating it so it's more intuitive for the end user.
+            */
+            this.grid = Grid.EMPTY();
+            for (let x = 0; x < 3; x++) {
+                for (let y = 0; y < 3; y++) {
+                    this.grid[x][y] = _content[y][x];
+                }
+            }
         }
         ;
         static EMPTY() {
@@ -877,7 +1031,7 @@ var Script;
             let entityData = data.getEntity(entityId);
             if (!entityData)
                 throw new Error(`Entity ${entityId} not found.`);
-            newGrid.set(pos, new _entity(entityData, Script.Provider.visualizer));
+            newGrid.set(pos, new _entity(entityData, Script.Provider.visualizer, pos));
         });
         return newGrid;
     }
@@ -894,16 +1048,16 @@ var Script;
     class VisualizeEntityNull {
         #entity;
         constructor(_entity) { this.#entity = _entity; }
-        async attack(_attack) {
-            console.log("entity visualizer null: attack", _attack);
+        async attack(_attack, _targets) {
+            console.log("entity visualizer null: attack", this.#entity, _attack, ..._targets);
             await Script.waitMS(200);
         }
         async move(_move) {
             console.log("entity visualizer null: move", _move);
             await Script.waitMS(200);
         }
-        async hurt() {
-            console.log("entity visualizer null: hurt", this.#entity);
+        async hurt(_damage, _crit) {
+            console.log("entity visualizer null: hurt", this.#entity, _damage, _crit);
             await Script.waitMS(200);
         }
         async spell(_spell) {

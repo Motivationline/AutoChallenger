@@ -370,7 +370,7 @@ declare namespace Script {
         move(_friendly: Grid<IEntity>): Promise<void>;
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
-        damage(_amt: number): number;
+        damage(_amt: number, _critChance: number): number;
         getOwnDamage(): number;
         updateVisuals(_arena: Arena): void;
     }
@@ -386,15 +386,17 @@ declare namespace Script {
         abilities?: AbilityData[];
         resistances?: [SPELL_TYPE, number][];
         startDirection?: number;
+        activeEffects: Map<SPELL_TYPE, number>;
         protected visualizer: IVisualizeEntity;
-        constructor(_entity: EntityData, _vis: IVisualizer);
-        damage(_amt: number): number;
+        constructor(_entity: EntityData, _vis: IVisualizer, _pos?: Position);
+        damage(_amt: number, _critChance: number): number;
         move(): Promise<void>;
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
         getOwnDamage(): number;
         updateVisuals(): void;
-        protected select<T extends Object>(_options: SelectableWithData<T>): T[];
+        protected select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[];
+        protected getDamageOfAttacks(_attacks: Readonly<AttackDataNoTarget[]>, _consumeEffects: boolean): number;
     }
     export {};
 }
@@ -442,6 +444,17 @@ declare namespace Script {
     }
 }
 declare namespace Script {
+    /**
+     * **!! This data is rotated when converted to Grid !!**
+     * That means that the data entered here aligns the way [[Position]] is done once converted.
+     * So enter your data like this:
+     *
+     * ```
+     * OPPONENT | [0, 0] [1, 0] [2, 0]
+     * OPPONENT | [0, 1] [1, 1] [2, 1]
+     * OPPONENT | [0, 2] [1, 2] [2, 2]
+     * ```
+     */
     type GridData<T> = [[T, T, T], [T, T, T], [T, T, T]];
     class Grid<T> {
         grid: GridData<T>;
@@ -461,9 +474,9 @@ declare namespace Script {
 }
 declare namespace Script {
     interface IVisualizeEntity {
-        attack(_attack: AttackData): Promise<void>;
+        attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
         move(_move: MoveData): Promise<void>;
-        hurt(): Promise<void>;
+        hurt(_damage: number, _crit: boolean): Promise<void>;
         spell(_spell: SpellData): Promise<void>;
         showPreview(): Promise<void>;
         hidePreview(): Promise<void>;
@@ -473,9 +486,9 @@ declare namespace Script {
     class VisualizeEntityNull implements IVisualizeEntity {
         #private;
         constructor(_entity: IEntity);
-        attack(_attack: AttackData): Promise<void>;
+        attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
         move(_move: MoveData): Promise<void>;
-        hurt(): Promise<void>;
+        hurt(_damage: number, _crit: boolean): Promise<void>;
         spell(_spell: SpellData): Promise<void>;
         showPreview(): Promise<void>;
         hidePreview(): Promise<void>;

@@ -266,7 +266,7 @@ namespace Script {
                 case AREA_POSITION.RELATIVE_SAME: {
                     // intuitively for the designer "same" means "the same spot on the opposite side".
                     // But because the own side is mirrored internally, "SAME" internally means mirrored and vice versa
-                    pos = [_self.position[0], 2 - _self.position[1]];
+                    pos = [2 - _self.position[0], _self.position[1]];
                     break;
                 }
                 case AREA_POSITION.RELATIVE_MIRRORED: {
@@ -336,9 +336,10 @@ namespace Script {
             }
 
             // final pattern achieved, get the actual entities in these areas now
-            side.forEachElement((el) => {
+            side.forEachElement((el, pos) => {
                 if (!el) return;
-                targets.push(el);
+                if (pattern.get(pos))
+                    targets.push(el);
             });
 
             return targets;

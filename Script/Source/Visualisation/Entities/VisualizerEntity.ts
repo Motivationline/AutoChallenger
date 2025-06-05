@@ -1,8 +1,8 @@
 namespace Script {
     export interface IVisualizeEntity {
-        attack(_attack: AttackData): Promise<void>;
+        attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
         move(_move: MoveData): Promise<void>;
-        hurt(): Promise<void>;
+        hurt(_damage: number, _crit: boolean): Promise<void>;
         spell(_spell: SpellData): Promise<void>;
         showPreview(): Promise<void>;
         hidePreview(): Promise<void>;
@@ -13,16 +13,16 @@ namespace Script {
     export class VisualizeEntityNull implements IVisualizeEntity {
         #entity: IEntity;
         constructor(_entity: IEntity) { this.#entity = _entity; }
-        async attack(_attack: AttackData): Promise<void> {
-            console.log("entity visualizer null: attack", _attack);
+        async attack(_attack: AttackData, _targets: IEntity[]): Promise<void> {
+            console.log("entity visualizer null: attack", this.#entity, _attack, ..._targets);
             await waitMS(200);
         }
         async move(_move: MoveData): Promise<void> {
             console.log("entity visualizer null: move", _move);
             await waitMS(200);
         }
-        async hurt(): Promise<void> {
-            console.log("entity visualizer null: hurt", this.#entity);
+        async hurt(_damage: number, _crit: boolean): Promise<void> {
+            console.log("entity visualizer null: hurt", this.#entity, _damage, _crit);
             await waitMS(200);
         }
         async spell(_spell: SpellData): Promise<void> {
