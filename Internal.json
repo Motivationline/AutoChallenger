@@ -28,5 +28,49 @@
       "idResource": "Graph|2025-05-23T08:52:13.386Z|08098",
       "type": "Graph"
     }
+  },
+  "GraphGLTF|2025-06-06T13:07:59.175Z|74632": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {
+        "ComponentAnimation": [
+          {
+            "ƒ.ComponentAnimation": {
+              "Component": {
+                "active": true
+              },
+              "idAnimation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
+              "playmode": "loop",
+              "quantization": "continous",
+              "scale": 1,
+              "scaleWithGameTime": true,
+              "animateInEditor": true
+            }
+          }
+        ]
+      },
+      "idResource": "GraphGLTF|2025-06-06T13:07:59.175Z|74632",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\Eumlinge\\Standard\\Standard_Eumling.glb"
+    }
+  },
+  "AnimationGLTF|2025-06-06T13:07:59.175Z|76196": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
+      "name": "standard_attack",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Eumlinge\\Standard\\Standard_Eumling.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-06-06T13:07:59.196Z|56237": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
+      "name": "standard_idle",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Eumlinge\\Standard\\Standard_Eumling.glb",
+      "events": {}
+    }
   }
 }

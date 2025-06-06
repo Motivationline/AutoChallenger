@@ -15,6 +15,35 @@
             "idResource": "Graph|2025-05-23T08:52:13.386Z|08098"
           }
         ]
+      },
+      {
+        "name": "GLTFs",
+        "entries": [
+          {
+            "name": "Eumlinge",
+            "entries": [
+              {
+                "name": "Standard",
+                "entries": [
+                  {
+                    "idResource": "GraphGLTF|2025-06-06T13:07:59.175Z|74632"
+                  },
+                  {
+                    "name": "Animations",
+                    "entries": [
+                      {
+                        "idResource": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   }
