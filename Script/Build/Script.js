@@ -718,6 +718,9 @@ var Script;
                 home: _home,
             };
         }
+        getRounds() {
+            return this.rounds;
+        }
         async run() {
             // TODO: add eventlisteners
             // run actual round
@@ -1073,6 +1076,8 @@ var Script;
             await Script.waitMS(200);
         }
         async updateVisuals() {
+            let rounds = document.querySelector(".Rounds");
+            rounds.innerText = "Rounds: 3";
             console.log("entity visualizer null: updateVisuals", this.#entity);
             await Script.waitMS(200);
         }

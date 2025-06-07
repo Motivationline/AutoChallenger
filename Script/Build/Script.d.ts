@@ -314,6 +314,7 @@ declare namespace Script {
         rounds: number;
         arena: Arena;
         constructor(_fight: FightData, _home: Grid<IEntity>);
+        getRounds(): number;
         run(): Promise<void>;
         private runOneSide;
     }

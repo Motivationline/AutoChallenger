@@ -27,6 +27,10 @@ namespace Script {
 
         }
 
+        getRounds() {
+            return this.rounds;
+        }
+
         async run(): Promise<void> {
             // TODO: add eventlisteners
 
