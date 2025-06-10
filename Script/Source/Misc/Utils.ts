@@ -1,5 +1,5 @@
 namespace Script {
-    export function initEntitiesInGrid<T extends IEntity>(_grid: GridData<string>, _entity: new (...data: any) => T): Grid<T> {
+    export function initEntitiesInGrid<T extends IEntity>(_grid: GridData<string>, _entity: new (...data: any) => T): Grid<T> { //TODO wie funktioniert das?
         const grid = new Grid(_grid);
         const newGrid = new Grid<T>();
         const data = Provider.data;

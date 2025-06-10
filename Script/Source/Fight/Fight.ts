@@ -46,6 +46,7 @@ namespace Script {
                 if (this.arena.away.occupiedSpots === 0) {
                     return console.log("Player won");
                 }
+                
             }
             return console.log("Player survived");
         }

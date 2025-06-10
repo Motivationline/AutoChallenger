@@ -799,14 +799,14 @@ var Script;
     ƒ.Debug.info("Main Program Template running!");
     let viewport;
     document.addEventListener("interactiveViewportStarted", start);
-    initProvider();
     async function initProvider() {
-        await Script.Provider.data.load();
+        await Script.Provider.data.load(); // TODO wie funktioniert das?
         //TODO load correct visualizer here
         run();
     }
     function start(_event) {
         viewport = _event.detail;
+        initProvider();
         ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
         // ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
     }
@@ -819,7 +819,7 @@ var Script;
         const eumlingData = Script.Provider.data.fights[0].entities;
         // rotate entities in first fight around because they're meant to be testing eumlings for now
         // TODO: remove this once this sort of testing is obsolete.
-        [eumlingData[0][0], eumlingData[0][2]] = [eumlingData[0][2], eumlingData[0][0]];
+        [eumlingData[0][0], eumlingData[0][2]] = [eumlingData[0][2], eumlingData[0][0]]; // TODO Wie funktioniert das?
         [eumlingData[1][0], eumlingData[1][2]] = [eumlingData[1][2], eumlingData[1][0]];
         [eumlingData[2][0], eumlingData[2][2]] = [eumlingData[2][2], eumlingData[2][0]];
         let eumlings = Script.initEntitiesInGrid(eumlingData, Script.Entity);
@@ -834,6 +834,7 @@ var Script;
         // eumlings.set([2, 0], tmp);
         let fightData = Script.Provider.data.fights[1];
         let fight = new Script.Fight(fightData, eumlings);
+        console.log("Rounds: " + fight.getRounds());
         await fight.run();
     }
 })(Script || (Script = {}));
@@ -1076,8 +1077,6 @@ var Script;
             await Script.waitMS(200);
         }
         async updateVisuals() {
-            let rounds = document.querySelector(".Rounds");
-            rounds.innerText = "Rounds: 3";
             console.log("entity visualizer null: updateVisuals", this.#entity);
             await Script.waitMS(200);
         }

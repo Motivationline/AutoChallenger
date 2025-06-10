@@ -55,7 +55,7 @@ namespace Script {
 
         protected visualizer: IVisualizeEntity;
 
-        constructor(_entity: EntityData, _vis: IVisualizer, _pos: Position = [0,0]) {
+        constructor(_entity: EntityData, _vis: IVisualizer, _pos: Position = [0, 0]) {
             this.id = _entity.id;
             this.health = _entity.health ?? 1;
             this.currentHealth = this.health;
@@ -110,6 +110,10 @@ namespace Script {
 
         updateVisuals(): void {
             this.visualizer.updateVisuals();
+        }
+
+        updateUI(_round: number): void {
+            this.visualizer.updateUI(_round);
         }
 
         protected select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[] {
