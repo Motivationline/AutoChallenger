@@ -411,6 +411,7 @@ declare namespace Script {
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks?: AttackData[], _targetsOverride?: IEntity[]): Promise<void>;
         getOwnDamage(): number;
         updateVisuals(): void;
+        updateUI(_round: number): void;
         protected select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[];
         protected getDamageOfAttacks(_attacks: Readonly<AttackDataNoTarget[]>, _consumeEffects: boolean): number;
         setGrids(_home: Grid<Entity>, _away: Grid<Entity>): void;
@@ -523,6 +524,7 @@ declare namespace Script {
         hidePreview(): Promise<void>;
         /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
         updateVisuals(): void;
+        updateUI(_round: number): Promise<void>;
     }
     class VisualizeEntityNull implements IVisualizeEntity {
         #private;
@@ -536,6 +538,17 @@ declare namespace Script {
         updateVisuals(): Promise<void>;
         resist(): Promise<void>;
         getEntity(): Readonly<IEntity>;
+        updateUI(_round: number): Promise<void>;
+    }
+}
+declare namespace Script {
+    import ƒ = FudgeCore;
+    class Tile extends ƒ.Node {
+        private static mesh;
+        private static material;
+        private size;
+        private pos;
+        constructor(_name: string, _size: number, _pos: ƒ.Vector3);
     }
 }
 declare namespace Script {

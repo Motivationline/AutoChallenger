@@ -639,6 +639,71 @@ var Script;
                 }
             },
             {
+                id: "idioticIcicle", // enemy that attacks the entire mirrored column for 1
+                health: 1,
+                attacks: {
+                    options: [
+                        {
+                            target: {
+                                area: {
+                                    shape: Script.AREA_SHAPE.COLUMN,
+                                    position: Script.AREA_POSITION.RELATIVE_MIRRORED,
+                                },
+                                side: Script.TARGET_SIDE.OPPONENT,
+                            },
+                            baseDamage: 1,
+                        }
+                    ],
+                    selection: {
+                        order: Script.SELECTION_ORDER.ALL,
+                    }
+                }
+            },
+            {
+                id: "boxingBug", // enemy that attacks everywhere but the center
+                health: 1,
+                attacks: {
+                    options: [
+                        {
+                            target: {
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 1],
+                                    shape: Script.AREA_SHAPE.SQUARE,
+                                },
+                                side: Script.TARGET_SIDE.OPPONENT,
+                            },
+                            baseDamage: 1,
+                        }
+                    ],
+                    selection: {
+                        order: Script.SELECTION_ORDER.ALL,
+                    }
+                }
+            },
+            {
+                id: "graveGrinder", // enemy that attacks a plus, but spawns in round 2 (not implemented yet)
+                health: 1,
+                attacks: {
+                    options: [
+                        {
+                            target: {
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 1],
+                                    shape: Script.AREA_SHAPE.PLUS,
+                                },
+                                side: Script.TARGET_SIDE.OPPONENT,
+                            },
+                            baseDamage: 1,
+                        }
+                    ],
+                    selection: {
+                        order: Script.SELECTION_ORDER.ALL,
+                    }
+                }
+            },
+            {
                 id: "worriedWall", // very strong wall, which dies when others die
                 health: 6,
                 abilities: [
@@ -649,7 +714,7 @@ var Script;
                             }],
                         target: Script.TARGET.SELF,
                         attack: {
-                            baseDamage: 6,
+                            baseDamage: Infinity,
                         }
                     },
                 ]
@@ -858,6 +923,8 @@ var Script;
     ƒ.Debug.info("Main Program Template running!");
     let viewport;
     document.addEventListener("interactiveViewportStarted", start);
+    const root = new ƒ.Node("Root");
+    let tile;
     async function initProvider() {
         await Script.Provider.data.load(); // TODO wie funktioniert das?
         //TODO load correct visualizer here
@@ -866,8 +933,19 @@ var Script;
     function start(_event) {
         viewport = _event.detail;
         initProvider();
+        tile = new Script.Tile("Tile", 100, new ƒ.Vector3(0, 0, 0));
+        root.addChild(tile);
+        //setup Camera view
+        const camera = new ƒ.ComponentCamera();
+        console.log(camera);
+        //camera.mtxPivot.translateZ(-10);
+        camera.mtxPivot.translateY(5);
+        camera.mtxPivot.rotateX(25);
+        //initialize the Viewport
+        viewport.initialize("Viewport", root, camera, document.querySelector("canvas"));
         ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
-        // ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
+        viewport.draw();
+        //ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
     }
     function update(_event) {
         // ƒ.Physics.simulate();  // if physics is included and used
@@ -989,6 +1067,9 @@ var Script;
         }
         updateVisuals() {
             this.visualizer.updateVisuals();
+        }
+        updateUI(_round) {
+            this.visualizer.updateUI(_round);
         }
         select(_options, _use) {
             if (!_options)
@@ -1320,8 +1401,34 @@ var Script;
         getEntity() {
             return this.#entity;
         }
+        async updateUI(_round) {
+            console.log("updating UI");
+            await Script.waitMS(200);
+        }
     }
     Script.VisualizeEntityNull = VisualizeEntityNull;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    class Tile extends ƒ.Node {
+        static { this.mesh = new ƒ.MeshQuad("TileMesh"); }
+        static { this.material = new ƒ.Material("TileMaterial", ƒ.ShaderLitTextured); }
+        constructor(_name, _size, _pos) {
+            super(_name);
+            this.size = _size;
+            this.pos = _pos;
+            const tileMat = new ƒ.ComponentMaterial(Tile.material);
+            tileMat.clrPrimary.setCSS("white");
+            this.addComponent(new ƒ.ComponentTransform());
+            this.addComponent(new ƒ.ComponentMesh(Tile.mesh));
+            this.addComponent(tileMat);
+            this.getComponent(ƒ.ComponentMesh).mtxPivot.scale(new ƒ.Vector3(this.size, this.size, 1));
+            this.getComponent(ƒ.ComponentMesh).mtxPivot.translate(this.pos);
+            this.addComponent(tileMat);
+        }
+    }
+    Script.Tile = Tile;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
