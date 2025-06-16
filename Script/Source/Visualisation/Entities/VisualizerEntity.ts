@@ -9,6 +9,7 @@ namespace Script {
         hidePreview(): Promise<void>;
         /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
         updateVisuals(): void;
+        updateUI(_round: number): Promise<void>;
     }
 
     export class VisualizeEntityNull implements IVisualizeEntity {
@@ -49,6 +50,10 @@ namespace Script {
 
         getEntity(): Readonly<IEntity> {
             return this.#entity;
+        }
+        async updateUI(_round: number): Promise<void> {
+            console.log("updating UI");
+            await waitMS(200);
         }
 
     }

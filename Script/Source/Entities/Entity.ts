@@ -141,6 +141,10 @@ namespace Script {
             this.visualizer.updateVisuals();
         }
 
+        updateUI(_round: number): void {
+            this.visualizer.updateUI(_round);
+        }
+
         protected select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[] {
             if (!_options) return [];
             const selection: T[] = [];

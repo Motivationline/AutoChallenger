@@ -325,6 +325,7 @@ declare namespace Script {
         arena: Arena;
         protected visualizer: IVisualizeFight;
         constructor(_fight: FightData, _home: Grid<IEntity>);
+        getRounds(): number;
         run(): Promise<void>;
         private runOneSide;
     }

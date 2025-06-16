@@ -35,6 +35,10 @@ namespace Script {
             this.visualizer = Provider.visualizer.getFight(this);
         }
 
+        getRounds() {
+            return this.rounds;
+        }
+
         async run(): Promise<void> {
             // Eventlisteners
             EventBus.removeAllEventListeners();
@@ -63,6 +67,7 @@ namespace Script {
                     await EventBus.dispatchEvent({ type: EVENT.FIGHT_END });
                     return console.log("Player won");
                 }
+                
             }
             await this.visualizer.fightEnd();
             await EventBus.dispatchEvent({ type: EVENT.FIGHT_END });
