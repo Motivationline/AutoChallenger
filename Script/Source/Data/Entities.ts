@@ -298,17 +298,82 @@ namespace Script {
                 }
             },
             {
+                id: "idioticIcicle", // enemy that attacks the entire mirrored column for 1
+                health: 1,
+                attacks: {
+                    options: [
+                        {
+                            target: {
+                                area: {
+                                    shape: AREA_SHAPE.COLUMN,
+                                    position: AREA_POSITION.RELATIVE_MIRRORED,
+                                },
+                                side: TARGET_SIDE.OPPONENT,
+                            },
+                            baseDamage: 1,
+                        }
+                    ],
+                    selection: {
+                        order: SELECTION_ORDER.ALL,
+                    }
+                }
+            },
+            {
+                id: "boxingBug", // enemy that attacks everywhere but the center
+                health: 1,
+                attacks: {
+                    options: [
+                        {
+                            target: {
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 1],
+                                    shape: AREA_SHAPE.SQUARE,
+                                },
+                                side: TARGET_SIDE.OPPONENT,
+                            },
+                            baseDamage: 1,
+                        }
+                    ],
+                    selection: {
+                        order: SELECTION_ORDER.ALL,
+                    }
+                }
+            },
+            {
+                id: "graveGrinder", // enemy that attacks a plus, but spawns in round 2 (not implemented yet)
+                health: 1,
+                attacks: {
+                    options: [
+                        {
+                            target: {
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 1],
+                                    shape: AREA_SHAPE.PLUS,
+                                },
+                                side: TARGET_SIDE.OPPONENT,
+                            },
+                            baseDamage: 1,
+                        }
+                    ],
+                    selection: {
+                        order: SELECTION_ORDER.ALL,
+                    }
+                }
+            },
+            {
                 id: "worriedWall", // very strong wall, which dies when others die
                 health: 6,
                 abilities: [
-                    {   // if an ally dies, deal 6 damage to self
+                    {   // if an ally dies, deal inf damage to self
                         on: EVENT.ENTITY_DIED,
                         conditions: [{
                             target: { side: TARGET_SIDE.ALLY, entity: {}, excludeSelf: true }
                         }],
                         target: TARGET.SELF,
                         attack: {
-                            baseDamage: 6,
+                            baseDamage: Infinity,
                         }
                     },
                 ]
