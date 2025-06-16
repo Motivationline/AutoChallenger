@@ -200,6 +200,7 @@ namespace Script {
     //#region Implementation
 
     export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self?: IEntity): IEntity[] {
+        if(!_target) return [];
         const targets: IEntity[] = [];
         const side: Grid<IEntity> = _target.side === TARGET_SIDE.ALLY ? _allies : _opponents;
 

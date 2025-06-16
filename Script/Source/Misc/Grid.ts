@@ -51,27 +51,17 @@ namespace Script {
             return this.grid[_pos[0]][_pos[1]] = _el;
         }
         public forEachElement(callback: (element?: T, pos?: Position) => void): void {
-            callback(this.grid[0][0], [0, 0]);
-            callback(this.grid[1][0], [1, 0]);
-            callback(this.grid[2][0], [2, 0]);
-            callback(this.grid[0][1], [0, 1]);
-            callback(this.grid[1][1], [1, 1]);
-            callback(this.grid[2][1], [2, 1]);
-            callback(this.grid[0][2], [0, 2]);
-            callback(this.grid[1][2], [1, 2]);
-            callback(this.grid[2][2], [2, 2]);
+            for (let y: number = 0; y < 3; y++)
+                for (let x: number = 0; x < 3; x++) {
+                    callback(this.grid[x][y], [x, y]);
+                }
         }
 
         public async forEachElementAsync(callback: (element?: T, pos?: Position) => Promise<void>): Promise<void> {
-            await callback(this.grid[0][0], [0, 0]);
-            await callback(this.grid[1][0], [1, 0]);
-            await callback(this.grid[2][0], [2, 0]);
-            await callback(this.grid[0][1], [0, 1]);
-            await callback(this.grid[1][1], [1, 1]);
-            await callback(this.grid[2][1], [2, 1]);
-            await callback(this.grid[0][2], [0, 2]);
-            await callback(this.grid[1][2], [1, 2]);
-            await callback(this.grid[2][2], [2, 2]);
+            for (let y: number = 0; y < 3; y++)
+                for (let x: number = 0; x < 3; x++) {
+                    await callback(this.grid[x][y], [x, y]);
+                }
         }
 
         public get occupiedSpots(): number {

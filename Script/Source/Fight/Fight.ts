@@ -17,6 +17,7 @@ namespace Script {
     export class Fight {
         rounds: number;
         arena: Arena;
+        protected visualizer: IVisualizeFight;
 
         constructor(_fight: FightData, _home: Grid<IEntity>) {
             this.rounds = _fight.rounds;
@@ -24,25 +25,47 @@ namespace Script {
                 away: initEntitiesInGrid(_fight.entities, Entity),
                 home: _home,
             }
+            this.arena.home.forEachElement((el)=>{
+                el?.setGrids(this.arena.home, this.arena.away);
+            });
+            this.arena.away.forEachElement((el)=>{
+                el?.setGrids(this.arena.away, this.arena.home);
+            });
 
+            this.visualizer = Provider.visualizer.getFight(this);
         }
 
         async run(): Promise<void> {
-            // TODO: add eventlisteners
-
-
+            // Eventlisteners
+            EventBus.removeAllEventListeners();
+            this.arena.home.forEachElement((el) => { el?.registerEventListeners() });
+            this.arena.away.forEachElement((el) => { el?.registerEventListeners() });
+            //TODO: Add artifacts
+            await this.visualizer.fightStart();
+            await EventBus.dispatchEvent({ type: EVENT.FIGHT_START });
+            
             // run actual round
             for (let r: number = 0; r < this.rounds; r++) {
+                await this.visualizer.roundStart();
+                await EventBus.dispatchEvent({ type: EVENT.ROUND_START });
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
+                await EventBus.dispatchEvent({ type: EVENT.ROUND_END });
+                await this.visualizer.roundEnd();
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {
+                    await this.visualizer.fightEnd();
+                    await EventBus.dispatchEvent({ type: EVENT.FIGHT_END });
                     return console.log("Player lost");
                 }
                 if (this.arena.away.occupiedSpots === 0) {
+                    await this.visualizer.fightEnd();
+                    await EventBus.dispatchEvent({ type: EVENT.FIGHT_END });
                     return console.log("Player won");
                 }
             }
+            await this.visualizer.fightEnd();
+            await EventBus.dispatchEvent({ type: EVENT.FIGHT_END });
             return console.log("Player survived");
         }
 
@@ -51,13 +74,13 @@ namespace Script {
 
             // spells
             await _active.forEachElementAsync(async (el) => {
-                if(!el) return;
+                if (!el) return;
                 await el.useSpell(_active, _passive);
             })
-            
+
             // attacks
             await _active.forEachElementAsync(async (el) => {
-                if(!el) return;
+                if (!el) return;
                 await el.useAttack(_active, _passive);
             })
         }
