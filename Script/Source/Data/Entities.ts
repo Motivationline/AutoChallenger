@@ -2,6 +2,7 @@
 /// <reference path="../Fight/Target.ts" />
 /// <reference path="../Fight/Spell.ts" />
 /// <reference path="../Misc/Types.ts" />
+/// <reference path="../Eventsystem.ts" />
 
 namespace Script {
     export namespace DataContent {
@@ -9,6 +10,16 @@ namespace Script {
             {
                 id: "e1",
                 health: 10,
+                abilities: [
+                    {
+                        on: EVENT.ENTITY_HURT,
+                        target: "cause",
+                        conditions: [{target: {entity: {}, side: TARGET_SIDE.ALLY}}],
+                        attack: {
+                            baseDamage: 1,
+                        }
+                    }
+                ]
             },
             {
                 id: "e2",
@@ -61,6 +72,11 @@ namespace Script {
                     selection: {
                         order: SELECTION_ORDER.ALL,
                     }
+                },
+                spells: {
+                    target: TARGET.RANDOM_ENEMY,
+                    type: SPELL_TYPE.FIRE,
+                    level: 2,
                 }
             },
             {
@@ -178,8 +194,7 @@ namespace Script {
                     }
                 },
                 resistances: [
-                    [SPELL_TYPE.FIRE, 0], // fully resistant to fire
-                    [SPELL_TYPE.POISON, 2], // double damage from poison
+                    SPELL_TYPE.FIRE, // fully resistant to fire
                 ]
             },
             {

@@ -1,4 +1,53 @@
 declare namespace Script {
+    enum EVENT {
+        FIGHT_PREPARE = "fightPrepare",
+        FIGHT_PREPARE_COMPLETED = "fightPrepareCompleted",
+        FIGHT_START = "fightStart",
+        FIGHT_END = "fightEnd",
+        ROUND_START = "roundStart",
+        ROUND_END = "roundEnd",
+        ENTITY_ATTACK = "entityAttack",
+        ENTITY_ATTACKED = "entityAttacked",
+        ENTITY_HEAL = "entityHeal",
+        ENTITY_HEALED = "entityHealed",
+        ENTITY_HURT_BEFORE = "entityHurtBefore",
+        ENTITY_HURT = "entityHurt",
+        ENTITY_DIES = "entityDies",
+        ENTITY_DIED = "entityDied",
+        ENTITY_CREATE = "entityCreate",
+        ENTITY_CREATED = "entityCreated",
+        ENTITY_MOVE = "entityMove",
+        ENTITY_MOVED = "entityMoved",
+        TRIGGERED_ABILITY = "triggeredAbility"
+    }
+    /**
+     * There are a lot of callbacks / events that things inside the game can hook into to do something at a specific point in time.
+     * We're using a custom system to be able to `await` the Event results to allow for a nice visual sequence to occur.
+     *
+     *
+    */
+    interface FightEvent {
+        /** What kind of event happened? */
+        type: EVENT;
+        /** Who sent this event? undefined if system */
+        target?: IEntity;
+        /** Who or what caused the event? Might be empty. */
+        cause?: IEntity;
+        /** Optional value field for relevant events. Might be empty. */
+        value?: number;
+        /** Optional value for whatever triggered this event. */
+        trigger?: AttackData | SpellData | MoveData;
+    }
+    type FightEventListener = (_ev?: FightEvent) => Promise<void>;
+    class EventBus {
+        static listeners: Map<EVENT, FightEventListener[]>;
+        static removeAllEventListeners(): void;
+        static addEventListener(_ev: EVENT, _fn: FightEventListener): void;
+        static removeEventListener(_ev: EVENT, _fn: FightEventListener): void;
+        static dispatchEvent(_ev: FightEvent): Promise<void>;
+    }
+}
+declare namespace Script {
     enum DIRECTION_RELATIVE {
         FORWARD = "forward",
         BACKWARD = "backward",
@@ -230,45 +279,6 @@ declare namespace Script {
      * ```
      */
     type Position = [number, number];
-    enum EVENT {
-        FIGHT_PREPARE = "fightPrepare",
-        FIGHT_PREPARE_COMPLETED = "fightPrepareCompleted",
-        FIGHT_START = "fightStart",
-        FIGHT_END = "fightEnd",
-        ROUND_START = "roundStart",
-        ROUND_END = "roundEnd",
-        ENTITY_ATTACK = "entityAttack",
-        ENTITY_ATTACKED = "entityAttacked",
-        ENTITY_HEAL = "entityHeal",
-        ENTITY_HEALED = "entityHealed",
-        ENTITY_HURT_BEFORE = "entityHurtBefore",
-        ENTITY_HURT = "entityHurt",
-        ENTITY_DIES = "entityDies",
-        ENTITY_DIED = "entityDied",
-        ENTITY_CREATE = "entityCreate",
-        ENTITY_CREATED = "entityCreated",
-        ENTITY_MOVE = "entityMove",
-        ENTITY_MOVED = "entityMoved",
-        TRIGGERED_ABILITY = "triggeredAbility"
-    }
-    /**
-     * There are a lot of callbacks / events that things inside the game can hook into to do something at a specific point in time.
-     * We're using a custom system to be able to `await` the Event results to allow for a nice visual sequence to occur.
-     *
-     *
-     */
-    interface FightEvent {
-        /** What kind of event happened? */
-        type: EVENT;
-        /** Who sent this event? */
-        target: IEntity;
-        /** Who or what caused the event? Might be empty. */
-        cause?: IEntity;
-        /** Optional value field for relevant events. Might be empty. */
-        value?: number;
-        /** Optional value for whatever triggered this event. */
-        trigger?: AttackData | SpellData | MoveData;
-    }
 }
 declare namespace Script {
     namespace DataContent {
@@ -313,6 +323,7 @@ declare namespace Script {
     class Fight {
         rounds: number;
         arena: Arena;
+        protected visualizer: IVisualizeFight;
         constructor(_fight: FightData, _home: Grid<IEntity>);
         run(): Promise<void>;
         private runOneSide;
@@ -321,9 +332,11 @@ declare namespace Script {
 declare namespace Script {
     interface IVisualizer {
         getEntity(_entity: IEntity): IVisualizeEntity;
+        getFight(_fight: Fight): IVisualizeFight;
     }
     class VisualizerNull implements IVisualizer {
         getEntity(_entity: IEntity): IVisualizeEntity;
+        getFight(_fight: Fight): IVisualizeFight;
     }
 }
 declare namespace Script {
@@ -354,14 +367,8 @@ declare namespace Script {
         moves?: Selectable<MoveData>;
         spells?: Selectable<SpellData>;
         attacks?: Selectable<AttackData>;
-        /** Modifiers to protect against Spells. It's a multiplier.
-         *
-         * 0 => no effect
-         * 0.5 => half as powerful
-         * 1 => normal
-         * 2 => twice as powerful
-        */
-        resistances?: [SPELL_TYPE, number][];
+        /** If it's in this list, this kind of spell is ignored by the entity.*/
+        resistances?: SPELL_TYPE[];
         abilities?: AbilityData[];
     }
     export interface IEntity extends EntityData {
@@ -370,11 +377,16 @@ declare namespace Script {
         move(_friendly: Grid<IEntity>): Promise<void>;
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
-        damage(_amt: number, _critChance: number): number;
+        damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
+        affect(_spell: SpellData, _cause?: IEntity): Promise<number>;
         getOwnDamage(): number;
         updateVisuals(_arena: Arena): void;
+        registerEventListeners(): void;
+        getVisualizer(): Readonly<IVisualizeEntity>;
+        setGrids(_home: Grid<IEntity>, _away: Grid<IEntity>): void;
     }
     export class Entity implements IEntity {
+        #private;
         currentHealth: number;
         position: Position;
         id: string;
@@ -384,19 +396,28 @@ declare namespace Script {
         spells?: Selectable<SpellData>;
         attacks?: Selectable<AttackData>;
         abilities?: AbilityData[];
-        resistances?: [SPELL_TYPE, number][];
+        resistances?: SPELL_TYPE[];
+        resistancesSet?: Set<SPELL_TYPE>;
         startDirection?: number;
         activeEffects: Map<SPELL_TYPE, number>;
         protected visualizer: IVisualizeEntity;
         constructor(_entity: EntityData, _vis: IVisualizer, _pos?: Position);
-        damage(_amt: number, _critChance: number): number;
+        getVisualizer(): Readonly<IVisualizeEntity>;
+        damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
+        affect(_spell: SpellData, _cause?: IEntity): Promise<number>;
         move(): Promise<void>;
-        useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
-        useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
+        useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells?: SpellData[], _targetsOverride?: IEntity[]): Promise<void>;
+        useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks?: AttackData[], _targetsOverride?: IEntity[]): Promise<void>;
         getOwnDamage(): number;
         updateVisuals(): void;
         protected select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[];
         protected getDamageOfAttacks(_attacks: Readonly<AttackDataNoTarget[]>, _consumeEffects: boolean): number;
+        setGrids(_home: Grid<Entity>, _away: Grid<Entity>): void;
+        registerEventListeners(): void;
+        private abilityEventListener;
+        protected runAbility(_ev: FightEvent): Promise<void>;
+        private endOfRoundEventListener;
+        protected handleEndOfTurn(_ev: FightEvent): Promise<void>;
     }
     export {};
 }
@@ -473,11 +494,30 @@ declare namespace Script {
     function waitMS(_ms: number): Promise<void>;
 }
 declare namespace Script {
+    interface IVisualizeFight {
+        showGrid(): Promise<void>;
+        fightStart(): Promise<void>;
+        roundStart(): Promise<void>;
+        roundEnd(): Promise<void>;
+        fightEnd(): Promise<void>;
+    }
+    class VisualizeFightNull implements IVisualizeFight {
+        #private;
+        constructor(_fight: Fight);
+        showGrid(): Promise<void>;
+        fightStart(): Promise<void>;
+        roundStart(): Promise<void>;
+        roundEnd(): Promise<void>;
+        fightEnd(): Promise<void>;
+    }
+}
+declare namespace Script {
     interface IVisualizeEntity {
         attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
         move(_move: MoveData): Promise<void>;
         hurt(_damage: number, _crit: boolean): Promise<void>;
-        spell(_spell: SpellData): Promise<void>;
+        resist(): Promise<void>;
+        spell(_spell: SpellData, _targets: IEntity[]): Promise<void>;
         showPreview(): Promise<void>;
         hidePreview(): Promise<void>;
         /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
@@ -489,10 +529,12 @@ declare namespace Script {
         attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
         move(_move: MoveData): Promise<void>;
         hurt(_damage: number, _crit: boolean): Promise<void>;
-        spell(_spell: SpellData): Promise<void>;
+        spell(_spell: SpellData, _targets: IEntity[]): Promise<void>;
         showPreview(): Promise<void>;
         hidePreview(): Promise<void>;
         updateVisuals(): Promise<void>;
+        resist(): Promise<void>;
+        getEntity(): Readonly<IEntity>;
     }
 }
 declare namespace Script {
@@ -501,7 +543,7 @@ declare namespace Script {
         updateVisuals(): void;
     }
     class VisualizeGridNull implements IVisualizeGrid {
-        #private;
+        grid: Grid<IVisualizeEntity>;
         constructor(_grid: Grid<IVisualizeEntity>);
         updateVisuals(): void;
         getRealPosition(_pos: Position): Position;
