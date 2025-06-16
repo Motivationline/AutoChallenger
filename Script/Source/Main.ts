@@ -23,15 +23,15 @@ namespace Script {
     viewport = _event.detail;
     initProvider();
 
-    tile = new Tile("Tile", 100, new ƒ.Vector3(0, 0, 0));
+    tile = new Tile("Tile", 1, new ƒ.Vector3(0, 0, 0));
     root.addChild(tile);
     console.log(root);
 
     //setup Camera view
     const camera = new ƒ.ComponentCamera();
     console.log(camera);
-    //camera.mtxPivot.translateZ(-10);
-    camera.mtxPivot.translateY(1);
+    camera.mtxPivot.translateZ(-10);
+    camera.mtxPivot.translateY(5);
     camera.mtxPivot.rotateX(25);
 
     //initialize the Viewport

@@ -933,14 +933,14 @@ var Script;
     function start(_event) {
         viewport = _event.detail;
         initProvider();
-        tile = new Script.Tile("Tile", 100, new ƒ.Vector3(0, 0, 0));
+        tile = new Script.Tile("Tile", 1, new ƒ.Vector3(0, 0, 0));
         root.addChild(tile);
         console.log(root);
         //setup Camera view
         const camera = new ƒ.ComponentCamera();
         console.log(camera);
-        //camera.mtxPivot.translateZ(-10);
-        camera.mtxPivot.translateY(1);
+        camera.mtxPivot.translateZ(-10);
+        camera.mtxPivot.translateY(5);
         camera.mtxPivot.rotateX(25);
         //initialize the Viewport
         viewport.initialize("Viewport", root, camera, document.querySelector("canvas"));
@@ -1414,20 +1414,22 @@ var Script;
     var ƒ = FudgeCore;
     class Tile extends ƒ.Node {
         //create a mesh and material for the tile
-        static { this.mesh = new ƒ.MeshQuad("TileMesh"); }
-        static { this.material = new ƒ.Material("TileMaterial", ƒ.ShaderFlat); }
+        static { this.mesh = new ƒ.MeshCube("TileMesh"); }
+        static { this.material = new ƒ.Material("TileMat", ƒ.ShaderLitTextured); }
         constructor(_name, _size, _pos) {
             super(_name);
             this.size = _size;
             this.pos = _pos;
             const tileMesh = new ƒ.ComponentMesh(Tile.mesh);
-            tileMesh.mtxPivot.scale(new ƒ.Vector3(this.size, 1, this.size));
+            tileMesh.mtxPivot.scale(new ƒ.Vector3(this.size, 0.001, this.size));
             tileMesh.mtxPivot.translate(this.pos);
+            tileMesh.mtxPivot.rotateZ(90);
+            //const sphere: ƒ.ComponentMesh = new ƒ.ComponentMesh(new ƒ.MeshSphere("Tile"));
             const tileMat = new ƒ.ComponentMaterial(Tile.material);
             tileMat.clrPrimary.setCSS("white");
-            this.addComponent(new ƒ.ComponentTransform());
             this.addComponent(tileMesh);
             this.addComponent(tileMat);
+            this.addComponent(new ƒ.ComponentTransform());
         }
     }
     Script.Tile = Tile;

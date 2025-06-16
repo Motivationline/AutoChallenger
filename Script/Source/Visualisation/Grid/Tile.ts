@@ -3,8 +3,8 @@ namespace Script {
 
     export class Tile extends ƒ.Node {
         //create a mesh and material for the tile
-        private static mesh : ƒ.Mesh = new ƒ.MeshQuad("TileMesh");
-        private static material : ƒ.Material = new ƒ.Material("TileMaterial", ƒ.ShaderFlat);
+        private static mesh : ƒ.Mesh = new ƒ.MeshCube("TileMesh");
+        private static material : ƒ.Material = new ƒ.Material("TileMat", ƒ.ShaderLitTextured);
 
         private size : number;
         private pos : ƒ.Vector3;
@@ -15,15 +15,18 @@ namespace Script {
             this.pos = _pos;
 
             const tileMesh: ƒ.ComponentMesh = new ƒ.ComponentMesh(Tile.mesh);
-            tileMesh.mtxPivot.scale(new ƒ.Vector3(this.size, 1, this.size));
+            tileMesh.mtxPivot.scale(new ƒ.Vector3(this.size, 0.001, this.size));
             tileMesh.mtxPivot.translate(this.pos);
+            tileMesh.mtxPivot.rotateZ(90);
+
+            //const sphere: ƒ.ComponentMesh = new ƒ.ComponentMesh(new ƒ.MeshSphere("Tile"));
 
             const tileMat: ƒ.ComponentMaterial = new ƒ.ComponentMaterial(Tile.material);
             tileMat.clrPrimary.setCSS("white");
 
-            this.addComponent(new ƒ.ComponentTransform());
             this.addComponent(tileMesh);
             this.addComponent(tileMat);
+            this.addComponent(new ƒ.ComponentTransform());
         }
     }
 }
