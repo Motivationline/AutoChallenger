@@ -25,18 +25,19 @@ namespace Script {
 
     tile = new Tile("Tile", 100, new ƒ.Vector3(0, 0, 0));
     root.addChild(tile);
+    console.log(root);
 
     //setup Camera view
     const camera = new ƒ.ComponentCamera();
     console.log(camera);
     //camera.mtxPivot.translateZ(-10);
-    camera.mtxPivot.translateY(5);
+    camera.mtxPivot.translateY(1);
     camera.mtxPivot.rotateX(25);
 
     //initialize the Viewport
     viewport.initialize("Viewport", root, camera, document.querySelector("canvas"));
-    ƒ.Loop.addEventListener(ƒ.EVENT.LOOP_FRAME, update);
     viewport.draw();
+    ƒ.Loop.addEventListener(ƒ.EVENT.LOOP_FRAME, update);
     //ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
   }
 

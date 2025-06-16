@@ -935,16 +935,17 @@ var Script;
         initProvider();
         tile = new Script.Tile("Tile", 100, new ƒ.Vector3(0, 0, 0));
         root.addChild(tile);
+        console.log(root);
         //setup Camera view
         const camera = new ƒ.ComponentCamera();
         console.log(camera);
         //camera.mtxPivot.translateZ(-10);
-        camera.mtxPivot.translateY(5);
+        camera.mtxPivot.translateY(1);
         camera.mtxPivot.rotateX(25);
         //initialize the Viewport
         viewport.initialize("Viewport", root, camera, document.querySelector("canvas"));
-        ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
         viewport.draw();
+        ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
         //ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
     }
     function update(_event) {
@@ -1412,19 +1413,20 @@ var Script;
 (function (Script) {
     var ƒ = FudgeCore;
     class Tile extends ƒ.Node {
+        //create a mesh and material for the tile
         static { this.mesh = new ƒ.MeshQuad("TileMesh"); }
-        static { this.material = new ƒ.Material("TileMaterial", ƒ.ShaderLitTextured); }
+        static { this.material = new ƒ.Material("TileMaterial", ƒ.ShaderFlat); }
         constructor(_name, _size, _pos) {
             super(_name);
             this.size = _size;
             this.pos = _pos;
+            const tileMesh = new ƒ.ComponentMesh(Tile.mesh);
+            tileMesh.mtxPivot.scale(new ƒ.Vector3(this.size, 1, this.size));
+            tileMesh.mtxPivot.translate(this.pos);
             const tileMat = new ƒ.ComponentMaterial(Tile.material);
             tileMat.clrPrimary.setCSS("white");
             this.addComponent(new ƒ.ComponentTransform());
-            this.addComponent(new ƒ.ComponentMesh(Tile.mesh));
-            this.addComponent(tileMat);
-            this.getComponent(ƒ.ComponentMesh).mtxPivot.scale(new ƒ.Vector3(this.size, this.size, 1));
-            this.getComponent(ƒ.ComponentMesh).mtxPivot.translate(this.pos);
+            this.addComponent(tileMesh);
             this.addComponent(tileMat);
         }
     }
