@@ -307,7 +307,7 @@ var Script;
         /** Deals 1 damage to attacker once, destroyed after. */
         SPELL_TYPE["THORNS"] = "thorns";
         /** Heals the target by the specified amount. */
-        // HEAL = "health",
+        SPELL_TYPE["HEAL"] = "health";
         /** Entity cannot be targeted for this round */
         SPELL_TYPE["UNTARGETABLE"] = "untargetable";
         // negative
@@ -1081,10 +1081,25 @@ var Script;
                 await this.visualizer.resist();
                 return 0;
             }
-            let value = this.activeEffects.get(_spell.type) ?? 0;
-            value += _spell.level ?? 1;
-            this.activeEffects.set(_spell.type, value);
-            return value;
+            const instantEffects = new Set([Script.SPELL_TYPE.HEAL]);
+            if (!instantEffects.has(_spell.type)) {
+                let value = this.activeEffects.get(_spell.type) ?? 0;
+                value += _spell.level ?? 1;
+                this.activeEffects.set(_spell.type, value);
+                return value;
+            }
+            switch (_spell.type) {
+                case Script.SPELL_TYPE.HEAL: {
+                    let amount = _spell.level ?? 1;
+                    Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HEAL, value: amount, target: this, cause: _cause });
+                    // TODO: call Visualizer
+                    // TODO: prevent overheal?
+                    this.currentHealth += amount;
+                    Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HEALED, value: amount, target: this, cause: _cause });
+                    break;
+                }
+            }
+            return 0;
         }
         async setEffectLevel(_spell, value) {
             if (value > 0) {
@@ -1098,7 +1113,7 @@ var Script;
             ;
         }
         async useSpell(_friendly, _opponent, _spells = this.select(this.spells, true), _targetsOverride) {
-            if (!this.spells)
+            if (!_spells)
                 return;
             if (this.stunned) {
                 // TODO: Event/Visualization for stunned
@@ -1113,7 +1128,7 @@ var Script;
             }
         }
         async useAttack(_friendly, _opponent, _attacks = this.select(this.attacks, true), _targetsOverride) {
-            if (!this.attacks)
+            if (!_attacks)
                 return;
             if (this.stunned) {
                 // TODO: Event/Visualization for stunned

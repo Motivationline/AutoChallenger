@@ -170,10 +170,28 @@ namespace Script {
                 await this.visualizer.resist();
                 return 0;
             }
-            let value = this.activeEffects.get(_spell.type) ?? 0;
-            value += _spell.level ?? 1;
-            this.activeEffects.set(_spell.type, value);
-            return value;
+
+            const instantEffects: Set<SPELL_TYPE> = new Set([SPELL_TYPE.HEAL]);
+
+            if (!instantEffects.has(_spell.type)) {
+                let value = this.activeEffects.get(_spell.type) ?? 0;
+                value += _spell.level ?? 1;
+                this.activeEffects.set(_spell.type, value);
+                return value;
+            }
+
+            switch (_spell.type) {
+                case SPELL_TYPE.HEAL: {
+                    let amount = _spell.level ?? 1;
+                    EventBus.dispatchEvent({ type: EVENT.ENTITY_HEAL, value: amount, target: this, cause: _cause })
+                    // TODO: call Visualizer
+                    // TODO: prevent overheal?
+                    this.currentHealth += amount;
+                    EventBus.dispatchEvent({ type: EVENT.ENTITY_HEALED, value: amount, target: this, cause: _cause })
+                    break;
+                }
+            }
+            return 0;
         }
 
         async setEffectLevel(_spell: SPELL_TYPE, value: number) {
@@ -188,7 +206,7 @@ namespace Script {
             ;
         }
         async useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells: SpellData[] = this.select(this.spells, true), _targetsOverride?: IEntity[]): Promise<void> {
-            if (!this.spells) return;
+            if (!_spells) return;
             if (this.stunned) {
                 // TODO: Event/Visualization for stunned
                 return;
@@ -202,7 +220,7 @@ namespace Script {
             }
         }
         async useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks: AttackData[] = this.select(this.attacks, true), _targetsOverride?: IEntity[]): Promise<void> {
-            if (!this.attacks) return;
+            if (!_attacks) return;
             if (this.stunned) {
                 // TODO: Event/Visualization for stunned
                 return;

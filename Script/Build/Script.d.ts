@@ -252,6 +252,7 @@ declare namespace Script {
         /** Deals 1 damage to attacker once, destroyed after. */
         THORNS = "thorns",
         /** Heals the target by the specified amount. */
+        HEAL = "health",
         /** Entity cannot be targeted for this round */
         UNTARGETABLE = "untargetable",
         /** Takes double damage from next attack. Max 1 used per attack */

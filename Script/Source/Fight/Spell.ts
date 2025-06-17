@@ -12,7 +12,7 @@ namespace Script {
         /** Deals 1 damage to attacker once, destroyed after. */
         THORNS = "thorns",
         /** Heals the target by the specified amount. */
-        // HEAL = "health",
+        HEAL = "health",
         /** Entity cannot be targeted for this round */
         UNTARGETABLE = "untargetable",
 
