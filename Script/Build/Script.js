@@ -138,7 +138,7 @@ var Script;
     })(TARGET_SORT = Script.TARGET_SORT || (Script.TARGET_SORT = {}));
     let TARGET;
     (function (TARGET) {
-        TARGET.SELF = { area: { position: Script.AREA_POSITION.RELATIVE_SAME, shape: Script.AREA_SHAPE.SINGLE }, side: TARGET_SIDE.ALLY };
+        TARGET.SELF = { area: { position: Script.AREA_POSITION.RELATIVE_MIRRORED, shape: Script.AREA_SHAPE.SINGLE }, side: TARGET_SIDE.ALLY };
         TARGET.FIRST_ENEMY_SAME_ROW = { area: { position: Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW, shape: Script.AREA_SHAPE.SINGLE }, side: TARGET_SIDE.OPPONENT };
         TARGET.RANDOM_ENEMY = { entity: { sortBy: TARGET_SORT.RANDOM, maxNumTargets: 1 }, side: TARGET_SIDE.OPPONENT };
         TARGET.RANDOM_ALLY = { entity: { sortBy: TARGET_SORT.RANDOM, maxNumTargets: 1 }, side: TARGET_SIDE.ALLY, excludeSelf: true };
@@ -154,7 +154,7 @@ var Script;
         // entity selector
         if ("entity" in _target) {
             side.forEachElement((entity) => {
-                if (entity)
+                if (entity && !entity.untargetable)
                     targets.push(entity);
             });
             switch (_target.entity.sortBy) {
@@ -281,6 +281,8 @@ var Script;
             side.forEachElement((el, pos) => {
                 if (!el)
                     return;
+                if (el.untargetable)
+                    return;
                 if (pattern.get(pos))
                     targets.push(el);
             });
@@ -304,6 +306,10 @@ var Script;
         SPELL_TYPE["STRENGTH"] = "strength";
         /** Deals 1 damage to attacker once, destroyed after. */
         SPELL_TYPE["THORNS"] = "thorns";
+        /** Heals the target by the specified amount. */
+        // HEAL = "health",
+        /** Entity cannot be targeted for this round */
+        SPELL_TYPE["UNTARGETABLE"] = "untargetable";
         // negative
         /** Takes double damage from next attack. Max 1 used per attack */
         SPELL_TYPE["VULNERABLE"] = "vulnerable";
@@ -313,8 +319,10 @@ var Script;
         SPELL_TYPE["POISON"] = "poison";
         /** Deals 1 damage at the end of the round. Removes 1 per round. */
         SPELL_TYPE["FIRE"] = "fire";
+        /** Entity cannot act at all this turn */
+        SPELL_TYPE["STUN"] = "stun";
         // not fight related
-        SPELL_TYPE["GOLD"] = "gold";
+        // GOLD = "gold",
     })(SPELL_TYPE = Script.SPELL_TYPE || (Script.SPELL_TYPE = {}));
 })(Script || (Script = {}));
 /// <reference path="../Fight/Move.ts" />
@@ -639,6 +647,71 @@ var Script;
                 }
             },
             {
+                id: "idioticIcicle", // enemy that attacks the entire mirrored column for 1
+                health: 1,
+                attacks: {
+                    options: [
+                        {
+                            target: {
+                                area: {
+                                    shape: Script.AREA_SHAPE.COLUMN,
+                                    position: Script.AREA_POSITION.RELATIVE_MIRRORED,
+                                },
+                                side: Script.TARGET_SIDE.OPPONENT,
+                            },
+                            baseDamage: 1,
+                        }
+                    ],
+                    selection: {
+                        order: Script.SELECTION_ORDER.ALL,
+                    }
+                }
+            },
+            {
+                id: "boxingBug", // enemy that attacks everywhere but the center
+                health: 1,
+                attacks: {
+                    options: [
+                        {
+                            target: {
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 1],
+                                    shape: Script.AREA_SHAPE.SQUARE,
+                                },
+                                side: Script.TARGET_SIDE.OPPONENT,
+                            },
+                            baseDamage: 1,
+                        }
+                    ],
+                    selection: {
+                        order: Script.SELECTION_ORDER.ALL,
+                    }
+                }
+            },
+            {
+                id: "graveGrinder", // enemy that attacks a plus, but spawns in round 2 (not implemented yet)
+                health: 1,
+                attacks: {
+                    options: [
+                        {
+                            target: {
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 1],
+                                    shape: Script.AREA_SHAPE.PLUS,
+                                },
+                                side: Script.TARGET_SIDE.OPPONENT,
+                            },
+                            baseDamage: 1,
+                        }
+                    ],
+                    selection: {
+                        order: Script.SELECTION_ORDER.ALL,
+                    }
+                }
+            },
+            {
                 id: "worriedWall", // very strong wall, which dies when others die
                 health: 6,
                 abilities: [
@@ -649,7 +722,7 @@ var Script;
                             }],
                         target: Script.TARGET.SELF,
                         attack: {
-                            baseDamage: 6,
+                            baseDamage: Infinity,
                         }
                     },
                 ]
@@ -925,25 +998,84 @@ var Script;
             this.resistancesSet = new Set(_entity.resistances);
             this.visualizer = _vis.getEntity(this);
         }
+        get untargetable() {
+            if (this.activeEffects.get(Script.SPELL_TYPE.UNTARGETABLE) > 0) {
+                return true;
+            }
+            return false;
+        }
+        get stunned() {
+            if (this.activeEffects.get(Script.SPELL_TYPE.STUN) > 0) {
+                return true;
+            }
+            return false;
+        }
         getVisualizer() {
             return this.visualizer;
         }
         async damage(_amt, _critChance, _cause) {
+            if (this.untargetable) {
+                return this.health;
+            }
             let wasCrit = false;
+            let amount = _amt;
+            // mirror
+            if (this.activeEffects.has(Script.SPELL_TYPE.MIRROR) && _cause) {
+                let mirrors = Math.max(0, this.activeEffects.get(Script.SPELL_TYPE.MIRROR));
+                if (mirrors > 0) {
+                    _cause.damage(_amt, _critChance, this);
+                    mirrors--;
+                    this.setEffectLevel(Script.SPELL_TYPE.MIRROR, mirrors);
+                    // TODO: Event for mirror effect?
+                    return this.currentHealth;
+                }
+                this.activeEffects.set(Script.SPELL_TYPE.MIRROR, 0);
+            }
+            // crit
             if (_critChance > Math.random()) {
-                _amt *= 2;
+                amount *= 2;
                 wasCrit = true;
             }
-            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HURT_BEFORE, target: this, value: _amt, cause: _cause });
-            this.currentHealth -= _amt;
-            this.visualizer.hurt(_amt, wasCrit);
-            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HURT, target: this, cause: _cause });
+            // vulnerable
+            if (this.activeEffects.has(Script.SPELL_TYPE.VULNERABLE)) {
+                let vulnerable = Math.max(0, this.activeEffects.get(Script.SPELL_TYPE.VULNERABLE));
+                if (vulnerable > 0) {
+                    amount *= 2;
+                    vulnerable--;
+                }
+                this.setEffectLevel(Script.SPELL_TYPE.VULNERABLE, vulnerable);
+            }
+            // shields
+            if (this.activeEffects.has(Script.SPELL_TYPE.SHIELD)) {
+                let shields = Math.max(0, this.activeEffects.get(Script.SPELL_TYPE.SHIELD));
+                while (amount > 0 && shields > 0) {
+                    amount--;
+                    shields--;
+                }
+                // TODO: Event for breaking shields? Or maybe event for triggering effect in general?
+                this.setEffectLevel(Script.SPELL_TYPE.SHIELD, shields);
+            }
+            // thorns
+            if (this.activeEffects.has(Script.SPELL_TYPE.THORNS) && _cause) {
+                let thorns = Math.max(0, this.activeEffects.get(Script.SPELL_TYPE.THORNS));
+                if (thorns > 0) {
+                    _cause.damage(thorns, 0, this);
+                }
+                this.setEffectLevel(Script.SPELL_TYPE.THORNS, 0);
+            }
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HURT_BEFORE, target: this, value: amount, cause: _cause });
+            this.currentHealth -= amount;
+            this.visualizer.hurt(amount, wasCrit);
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HURT, target: this, cause: _cause, value: amount });
             if (this.currentHealth <= 0) {
                 //TODO this entity died, handle that.
             }
             return this.currentHealth;
         }
         async affect(_spell, _cause) {
+            if (this.untargetable) {
+                return undefined;
+            }
             if (this.resistancesSet.has(_spell.type)) {
                 // resisted this spell
                 await this.visualizer.resist();
@@ -954,10 +1086,24 @@ var Script;
             this.activeEffects.set(_spell.type, value);
             return value;
         }
+        async setEffectLevel(_spell, value) {
+            if (value > 0) {
+                this.activeEffects.set(_spell, value);
+            }
+            else {
+                this.activeEffects.delete(_spell);
+            }
+        }
         async move() {
             ;
         }
         async useSpell(_friendly, _opponent, _spells = this.select(this.spells, true), _targetsOverride) {
+            if (!this.spells)
+                return;
+            if (this.stunned) {
+                // TODO: Event/Visualization for stunned
+                return;
+            }
             for (let spell of _spells) {
                 let targets = _targetsOverride ?? Script.getTargets(spell.target, _friendly, _opponent, this);
                 await this.visualizer.spell(spell, targets);
@@ -967,6 +1113,12 @@ var Script;
             }
         }
         async useAttack(_friendly, _opponent, _attacks = this.select(this.attacks, true), _targetsOverride) {
+            if (!this.attacks)
+                return;
+            if (this.stunned) {
+                // TODO: Event/Visualization for stunned
+                return;
+            }
             for (let attack of _attacks) {
                 // get the target(s)
                 let targets = _targetsOverride ?? Script.getTargets(attack.target, _friendly, _opponent, this);
@@ -1028,8 +1180,8 @@ var Script;
                 totalDamage += atkDmg;
             }
             if (_consumeEffects) {
-                this.activeEffects.set(Script.SPELL_TYPE.WEAKNESS, weaknesses);
-                this.activeEffects.set(Script.SPELL_TYPE.STRENGTH, strengths);
+                this.setEffectLevel(Script.SPELL_TYPE.WEAKNESS, weaknesses);
+                this.setEffectLevel(Script.SPELL_TYPE.STRENGTH, strengths);
             }
             return totalDamage;
         }
@@ -1112,10 +1264,10 @@ var Script;
                         targets = [_ev.target];
                 }
                 else {
-                    targets = Script.getTargets(ability.target, this.#arena.home, this.#arena.away);
+                    targets = Script.getTargets(ability.target, this.#arena.home, this.#arena.away, this);
                 }
                 // no targets found, no need to do the ability
-                if (!targets)
+                if (!targets || targets.length === 0)
                     continue nextAbility;
                 if (ability.attack) {
                     await this.useAttack(this.#arena.home, this.#arena.away, [{ target: undefined, ...ability.attack }], targets);
@@ -1127,15 +1279,18 @@ var Script;
         }
         async handleEndOfTurn(_ev) {
             // take care of DOTs
-            const relevantSpells = [Script.SPELL_TYPE.FIRE, Script.SPELL_TYPE.POISON];
+            const relevantSpells = [Script.SPELL_TYPE.FIRE, Script.SPELL_TYPE.POISON, Script.SPELL_TYPE.STUN, Script.SPELL_TYPE.UNTARGETABLE];
+            const damagingSpells = [Script.SPELL_TYPE.FIRE, Script.SPELL_TYPE.POISON];
             for (let spell of relevantSpells) {
                 if (!this.activeEffects.has(spell))
                     continue;
                 let value = this.activeEffects.get(spell);
-                if (value <= 0)
-                    continue;
-                this.damage(value, 0);
-                this.activeEffects.set(spell, --value);
+                if (value > 0) {
+                    if (damagingSpells.includes(spell)) {
+                        this.damage(value, 0);
+                    }
+                }
+                this.setEffectLevel(spell, --value);
             }
         }
     }

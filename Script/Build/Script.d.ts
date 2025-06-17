@@ -238,7 +238,7 @@ declare namespace Script {
         const RANDOM_ENEMY: Readonly<Target>;
         const RANDOM_ALLY: Readonly<Target>;
     }
-    export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self?: IEntity): IEntity[];
+    export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self: IEntity): IEntity[];
     export {};
 }
 declare namespace Script {
@@ -251,6 +251,9 @@ declare namespace Script {
         STRENGTH = "strength",
         /** Deals 1 damage to attacker once, destroyed after. */
         THORNS = "thorns",
+        /** Heals the target by the specified amount. */
+        /** Entity cannot be targeted for this round */
+        UNTARGETABLE = "untargetable",
         /** Takes double damage from next attack. Max 1 used per attack */
         VULNERABLE = "vulnerable",
         /** Next attack doesn't deal any damage. Max 1 used per attack */
@@ -259,7 +262,8 @@ declare namespace Script {
         POISON = "poison",
         /** Deals 1 damage at the end of the round. Removes 1 per round. */
         FIRE = "fire",
-        GOLD = "gold"
+        /** Entity cannot act at all this turn */
+        STUN = "stun"
     }
     interface SpellDataNoTarget {
         type: SPELL_TYPE;
@@ -374,6 +378,7 @@ declare namespace Script {
     export interface IEntity extends EntityData {
         currentHealth: number;
         position: Position;
+        untargetable: boolean;
         move(_friendly: Grid<IEntity>): Promise<void>;
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
@@ -402,9 +407,12 @@ declare namespace Script {
         activeEffects: Map<SPELL_TYPE, number>;
         protected visualizer: IVisualizeEntity;
         constructor(_entity: EntityData, _vis: IVisualizer, _pos?: Position);
+        get untargetable(): boolean;
+        get stunned(): boolean;
         getVisualizer(): Readonly<IVisualizeEntity>;
         damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
         affect(_spell: SpellData, _cause?: IEntity): Promise<number>;
+        setEffectLevel(_spell: SPELL_TYPE, value: number): Promise<void>;
         move(): Promise<void>;
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells?: SpellData[], _targetsOverride?: IEntity[]): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks?: AttackData[], _targetsOverride?: IEntity[]): Promise<void>;

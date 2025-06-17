@@ -189,7 +189,7 @@ namespace Script {
     export type Target = TargetBase & TargetTarget;
 
     export namespace TARGET {
-        export const SELF: Readonly<Target> = { area: { position: AREA_POSITION.RELATIVE_SAME, shape: AREA_SHAPE.SINGLE }, side: TARGET_SIDE.ALLY };
+        export const SELF: Readonly<Target> = { area: { position: AREA_POSITION.RELATIVE_MIRRORED, shape: AREA_SHAPE.SINGLE }, side: TARGET_SIDE.ALLY };
         export const FIRST_ENEMY_SAME_ROW: Readonly<Target> = { area: { position: AREA_POSITION.RELATIVE_FIRST_IN_ROW, shape: AREA_SHAPE.SINGLE }, side: TARGET_SIDE.OPPONENT };
         export const RANDOM_ENEMY: Readonly<Target> = { entity: { sortBy: TARGET_SORT.RANDOM, maxNumTargets: 1 }, side: TARGET_SIDE.OPPONENT };
         export const RANDOM_ALLY: Readonly<Target> = { entity: { sortBy: TARGET_SORT.RANDOM, maxNumTargets: 1 }, side: TARGET_SIDE.ALLY, excludeSelf: true };
@@ -199,15 +199,15 @@ namespace Script {
 
     //#region Implementation
 
-    export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self?: IEntity): IEntity[] {
-        if(!_target) return [];
+    export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self: IEntity): IEntity[] {
+        if (!_target) return [];
         const targets: IEntity[] = [];
         const side: Grid<IEntity> = _target.side === TARGET_SIDE.ALLY ? _allies : _opponents;
 
         // entity selector
         if ("entity" in _target) {
             side.forEachElement((entity) => {
-                if (entity) targets.push(entity);
+                if (entity && !entity.untargetable) targets.push(entity);
             })
 
             switch (_target.entity.sortBy) {
@@ -339,6 +339,7 @@ namespace Script {
             // final pattern achieved, get the actual entities in these areas now
             side.forEachElement((el, pos) => {
                 if (!el) return;
+                if (el.untargetable) return;
                 if (pattern.get(pos))
                     targets.push(el);
             });

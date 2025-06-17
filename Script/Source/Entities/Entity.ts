@@ -25,6 +25,7 @@ namespace Script {
     export interface IEntity extends EntityData {
         currentHealth: number,
         position: Position,
+        untargetable: boolean,
         move(_friendly: Grid<IEntity>): Promise<void>,
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>,
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>,
@@ -72,21 +73,87 @@ namespace Script {
 
             this.visualizer = _vis.getEntity(this);
         }
+
+        public get untargetable() {
+            if (this.activeEffects.get(SPELL_TYPE.UNTARGETABLE) > 0) {
+                return true;
+            }
+            return false;
+        }
+
+        public get stunned() {
+            if (this.activeEffects.get(SPELL_TYPE.STUN) > 0) {
+                return true;
+            }
+            return false;
+        }
+
         getVisualizer(): Readonly<IVisualizeEntity> {
             return this.visualizer;
         }
 
         async damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number> {
+            if (this.untargetable) {
+                return this.health;
+            }
             let wasCrit: boolean = false;
+            let amount: number = _amt;
+
+            // mirror
+            if (this.activeEffects.has(SPELL_TYPE.MIRROR) && _cause) {
+                let mirrors = Math.max(0, this.activeEffects.get(SPELL_TYPE.MIRROR));
+                if (mirrors > 0) {
+                    _cause.damage(_amt, _critChance, this);
+                    mirrors--;
+                    this.setEffectLevel(SPELL_TYPE.MIRROR, mirrors);
+                    // TODO: Event for mirror effect?
+                    return this.currentHealth;
+                }
+                this.activeEffects.set(SPELL_TYPE.MIRROR, 0);
+            }
+
+            // crit
             if (_critChance > Math.random()) {
-                _amt *= 2;
+                amount *= 2;
                 wasCrit = true;
             }
-            await EventBus.dispatchEvent({ type: EVENT.ENTITY_HURT_BEFORE, target: this, value: _amt, cause: _cause });
-            this.currentHealth -= _amt;
-            this.visualizer.hurt(_amt, wasCrit);
 
-            await EventBus.dispatchEvent({ type: EVENT.ENTITY_HURT, target: this, cause: _cause });
+            // vulnerable
+            if (this.activeEffects.has(SPELL_TYPE.VULNERABLE)) {
+                let vulnerable = Math.max(0, this.activeEffects.get(SPELL_TYPE.VULNERABLE));
+                if (vulnerable > 0) {
+                    amount *= 2;
+                    vulnerable--;
+                }
+                this.setEffectLevel(SPELL_TYPE.VULNERABLE, vulnerable);
+
+            }
+
+            // shields
+            if (this.activeEffects.has(SPELL_TYPE.SHIELD)) {
+                let shields = Math.max(0, this.activeEffects.get(SPELL_TYPE.SHIELD));
+                while (amount > 0 && shields > 0) {
+                    amount--; shields--;
+                }
+                // TODO: Event for breaking shields? Or maybe event for triggering effect in general?
+                this.setEffectLevel(SPELL_TYPE.SHIELD, shields);
+            }
+
+            // thorns
+            if (this.activeEffects.has(SPELL_TYPE.THORNS) && _cause) {
+                let thorns = Math.max(0, this.activeEffects.get(SPELL_TYPE.THORNS));
+                if (thorns > 0) {
+                    _cause.damage(thorns, 0, this);
+                }
+                this.setEffectLevel(SPELL_TYPE.THORNS, 0);
+            }
+
+
+            await EventBus.dispatchEvent({ type: EVENT.ENTITY_HURT_BEFORE, target: this, value: amount, cause: _cause });
+            this.currentHealth -= amount;
+            this.visualizer.hurt(amount, wasCrit);
+
+            await EventBus.dispatchEvent({ type: EVENT.ENTITY_HURT, target: this, cause: _cause, value: amount });
 
             if (this.currentHealth <= 0) {
                 //TODO this entity died, handle that.
@@ -95,6 +162,9 @@ namespace Script {
         }
 
         async affect(_spell: SpellData, _cause?: IEntity): Promise<number> {
+            if (this.untargetable) {
+                return undefined;
+            }
             if (this.resistancesSet.has(_spell.type)) {
                 // resisted this spell
                 await this.visualizer.resist();
@@ -106,10 +176,23 @@ namespace Script {
             return value;
         }
 
+        async setEffectLevel(_spell: SPELL_TYPE, value: number) {
+            if (value > 0) {
+                this.activeEffects.set(_spell, value);
+            } else {
+                this.activeEffects.delete(_spell);
+            }
+        }
+
         async move(): Promise<void> {
             ;
         }
         async useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells: SpellData[] = this.select(this.spells, true), _targetsOverride?: IEntity[]): Promise<void> {
+            if (!this.spells) return;
+            if (this.stunned) {
+                // TODO: Event/Visualization for stunned
+                return;
+            }
             for (let spell of _spells) {
                 let targets = _targetsOverride ?? getTargets(spell.target, _friendly, _opponent, this);
                 await this.visualizer.spell(spell, targets);
@@ -119,6 +202,11 @@ namespace Script {
             }
         }
         async useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks: AttackData[] = this.select(this.attacks, true), _targetsOverride?: IEntity[]): Promise<void> {
+            if (!this.attacks) return;
+            if (this.stunned) {
+                // TODO: Event/Visualization for stunned
+                return;
+            }
             for (let attack of _attacks) {
                 // get the target(s)
                 let targets = _targetsOverride ?? getTargets(attack.target, _friendly, _opponent, this);
@@ -184,8 +272,8 @@ namespace Script {
             }
 
             if (_consumeEffects) {
-                this.activeEffects.set(SPELL_TYPE.WEAKNESS, weaknesses);
-                this.activeEffects.set(SPELL_TYPE.STRENGTH, strengths);
+                this.setEffectLevel(SPELL_TYPE.WEAKNESS, weaknesses);
+                this.setEffectLevel(SPELL_TYPE.STRENGTH, strengths);
             }
 
             return totalDamage;
@@ -273,11 +361,11 @@ namespace Script {
                         targets = [_ev.target]
                 }
                 else {
-                    targets = getTargets(ability.target, this.#arena.home, this.#arena.away);
+                    targets = getTargets(ability.target, this.#arena.home, this.#arena.away, this);
                 }
 
                 // no targets found, no need to do the ability
-                if (!targets) continue nextAbility;
+                if (!targets || targets.length === 0) continue nextAbility;
 
                 if (ability.attack) {
                     await this.useAttack(this.#arena.home, this.#arena.away, [{ target: undefined, ...ability.attack }], targets);
@@ -296,13 +384,17 @@ namespace Script {
 
         protected async handleEndOfTurn(_ev: FightEvent) {
             // take care of DOTs
-            const relevantSpells: SPELL_TYPE[] = [SPELL_TYPE.FIRE, SPELL_TYPE.POISON];
+            const relevantSpells: SPELL_TYPE[] = [SPELL_TYPE.FIRE, SPELL_TYPE.POISON, SPELL_TYPE.STUN, SPELL_TYPE.UNTARGETABLE];
+            const damagingSpells: SPELL_TYPE[] = [SPELL_TYPE.FIRE, SPELL_TYPE.POISON];
             for (let spell of relevantSpells) {
                 if (!this.activeEffects.has(spell)) continue;
                 let value = this.activeEffects.get(spell);
-                if (value <= 0) continue;
-                this.damage(value, 0);
-                this.activeEffects.set(spell, --value);
+                if (value > 0) {
+                    if (damagingSpells.includes(spell)) {
+                        this.damage(value, 0);
+                    }
+                }
+                this.setEffectLevel(spell, --value);
             }
         }
 

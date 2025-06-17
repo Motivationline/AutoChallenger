@@ -11,6 +11,10 @@ namespace Script {
         STRENGTH = "strength",
         /** Deals 1 damage to attacker once, destroyed after. */
         THORNS = "thorns",
+        /** Heals the target by the specified amount. */
+        // HEAL = "health",
+        /** Entity cannot be targeted for this round */
+        UNTARGETABLE = "untargetable",
 
         // negative
         /** Takes double damage from next attack. Max 1 used per attack */
@@ -21,9 +25,11 @@ namespace Script {
         POISON = "poison",
         /** Deals 1 damage at the end of the round. Removes 1 per round. */
         FIRE = "fire",
+        /** Entity cannot act at all this turn */
+        STUN = "stun",
 
         // not fight related
-        GOLD = "gold",
+        // GOLD = "gold",
     }
 
     export interface SpellDataNoTarget {
