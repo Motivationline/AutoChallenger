@@ -68,6 +68,9 @@ namespace Script {
                 _parent.addChild(tile);
             }
         }
+
+        //TODO: add an interface to handle Entities sitting on the tiles
+        
     }
 
 }
