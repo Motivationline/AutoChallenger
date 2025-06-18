@@ -15,7 +15,7 @@ namespace Script {
   let grid: VisualizeGrid;
 
   async function initProvider() {
-    await Provider.data.load(); // TODO wie funktioniert das?
+    await Provider.data.load();
     //TODO load correct visualizer here
     run();
   }
@@ -34,7 +34,7 @@ namespace Script {
     const camera = new ƒ.ComponentCamera();
     console.log(camera);
     camera.mtxPivot.translateZ(-10);
-    camera.mtxPivot.translateY(5);
+    camera.mtxPivot.translateY(6);
     camera.mtxPivot.rotateX(25);
 
     //initialize the Viewport
@@ -54,7 +54,7 @@ namespace Script {
     const eumlingData = Provider.data.fights[0].entities;
     // rotate entities in first fight around because they're meant to be testing eumlings for now
     // TODO: remove this once this sort of testing is obsolete.
-    [eumlingData[0][0], eumlingData[0][2]] = [eumlingData[0][2], eumlingData[0][0]];  // TODO Wie funktioniert das?
+    [eumlingData[0][0], eumlingData[0][2]] = [eumlingData[0][2], eumlingData[0][0]];
     [eumlingData[1][0], eumlingData[1][2]] = [eumlingData[1][2], eumlingData[1][0]];
     [eumlingData[2][0], eumlingData[2][2]] = [eumlingData[2][2], eumlingData[2][0]];
 

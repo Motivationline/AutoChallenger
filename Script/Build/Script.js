@@ -942,7 +942,7 @@ var Script;
         const camera = new ƒ.ComponentCamera();
         console.log(camera);
         camera.mtxPivot.translateZ(-10);
-        camera.mtxPivot.translateY(5);
+        camera.mtxPivot.translateY(6);
         camera.mtxPivot.rotateX(25);
         //initialize the Viewport
         viewport.initialize("Viewport", root, camera, document.querySelector("canvas"));
@@ -1445,7 +1445,7 @@ var Script;
             this.position = _position;
             this.tiles = 9; //3x3
             this.tileSize = 1;
-            this.spacing = 0.2;
+            this.spacing = 0.4; //large values = smaller spacing between 0 and 0.5
             this.offset = 0.5;
             this.addComponent(new ƒ.ComponentTransform());
             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(this.position);

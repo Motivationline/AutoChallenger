@@ -15,7 +15,7 @@ namespace Script {
             this.position = _position;
             this.tiles = 9; //3x3
             this.tileSize = 1;
-            this.spacing = 0.2; //large values = smaller spacing
+            this.spacing = 0.4; //large values = smaller spacing between 0 and 0.5
             this.offset = 0.5;
 
             this.addComponent(new ƒ.ComponentTransform());
