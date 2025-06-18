@@ -11,7 +11,8 @@ namespace Script {
 
   const root: ƒ.Node = new ƒ.Node("Root");
 
-  let tile: Tile;
+  //let tile: Tile;
+  let grid: VisualizeGrid;
 
   async function initProvider() {
     await Provider.data.load(); // TODO wie funktioniert das?
@@ -23,8 +24,10 @@ namespace Script {
     viewport = _event.detail;
     initProvider();
 
-    tile = new Tile("Tile", 1, new ƒ.Vector3(0, 0, 0));
-    root.addChild(tile);
+    //tile = new Tile("Tile", 1, new ƒ.Vector3(0, 0, 0));
+    grid = new VisualizeGrid(new ƒ.Vector3(0, 0, 0));
+
+    root.addChild(grid);
     console.log(root);
 
     //setup Camera view

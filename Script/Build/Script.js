@@ -924,7 +924,8 @@ var Script;
     let viewport;
     document.addEventListener("interactiveViewportStarted", start);
     const root = new ƒ.Node("Root");
-    let tile;
+    //let tile: Tile;
+    let grid;
     async function initProvider() {
         await Script.Provider.data.load(); // TODO wie funktioniert das?
         //TODO load correct visualizer here
@@ -933,8 +934,9 @@ var Script;
     function start(_event) {
         viewport = _event.detail;
         initProvider();
-        tile = new Script.Tile("Tile", 1, new ƒ.Vector3(0, 0, 0));
-        root.addChild(tile);
+        //tile = new Tile("Tile", 1, new ƒ.Vector3(0, 0, 0));
+        grid = new Script.VisualizeGrid(new ƒ.Vector3(0, 0, 0));
+        root.addChild(grid);
         console.log(root);
         //setup Camera view
         const camera = new ƒ.ComponentCamera();
@@ -1433,6 +1435,66 @@ var Script;
         }
     }
     Script.Tile = Tile;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    class VisualizeGrid extends ƒ.Node {
+        constructor(_position) {
+            super("VisualizeGrid");
+            this.position = _position;
+            this.tiles = 9; //3x3
+            this.tileSize = 1;
+            this.spacing = 0.2;
+            this.offset = 0.5;
+            this.addComponent(new ƒ.ComponentTransform());
+            this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(this.position);
+            this.generateGrid();
+        }
+        //create a grid with 2 Sides: home | away
+        //each having a 3x3 grid of tiles
+        generateGrid() {
+            let home = new ƒ.Node("home");
+            let away = new ƒ.Node("away");
+            home.addComponent(new ƒ.ComponentTransform);
+            away.addComponent(new ƒ.ComponentTransform);
+            //create the tile grid for each side
+            this.layoutGrid(home, 1);
+            this.layoutGrid(away, -1);
+            //add the sides as children to the grid Object
+            this.addChild(home);
+            this.addChild(away);
+        }
+        //TODO: consider world position or relative position?
+        getTilePosition(_index, _side) {
+            let i = _index;
+            if (_side === "home") {
+                let x = i % 3;
+                let z = Math.floor(i / 3);
+                return new ƒ.Vector3(x, 0, z);
+            }
+            else if (_side === "away") {
+                let x = -(i % 3);
+                let z = Math.floor(i / 3);
+                return new ƒ.Vector3(x, 0, z);
+            }
+            else {
+                throw new Error("Invalide side. Expected 'home' or 'away'.");
+            }
+        }
+        //Layout the tiles in a grid with a given direction and add them as childs to the given parent node
+        layoutGrid(_parent, direction = 1) {
+            for (let i = 0; i < this.tiles; i++) {
+                let x = i % 3;
+                let z = Math.floor(i / 3);
+                let tilePos = new ƒ.Vector3(direction * (this.offset + x * (this.tileSize - this.spacing)), 0, z * (this.tileSize - this.spacing));
+                let tile = new Script.Tile(`Tile_${i}: ${x}, ${z}`, this.tileSize, tilePos);
+                tile.getComponent(ƒ.ComponentTransform).mtxLocal.translate(tilePos);
+                _parent.addChild(tile);
+            }
+        }
+    }
+    Script.VisualizeGrid = VisualizeGrid;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {

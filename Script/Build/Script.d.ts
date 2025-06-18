@@ -552,6 +552,20 @@ declare namespace Script {
     }
 }
 declare namespace Script {
+    import ƒ = FudgeCore;
+    class VisualizeGrid extends ƒ.Node {
+        private tiles;
+        private tileSize;
+        private spacing;
+        private offset;
+        private position;
+        constructor(_position: ƒ.Vector3);
+        private generateGrid;
+        getTilePosition(_index: number, _side: string): ƒ.Vector3;
+        private layoutGrid;
+    }
+}
+declare namespace Script {
     interface IVisualizeGrid {
         getRealPosition(_pos: Position): any;
         updateVisuals(): void;
