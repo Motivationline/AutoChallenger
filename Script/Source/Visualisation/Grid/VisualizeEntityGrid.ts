@@ -2,7 +2,7 @@ namespace Script {
 
     import ƒ = FudgeCore;
 
-    export class VisualizeGrid extends ƒ.Node{
+    export class VisualizeEntityGrid extends ƒ.Node{
 
         private tiles: number;
         private tileSize: number;
@@ -68,6 +68,12 @@ namespace Script {
                 _parent.addChild(tile);
             }
         }
-    }
 
+        //TODO: add an interface to handle Entities sitting on the tiles
+        forEachEntity(_side: ƒ.Node){
+            let entities = _side.getChildren();
+            
+
+        }
+    }
 }

@@ -16,6 +16,7 @@ namespace Script {
     export class VisualizeEntity extends ƒ.Node implements VisualizeEntity {
 
         private entity: IEntity;
+        private grid: VisualizeGrid = 
 
         //TODO: read position from Fights.ts
         //TODO: attach to Grid
@@ -24,6 +25,7 @@ namespace Script {
         constructor(_entity: IEntity) {
             super(_entity.id);
             this.entity = _entity;
+            
         }
 
         // idle(): Promise<void> {
