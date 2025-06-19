@@ -16,20 +16,76 @@ namespace Script {
     export class VisualizeEntity extends ƒ.Node implements VisualizeEntity {
 
         private entity: IEntity;
-        private grid: VisualizeGrid = 
+        private grid: VisualizeEntityGrid;
 
-        //TODO: read position from Fights.ts
-        //TODO: attach to Grid
+        //create a mesh and material for the tile
+        private static mesh: ƒ.Mesh = new ƒ.MeshCube("EntityMesh");
+        private static material: ƒ.Material = new ƒ.Material("EntityMat", ƒ.ShaderLitTextured);
 
+        private size: number = 0.5;
 
-        constructor(_entity: IEntity) {
+        constructor(_entity: IEntity, _grid: VisualizeEntityGrid) {
             super(_entity.id);
             this.entity = _entity;
-            
+            this.grid = _grid;
+
+            this.addComponent(new ƒ.ComponentTransform());
+            this.addComponent(new ƒ.ComponentMesh(VisualizeEntity.mesh));
+            this.addComponent(new ƒ.ComponentMaterial(VisualizeEntity.material));
+            this.grid.addChild(this);
         }
 
-        // idle(): Promise<void> {
+        async idle(): Promise<void> {
+            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
+            await waitMS(200);
+        }
 
-        // }
+        async attack(_attack: AttackData, _targets: IEntity[]): Promise<void> {
+            console.log("entity visualizer null: attack", {attacker: this.entity, attack: _attack, targets: _targets});
+            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("blue");
+            await waitMS(200);
+        }
+
+        async move(_move: MoveData): Promise<void> {
+            //TODO: add movement logic here
+            this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
+            console.log("entity visualizer null: move", _move);
+            await waitMS(200);
+        }
+
+        async hurt(_damage: number, _crit: boolean): Promise<void> {
+            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("red");
+            await waitMS(200);
+        }
+
+        async spell(_spell: SpellData, _targets: IEntity[]): Promise<void> {
+            console.log("entity visualizer null: spell", {caster: this.entity, spell: _spell, targets: _targets});
+            await waitMS(200);
+        }
+
+        async showPreview(): Promise<void> {
+            console.log("entity visualizer null: show preview", this.entity);
+            await waitMS(200);
+        }
+
+        async hidePreview(): Promise<void> {
+            console.log("entity visualizer null: hide preview", this.entity);
+            await waitMS(200);
+        }
+
+        async updateVisuals(): Promise<void> {
+            // console.log("entity visualizer null: updateVisuals", this.entity);
+            // await waitMS(200);
+        }
+
+        async resist(): Promise<void> {
+            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("gray");
+            console.log("entity visualizer null: resisting", this.entity);
+            await waitMS(200);
+        }
+
+        getEntity(): Readonly<IEntity> {
+            return this.entity;
+        }
     }
 }

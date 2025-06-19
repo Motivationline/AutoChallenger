@@ -35,17 +35,21 @@ namespace Script {
 
             console.table(grid);
         }
+
         async fightStart(): Promise<void> {
             console.log("Fight Start!");
             await this.showGrid();
         }
+
         async roundStart(): Promise<void> {
             console.log("Round Start!");
         }
+
         async roundEnd(): Promise<void> {
             await this.showGrid();
             console.log("Round End");
         }
+        
         async fightEnd(): Promise<void> {
             console.log("Fight End!");
         }

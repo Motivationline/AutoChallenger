@@ -2,7 +2,7 @@ namespace Script {
 
     import ƒ = FudgeCore;
 
-    export class VisualizeGrid extends ƒ.Node{
+    export class VisualizeTileGrid extends ƒ.Node{
 
         private tiles: number;
         private tileSize: number;
@@ -59,11 +59,11 @@ namespace Script {
 
         //Layout the tiles in a grid with a given direction and add them as childs to the given parent node
         private layoutGrid(_parent: ƒ.Node, direction: number = 1) {
-            for (let i = 0; i < this.tiles; i++) {
+            for (let i = 0; i < this.tiles; i++) {  
                 let x = i % 3;
                 let z = Math.floor(i / 3);
                 let tilePos = new ƒ.Vector3(direction * (this.offset + x * (this.tileSize - this.spacing)), 0, z * (this.tileSize - this.spacing));
-                let tile: Tile = new Tile(`Tile_${i}: ${x}, ${z}`, this.tileSize, tilePos);
+                let tile: VisualizeTile = new VisualizeTile(`Tile_${i}: ${x}, ${z}`, this.tileSize, tilePos);
                 tile.getComponent(ƒ.ComponentTransform).mtxLocal.translate(tilePos);
                 _parent.addChild(tile);
             }

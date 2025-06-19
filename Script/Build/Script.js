@@ -927,7 +927,7 @@ var Script;
     //let tile: Tile;
     let grid;
     async function initProvider() {
-        await Script.Provider.data.load(); // TODO wie funktioniert das?
+        await Script.Provider.data.load();
         //TODO load correct visualizer here
         run();
     }
@@ -959,7 +959,7 @@ var Script;
         const eumlingData = Script.Provider.data.fights[0].entities;
         // rotate entities in first fight around because they're meant to be testing eumlings for now
         // TODO: remove this once this sort of testing is obsolete.
-        [eumlingData[0][0], eumlingData[0][2]] = [eumlingData[0][2], eumlingData[0][0]]; // TODO Wie funktioniert das?
+        [eumlingData[0][0], eumlingData[0][2]] = [eumlingData[0][2], eumlingData[0][0]];
         [eumlingData[1][0], eumlingData[1][2]] = [eumlingData[1][2], eumlingData[1][0]];
         [eumlingData[2][0], eumlingData[2][2]] = [eumlingData[2][2], eumlingData[2][0]];
         let eumlings = Script.initEntitiesInGrid(eumlingData, Script.Entity);
@@ -1070,9 +1070,6 @@ var Script;
         }
         updateVisuals() {
             this.visualizer.updateVisuals();
-        }
-        updateUI(_round) {
-            this.visualizer.updateUI(_round);
         }
         select(_options, _use) {
             if (!_options)
@@ -1308,6 +1305,7 @@ var Script;
                 throw new Error(`Entity ${entityId} not found.`);
             newGrid.set(pos, new _entity(entityData, Script.Provider.visualizer, pos));
         });
+        console.log("init Grid: " + newGrid);
         return newGrid;
     }
     Script.initEntitiesInGrid = initEntitiesInGrid;
@@ -1364,6 +1362,33 @@ var Script;
     }
     Script.VisualizeFightNull = VisualizeFightNull;
 })(Script || (Script = {}));
+// namespace Script {
+//     import ƒ = FudgeCore;
+//     export interface VisualizeEntity {
+//         idle(): Promise<void>;
+//         attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
+//         move(_move: MoveData): Promise<void>;
+//         hurt(_damage: number, _crit: boolean): Promise<void>;
+//         resist(): Promise<void>;
+//         spell(_spell: SpellData, _targets: IEntity[]): Promise<void>;
+//         showPreview(): Promise<void>;
+//         hidePreview(): Promise<void>;
+//         /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
+//         updateVisuals(): void;
+//     }
+//     export class VisualizeEntity extends ƒ.Node implements VisualizeEntity {
+//         private entity: IEntity;
+//         private grid: VisualizeGrid = 
+//         //TODO: read position from Fights.ts
+//         //TODO: attach to Grid
+//         // constructor(_entity: IEntity) {
+//         //     super(_entity.id);
+//         //     this.entity = _entity;
+//         // }
+//         // idle(): Promise<void> {
+//         // }
+//     }
+// }
 var Script;
 (function (Script) {
     class VisualizeEntityNull {
@@ -1404,10 +1429,6 @@ var Script;
         getEntity() {
             return this.#entity;
         }
-        async updateUI(_round) {
-            console.log("updating UI");
-            await Script.waitMS(200);
-        }
     }
     Script.VisualizeEntityNull = VisualizeEntityNull;
 })(Script || (Script = {}));
@@ -1435,6 +1456,72 @@ var Script;
         }
     }
     Script.Tile = Tile;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    class VisualizeEntityGrid extends ƒ.Node {
+        //grid: Grid<VisualizeEntity>;
+        constructor(_position) {
+            super("VisualizeGrid");
+            this.position = _position;
+            this.tiles = 9; //3x3
+            this.tileSize = 1;
+            this.spacing = 0.4; //large values = smaller spacing between 0 and 0.5
+            this.offset = 0.5;
+            //this.grid = _grid;
+            this.addComponent(new ƒ.ComponentTransform());
+            this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(this.position);
+            this.generateGrid();
+        }
+        //create a grid with 2 Sides: home | away
+        //each having a 3x3 grid of tiles
+        generateGrid() {
+            let home = new ƒ.Node("home");
+            let away = new ƒ.Node("away");
+            home.addComponent(new ƒ.ComponentTransform);
+            away.addComponent(new ƒ.ComponentTransform);
+            //create the tile grid for each side
+            this.layoutGrid(home, 1);
+            this.layoutGrid(away, -1);
+            //add the sides as children to the grid Object
+            this.addChild(home);
+            this.addChild(away);
+        }
+        //TODO: consider world position or relative position?
+        getTilePosition(_index, _side) {
+            let i = _index;
+            if (_side === "home") {
+                let x = i % 3;
+                let z = Math.floor(i / 3);
+                return new ƒ.Vector3(x, 0, z);
+            }
+            else if (_side === "away") {
+                let x = -(i % 3);
+                let z = Math.floor(i / 3);
+                return new ƒ.Vector3(x, 0, z);
+            }
+            else {
+                throw new Error("Invalide side. Expected 'home' or 'away'.");
+            }
+        }
+        //Layout the tiles in a grid with a given direction and add them as childs to the given parent node
+        layoutGrid(_parent, direction = 1) {
+            for (let i = 0; i < this.tiles; i++) {
+                let x = i % 3;
+                let z = Math.floor(i / 3);
+                let tilePos = new ƒ.Vector3(direction * (this.offset + x * (this.tileSize - this.spacing)), 0, z * (this.tileSize - this.spacing));
+                let tile = new Script.Tile(`Tile_${i}: ${x}, ${z}`, this.tileSize, tilePos);
+                tile.getComponent(ƒ.ComponentTransform).mtxLocal.translate(tilePos);
+                _parent.addChild(tile);
+            }
+        }
+        //TODO: add an interface to handle Entities sitting on the tiles
+        forEachEntity(_side) {
+            //let entities = _side.getChildren();
+        }
+    }
+    Script.VisualizeEntityGrid = VisualizeEntityGrid;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -1498,6 +1585,7 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
+    //import ƒ = FudgeCore;
     class VisualizeGridNull {
         constructor(_grid) {
             this.grid = _grid;

@@ -12,7 +12,7 @@ namespace Script {
   const root: ƒ.Node = new ƒ.Node("Root");
 
   //let tile: Tile;
-  let grid: VisualizeGrid;
+  let grid: VisualizeTileGrid;
 
   async function initProvider() {
     await Provider.data.load();
@@ -25,7 +25,7 @@ namespace Script {
     initProvider();
 
     //tile = new Tile("Tile", 1, new ƒ.Vector3(0, 0, 0));
-    grid = new VisualizeGrid(new ƒ.Vector3(0, 0, 0));
+    grid = new VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
 
     root.addChild(grid);
     console.log(root);

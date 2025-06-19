@@ -10,13 +10,17 @@ namespace Script {
         private offset: number;
         private position: ƒ.Vector3;
 
-        constructor(_position: ƒ.Vector3) {
+        //grid: Grid<VisualizeEntity>;
+
+        constructor(_position: ƒ.Vector3, /*_grid: Grid<VisualizeEntity>*/) {
             super("VisualizeGrid");
             this.position = _position;
             this.tiles = 9; //3x3
             this.tileSize = 1;
             this.spacing = 0.4; //large values = smaller spacing between 0 and 0.5
             this.offset = 0.5;
+
+            //this.grid = _grid;
 
             this.addComponent(new ƒ.ComponentTransform());
             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(this.position);
@@ -63,7 +67,7 @@ namespace Script {
                 let x = i % 3;
                 let z = Math.floor(i / 3);
                 let tilePos = new ƒ.Vector3(direction * (this.offset + x * (this.tileSize - this.spacing)), 0, z * (this.tileSize - this.spacing));
-                let tile: Tile = new Tile(`Tile_${i}: ${x}, ${z}`, this.tileSize, tilePos);
+                let tile: VisualizeTile = new VisualizeTile(`Tile_${i}: ${x}, ${z}`, this.tileSize, tilePos);
                 tile.getComponent(ƒ.ComponentTransform).mtxLocal.translate(tilePos);
                 _parent.addChild(tile);
             }
@@ -71,7 +75,7 @@ namespace Script {
 
         //TODO: add an interface to handle Entities sitting on the tiles
         forEachEntity(_side: ƒ.Node){
-            let entities = _side.getChildren();
+            //let entities = _side.getChildren();
             
 
         }

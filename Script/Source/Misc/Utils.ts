@@ -9,8 +9,8 @@ namespace Script {
             if (!entityData) throw new Error(`Entity ${entityId} not found.`);
             newGrid.set(pos, new _entity(entityData, Provider.visualizer, pos));
         })
+        console.log("init Grid: " + newGrid);
         return newGrid;
-
     }
 
     export async function waitMS(_ms: number): Promise<void> {

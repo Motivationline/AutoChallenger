@@ -1,6 +1,6 @@
 namespace Script {
 
-    import ƒ = FudgeCore;
+    //import ƒ = FudgeCore;
 
     export interface IVisualizeGrid {
         getRealPosition(_pos: Position): any;
