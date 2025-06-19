@@ -513,6 +513,30 @@ declare namespace Script {
     }
 }
 declare namespace Script {
+    import ƒ = FudgeCore;
+    interface VisualizeEntity {
+        idle(): Promise<void>;
+        attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
+        move(_move: MoveData): Promise<void>;
+        hurt(_damage: number, _crit: boolean): Promise<void>;
+        resist(): Promise<void>;
+        spell(_spell: SpellData, _targets: IEntity[]): Promise<void>;
+        showPreview(): Promise<void>;
+        hidePreview(): Promise<void>;
+        /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
+        updateVisuals(): void;
+    }
+    class VisualizeEntity extends ƒ.Node implements VisualizeEntity {
+        private entity;
+        private grid;
+        private static mesh;
+        private static material;
+        private size;
+        constructor(_entity: IEntity, _grid: VisualizeEntityGrid);
+        getEntity(): Readonly<IEntity>;
+    }
+}
+declare namespace Script {
     interface IVisualizeEntity {
         attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
         move(_move: MoveData): Promise<void>;
@@ -540,16 +564,6 @@ declare namespace Script {
 }
 declare namespace Script {
     import ƒ = FudgeCore;
-    class Tile extends ƒ.Node {
-        private static mesh;
-        private static material;
-        private size;
-        private pos;
-        constructor(_name: string, _size: number, _pos: ƒ.Vector3);
-    }
-}
-declare namespace Script {
-    import ƒ = FudgeCore;
     class VisualizeEntityGrid extends ƒ.Node {
         private tiles;
         private tileSize;
@@ -565,7 +579,17 @@ declare namespace Script {
 }
 declare namespace Script {
     import ƒ = FudgeCore;
-    class VisualizeGrid extends ƒ.Node {
+    class VisualizeTile extends ƒ.Node {
+        private static mesh;
+        private static material;
+        private size;
+        private pos;
+        constructor(_name: string, _size: number, _pos: ƒ.Vector3);
+    }
+}
+declare namespace Script {
+    import ƒ = FudgeCore;
+    class VisualizeTileGrid extends ƒ.Node {
         private tiles;
         private tileSize;
         private spacing;

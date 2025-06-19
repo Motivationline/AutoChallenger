@@ -1,16 +1,19 @@
 namespace Script {
 
-    //import ƒ = FudgeCore;
+    import ƒ = FudgeCore;
 
     export interface IVisualizeGrid {
         getRealPosition(_pos: Position): any;
         updateVisuals(): void;
     }
 
-    export class VisualizeGridNull implements IVisualizeGrid {
+    export class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
         grid: Grid<IVisualizeEntity>;
         constructor(_grid: Grid<IVisualizeEntity>) {
+            super("VisualizeGridNull");
             this.grid = _grid;
+            this.addComponent(new ƒ.ComponentTransform());
+            this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3(0));
         }
         
         updateVisuals(): void {

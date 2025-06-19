@@ -16,7 +16,7 @@ namespace Script {
     export class VisualizeEntity extends ƒ.Node implements VisualizeEntity {
 
         private entity: IEntity;
-        private grid: VisualizeEntityGrid;
+        private grid: VisualizeGridNull;
 
         //create a mesh and material for the tile
         private static mesh: ƒ.Mesh = new ƒ.MeshCube("EntityMesh");
@@ -24,7 +24,7 @@ namespace Script {
 
         private size: number = 0.5;
 
-        constructor(_entity: IEntity, _grid: VisualizeEntityGrid) {
+        constructor(_entity: IEntity, _grid: VisualizeGridNull) {
             super(_entity.id);
             this.entity = _entity;
             this.grid = _grid;
@@ -32,6 +32,7 @@ namespace Script {
             this.addComponent(new ƒ.ComponentTransform());
             this.addComponent(new ƒ.ComponentMesh(VisualizeEntity.mesh));
             this.addComponent(new ƒ.ComponentMaterial(VisualizeEntity.material));
+            this.getComponent(ƒ.ComponentTransform).mtxLocal.scale(new ƒ.Vector3(this.size));
             this.grid.addChild(this);
         }
 

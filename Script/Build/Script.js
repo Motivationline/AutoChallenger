@@ -935,7 +935,7 @@ var Script;
         viewport = _event.detail;
         initProvider();
         //tile = new Tile("Tile", 1, new ƒ.Vector3(0, 0, 0));
-        grid = new Script.VisualizeGrid(new ƒ.Vector3(0, 0, 0));
+        grid = new Script.VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
         root.addChild(grid);
         console.log(root);
         //setup Camera view
@@ -1362,33 +1362,70 @@ var Script;
     }
     Script.VisualizeFightNull = VisualizeFightNull;
 })(Script || (Script = {}));
-// namespace Script {
-//     import ƒ = FudgeCore;
-//     export interface VisualizeEntity {
-//         idle(): Promise<void>;
-//         attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
-//         move(_move: MoveData): Promise<void>;
-//         hurt(_damage: number, _crit: boolean): Promise<void>;
-//         resist(): Promise<void>;
-//         spell(_spell: SpellData, _targets: IEntity[]): Promise<void>;
-//         showPreview(): Promise<void>;
-//         hidePreview(): Promise<void>;
-//         /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
-//         updateVisuals(): void;
-//     }
-//     export class VisualizeEntity extends ƒ.Node implements VisualizeEntity {
-//         private entity: IEntity;
-//         private grid: VisualizeGrid = 
-//         //TODO: read position from Fights.ts
-//         //TODO: attach to Grid
-//         // constructor(_entity: IEntity) {
-//         //     super(_entity.id);
-//         //     this.entity = _entity;
-//         // }
-//         // idle(): Promise<void> {
-//         // }
-//     }
-// }
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    class VisualizeEntity extends ƒ.Node {
+        //create a mesh and material for the tile
+        static { this.mesh = new ƒ.MeshCube("EntityMesh"); }
+        static { this.material = new ƒ.Material("EntityMat", ƒ.ShaderLitTextured); }
+        constructor(_entity, _grid) {
+            super(_entity.id);
+            this.size = 0.5;
+            this.entity = _entity;
+            this.grid = _grid;
+            this.addComponent(new ƒ.ComponentTransform());
+            this.addComponent(new ƒ.ComponentMesh(VisualizeEntity.mesh));
+            this.addComponent(new ƒ.ComponentMaterial(VisualizeEntity.material));
+            this.getComponent(ƒ.ComponentTransform).mtxLocal.scale(new ƒ.Vector3(this.size));
+            this.grid.addChild(this);
+        }
+        async idle() {
+            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
+            await Script.waitMS(200);
+        }
+        async attack(_attack, _targets) {
+            console.log("entity visualizer null: attack", { attacker: this.entity, attack: _attack, targets: _targets });
+            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("blue");
+            await Script.waitMS(200);
+        }
+        async move(_move) {
+            //TODO: add movement logic here
+            this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
+            console.log("entity visualizer null: move", _move);
+            await Script.waitMS(200);
+        }
+        async hurt(_damage, _crit) {
+            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("red");
+            await Script.waitMS(200);
+        }
+        async spell(_spell, _targets) {
+            console.log("entity visualizer null: spell", { caster: this.entity, spell: _spell, targets: _targets });
+            await Script.waitMS(200);
+        }
+        async showPreview() {
+            console.log("entity visualizer null: show preview", this.entity);
+            await Script.waitMS(200);
+        }
+        async hidePreview() {
+            console.log("entity visualizer null: hide preview", this.entity);
+            await Script.waitMS(200);
+        }
+        async updateVisuals() {
+            // console.log("entity visualizer null: updateVisuals", this.entity);
+            // await waitMS(200);
+        }
+        async resist() {
+            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("gray");
+            console.log("entity visualizer null: resisting", this.entity);
+            await Script.waitMS(200);
+        }
+        getEntity() {
+            return this.entity;
+        }
+    }
+    Script.VisualizeEntity = VisualizeEntity;
+})(Script || (Script = {}));
 var Script;
 (function (Script) {
     class VisualizeEntityNull {
@@ -1431,31 +1468,6 @@ var Script;
         }
     }
     Script.VisualizeEntityNull = VisualizeEntityNull;
-})(Script || (Script = {}));
-var Script;
-(function (Script) {
-    var ƒ = FudgeCore;
-    class Tile extends ƒ.Node {
-        //create a mesh and material for the tile
-        static { this.mesh = new ƒ.MeshCube("TileMesh"); }
-        static { this.material = new ƒ.Material("TileMat", ƒ.ShaderLitTextured); }
-        constructor(_name, _size, _pos) {
-            super(_name);
-            this.size = _size;
-            this.pos = _pos;
-            const tileMesh = new ƒ.ComponentMesh(Tile.mesh);
-            tileMesh.mtxPivot.scale(new ƒ.Vector3(this.size, 0.001, this.size));
-            tileMesh.mtxPivot.translate(this.pos);
-            tileMesh.mtxPivot.rotateZ(90);
-            //const sphere: ƒ.ComponentMesh = new ƒ.ComponentMesh(new ƒ.MeshSphere("Tile"));
-            const tileMat = new ƒ.ComponentMaterial(Tile.material);
-            tileMat.clrPrimary.setCSS("white");
-            this.addComponent(tileMesh);
-            this.addComponent(tileMat);
-            this.addComponent(new ƒ.ComponentTransform());
-        }
-    }
-    Script.Tile = Tile;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -1511,7 +1523,7 @@ var Script;
                 let x = i % 3;
                 let z = Math.floor(i / 3);
                 let tilePos = new ƒ.Vector3(direction * (this.offset + x * (this.tileSize - this.spacing)), 0, z * (this.tileSize - this.spacing));
-                let tile = new Script.Tile(`Tile_${i}: ${x}, ${z}`, this.tileSize, tilePos);
+                let tile = new Script.VisualizeTile(`Tile_${i}: ${x}, ${z}`, this.tileSize, tilePos);
                 tile.getComponent(ƒ.ComponentTransform).mtxLocal.translate(tilePos);
                 _parent.addChild(tile);
             }
@@ -1526,7 +1538,32 @@ var Script;
 var Script;
 (function (Script) {
     var ƒ = FudgeCore;
-    class VisualizeGrid extends ƒ.Node {
+    class VisualizeTile extends ƒ.Node {
+        //create a mesh and material for the tile
+        static { this.mesh = new ƒ.MeshCube("TileMesh"); }
+        static { this.material = new ƒ.Material("TileMat", ƒ.ShaderLitTextured); }
+        constructor(_name, _size, _pos) {
+            super(_name);
+            this.size = _size;
+            this.pos = _pos;
+            const tileMesh = new ƒ.ComponentMesh(VisualizeTile.mesh);
+            tileMesh.mtxPivot.scale(new ƒ.Vector3(this.size, 0.001, this.size));
+            tileMesh.mtxPivot.translate(this.pos);
+            tileMesh.mtxPivot.rotateZ(90);
+            //const sphere: ƒ.ComponentMesh = new ƒ.ComponentMesh(new ƒ.MeshSphere("Tile"));
+            const tileMat = new ƒ.ComponentMaterial(VisualizeTile.material);
+            tileMat.clrPrimary.setCSS("white");
+            this.addComponent(tileMesh);
+            this.addComponent(tileMat);
+            this.addComponent(new ƒ.ComponentTransform());
+        }
+    }
+    Script.VisualizeTile = VisualizeTile;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    class VisualizeTileGrid extends ƒ.Node {
         constructor(_position) {
             super("VisualizeGrid");
             this.position = _position;
@@ -1575,13 +1612,13 @@ var Script;
                 let x = i % 3;
                 let z = Math.floor(i / 3);
                 let tilePos = new ƒ.Vector3(direction * (this.offset + x * (this.tileSize - this.spacing)), 0, z * (this.tileSize - this.spacing));
-                let tile = new Script.Tile(`Tile_${i}: ${x}, ${z}`, this.tileSize, tilePos);
+                let tile = new Script.VisualizeTile(`Tile_${i}: ${x}, ${z}`, this.tileSize, tilePos);
                 tile.getComponent(ƒ.ComponentTransform).mtxLocal.translate(tilePos);
                 _parent.addChild(tile);
             }
         }
     }
-    Script.VisualizeGrid = VisualizeGrid;
+    Script.VisualizeTileGrid = VisualizeTileGrid;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
