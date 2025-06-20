@@ -967,6 +967,8 @@ var Script;
             let visualizer = new Script.VisualizeEntity(eumling);
             root.addChild(visualizer);
         });
+        console.log("Root: ", root);
+        viewport.draw();
         // let tmp = eumlings.get([0, 0]);
         // eumlings.set([0, 0], eumlings.get([2, 0]));
         // eumlings.set([2, 0], tmp);
