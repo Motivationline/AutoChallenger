@@ -332,11 +332,11 @@ declare namespace Script {
 }
 declare namespace Script {
     interface IVisualizer {
-        getEntity(_entity: IEntity): IVisualizeEntity;
+        getEntity(_entity: IEntity): VisualizeEntity;
         getFight(_fight: Fight): IVisualizeFight;
     }
     class VisualizerNull implements IVisualizer {
-        getEntity(_entity: IEntity): IVisualizeEntity;
+        getEntity(_entity: IEntity): VisualizeEntity;
         getFight(_fight: Fight): IVisualizeFight;
     }
 }
@@ -383,7 +383,7 @@ declare namespace Script {
         getOwnDamage(): number;
         updateVisuals(_arena: Arena): void;
         registerEventListeners(): void;
-        getVisualizer(): Readonly<IVisualizeEntity>;
+        getVisualizer(): VisualizeEntity;
         setGrids(_home: Grid<IEntity>, _away: Grid<IEntity>): void;
     }
     export class Entity implements IEntity {
@@ -401,9 +401,9 @@ declare namespace Script {
         resistancesSet?: Set<SPELL_TYPE>;
         startDirection?: number;
         activeEffects: Map<SPELL_TYPE, number>;
-        protected visualizer: IVisualizeEntity;
+        protected visualizer: VisualizeEntity;
         constructor(_entity: EntityData, _vis: IVisualizer, _pos?: Position);
-        getVisualizer(): Readonly<IVisualizeEntity>;
+        getVisualizer(): VisualizeEntity;
         damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
         affect(_spell: SpellData, _cause?: IEntity): Promise<number>;
         move(): Promise<void>;
@@ -526,13 +526,12 @@ declare namespace Script {
         /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
         updateVisuals(): void;
     }
-    class VisualizeEntity extends ƒ.Node implements VisualizeEntity {
+    class VisualizeEntity extends ƒ.Node {
         private entity;
-        private grid;
         private static mesh;
         private static material;
         private size;
-        constructor(_entity: IEntity, _grid: VisualizeEntityGrid);
+        constructor(_entity: IEntity);
         getEntity(): Readonly<IEntity>;
     }
 }
@@ -564,21 +563,6 @@ declare namespace Script {
 }
 declare namespace Script {
     import ƒ = FudgeCore;
-    class VisualizeEntityGrid extends ƒ.Node {
-        private tiles;
-        private tileSize;
-        private spacing;
-        private offset;
-        private position;
-        constructor(_position: ƒ.Vector3);
-        private generateGrid;
-        getTilePosition(_index: number, _side: string): ƒ.Vector3;
-        private layoutGrid;
-        forEachEntity(_side: ƒ.Node): void;
-    }
-}
-declare namespace Script {
-    import ƒ = FudgeCore;
     class VisualizeTile extends ƒ.Node {
         private static mesh;
         private static material;
@@ -602,11 +586,12 @@ declare namespace Script {
     }
 }
 declare namespace Script {
+    import ƒ = FudgeCore;
     interface IVisualizeGrid {
         getRealPosition(_pos: Position): any;
         updateVisuals(): void;
     }
-    class VisualizeGridNull implements IVisualizeGrid {
+    class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
         grid: Grid<IVisualizeEntity>;
         constructor(_grid: Grid<IVisualizeEntity>);
         updateVisuals(): void;

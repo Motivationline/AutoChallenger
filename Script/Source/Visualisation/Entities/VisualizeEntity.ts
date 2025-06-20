@@ -13,10 +13,10 @@ namespace Script {
         updateVisuals(): void;
     }
 
-    export class VisualizeEntity extends ƒ.Node implements VisualizeEntity {
+    export class VisualizeEntity extends ƒ.Node /*implements VisualizeEntity*/ {
 
         private entity: IEntity;
-        private grid: VisualizeGridNull;
+        //private grid: VisualizeGridNull;
 
         //create a mesh and material for the tile
         private static mesh: ƒ.Mesh = new ƒ.MeshCube("EntityMesh");
@@ -24,16 +24,14 @@ namespace Script {
 
         private size: number = 0.5;
 
-        constructor(_entity: IEntity, _grid: VisualizeGridNull) {
-            super(_entity.id);
+        constructor(_entity: IEntity) {
+            super("entity");
             this.entity = _entity;
-            this.grid = _grid;
 
             this.addComponent(new ƒ.ComponentTransform());
             this.addComponent(new ƒ.ComponentMesh(VisualizeEntity.mesh));
             this.addComponent(new ƒ.ComponentMaterial(VisualizeEntity.material));
             this.getComponent(ƒ.ComponentTransform).mtxLocal.scale(new ƒ.Vector3(this.size));
-            this.grid.addChild(this);
         }
 
         async idle(): Promise<void> {

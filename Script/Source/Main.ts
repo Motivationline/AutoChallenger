@@ -59,6 +59,10 @@ namespace Script {
     [eumlingData[2][0], eumlingData[2][2]] = [eumlingData[2][2], eumlingData[2][0]];
 
     let eumlings: Grid<IEntity> = initEntitiesInGrid(eumlingData, Entity);
+    eumlings.forEachElement((eumling) => {
+      let visualizer = new VisualizeEntity(eumling);
+      root.addChild(visualizer);
+    });
     // let tmp = eumlings.get([0, 0]);
     // eumlings.set([0, 0], eumlings.get([2, 0]));
     // eumlings.set([2, 0], tmp);

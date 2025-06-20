@@ -33,7 +33,7 @@ namespace Script {
         getOwnDamage(): number;
         updateVisuals(_arena: Arena): void;
         registerEventListeners(): void;
-        getVisualizer(): Readonly<IVisualizeEntity>;
+        getVisualizer(): VisualizeEntity;
         setGrids(_home: Grid<IEntity>, _away: Grid<IEntity>): void;
     }
 
@@ -52,7 +52,7 @@ namespace Script {
         startDirection?: number;
         activeEffects = new Map<SPELL_TYPE, number>();
 
-        protected visualizer: IVisualizeEntity;
+        protected visualizer: VisualizeEntity;
 
         #arena: Arena;
 
@@ -72,7 +72,7 @@ namespace Script {
 
             this.visualizer = _vis.getEntity(this);
         }
-        getVisualizer(): Readonly<IVisualizeEntity> {
+        getVisualizer(): VisualizeEntity {
             return this.visualizer;
         }
 

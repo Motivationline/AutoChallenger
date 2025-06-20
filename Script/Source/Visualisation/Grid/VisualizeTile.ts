@@ -3,13 +3,13 @@ namespace Script {
 
     export class VisualizeTile extends ƒ.Node {
         //create a mesh and material for the tile
-        private static mesh : ƒ.Mesh = new ƒ.MeshCube("TileMesh");
-        private static material : ƒ.Material = new ƒ.Material("TileMat", ƒ.ShaderLitTextured);
+        private static mesh: ƒ.Mesh = new ƒ.MeshCube("TileMesh");
+        private static material: ƒ.Material = new ƒ.Material("TileMat", ƒ.ShaderLitTextured);
 
-        private size : number;
-        private pos : ƒ.Vector3;
+        private size: number;
+        private pos: ƒ.Vector3;
 
-        constructor(_name : string, _size: number, _pos: ƒ.Vector3){
+        constructor(_name: string, _size: number, _pos: ƒ.Vector3) {
             super(_name);
             this.size = _size;
             this.pos = _pos;
