@@ -341,10 +341,21 @@ declare namespace Script {
     }
 }
 declare namespace Script {
+    interface VisualizeHUD {
+        sayHello(): void;
+        updateRoundCounter(_ev: FightEvent): void;
+    }
+    class VisualizeHUD implements VisualizeHUD {
+        constructor();
+        private roundStart;
+    }
+}
+declare namespace Script {
     class Provider {
         #private;
         static get data(): Readonly<Data>;
         static get visualizer(): Readonly<IVisualizer>;
+        static get HUD(): Readonly<VisualizeHUD>;
         static setVisualizer(_vis: IVisualizer): void;
     }
 }
@@ -596,12 +607,5 @@ declare namespace Script {
         constructor(_grid: Grid<IVisualizeEntity>);
         updateVisuals(): void;
         getRealPosition(_pos: Position): Position;
-    }
-}
-declare namespace Script {
-    class VisualizeHUD {
-        constructor();
-        private fightStart;
-        private updateRoundCounter;
     }
 }

@@ -1,4 +1,6 @@
 /// <reference path="../Visualisation/Visualizer.ts" />
+/// <reference path="../Visualisation/UI/VisualizeHUD.ts" />
+
 
 namespace Script {
     export class Provider {

@@ -1,6 +1,7 @@
 /// <reference path="Data/Data.ts" />
 /// <reference path="Fight/Fight.ts" />
 /// <reference path="Misc/Provider.ts" />
+/// <reference path="Visualisation/UI/VisualizeHUD.ts"/>
 
 namespace Script {
   import ƒ = FudgeCore;
@@ -13,7 +14,8 @@ namespace Script {
 
   //let tile: Tile;
   let grid: VisualizeTileGrid;
-  const HUD: VisualizeHUD = new VisualizeHUD();
+  let HUD: VisualizeHUD = new VisualizeHUD();
+  HUD.sayHello();// TODO remove this!
 
   async function initProvider() {
     await Provider.data.load();

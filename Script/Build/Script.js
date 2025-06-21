@@ -888,18 +888,46 @@ var Script;
     }
     Script.VisualizerNull = VisualizerNull;
 })(Script || (Script = {}));
+var Script;
+(function (Script) {
+    // TODO: add Provider to pass UI elements without hardcoding
+    class VisualizeHUD {
+        constructor() {
+            this.roundStart = async (_ev) => {
+                this.updateRoundCounter(_ev);
+            };
+            Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.roundStart);
+        }
+        sayHello() {
+            console.log("Hello from HUD");
+        }
+        updateRoundCounter(_ev) {
+            let round = _ev.value;
+            const roundCounter = document.querySelector(".RoundCounter");
+            roundCounter.innerText = `Round: ${round + 1}`;
+            console.log(`Update Round: ${round + 1}`);
+        }
+    }
+    Script.VisualizeHUD = VisualizeHUD;
+})(Script || (Script = {}));
 /// <reference path="../Visualisation/Visualizer.ts" />
+/// <reference path="../Visualisation/UI/VisualizeHUD.ts" />
 var Script;
 /// <reference path="../Visualisation/Visualizer.ts" />
+/// <reference path="../Visualisation/UI/VisualizeHUD.ts" />
 (function (Script) {
     class Provider {
         static #data = new Script.Data();
         static #visualizer = new Script.VisualizerNull();
+        static #HUD = new Script.VisualizeHUD();
         static get data() {
             return this.#data;
         }
         static get visualizer() {
             return this.#visualizer;
+        }
+        static get HUD() {
+            return this.#HUD;
         }
         static setVisualizer(_vis) {
             if (!_vis) {
@@ -914,10 +942,12 @@ var Script;
 /// <reference path="Data/Data.ts" />
 /// <reference path="Fight/Fight.ts" />
 /// <reference path="Misc/Provider.ts" />
+/// <reference path="Visualisation/UI/VisualizeHUD.ts"/>
 var Script;
 /// <reference path="Data/Data.ts" />
 /// <reference path="Fight/Fight.ts" />
 /// <reference path="Misc/Provider.ts" />
+/// <reference path="Visualisation/UI/VisualizeHUD.ts"/>
 (function (Script) {
     var ƒ = FudgeCore;
     ƒ.Debug.info("Main Program Template running!");
@@ -926,6 +956,8 @@ var Script;
     const root = new ƒ.Node("Root");
     //let tile: Tile;
     let grid;
+    let HUD = new Script.VisualizeHUD();
+    HUD.sayHello();
     async function initProvider() {
         await Script.Provider.data.load();
         //TODO load correct visualizer here
@@ -1582,23 +1614,5 @@ var Script;
         }
     }
     Script.VisualizeGridNull = VisualizeGridNull;
-})(Script || (Script = {}));
-var Script;
-(function (Script) {
-    // TODO: add Provider to pass UI elements without hardcoding
-    class VisualizeHUD {
-        constructor() {
-            this.fightStart = async (_ev) => {
-                await this.updateRoundCounter(_ev);
-            };
-            Script.EventBus.addEventListener(Script.EVENT.FIGHT_START, this.fightStart);
-        }
-        updateRoundCounter(_ev) {
-            let round = _ev.value;
-            const roundCounter = document.querySelector("#RoundCounter");
-            roundCounter.innerText = `Round: ${round + 1}`;
-        }
-    }
-    Script.VisualizeHUD = VisualizeHUD;
 })(Script || (Script = {}));
 //# sourceMappingURL=Script.js.map
