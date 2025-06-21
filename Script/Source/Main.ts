@@ -13,6 +13,7 @@ namespace Script {
 
   //let tile: Tile;
   let grid: VisualizeTileGrid;
+  const HUD: VisualizeHUD = new VisualizeHUD();
 
   async function initProvider() {
     await Provider.data.load();

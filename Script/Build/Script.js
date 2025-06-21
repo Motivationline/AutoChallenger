@@ -837,10 +837,10 @@ var Script;
             // run actual round
             for (let r = 0; r < this.rounds; r++) {
                 await this.visualizer.roundStart();
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_START });
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_START, value: r });
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_END });
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_END, value: r });
                 await this.visualizer.roundEnd();
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {
@@ -1380,10 +1380,13 @@ var Script;
             super("entity");
             this.size = 0.5;
             this.entity = _entity;
+            const entityMesh = new ƒ.ComponentMesh(VisualizeEntity.mesh);
+            const entityMat = new ƒ.ComponentMaterial(VisualizeEntity.material);
+            this.addComponent(entityMesh);
+            this.addComponent(entityMat);
+            entityMesh.mtxPivot.scale(new ƒ.Vector3(this.size));
+            entityMat.clrPrimary.setCSS("white");
             this.addComponent(new ƒ.ComponentTransform());
-            this.addComponent(new ƒ.ComponentMesh(VisualizeEntity.mesh));
-            this.addComponent(new ƒ.ComponentMaterial(VisualizeEntity.material));
-            this.getComponent(ƒ.ComponentTransform).mtxLocal.scale(new ƒ.Vector3(this.size));
         }
         async idle() {
             this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
@@ -1579,5 +1582,23 @@ var Script;
         }
     }
     Script.VisualizeGridNull = VisualizeGridNull;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    // TODO: add Provider to pass UI elements without hardcoding
+    class VisualizeHUD {
+        constructor() {
+            this.fightStart = async (_ev) => {
+                await this.updateRoundCounter(_ev);
+            };
+            Script.EventBus.addEventListener(Script.EVENT.FIGHT_START, this.fightStart);
+        }
+        updateRoundCounter(_ev) {
+            let round = _ev.value;
+            const roundCounter = document.querySelector("#RoundCounter");
+            roundCounter.innerText = `Round: ${round + 1}`;
+        }
+    }
+    Script.VisualizeHUD = VisualizeHUD;
 })(Script || (Script = {}));
 //# sourceMappingURL=Script.js.map

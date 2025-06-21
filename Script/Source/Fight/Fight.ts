@@ -51,10 +51,10 @@ namespace Script {
             // run actual round
             for (let r: number = 0; r < this.rounds; r++) {
                 await this.visualizer.roundStart();
-                await EventBus.dispatchEvent({ type: EVENT.ROUND_START });
+                await EventBus.dispatchEvent({ type: EVENT.ROUND_START, value: r });
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
-                await EventBus.dispatchEvent({ type: EVENT.ROUND_END });
+                await EventBus.dispatchEvent({ type: EVENT.ROUND_END, value: r });
                 await this.visualizer.roundEnd();
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {

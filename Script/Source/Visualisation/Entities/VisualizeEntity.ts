@@ -28,10 +28,14 @@ namespace Script {
             super("entity");
             this.entity = _entity;
 
+            const entityMesh = new ƒ.ComponentMesh(VisualizeEntity.mesh);
+            const entityMat = new ƒ.ComponentMaterial(VisualizeEntity.material);
+            this.addComponent(entityMesh);
+            this.addComponent(entityMat);
+            entityMesh.mtxPivot.scale(new ƒ.Vector3(this.size));
+            entityMat.clrPrimary.setCSS("white");
+
             this.addComponent(new ƒ.ComponentTransform());
-            this.addComponent(new ƒ.ComponentMesh(VisualizeEntity.mesh));
-            this.addComponent(new ƒ.ComponentMaterial(VisualizeEntity.material));
-            this.getComponent(ƒ.ComponentTransform).mtxLocal.scale(new ƒ.Vector3(this.size));
         }
 
         async idle(): Promise<void> {

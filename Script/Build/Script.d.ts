@@ -599,4 +599,9 @@ declare namespace Script {
     }
 }
 declare namespace Script {
+    class VisualizeHUD {
+        constructor();
+        private fightStart;
+        private updateRoundCounter;
+    }
 }
