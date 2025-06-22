@@ -11,10 +11,10 @@ namespace Script {
         #home: VisualizeGridNull;
         #away: VisualizeGridNull;
         constructor(_fight: Fight) {
-            let awayGrid = new Grid<IVisualizeEntity>();
+            let awayGrid = new Grid<VisualizeEntity>();
             _fight.arena.away.forEachElement((entity, pos) => awayGrid.set(pos, entity?.getVisualizer()));
             this.#away = new VisualizeGridNull(awayGrid);
-            let homeGrid = new Grid<IVisualizeEntity>();
+            let homeGrid = new Grid<VisualizeEntity>();
             _fight.arena.home.forEachElement((entity, pos) => homeGrid.set(pos, entity?.getVisualizer()));
             this.#home = new VisualizeGridNull(homeGrid);
         }
@@ -24,12 +24,12 @@ namespace Script {
 
             this.#home.grid.forEachElement((el, pos) => {
                 if(!el) return;
-                let entity = (<VisualizeEntityNull>el).getEntity();
+                let entity = (<VisualizeEntity>el).getEntity();
             grid[pos[1]][2 - pos[0]] = `${entity.id}\n${entity.currentHealth} ♥️`;
             })
             this.#away.grid.forEachElement((el, pos) => {
                 if(!el) return;
-                let entity = (<VisualizeEntityNull>el).getEntity();
+                let entity = (<VisualizeEntity>el).getEntity();
             grid[pos[1]][pos[0] + 4] = `${entity.id}\n${entity.currentHealth} ♥️`;
             })
 

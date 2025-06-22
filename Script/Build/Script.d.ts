@@ -547,32 +547,6 @@ declare namespace Script {
     }
 }
 declare namespace Script {
-    interface IVisualizeEntity {
-        attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
-        move(_move: MoveData): Promise<void>;
-        hurt(_damage: number, _crit: boolean): Promise<void>;
-        resist(): Promise<void>;
-        spell(_spell: SpellData, _targets: IEntity[]): Promise<void>;
-        showPreview(): Promise<void>;
-        hidePreview(): Promise<void>;
-        /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
-        updateVisuals(): void;
-    }
-    class VisualizeEntityNull implements IVisualizeEntity {
-        #private;
-        constructor(_entity: IEntity);
-        attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
-        move(_move: MoveData): Promise<void>;
-        hurt(_damage: number, _crit: boolean): Promise<void>;
-        spell(_spell: SpellData, _targets: IEntity[]): Promise<void>;
-        showPreview(): Promise<void>;
-        hidePreview(): Promise<void>;
-        updateVisuals(): Promise<void>;
-        resist(): Promise<void>;
-        getEntity(): Readonly<IEntity>;
-    }
-}
-declare namespace Script {
     import ƒ = FudgeCore;
     class VisualizeTile extends ƒ.Node {
         private static mesh;
@@ -603,8 +577,8 @@ declare namespace Script {
         updateVisuals(): void;
     }
     class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
-        grid: Grid<IVisualizeEntity>;
-        constructor(_grid: Grid<IVisualizeEntity>);
+        grid: Grid<VisualizeEntity>;
+        constructor(_grid: Grid<VisualizeEntity>);
         updateVisuals(): void;
         getRealPosition(_pos: Position): Position;
     }

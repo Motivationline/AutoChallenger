@@ -8,8 +8,8 @@ namespace Script {
     }
 
     export class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
-        grid: Grid<IVisualizeEntity>;
-        constructor(_grid: Grid<IVisualizeEntity>) {
+        grid: Grid<VisualizeEntity>;
+        constructor(_grid: Grid<VisualizeEntity>) {
             super("VisualizeGridNull");
             this.grid = _grid;
             this.addComponent(new ƒ.ComponentTransform());
