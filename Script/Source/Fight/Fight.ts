@@ -41,7 +41,8 @@ namespace Script {
 
         async run(): Promise<void> {
             // Eventlisteners
-            EventBus.removeAllEventListeners();
+            // TODO: is this realy needed? learing all listeners interferes with the HUD listeners
+            //EventBus.removeAllEventListeners();
             this.arena.home.forEachElement((el) => { el?.registerEventListeners() });
             this.arena.away.forEachElement((el) => { el?.registerEventListeners() });
             //TODO: Add artifacts

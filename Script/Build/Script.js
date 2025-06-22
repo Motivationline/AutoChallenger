@@ -828,7 +828,7 @@ var Script;
         }
         async run() {
             // Eventlisteners
-            Script.EventBus.removeAllEventListeners();
+            //EventBus.removeAllEventListeners();
             this.arena.home.forEachElement((el) => { el?.registerEventListeners(); });
             this.arena.away.forEachElement((el) => { el?.registerEventListeners(); });
             //TODO: Add artifacts
