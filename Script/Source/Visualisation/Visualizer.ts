@@ -2,6 +2,7 @@ namespace Script {
     export interface IVisualizer {
         getEntity(_entity: IEntity): VisualizeEntity;
         getFight(_fight: Fight): IVisualizeFight;
+        getHUD(): VisualizeHUD;
     }
 
 
@@ -11,6 +12,9 @@ namespace Script {
         }
         getFight(_fight: Fight): IVisualizeFight {
             return new VisualizeFightNull(_fight);
+        }
+        getHUD(): VisualizeHUD {
+            return new VisualizeHUD();
         }
         
     }

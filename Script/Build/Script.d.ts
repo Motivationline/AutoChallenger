@@ -324,6 +324,7 @@ declare namespace Script {
         rounds: number;
         arena: Arena;
         protected visualizer: IVisualizeFight;
+        protected HUD: VisualizeHUD;
         constructor(_fight: FightData, _home: Grid<IEntity>);
         getRounds(): number;
         run(): Promise<void>;
@@ -334,10 +335,12 @@ declare namespace Script {
     interface IVisualizer {
         getEntity(_entity: IEntity): VisualizeEntity;
         getFight(_fight: Fight): IVisualizeFight;
+        getHUD(): VisualizeHUD;
     }
     class VisualizerNull implements IVisualizer {
         getEntity(_entity: IEntity): VisualizeEntity;
         getFight(_fight: Fight): IVisualizeFight;
+        getHUD(): VisualizeHUD;
     }
 }
 declare namespace Script {
@@ -348,6 +351,7 @@ declare namespace Script {
     class VisualizeHUD implements VisualizeHUD {
         constructor();
         private roundStart;
+        addFightListeners(): void;
     }
 }
 declare namespace Script {

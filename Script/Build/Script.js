@@ -822,13 +822,15 @@ var Script;
                 el?.setGrids(this.arena.away, this.arena.home);
             });
             this.visualizer = Script.Provider.visualizer.getFight(this);
+            this.HUD = Script.Provider.visualizer.getHUD();
         }
         getRounds() {
             return this.rounds;
         }
         async run() {
             // Eventlisteners
-            //EventBus.removeAllEventListeners();
+            Script.EventBus.removeAllEventListeners();
+            this.HUD.addFightListeners(); //replace main.ts instance with Provider.visualizer.getHUD() instance
             this.arena.home.forEachElement((el) => { el?.registerEventListeners(); });
             this.arena.away.forEachElement((el) => { el?.registerEventListeners(); });
             //TODO: Add artifacts
@@ -885,6 +887,9 @@ var Script;
         getFight(_fight) {
             return new Script.VisualizeFightNull(_fight);
         }
+        getHUD() {
+            return new Script.VisualizeHUD();
+        }
     }
     Script.VisualizerNull = VisualizerNull;
 })(Script || (Script = {}));
@@ -896,7 +901,6 @@ var Script;
             this.roundStart = async (_ev) => {
                 this.updateRoundCounter(_ev);
             };
-            Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.roundStart);
         }
         sayHello() {
             console.log("Hello from HUD");
@@ -906,6 +910,9 @@ var Script;
             const roundCounter = document.querySelector(".RoundCounter");
             roundCounter.innerText = `Round: ${round + 1}`;
             console.log(`Update Round: ${round + 1}`);
+        }
+        addFightListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.roundStart);
         }
     }
     Script.VisualizeHUD = VisualizeHUD;

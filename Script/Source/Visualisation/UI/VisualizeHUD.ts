@@ -6,9 +6,7 @@ namespace Script {
     // TODO: add Provider to pass UI elements without hardcoding
     export class VisualizeHUD implements VisualizeHUD {
 
-        constructor() {
-            EventBus.addEventListener(EVENT.ROUND_START, this.roundStart)
-        }
+        constructor() {}
 
         sayHello(): void {
             console.log("Hello from HUD");
@@ -23,6 +21,10 @@ namespace Script {
             const roundCounter: HTMLDivElement = document.querySelector(".RoundCounter");
             roundCounter.innerText = `Round: ${round + 1}`;
             console.log(`Update Round: ${round + 1}`);
+        }
+
+        addFightListeners() {
+            EventBus.addEventListener(EVENT.ROUND_START, this.roundStart);
         }
     }
 }

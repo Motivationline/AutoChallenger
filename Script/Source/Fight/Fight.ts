@@ -18,6 +18,7 @@ namespace Script {
         rounds: number;
         arena: Arena;
         protected visualizer: IVisualizeFight;
+        protected HUD: VisualizeHUD;
 
         constructor(_fight: FightData, _home: Grid<IEntity>) {
             this.rounds = _fight.rounds;
@@ -33,6 +34,7 @@ namespace Script {
             });
 
             this.visualizer = Provider.visualizer.getFight(this);
+            this.HUD = Provider.visualizer.getHUD();
         }
 
         getRounds() {
@@ -41,8 +43,8 @@ namespace Script {
 
         async run(): Promise<void> {
             // Eventlisteners
-            // TODO: is this realy needed? learing all listeners interferes with the HUD listeners
-            //EventBus.removeAllEventListeners();
+            EventBus.removeAllEventListeners();
+            this.HUD.addFightListeners();//replace main.ts instance with Provider.visualizer.getHUD() instance
             this.arena.home.forEachElement((el) => { el?.registerEventListeners() });
             this.arena.away.forEachElement((el) => { el?.registerEventListeners() });
             //TODO: Add artifacts
