@@ -958,6 +958,12 @@ var Script;
     let grid;
     let HUD = new Script.VisualizeHUD();
     HUD.sayHello(); // TODO remove this!
+    //setup Camera view
+    const camera = new ƒ.ComponentCamera();
+    console.log(camera);
+    camera.mtxPivot.translateZ(-10);
+    camera.mtxPivot.translateY(6);
+    camera.mtxPivot.rotateX(25);
     async function initProvider() {
         await Script.Provider.data.load();
         //TODO load correct visualizer here
@@ -970,12 +976,6 @@ var Script;
         grid = new Script.VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
         root.addChild(grid);
         console.log(root);
-        //setup Camera view
-        const camera = new ƒ.ComponentCamera();
-        console.log(camera);
-        camera.mtxPivot.translateZ(-10);
-        camera.mtxPivot.translateY(6);
-        camera.mtxPivot.rotateX(25);
         //initialize the Viewport
         viewport.initialize("Viewport", root, camera, document.querySelector("canvas"));
         viewport.draw();
@@ -1000,6 +1000,7 @@ var Script;
             root.addChild(visualizer);
         });
         console.log("Root: ", root);
+        viewport.initialize("Viewport", root, camera, document.querySelector("canvas"));
         viewport.draw();
         // let tmp = eumlings.get([0, 0]);
         // eumlings.set([0, 0], eumlings.get([2, 0]));
@@ -1410,7 +1411,7 @@ var Script;
         static { this.material = new ƒ.Material("EntityMat", ƒ.ShaderLitTextured); }
         constructor(_entity) {
             super("entity");
-            this.size = 0.5;
+            this.size = 1.0;
             this.entity = _entity;
             const entityMesh = new ƒ.ComponentMesh(VisualizeEntity.mesh);
             const entityMat = new ƒ.ComponentMaterial(VisualizeEntity.material);

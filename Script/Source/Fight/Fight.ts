@@ -89,6 +89,5 @@ namespace Script {
                 await el.useAttack(_active, _passive);
             })
         }
-
     }
 }

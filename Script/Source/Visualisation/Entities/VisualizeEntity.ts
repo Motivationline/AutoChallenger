@@ -22,7 +22,7 @@ namespace Script {
         private static mesh: ƒ.Mesh = new ƒ.MeshCube("EntityMesh");
         private static material: ƒ.Material = new ƒ.Material("EntityMat", ƒ.ShaderLitTextured);
 
-        private size: number = 0.5;
+        private size: number = 1.0;
 
         constructor(_entity: IEntity) {
             super("entity");

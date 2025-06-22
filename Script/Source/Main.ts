@@ -17,6 +17,13 @@ namespace Script {
   let HUD: VisualizeHUD = new VisualizeHUD();
   HUD.sayHello();// TODO remove this!
 
+  //setup Camera view
+  const camera = new ƒ.ComponentCamera();
+  console.log(camera);
+  camera.mtxPivot.translateZ(-10);
+  camera.mtxPivot.translateY(6);
+  camera.mtxPivot.rotateX(25);
+
   async function initProvider() {
     await Provider.data.load();
     //TODO load correct visualizer here
@@ -32,13 +39,6 @@ namespace Script {
 
     root.addChild(grid);
     console.log(root);
-
-    //setup Camera view
-    const camera = new ƒ.ComponentCamera();
-    console.log(camera);
-    camera.mtxPivot.translateZ(-10);
-    camera.mtxPivot.translateY(6);
-    camera.mtxPivot.rotateX(25);
 
     //initialize the Viewport
     viewport.initialize("Viewport", root, camera, document.querySelector("canvas"));
@@ -67,6 +67,7 @@ namespace Script {
       root.addChild(visualizer);
     });
     console.log("Root: ", root);
+    viewport.initialize("Viewport", root, camera, document.querySelector("canvas"));
     viewport.draw();
 
     // let tmp = eumlings.get([0, 0]);
