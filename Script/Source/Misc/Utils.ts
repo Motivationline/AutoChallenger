@@ -3,6 +3,7 @@ namespace Script {
         const grid = new Grid(_grid);
         const newGrid = new Grid<T>();
         const data = Provider.data;
+        //const visualizer = Provider.visualizer;
         grid.forEachElement((entityId, pos) => {
             if (!entityId) return;
             let entityData = data.getEntity(entityId);

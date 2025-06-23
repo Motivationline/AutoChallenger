@@ -10,20 +10,6 @@ namespace Script {
   let viewport: ƒ.Viewport;
   document.addEventListener("interactiveViewportStarted", <EventListener>start);
 
-  const root: ƒ.Node = new ƒ.Node("Root");
-
-  //let tile: Tile;
-  let grid: VisualizeTileGrid;
-  let HUD: VisualizeHUD = new VisualizeHUD();
-  HUD.sayHello();// TODO remove this!
-
-  //setup Camera view
-  const camera = new ƒ.ComponentCamera();
-  console.log(camera);
-  camera.mtxPivot.translateZ(-10);
-  camera.mtxPivot.translateY(6);
-  camera.mtxPivot.rotateX(25);
-
   async function initProvider() {
     await Provider.data.load();
     //TODO load correct visualizer here
@@ -33,15 +19,8 @@ namespace Script {
   function start(_event: CustomEvent): void {
     viewport = _event.detail;
     initProvider();
-
-    //tile = new Tile("Tile", 1, new ƒ.Vector3(0, 0, 0));
-    grid = new VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
-
-    root.addChild(grid);
-    console.log(root);
-
-    //initialize the Viewport
-    viewport.initialize("Viewport", root, camera, document.querySelector("canvas"));
+    let visualizer = Provider.visualizer;
+    viewport = visualizer.initializeScene(viewport);
     viewport.draw();
     ƒ.Loop.addEventListener(ƒ.EVENT.LOOP_FRAME, update);
     //ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
@@ -62,13 +41,12 @@ namespace Script {
     [eumlingData[2][0], eumlingData[2][2]] = [eumlingData[2][2], eumlingData[2][0]];
 
     let eumlings: Grid<IEntity> = initEntitiesInGrid(eumlingData, Entity);
-    eumlings.forEachElement((eumling) => {
-      let visualizer = new VisualizeEntity(eumling);
-      root.addChild(visualizer);
-    });
-    console.log("Root: ", root);
-    viewport.initialize("Viewport", root, camera, document.querySelector("canvas"));
-    viewport.draw();
+    // eumlings.forEachElement((eumling) => {
+    //   let visualizer = new VisualizeEntity(eumling);
+    //   root.addChild(visualizer);
+    // });
+    // console.log("Root: ", root);
+    // viewport.draw();
 
     // let tmp = eumlings.get([0, 0]);
     // eumlings.set([0, 0], eumlings.get([2, 0]));

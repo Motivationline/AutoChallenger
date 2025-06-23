@@ -7,6 +7,8 @@ namespace Script {
         fightEnd(): Promise<void>;
     }
 
+    import ƒ = FudgeCore;
+
     export class VisualizeFightNull implements IVisualizeFight {
         #home: VisualizeGridNull;
         #away: VisualizeGridNull;
@@ -20,6 +22,12 @@ namespace Script {
         }
 
         async showGrid(): Promise<void> {
+            let visualizer = Provider.visualizer;
+            let tileGrid: ƒ.Node;
+            tileGrid = new VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
+
+            visualizer.addToScene(tileGrid);
+
             let grid: string[][] = [[,,,,,,,],[],[]];
 
             this.#home.grid.forEachElement((el, pos) => {

@@ -880,7 +880,12 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
+    var ƒ = FudgeCore;
     class VisualizerNull {
+        constructor() {
+            this.root = new ƒ.Node("Root");
+            this.camera = new ƒ.ComponentCamera();
+        }
         getEntity(_entity) {
             return new Script.VisualizeEntity(_entity);
         }
@@ -889,6 +894,32 @@ var Script;
         }
         getHUD() {
             return new Script.VisualizeHUD();
+        }
+        initializeScene(_viewport) {
+            //let tile: Tile;
+            let grid;
+            let HUD = new Script.VisualizeHUD();
+            HUD.sayHello(); // TODO remove this!
+            //tile = new Tile("Tile", 1, new ƒ.Vector3(0, 0, 0));
+            grid = new Script.VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
+            this.root.addChild(grid);
+            console.log(this.root);
+            //testing camera orientation
+            this.camera.mtxPivot.translateZ(-10);
+            this.camera.mtxPivot.translateY(6);
+            this.camera.mtxPivot.rotateX(25);
+            _viewport.initialize("Viewport", this.root, this.camera, document.querySelector("canvas"));
+            _viewport.draw();
+            return _viewport;
+        }
+        addToScene(_el) {
+            this.root.addChild(_el);
+        }
+        getCamera() {
+            return this.camera;
+        }
+        getRoot() {
+            return this.root;
         }
     }
     Script.VisualizerNull = VisualizerNull;
@@ -960,17 +991,6 @@ var Script;
     ƒ.Debug.info("Main Program Template running!");
     let viewport;
     document.addEventListener("interactiveViewportStarted", start);
-    const root = new ƒ.Node("Root");
-    //let tile: Tile;
-    let grid;
-    let HUD = new Script.VisualizeHUD();
-    HUD.sayHello(); // TODO remove this!
-    //setup Camera view
-    const camera = new ƒ.ComponentCamera();
-    console.log(camera);
-    camera.mtxPivot.translateZ(-10);
-    camera.mtxPivot.translateY(6);
-    camera.mtxPivot.rotateX(25);
     async function initProvider() {
         await Script.Provider.data.load();
         //TODO load correct visualizer here
@@ -979,12 +999,8 @@ var Script;
     function start(_event) {
         viewport = _event.detail;
         initProvider();
-        //tile = new Tile("Tile", 1, new ƒ.Vector3(0, 0, 0));
-        grid = new Script.VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
-        root.addChild(grid);
-        console.log(root);
-        //initialize the Viewport
-        viewport.initialize("Viewport", root, camera, document.querySelector("canvas"));
+        let visualizer = Script.Provider.visualizer;
+        viewport = visualizer.initializeScene(viewport);
         viewport.draw();
         ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
         //ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
@@ -1002,13 +1018,12 @@ var Script;
         [eumlingData[1][0], eumlingData[1][2]] = [eumlingData[1][2], eumlingData[1][0]];
         [eumlingData[2][0], eumlingData[2][2]] = [eumlingData[2][2], eumlingData[2][0]];
         let eumlings = Script.initEntitiesInGrid(eumlingData, Script.Entity);
-        eumlings.forEachElement((eumling) => {
-            let visualizer = new Script.VisualizeEntity(eumling);
-            root.addChild(visualizer);
-        });
-        console.log("Root: ", root);
-        viewport.initialize("Viewport", root, camera, document.querySelector("canvas"));
-        viewport.draw();
+        // eumlings.forEachElement((eumling) => {
+        //   let visualizer = new VisualizeEntity(eumling);
+        //   root.addChild(visualizer);
+        // });
+        // console.log("Root: ", root);
+        // viewport.draw();
         // let tmp = eumlings.get([0, 0]);
         // eumlings.set([0, 0], eumlings.get([2, 0]));
         // eumlings.set([2, 0], tmp);
@@ -1343,6 +1358,7 @@ var Script;
         const grid = new Script.Grid(_grid);
         const newGrid = new Script.Grid();
         const data = Script.Provider.data;
+        //const visualizer = Provider.visualizer;
         grid.forEachElement((entityId, pos) => {
             if (!entityId)
                 return;
@@ -1364,6 +1380,7 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
+    var ƒ = FudgeCore;
     class VisualizeFightNull {
         #home;
         #away;
@@ -1376,6 +1393,10 @@ var Script;
             this.#home = new Script.VisualizeGridNull(homeGrid);
         }
         async showGrid() {
+            let visualizer = Script.Provider.visualizer;
+            let tileGrid;
+            tileGrid = new Script.VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
+            visualizer.addToScene(tileGrid);
             let grid = [[, , , , , , ,], [], []];
             this.#home.grid.forEachElement((el, pos) => {
                 if (!el)
