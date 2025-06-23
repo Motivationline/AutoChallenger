@@ -22,7 +22,7 @@ namespace Script {
         private static mesh: ƒ.Mesh = new ƒ.MeshCube("EntityMesh");
         private static material: ƒ.Material = new ƒ.Material("EntityMat", ƒ.ShaderLitTextured);
 
-        private size: number = 1.0;
+        private size: number = 0.5;
 
         constructor(_entity: IEntity) {
             super("entity");
@@ -32,10 +32,11 @@ namespace Script {
             const entityMat = new ƒ.ComponentMaterial(VisualizeEntity.material);
             this.addComponent(entityMesh);
             this.addComponent(entityMat);
-            entityMesh.mtxPivot.scale(new ƒ.Vector3(this.size));
+            entityMesh.mtxPivot.scale(ƒ.Vector3.ONE(this.size));
             entityMat.clrPrimary.setCSS("white");
 
             this.addComponent(new ƒ.ComponentTransform());
+            this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
         }
 
         async idle(): Promise<void> {

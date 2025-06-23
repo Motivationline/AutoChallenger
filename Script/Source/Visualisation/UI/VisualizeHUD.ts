@@ -1,7 +1,7 @@
 namespace Script {
     export interface VisualizeHUD {
         sayHello(): void;
-        updateRoundCounter(_ev: FightEvent): void;
+        addFightListeners(): void;
     }
     // TODO: add Provider to pass UI elements without hardcoding
     export class VisualizeHUD implements VisualizeHUD {
@@ -16,7 +16,7 @@ namespace Script {
             this.updateRoundCounter(_ev);
         }
 
-        updateRoundCounter(_ev: FightEvent) { //TODO: make private somehow
+        private updateRoundCounter(_ev: FightEvent) { //TODO: make private somehow
             let round = _ev.value;
             const roundCounter: HTMLDivElement = document.querySelector(".RoundCounter");
             roundCounter.innerText = `Round: ${round + 1}`;

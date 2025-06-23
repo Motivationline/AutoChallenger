@@ -346,12 +346,12 @@ declare namespace Script {
 declare namespace Script {
     interface VisualizeHUD {
         sayHello(): void;
-        updateRoundCounter(_ev: FightEvent): void;
+        addFightListeners(): void;
     }
     class VisualizeHUD implements VisualizeHUD {
         constructor();
         private roundStart;
-        addFightListeners(): void;
+        private updateRoundCounter;
     }
 }
 declare namespace Script {
