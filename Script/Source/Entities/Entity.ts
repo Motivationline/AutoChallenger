@@ -156,7 +156,10 @@ namespace Script {
             await EventBus.dispatchEvent({ type: EVENT.ENTITY_HURT, target: this, cause: _cause, value: amount });
 
             if (this.currentHealth <= 0) {
+                await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIES, target: this, cause: _cause, value: amount });
                 //TODO this entity died, handle that.
+
+                await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIED, target: this, cause: _cause, value: amount });
             }
             return this.currentHealth;
         }
@@ -172,22 +175,25 @@ namespace Script {
             }
 
             const instantEffects: Set<SPELL_TYPE> = new Set([SPELL_TYPE.HEAL]);
+            let amount = _spell.level ?? 1;
 
+            await EventBus.dispatchEvent({ type: EVENT.ENTITY_AFFECT, value: amount, trigger: _spell, target: this, cause: _cause })
             if (!instantEffects.has(_spell.type)) {
                 let value = this.activeEffects.get(_spell.type) ?? 0;
-                value += _spell.level ?? 1;
+                value += amount;
                 this.activeEffects.set(_spell.type, value);
+                await EventBus.dispatchEvent({ type: EVENT.ENTITY_AFFECTED, value: amount, trigger: _spell, target: this, cause: _cause })
                 return value;
             }
 
             switch (_spell.type) {
                 case SPELL_TYPE.HEAL: {
-                    let amount = _spell.level ?? 1;
-                    EventBus.dispatchEvent({ type: EVENT.ENTITY_HEAL, value: amount, target: this, cause: _cause })
+                    await EventBus.dispatchEvent({ type: EVENT.ENTITY_HEAL, value: amount, trigger: _spell, target: this, cause: _cause })
                     // TODO: call Visualizer
                     // TODO: prevent overheal?
                     this.currentHealth += amount;
-                    EventBus.dispatchEvent({ type: EVENT.ENTITY_HEALED, value: amount, target: this, cause: _cause })
+                    await EventBus.dispatchEvent({ type: EVENT.ENTITY_HEALED, value: amount, trigger: _spell, target: this, cause: _cause })
+                    await EventBus.dispatchEvent({ type: EVENT.ENTITY_AFFECTED, value: amount, trigger: _spell, target: this, cause: _cause })
                     break;
                 }
             }
@@ -215,7 +221,9 @@ namespace Script {
                 let targets = _targetsOverride ?? getTargets(spell.target, _friendly, _opponent, this);
                 await this.visualizer.spell(spell, targets);
                 for (let target of targets) {
+                    await EventBus.dispatchEvent({ type: EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target })
                     await target.affect(spell, this);
+                    await EventBus.dispatchEvent({ type: EVENT.ENTITY_SPELL, trigger: spell, cause: this, target })
                 }
             }
         }
@@ -232,7 +240,9 @@ namespace Script {
                 await this.visualizer.attack(attack, targets);
                 let attackDmg = this.getDamageOfAttacks([attack], true);
                 for (let target of targets) {
+                    EventBus.dispatchEvent({ type: EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, value: attackDmg })
                     await target.damage(attackDmg, attack.baseCritChance, this);
+                    EventBus.dispatchEvent({ type: EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, value: attackDmg })
                 }
             }
         }
@@ -385,6 +395,7 @@ namespace Script {
                 // no targets found, no need to do the ability
                 if (!targets || targets.length === 0) continue nextAbility;
 
+                await EventBus.dispatchEvent({ type: EVENT.TRIGGER_ABILITY, cause: this, target: this, trigger: ability });
                 if (ability.attack) {
                     await this.useAttack(this.#arena.home, this.#arena.away, [{ target: undefined, ...ability.attack }], targets);
                 }
@@ -392,6 +403,7 @@ namespace Script {
                 if (ability.spell) {
                     await this.useSpell(this.#arena.home, this.#arena.away, [{ target: undefined, ...ability.spell }], targets);
                 }
+                await EventBus.dispatchEvent({ type: EVENT.TRIGGERED_ABILITY, cause: this, target: this, trigger: ability });
 
             }
         }

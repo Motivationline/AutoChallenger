@@ -25,10 +25,10 @@ namespace Script {
                 away: initEntitiesInGrid(_fight.entities, Entity),
                 home: _home,
             }
-            this.arena.home.forEachElement((el)=>{
+            this.arena.home.forEachElement((el) => {
                 el?.setGrids(this.arena.home, this.arena.away);
             });
-            this.arena.away.forEachElement((el)=>{
+            this.arena.away.forEachElement((el) => {
                 el?.setGrids(this.arena.away, this.arena.home);
             });
 
@@ -43,7 +43,7 @@ namespace Script {
             //TODO: Add artifacts
             await this.visualizer.fightStart();
             await EventBus.dispatchEvent({ type: EVENT.FIGHT_START });
-            
+
             // run actual round
             for (let r: number = 0; r < this.rounds; r++) {
                 await this.visualizer.roundStart();
@@ -54,19 +54,21 @@ namespace Script {
                 await this.visualizer.roundEnd();
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {
-                    await this.visualizer.fightEnd();
-                    await EventBus.dispatchEvent({ type: EVENT.FIGHT_END });
+                    await this.fightEnd();
                     return console.log("Player lost");
                 }
                 if (this.arena.away.occupiedSpots === 0) {
-                    await this.visualizer.fightEnd();
-                    await EventBus.dispatchEvent({ type: EVENT.FIGHT_END });
+                    await this.fightEnd();
                     return console.log("Player won");
                 }
             }
+            await this.fightEnd();
+            return console.log("Player survived");
+        }
+
+        private async fightEnd() {
             await this.visualizer.fightEnd();
             await EventBus.dispatchEvent({ type: EVENT.FIGHT_END });
-            return console.log("Player survived");
         }
 
         private async runOneSide(_active: Grid<IEntity>, _passive: Grid<IEntity>): Promise<void> {
