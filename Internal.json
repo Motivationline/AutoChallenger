@@ -107,5 +107,15 @@
       "url": "Assets\\GLTFs\\Enemies\\CactusCrawler\\CactusCrawler.glb",
       "events": {}
     }
+  },
+  "GraphGLTF|2025-06-24T12:17:49.187Z|53955": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {},
+      "idResource": "GraphGLTF|2025-06-24T12:17:49.187Z|53955",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\Environment\\BattleTiles\\Grasfield\\Grasfield.glb"
+    }
   }
 }
