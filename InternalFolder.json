@@ -42,6 +42,27 @@
                 ]
               }
             ]
+          },
+          {
+            "name": "Enemies",
+            "entries": [
+              {
+                "name": "CactusCrawler",
+                "entries": [
+                  {
+                    "idResource": "GraphGLTF|2025-06-24T11:23:56.089Z|16435"
+                  },
+                  {
+                    "name": "Animations",
+                    "entries": [
+                      {
+                        "idResource": "AnimationGLTF|2025-06-24T11:23:56.089Z|47567"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       }
