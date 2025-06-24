@@ -275,6 +275,29 @@ namespace Script {
                 ]
             },
             {
+                id: "R-Eumling",
+                health: 3,
+                attacks: {
+                    baseDamage: 1,
+                    target: {
+                        side: TARGET_SIDE.OPPONENT,
+                        area: {
+                            position: AREA_POSITION.RELATIVE_FIRST_IN_ROW,
+                            shape: AREA_SHAPE.SINGLE,
+                        },
+                    }
+                }
+            },
+            {
+                id: "S-Eumling",
+                health: 4,
+                spells: {
+                        target: TARGET.SELF,
+                        type: SPELL_TYPE.HEAL,
+                        level: 1,
+                },
+            },
+            {
                 id: "cactusCrawler", // doesn't attack but gets thorns after moving
                 health: 1,
                 moves: { direction: DIRECTION_RELATIVE.FORWARD, distance: 1 },
