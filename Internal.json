@@ -55,6 +55,15 @@
       "url": "Assets\\GLTFs\\Eumlinge\\Standard\\Standard_Eumling.glb"
     }
   },
+  "AnimationGLTF|2025-06-06T13:07:59.196Z|56237": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
+      "name": "standard_idle",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Eumlinge\\Standard\\Standard_Eumling.glb",
+      "events": {}
+    }
+  },
   "AnimationGLTF|2025-06-06T13:07:59.175Z|76196": {
     "ƒ.AnimationGLTF": {
       "idResource": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
@@ -64,13 +73,49 @@
       "events": {}
     }
   },
-  "AnimationGLTF|2025-06-06T13:07:59.196Z|56237": {
+  "GraphGLTF|2025-06-24T11:23:56.089Z|16435": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {
+        "ComponentAnimation": [
+          {
+            "ƒ.ComponentAnimation": {
+              "Component": {
+                "active": true
+              },
+              "idAnimation": "AnimationGLTF|2025-06-24T11:23:56.089Z|47567",
+              "playmode": "loop",
+              "quantization": "continous",
+              "scale": 1,
+              "scaleWithGameTime": true,
+              "animateInEditor": true
+            }
+          }
+        ]
+      },
+      "idResource": "GraphGLTF|2025-06-24T11:23:56.089Z|16435",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\CactusCrawler\\CactusCrawler.glb"
+    }
+  },
+  "AnimationGLTF|2025-06-24T11:23:56.089Z|47567": {
     "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-      "name": "standard_idle",
+      "idResource": "AnimationGLTF|2025-06-24T11:23:56.089Z|47567",
+      "name": "idle_cactus_crawler",
       "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Eumlinge\\Standard\\Standard_Eumling.glb",
+      "url": "Assets\\GLTFs\\Enemies\\CactusCrawler\\CactusCrawler.glb",
       "events": {}
+    }
+  },
+  "GraphGLTF|2025-06-24T12:17:49.187Z|53955": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {},
+      "idResource": "GraphGLTF|2025-06-24T12:17:49.187Z|53955",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\Environment\\BattleTiles\\Grasfield\\Grasfield.glb"
     }
   }
 }
