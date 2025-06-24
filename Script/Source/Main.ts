@@ -6,7 +6,7 @@
 namespace Script {
   import ƒ = FudgeCore;
   ƒ.Debug.info("Main Program Template running!");
-
+  let visualizer: IVisualizer;
   let viewport: ƒ.Viewport;
   document.addEventListener("interactiveViewportStarted", <EventListener>start);
 
@@ -19,16 +19,16 @@ namespace Script {
   function start(_event: CustomEvent): void {
     viewport = _event.detail;
     initProvider();
-    let visualizer = Provider.visualizer;
-    viewport = visualizer.initializeScene(viewport);
-    viewport.draw();
+    visualizer = Provider.visualizer;
+    visualizer.initializeScene(viewport);
+    visualizer.drawScene();
     ƒ.Loop.addEventListener(ƒ.EVENT.LOOP_FRAME, update);
     //ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
   }
 
   function update(_event: Event): void {
     // ƒ.Physics.simulate();  // if physics is included and used
-    viewport.draw();
+
     ƒ.AudioManager.default.update();
   }
 
@@ -58,6 +58,7 @@ namespace Script {
     // eumlings.set([0, 0], eumlings.get([2, 0]));
     // eumlings.set([2, 0], tmp);
 
+    visualizer.drawScene();
     let fightData = Provider.data.fights[1];
     let fight = new Fight(fightData, eumlings);
     console.log("Rounds: " + fight.getRounds());

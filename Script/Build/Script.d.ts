@@ -339,20 +339,23 @@ declare namespace Script {
         addToScene(_el: ƒ.Node): void;
         getCamera(): ƒ.ComponentCamera;
         getRoot(): ƒ.Node;
-        initializeScene(_viewport: ƒ.Viewport): ƒ.Viewport;
+        initializeScene(_viewport: ƒ.Viewport): void;
+        drawScene(): void;
     }
     import ƒ = FudgeCore;
     class VisualizerNull implements IVisualizer {
         root: ƒ.Node;
         camera: ƒ.ComponentCamera;
+        viewport: ƒ.Viewport;
         constructor();
         getEntity(_entity: IEntity): VisualizeEntity;
         getFight(_fight: Fight): IVisualizeFight;
         getHUD(): VisualizeHUD;
-        initializeScene(_viewport: ƒ.Viewport): ƒ.Viewport;
+        initializeScene(_viewport: ƒ.Viewport): void;
         addToScene(_el: ƒ.Node): void;
         getCamera(): ƒ.ComponentCamera;
         getRoot(): ƒ.Node;
+        drawScene(): void;
     }
 }
 declare namespace Script {

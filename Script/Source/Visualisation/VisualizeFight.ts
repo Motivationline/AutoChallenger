@@ -42,6 +42,8 @@ namespace Script {
             })
 
             console.table(grid);
+            //draw the 3D scene
+            visualizer.drawScene();
         }
 
         async fightStart(): Promise<void> {

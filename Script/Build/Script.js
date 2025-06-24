@@ -896,6 +896,7 @@ var Script;
             return new Script.VisualizeHUD();
         }
         initializeScene(_viewport) {
+            this.viewport = _viewport;
             //let tile: Tile;
             let grid;
             let HUD = new Script.VisualizeHUD();
@@ -910,16 +911,19 @@ var Script;
             this.camera.mtxPivot.rotateX(25);
             _viewport.initialize("Viewport", this.root, this.camera, document.querySelector("canvas"));
             _viewport.draw();
-            return _viewport;
         }
         addToScene(_el) {
             this.root.addChild(_el);
+            console.log("Root: " + this.root);
         }
         getCamera() {
             return this.camera;
         }
         getRoot() {
             return this.root;
+        }
+        drawScene() {
+            this.viewport.draw();
         }
     }
     Script.VisualizerNull = VisualizerNull;
@@ -989,6 +993,7 @@ var Script;
 (function (Script) {
     var ƒ = FudgeCore;
     ƒ.Debug.info("Main Program Template running!");
+    let visualizer;
     let viewport;
     document.addEventListener("interactiveViewportStarted", start);
     async function initProvider() {
@@ -999,15 +1004,14 @@ var Script;
     function start(_event) {
         viewport = _event.detail;
         initProvider();
-        let visualizer = Script.Provider.visualizer;
-        viewport = visualizer.initializeScene(viewport);
-        viewport.draw();
+        visualizer = Script.Provider.visualizer;
+        visualizer.initializeScene(viewport);
+        visualizer.drawScene();
         ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
         //ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
     }
     function update(_event) {
         // ƒ.Physics.simulate();  // if physics is included and used
-        viewport.draw();
         ƒ.AudioManager.default.update();
     }
     async function run() {
@@ -1033,6 +1037,7 @@ var Script;
         // tmp = eumlings.get([0, 0]);
         // eumlings.set([0, 0], eumlings.get([2, 0]));
         // eumlings.set([2, 0], tmp);
+        visualizer.drawScene();
         let fightData = Script.Provider.data.fights[1];
         let fight = new Script.Fight(fightData, eumlings);
         console.log("Rounds: " + fight.getRounds());
@@ -1411,6 +1416,8 @@ var Script;
                 grid[pos[1]][pos[0] + 4] = `${entity.id}\n${entity.currentHealth} ♥️`;
             });
             console.table(grid);
+            //draw the 3D scene
+            visualizer.drawScene();
         }
         async fightStart() {
             console.log("Fight Start!");
@@ -1449,6 +1456,7 @@ var Script;
             entityMat.clrPrimary.setCSS("white");
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
+            Script.Provider.visualizer.addToScene(this);
         }
         async idle() {
             this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");

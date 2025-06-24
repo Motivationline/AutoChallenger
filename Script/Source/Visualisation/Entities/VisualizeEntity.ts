@@ -37,6 +37,7 @@ namespace Script {
 
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
+            Provider.visualizer.addToScene(this);
         }
 
         async idle(): Promise<void> {

@@ -6,7 +6,8 @@ namespace Script {
         addToScene(_el: ƒ.Node):void;
         getCamera(): ƒ.ComponentCamera;
         getRoot(): ƒ.Node;
-        initializeScene(_viewport: ƒ.Viewport): ƒ.Viewport;
+        initializeScene(_viewport: ƒ.Viewport): void;
+        drawScene(): void;
     }
 
     import ƒ = FudgeCore;
@@ -14,6 +15,7 @@ namespace Script {
     export class VisualizerNull implements IVisualizer {
         root: ƒ.Node;
         camera: ƒ.ComponentCamera;
+        viewport: ƒ.Viewport;
 
         constructor() {
             this.root = new ƒ.Node("Root");
@@ -28,7 +30,8 @@ namespace Script {
         getHUD(): VisualizeHUD {
             return new VisualizeHUD();
         }
-        initializeScene(_viewport: ƒ.Viewport): ƒ.Viewport {
+        initializeScene(_viewport: ƒ.Viewport): void {
+            this.viewport = _viewport;
             //let tile: Tile;
             let grid: VisualizeTileGrid;
             let HUD: VisualizeHUD = new VisualizeHUD();
@@ -47,16 +50,19 @@ namespace Script {
 
             _viewport.initialize("Viewport", this.root, this.camera, document.querySelector("canvas"));
             _viewport.draw();
-            return _viewport;
         }
         addToScene(_el: ƒ.Node): void {
             this.root.addChild(_el);
+            console.log("Root: " + this.root);
         }
         getCamera(): ƒ.ComponentCamera {
             return this.camera;
         }
         getRoot(): ƒ.Node {
             return this.root;
+        }
+        drawScene(): void {
+            this.viewport.draw();
         }
     }
 }
