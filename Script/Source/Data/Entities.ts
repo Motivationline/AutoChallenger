@@ -357,7 +357,7 @@ namespace Script {
                 }
             },
             {
-                id: "boxingBug", // enemy that attacks everywhere but the center
+                id: "punchingPalmtree", // enemy that attacks everywhere but the center
                 health: 1,
                 attacks: {
                     options: [
@@ -413,6 +413,30 @@ namespace Script {
                         attack: {
                             baseDamage: Infinity,
                         }
+                    },
+                ]
+            },
+            {
+                id: "countdownCoconut", // coconut that blows up on the final turn
+                health: 1,
+                abilities: [
+                    {
+                        on: EVENT.ROUND_END,
+                        target: {
+                            area: {
+                                position: AREA_POSITION.ABSOLUTE,
+                                absolutePosition: [1, 1],
+                                shape: AREA_SHAPE.PATTERN,
+                                pattern: [
+                                    [1, 1, 1,],
+                                    [1, 1, 1,],
+                                    [1, 1, 1,]]
+                            },
+                            side: TARGET_SIDE.OPPONENT,
+                        },
+                        attack: {
+                            baseDamage: 1,
+                        }, // NEEDS TO BLOW UP ITSELF ASWELL
                     },
                 ]
             }
