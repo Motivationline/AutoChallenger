@@ -1408,12 +1408,14 @@ var Script;
                     return;
                 let entity = el.getEntity();
                 grid[pos[1]][2 - pos[0]] = `${entity.id}\n${entity.currentHealth} ♥️`;
+                el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
             });
             this.#away.grid.forEachElement((el, pos) => {
                 if (!el)
                     return;
                 let entity = el.getEntity();
                 grid[pos[1]][pos[0] + 4] = `${entity.id}\n${entity.currentHealth} ♥️`;
+                el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
             });
             console.table(grid);
             //draw the 3D scene
