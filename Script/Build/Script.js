@@ -9,18 +9,23 @@ var Script;
         EVENT["FIGHT_END"] = "fightEnd";
         EVENT["ROUND_START"] = "roundStart";
         EVENT["ROUND_END"] = "roundEnd";
+        EVENT["ENTITY_SPELL_BEFORE"] = "entitySpellBefore";
+        EVENT["ENTITY_SPELL"] = "entitySpell";
         EVENT["ENTITY_ATTACK"] = "entityAttack";
         EVENT["ENTITY_ATTACKED"] = "entityAttacked";
         EVENT["ENTITY_HEAL"] = "entityHeal";
         EVENT["ENTITY_HEALED"] = "entityHealed";
+        EVENT["ENTITY_AFFECT"] = "entityAffect";
+        EVENT["ENTITY_AFFECTED"] = "entityAffected";
         EVENT["ENTITY_HURT_BEFORE"] = "entityHurtBefore";
         EVENT["ENTITY_HURT"] = "entityHurt";
         EVENT["ENTITY_DIES"] = "entityDies";
         EVENT["ENTITY_DIED"] = "entityDied";
-        EVENT["ENTITY_CREATE"] = "entityCreate";
-        EVENT["ENTITY_CREATED"] = "entityCreated";
+        // ENTITY_CREATE = "entityCreate", // unused
+        // ENTITY_CREATED = "entityCreated", // unused
         EVENT["ENTITY_MOVE"] = "entityMove";
         EVENT["ENTITY_MOVED"] = "entityMoved";
+        EVENT["TRIGGER_ABILITY"] = "triggerAbility";
         EVENT["TRIGGERED_ABILITY"] = "triggeredAbility";
     })(EVENT = Script.EVENT || (Script.EVENT = {}));
     class EventBus {
@@ -609,6 +614,29 @@ var Script;
                 ]
             },
             {
+                id: "R-Eumling",
+                health: 3,
+                attacks: {
+                    baseDamage: 1,
+                    target: {
+                        side: Script.TARGET_SIDE.OPPONENT,
+                        area: {
+                            position: Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW,
+                            shape: Script.AREA_SHAPE.SINGLE,
+                        },
+                    }
+                }
+            },
+            {
+                id: "S-Eumling",
+                health: 4,
+                spells: {
+                    target: Script.TARGET.SELF,
+                    type: Script.SPELL_TYPE.HEAL,
+                    level: 1,
+                },
+            },
+            {
                 id: "cactusCrawler", // doesn't attack but gets thorns after moving
                 health: 1,
                 moves: { direction: Script.DIRECTION_RELATIVE.FORWARD, distance: 1 },
@@ -668,7 +696,7 @@ var Script;
                 }
             },
             {
-                id: "boxingBug", // enemy that attacks everywhere but the center
+                id: "punchingPalmtree", // enemy that attacks everywhere but the center
                 health: 1,
                 attacks: {
                     options: [
@@ -726,6 +754,31 @@ var Script;
                         }
                     },
                 ]
+            },
+            {
+                id: "countdownCoconut", // coconut that blows up on the final turn
+                health: 1,
+                abilities: [
+                    {
+                        on: Script.EVENT.ROUND_END,
+                        target: {
+                            area: {
+                                position: Script.AREA_POSITION.ABSOLUTE,
+                                absolutePosition: [1, 1],
+                                shape: Script.AREA_SHAPE.PATTERN,
+                                pattern: [
+                                    [1, 1, 1,],
+                                    [1, 1, 1,],
+                                    [1, 1, 1,]
+                                ]
+                            },
+                            side: Script.TARGET_SIDE.OPPONENT,
+                        },
+                        attack: {
+                            baseDamage: 1,
+                        }, // NEEDS TO BLOW UP ITSELF ASWELL
+                    },
+                ]
             }
         ];
     })(DataContent = Script.DataContent || (Script.DataContent = {}));
@@ -779,6 +832,7 @@ var Script;
         async load() {
             this.data.fights = Script.DataContent.fights;
             this.data.entities = Script.DataContent.entities;
+            this.data.relics = Script.DataContent.relics;
             // copy to map for quicker access through getEntity
             this.data.entityMap = {};
             for (let entity of this.data.entities) {
@@ -799,6 +853,9 @@ var Script;
         }
         get entities() {
             return this.data.entities;
+        }
+        get relics() {
+            return this.data.relics;
         }
         getEntity(_id) {
             return this.data.entityMap[_id];
@@ -832,11 +889,12 @@ var Script;
             this.visualizer = Script.Provider.visualizer.getFight(this);
         }
         async run() {
+            Fight.activeFight = this;
             // Eventlisteners
             Script.EventBus.removeAllEventListeners();
             this.arena.home.forEachElement((el) => { el?.registerEventListeners(); });
             this.arena.away.forEachElement((el) => { el?.registerEventListeners(); });
-            //TODO: Add artifacts
+            //TODO: Add relics
             await this.visualizer.fightStart();
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_START });
             // run actual round
@@ -849,19 +907,21 @@ var Script;
                 await this.visualizer.roundEnd();
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {
-                    await this.visualizer.fightEnd();
-                    await Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_END });
+                    await this.fightEnd();
                     return console.log("Player lost");
                 }
                 if (this.arena.away.occupiedSpots === 0) {
-                    await this.visualizer.fightEnd();
-                    await Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_END });
+                    await this.fightEnd();
                     return console.log("Player won");
                 }
             }
+            await this.fightEnd();
+            return console.log("Player survived");
+        }
+        async fightEnd() {
             await this.visualizer.fightEnd();
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_END });
-            return console.log("Player survived");
+            Fight.activeFight = undefined;
         }
         async runOneSide(_active, _passive) {
             // TODO: moves
@@ -968,6 +1028,59 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
+    let DataContent;
+    (function (DataContent) {
+        DataContent.relics = [
+            {
+                id: "healstone",
+                abilityLevels: [
+                    {
+                        on: Script.EVENT.FIGHT_END,
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
+                        spell: { type: Script.SPELL_TYPE.HEAL, level: 1 }
+                    },
+                    {
+                        on: Script.EVENT.FIGHT_END,
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2 } },
+                        spell: { type: Script.SPELL_TYPE.HEAL, level: 1 }
+                    }
+                ]
+            },
+            {
+                id: "shieldstone",
+                abilityLevels: [
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1, sortBy: Script.TARGET_SORT.HEALTHIEST, reverse: true } },
+                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 1 }
+                    },
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1, sortBy: Script.TARGET_SORT.HEALTHIEST, reverse: true } },
+                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 2 }
+                    }
+                ]
+            },
+            {
+                id: "brick",
+                abilityLevels: [
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [0, 0], shape: Script.AREA_SHAPE.ROW, position: Script.AREA_POSITION.ABSOLUTE } },
+                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 1 }
+                    },
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [0, 0], shape: Script.AREA_SHAPE.ROW, position: Script.AREA_POSITION.ABSOLUTE } },
+                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 2 }
+                    }
+                ]
+            }
+        ];
+    })(DataContent = Script.DataContent || (Script.DataContent = {}));
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
     class Entity {
         #arena;
         constructor(_entity, _vis, _pos = [0, 0]) {
@@ -981,6 +1094,9 @@ var Script;
             };
             this.endOfRoundEventListener = async (_ev) => {
                 await this.handleEndOfTurn(_ev);
+            };
+            this.endOfFightEventListener = async (_ev) => {
+                await this.handleEndOfFight(_ev);
             };
             this.id = _entity.id;
             this.health = _entity.health ?? 1;
@@ -1068,7 +1184,9 @@ var Script;
             this.visualizer.hurt(amount, wasCrit);
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HURT, target: this, cause: _cause, value: amount });
             if (this.currentHealth <= 0) {
-                //TODO this entity died, handle that.
+                //this entity died
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_DIES, target: this, cause: _cause, value: amount });
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_DIED, target: this, cause: _cause, value: amount });
             }
             return this.currentHealth;
         }
@@ -1082,20 +1200,23 @@ var Script;
                 return 0;
             }
             const instantEffects = new Set([Script.SPELL_TYPE.HEAL]);
+            let amount = _spell.level ?? 1;
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_AFFECT, value: amount, trigger: _spell, target: this, cause: _cause });
             if (!instantEffects.has(_spell.type)) {
                 let value = this.activeEffects.get(_spell.type) ?? 0;
-                value += _spell.level ?? 1;
+                value += amount;
                 this.activeEffects.set(_spell.type, value);
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_AFFECTED, value: amount, trigger: _spell, target: this, cause: _cause });
                 return value;
             }
             switch (_spell.type) {
                 case Script.SPELL_TYPE.HEAL: {
-                    let amount = _spell.level ?? 1;
-                    Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HEAL, value: amount, target: this, cause: _cause });
+                    await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HEAL, value: amount, trigger: _spell, target: this, cause: _cause });
                     // TODO: call Visualizer
                     // TODO: prevent overheal?
                     this.currentHealth += amount;
-                    Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HEALED, value: amount, target: this, cause: _cause });
+                    await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HEALED, value: amount, trigger: _spell, target: this, cause: _cause });
+                    await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_AFFECTED, value: amount, trigger: _spell, target: this, cause: _cause });
                     break;
                 }
             }
@@ -1123,7 +1244,9 @@ var Script;
                 let targets = _targetsOverride ?? Script.getTargets(spell.target, _friendly, _opponent, this);
                 await this.visualizer.spell(spell, targets);
                 for (let target of targets) {
+                    await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target });
                     await target.affect(spell, this);
+                    await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL, trigger: spell, cause: this, target });
                 }
             }
         }
@@ -1141,7 +1264,9 @@ var Script;
                 await this.visualizer.attack(attack, targets);
                 let attackDmg = this.getDamageOfAttacks([attack], true);
                 for (let target of targets) {
+                    Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, value: attackDmg });
                     await target.damage(attackDmg, attack.baseCritChance, this);
+                    Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, value: attackDmg });
                 }
             }
         }
@@ -1226,70 +1351,14 @@ var Script;
             }
             // register end of turn effects
             Script.EventBus.addEventListener(Script.EVENT.ROUND_END, this.endOfRoundEventListener);
+            // register end of fight effects
+            Script.EventBus.addEventListener(Script.EVENT.FIGHT_END, this.endOfFightEventListener);
         }
         async runAbility(_ev) {
             if (!this.abilities)
                 return;
-            nextAbility: for (let ability of this.abilities) {
-                // correct type of event
-                if (Array.isArray(ability.on)) {
-                    if (!ability.on.includes(_ev.type))
-                        continue;
-                }
-                else {
-                    if (ability.on !== _ev.type)
-                        continue;
-                }
-                // are conditions met?
-                if (ability.conditions) {
-                    let conditions = Array.isArray(ability.conditions) ? ability.conditions : [ability.conditions];
-                    for (let condition of conditions) {
-                        if (condition.target && this.#arena && _ev.target) {
-                            let validTargets = Script.getTargets(condition.target, this.#arena.home, this.#arena.away, this);
-                            if (!validTargets.includes(_ev.target))
-                                continue nextAbility;
-                        }
-                        if (condition.cause && this.#arena && _ev.cause) {
-                            let validTargets = Script.getTargets(condition.cause, this.#arena.home, this.#arena.away, this);
-                            if (!validTargets.includes(_ev.cause))
-                                continue nextAbility;
-                        }
-                        if (condition.value && _ev.value !== undefined) {
-                            if (typeof condition.value === "number") {
-                                if (condition.value !== _ev.value)
-                                    continue nextAbility;
-                            }
-                            else {
-                                let min = condition.value.min ?? -Infinity;
-                                let max = condition.value.max ?? Infinity;
-                                if (min > _ev.value || max < _ev.value)
-                                    continue nextAbility;
-                            }
-                        }
-                    }
-                }
-                // if we get here, we're ready to do the ability
-                let targets = undefined;
-                if (ability.target === "cause") {
-                    if (_ev.cause)
-                        targets = [_ev.cause];
-                }
-                else if (ability.target === "target") {
-                    if (_ev.target)
-                        targets = [_ev.target];
-                }
-                else {
-                    targets = Script.getTargets(ability.target, this.#arena.home, this.#arena.away, this);
-                }
-                // no targets found, no need to do the ability
-                if (!targets || targets.length === 0)
-                    continue nextAbility;
-                if (ability.attack) {
-                    await this.useAttack(this.#arena.home, this.#arena.away, [{ target: undefined, ...ability.attack }], targets);
-                }
-                if (ability.spell) {
-                    await this.useSpell(this.#arena.home, this.#arena.away, [{ target: undefined, ...ability.spell }], targets);
-                }
+            for (let ability of this.abilities) {
+                Script.executeAbility.call(this, ability, this.#arena, _ev);
             }
         }
         async handleEndOfTurn(_ev) {
@@ -1308,8 +1377,136 @@ var Script;
                 this.setEffectLevel(spell, --value);
             }
         }
+        async handleEndOfFight(_ev) {
+            this.activeEffects.clear();
+        }
     }
     Script.Entity = Entity;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    function areAbilityConditionsMet(_ability, _arena, _ev) {
+        if (!_ability.conditions)
+            return true;
+        let conditions = Array.isArray(_ability.conditions) ? _ability.conditions : [_ability.conditions];
+        for (let condition of conditions) {
+            if (condition.target && _arena && _ev.target) {
+                let validTargets = Script.getTargets(condition.target, _arena.home, _arena.away, this);
+                if (!validTargets.includes(_ev.target))
+                    return false;
+            }
+            if (condition.cause && _arena && _ev.cause) {
+                let validTargets = Script.getTargets(condition.cause, _arena.home, _arena.away, this);
+                if (!validTargets.includes(_ev.cause))
+                    return false;
+            }
+            if (condition.value && _ev.value !== undefined) {
+                if (typeof condition.value === "number") {
+                    if (condition.value !== _ev.value)
+                        return false;
+                }
+                else {
+                    let min = condition.value.min ?? -Infinity;
+                    let max = condition.value.max ?? Infinity;
+                    if (min > _ev.value || max < _ev.value)
+                        return false;
+                }
+            }
+        }
+        return true;
+    }
+    Script.areAbilityConditionsMet = areAbilityConditionsMet;
+    async function executeAbility(_ability, _arena, _ev) {
+        if (!_ability || !_ev)
+            return;
+        // correct type of event
+        if (Array.isArray(_ability.on)) {
+            if (!_ability.on.includes(_ev.type))
+                return;
+        }
+        else {
+            if (_ability.on !== _ev.type)
+                return;
+        }
+        if (!areAbilityConditionsMet(_ability, _arena, _ev))
+            return;
+        // if we get here, we're ready to do the ability
+        let targets = undefined;
+        if (_ability.target === "cause") {
+            if (_ev.cause)
+                targets = [_ev.cause];
+        }
+        else if (_ability.target === "target") {
+            if (_ev.target)
+                targets = [_ev.target];
+        }
+        else {
+            targets = Script.getTargets(_ability.target, _arena.home, _arena.away, this);
+        }
+        // no targets found, no need to do the ability
+        if (!targets || targets.length === 0)
+            return;
+        await Script.EventBus.dispatchEvent({ type: Script.EVENT.TRIGGER_ABILITY, cause: this, target: this, trigger: _ability });
+        if (_ability.attack) {
+            await this.useAttack(_arena.home, _arena.away, [{ target: undefined, ..._ability.attack }], targets);
+        }
+        if (_ability.spell) {
+            await this.useSpell(_arena.home, _arena.away, [{ target: undefined, ..._ability.spell }], targets);
+        }
+        await Script.EventBus.dispatchEvent({ type: Script.EVENT.TRIGGERED_ABILITY, cause: this, target: this, trigger: _ability });
+    }
+    Script.executeAbility = executeAbility;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    class Relic {
+        #level;
+        #abilityLevels;
+        #id;
+        #triggers;
+        constructor(_data, _level = 0) {
+            this.#triggers = new Set();
+            this.abilityEventListener = async (_ev) => {
+                await this.runAbility(_ev);
+            };
+            this.level = _level;
+            this.#abilityLevels = _data.abilityLevels;
+            this.#id = _data.id;
+            for (let ability of this.#abilityLevels) {
+                if (Array.isArray(ability.on)) {
+                    for (let ev of ability.on) {
+                        this.#triggers.add(ev);
+                    }
+                }
+                else {
+                    this.#triggers.add(ability.on);
+                }
+            }
+        }
+        set level(_lvl) {
+            this.#level = Math.max(0, Math.min(this.#abilityLevels.length - 1, _lvl));
+        }
+        get id() {
+            return this.#id;
+        }
+        registerEventListeners() {
+            for (let trigger of this.#triggers) {
+                Script.EventBus.addEventListener(trigger, this.abilityEventListener);
+            }
+        }
+        removeEventListeners() {
+            for (let trigger of this.#triggers) {
+                Script.EventBus.removeEventListener(trigger, this.abilityEventListener);
+            }
+        }
+        async runAbility(_ev) {
+            let ability = this.#abilityLevels[this.#level];
+            if (!ability)
+                return;
+            Script.executeAbility.call(this, ability, Script.Fight.activeFight.arena, _ev);
+        }
+    }
+    Script.Relic = Relic;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {

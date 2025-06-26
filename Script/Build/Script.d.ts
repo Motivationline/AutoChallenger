@@ -6,18 +6,21 @@ declare namespace Script {
         FIGHT_END = "fightEnd",
         ROUND_START = "roundStart",
         ROUND_END = "roundEnd",
+        ENTITY_SPELL_BEFORE = "entitySpellBefore",
+        ENTITY_SPELL = "entitySpell",
         ENTITY_ATTACK = "entityAttack",
         ENTITY_ATTACKED = "entityAttacked",
-        ENTITY_HEAL = "entityHeal",
+        ENTITY_HEAL = "entityHeal",// could be covered by ENTITY_AFFECT, but easier shortcut for probably often used heal effect.
         ENTITY_HEALED = "entityHealed",
+        ENTITY_AFFECT = "entityAffect",
+        ENTITY_AFFECTED = "entityAffected",
         ENTITY_HURT_BEFORE = "entityHurtBefore",
         ENTITY_HURT = "entityHurt",
         ENTITY_DIES = "entityDies",
         ENTITY_DIED = "entityDied",
-        ENTITY_CREATE = "entityCreate",
-        ENTITY_CREATED = "entityCreated",
-        ENTITY_MOVE = "entityMove",
-        ENTITY_MOVED = "entityMoved",
+        ENTITY_MOVE = "entityMove",// unused for now
+        ENTITY_MOVED = "entityMoved",// unused for now
+        TRIGGER_ABILITY = "triggerAbility",
         TRIGGERED_ABILITY = "triggeredAbility"
     }
     /**
@@ -36,7 +39,7 @@ declare namespace Script {
         /** Optional value field for relevant events. Might be empty. */
         value?: number;
         /** Optional value for whatever triggered this event. */
-        trigger?: AttackData | SpellData | MoveData;
+        trigger?: AttackData | SpellData | MoveData | AbilityData;
     }
     type FightEventListener = (_ev?: FightEvent) => Promise<void>;
     class EventBus {
@@ -299,6 +302,7 @@ declare namespace Script {
     interface DataData {
         fights: FightData[];
         entities: EntityData[];
+        relics: RelicData[];
         entityMap: {
             [id: string]: EntityData;
         };
@@ -308,6 +312,7 @@ declare namespace Script {
         load(): Promise<void>;
         get fights(): readonly FightData[];
         get entities(): readonly EntityData[];
+        get relics(): readonly RelicData[];
         getEntity(_id: string): Readonly<EntityData> | undefined;
         private resolveParent;
     }
@@ -326,11 +331,13 @@ declare namespace Script {
         away: Grid<IEntity>;
     }
     class Fight {
+        static activeFight: Fight;
         rounds: number;
         arena: Arena;
         protected visualizer: IVisualizeFight;
         constructor(_fight: FightData, _home: Grid<IEntity>);
         run(): Promise<void>;
+        private fightEnd;
         private runOneSide;
     }
 }
@@ -353,6 +360,11 @@ declare namespace Script {
     }
 }
 declare namespace Script {
+}
+declare namespace Script {
+    namespace DataContent {
+        const relics: RelicData[];
+    }
 }
 declare namespace Script {
     type SelectableWithData<T> = Selectable<T> & {
@@ -427,6 +439,8 @@ declare namespace Script {
         protected runAbility(_ev: FightEvent): Promise<void>;
         private endOfRoundEventListener;
         protected handleEndOfTurn(_ev: FightEvent): Promise<void>;
+        private endOfFightEventListener;
+        protected handleEndOfFight(_ev: FightEvent): Promise<void>;
     }
     export {};
 }
@@ -462,6 +476,8 @@ declare namespace Script {
         attack?: AttackDataNoTarget;
         spell?: SpellDataNoTarget;
     }
+    function areAbilityConditionsMet(_ability: AbilityData, _arena: Arena, _ev: FightEvent): boolean;
+    function executeAbility(_ability: AbilityData, _arena: Arena, _ev: FightEvent): Promise<void>;
 }
 declare namespace Script {
     interface AttackDataNoTarget {
@@ -471,6 +487,22 @@ declare namespace Script {
     }
     interface AttackData extends AttackDataNoTarget {
         target: Target;
+    }
+}
+declare namespace Script {
+    interface RelicData {
+        id: string;
+        abilityLevels: AbilityData[];
+    }
+    class Relic {
+        #private;
+        constructor(_data: RelicData, _level?: number);
+        set level(_lvl: number);
+        get id(): string;
+        registerEventListeners(): void;
+        removeEventListeners(): void;
+        private abilityEventListener;
+        protected runAbility(_ev: FightEvent): Promise<void>;
     }
 }
 declare namespace Script {

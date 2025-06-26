@@ -156,8 +156,8 @@ namespace Script {
             await EventBus.dispatchEvent({ type: EVENT.ENTITY_HURT, target: this, cause: _cause, value: amount });
 
             if (this.currentHealth <= 0) {
+                //this entity died
                 await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIES, target: this, cause: _cause, value: amount });
-                //TODO this entity died, handle that.
 
                 await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIED, target: this, cause: _cause, value: amount });
             }
@@ -335,6 +335,8 @@ namespace Script {
 
             // register end of turn effects
             EventBus.addEventListener(EVENT.ROUND_END, this.endOfRoundEventListener);
+            // register end of fight effects
+            EventBus.addEventListener(EVENT.FIGHT_END, this.endOfFightEventListener);
         }
 
         private abilityEventListener = async (_ev: FightEvent) => {
@@ -346,65 +348,8 @@ namespace Script {
 
         protected async runAbility(_ev: FightEvent) {
             if (!this.abilities) return;
-            nextAbility: for (let ability of this.abilities) {
-                // correct type of event
-                if (Array.isArray(ability.on)) {
-                    if (!ability.on.includes(_ev.type)) continue;
-                } else {
-                    if (ability.on !== _ev.type) continue;
-                }
-
-                // are conditions met?
-                if (ability.conditions) {
-                    let conditions = Array.isArray(ability.conditions) ? ability.conditions : [ability.conditions];
-                    for (let condition of conditions) {
-                        if (condition.target && this.#arena && _ev.target) {
-                            let validTargets = getTargets(condition.target, this.#arena.home, this.#arena.away, this);
-                            if (!validTargets.includes(_ev.target)) continue nextAbility;
-                        }
-                        if (condition.cause && this.#arena && _ev.cause) {
-                            let validTargets = getTargets(condition.cause, this.#arena.home, this.#arena.away, this);
-                            if (!validTargets.includes(_ev.cause)) continue nextAbility;
-                        }
-                        if (condition.value && _ev.value !== undefined) {
-                            if (typeof condition.value === "number") {
-                                if (condition.value !== _ev.value) continue nextAbility;
-                            } else {
-                                let min = condition.value.min ?? -Infinity;
-                                let max = condition.value.max ?? Infinity;
-                                if (min > _ev.value || max < _ev.value) continue nextAbility;
-                            }
-                        }
-                    }
-                }
-
-                // if we get here, we're ready to do the ability
-                let targets: IEntity[] = undefined;
-                if (ability.target === "cause") {
-                    if (_ev.cause)
-                        targets = [_ev.cause]
-                }
-                else if (ability.target === "target") {
-                    if (_ev.target)
-                        targets = [_ev.target]
-                }
-                else {
-                    targets = getTargets(ability.target, this.#arena.home, this.#arena.away, this);
-                }
-
-                // no targets found, no need to do the ability
-                if (!targets || targets.length === 0) continue nextAbility;
-
-                await EventBus.dispatchEvent({ type: EVENT.TRIGGER_ABILITY, cause: this, target: this, trigger: ability });
-                if (ability.attack) {
-                    await this.useAttack(this.#arena.home, this.#arena.away, [{ target: undefined, ...ability.attack }], targets);
-                }
-
-                if (ability.spell) {
-                    await this.useSpell(this.#arena.home, this.#arena.away, [{ target: undefined, ...ability.spell }], targets);
-                }
-                await EventBus.dispatchEvent({ type: EVENT.TRIGGERED_ABILITY, cause: this, target: this, trigger: ability });
-
+            for (let ability of this.abilities) {
+                executeAbility.call(this, ability, this.#arena, _ev);
             }
         }
 
@@ -428,6 +373,13 @@ namespace Script {
             }
         }
 
+        private endOfFightEventListener = async (_ev: FightEvent) => {
+            await this.handleEndOfFight(_ev);
+        }
+
+        protected async handleEndOfFight(_ev: FightEvent) {
+            this.activeEffects.clear();
+        }
 
     }
 }

@@ -7,6 +7,7 @@ namespace Script {
     export interface DataData {
         fights: FightData[],
         entities: EntityData[],
+        relics: RelicData[],
         entityMap: { [id: string]: EntityData },
     }
 
@@ -15,6 +16,7 @@ namespace Script {
         public async load() {
             this.data.fights = DataContent.fights;
             this.data.entities = DataContent.entities;
+            this.data.relics = DataContent.relics;
 
             // copy to map for quicker access through getEntity
             this.data.entityMap = {};
@@ -38,6 +40,9 @@ namespace Script {
         }
         public get entities(): readonly EntityData[] {
             return this.data.entities;
+        }
+        public get relics(): readonly RelicData[] {
+            return this.data.relics;
         }
 
         public getEntity(_id: string): Readonly<EntityData> | undefined {

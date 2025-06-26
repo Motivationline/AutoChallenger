@@ -15,6 +15,7 @@ namespace Script {
     }
 
     export class Fight {
+        static activeFight: Fight;
         rounds: number;
         arena: Arena;
         protected visualizer: IVisualizeFight;
@@ -36,11 +37,12 @@ namespace Script {
         }
 
         async run(): Promise<void> {
+            Fight.activeFight = this;
             // Eventlisteners
             EventBus.removeAllEventListeners();
             this.arena.home.forEachElement((el) => { el?.registerEventListeners() });
             this.arena.away.forEachElement((el) => { el?.registerEventListeners() });
-            //TODO: Add artifacts
+            //TODO: Add relics
             await this.visualizer.fightStart();
             await EventBus.dispatchEvent({ type: EVENT.FIGHT_START });
 
@@ -69,6 +71,7 @@ namespace Script {
         private async fightEnd() {
             await this.visualizer.fightEnd();
             await EventBus.dispatchEvent({ type: EVENT.FIGHT_END });
+            Fight.activeFight = undefined;
         }
 
         private async runOneSide(_active: Grid<IEntity>, _passive: Grid<IEntity>): Promise<void> {
