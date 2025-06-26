@@ -20,6 +20,10 @@ namespace Script {
             let homeGrid = new Grid<VisualizeEntity>();
             _fight.arena.home.forEachElement((entity, pos) => homeGrid.set(pos, entity?.getVisualizer()));
             this.#home = new IVisualizeGrid(homeGrid, new ƒ.Vector3(-2,0,0));
+
+            Provider.visualizer.addToScene(this.#away);
+            Provider.visualizer.addToScene(this.#home);
+            Provider.visualizer.drawScene();
         }
 
         async showGrid(): Promise<void> {

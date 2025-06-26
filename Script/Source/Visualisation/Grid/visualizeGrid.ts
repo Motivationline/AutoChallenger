@@ -31,9 +31,6 @@ namespace Script {
                 element.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]).add(this.pos);
                 this.addChild(element);
             });
-
-            Provider.visualizer.addToScene(this);
-            Provider.visualizer.drawScene();
         }
     }
 

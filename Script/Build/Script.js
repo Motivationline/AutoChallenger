@@ -1390,12 +1390,16 @@ var Script;
         #home;
         #away;
         constructor(_fight) {
+            //TODO: Fix Scaling of the Grids and instance the Entities at given Positions from the Scen out of the Fudge Editor
             let awayGrid = new Script.Grid();
             _fight.arena.away.forEachElement((entity, pos) => awayGrid.set(pos, entity?.getVisualizer()));
             this.#away = new Script.IVisualizeGrid(awayGrid, new ƒ.Vector3(1, 0, 0));
             let homeGrid = new Script.Grid();
             _fight.arena.home.forEachElement((entity, pos) => homeGrid.set(pos, entity?.getVisualizer()));
             this.#home = new Script.IVisualizeGrid(homeGrid, new ƒ.Vector3(-2, 0, 0));
+            Script.Provider.visualizer.addToScene(this.#away);
+            Script.Provider.visualizer.addToScene(this.#home);
+            Script.Provider.visualizer.drawScene();
         }
         async showGrid() {
             let visualizer = Script.Provider.visualizer;
@@ -1685,8 +1689,6 @@ var Script;
                 element.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]).add(this.pos);
                 this.addChild(element);
             });
-            Script.Provider.visualizer.addToScene(this);
-            Script.Provider.visualizer.drawScene();
         }
     }
     Script.IVisualizeGrid = IVisualizeGrid;
