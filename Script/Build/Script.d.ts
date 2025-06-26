@@ -591,14 +591,10 @@ declare namespace Script {
 }
 declare namespace Script {
     import ƒ = FudgeCore;
-    interface IVisualizeGrid {
-        getRealPosition(_pos: Position): any;
-        updateVisuals(): void;
-    }
-    class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
+    class IVisualizeGrid extends ƒ.Node {
         grid: Grid<VisualizeEntity>;
-        constructor(_grid: Grid<VisualizeEntity>);
-        updateVisuals(): void;
-        getRealPosition(_pos: Position): Position;
+        tiles: Grid<VisualizeTile>;
+        pos: ƒ.Vector3;
+        constructor(_grid: Grid<VisualizeEntity>, _pos: ƒ.Vector3);
     }
 }

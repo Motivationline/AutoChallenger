@@ -1,10 +1,11 @@
 namespace Script {
 
+    //Visualize the Entities in the Grid
+    //Instances the Entities in the correct grid Position
+
     import ƒ = FudgeCore;
 
-    class IVisualizeGrid extends ƒ.Node{
-        home: ƒ.Node;
-        away: ƒ.Node;
+    export class IVisualizeGrid extends ƒ.Node{
 
         grid: Grid<VisualizeEntity>;
         tiles: Grid<VisualizeTile>;
@@ -18,6 +19,21 @@ namespace Script {
 
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.translate(this.pos);
+
+            //add the Tile Grid
+            let tileGrid: ƒ.Node;
+            tileGrid = new VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
+            Provider.visualizer.addToScene(tileGrid);
+
+            //set the positions of the entities in the grid
+            this.grid.forEachElement((element, pos) => {
+                if (!element) return;
+                element.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]).add(this.pos);
+                this.addChild(element);
+            });
+
+            Provider.visualizer.addToScene(this);
+            Provider.visualizer.drawScene();
         }
     }
 

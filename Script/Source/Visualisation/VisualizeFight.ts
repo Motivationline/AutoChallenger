@@ -10,40 +10,37 @@ namespace Script {
     import ƒ = FudgeCore;
 
     export class VisualizeFightNull implements IVisualizeFight {
-        #home: VisualizeGridNull;
-        #away: VisualizeGridNull;
+        #home: IVisualizeGrid;
+        #away: IVisualizeGrid;
         constructor(_fight: Fight) {
+            //TODO: Fix Scaling of the Grids and instance the Entities at given Positions from the Scen out of the Fudge Editor
             let awayGrid = new Grid<VisualizeEntity>();
             _fight.arena.away.forEachElement((entity, pos) => awayGrid.set(pos, entity?.getVisualizer()));
-            this.#away = new VisualizeGridNull(awayGrid);
+            this.#away = new IVisualizeGrid(awayGrid, new ƒ.Vector3(1,0,0));
             let homeGrid = new Grid<VisualizeEntity>();
             _fight.arena.home.forEachElement((entity, pos) => homeGrid.set(pos, entity?.getVisualizer()));
-            this.#home = new VisualizeGridNull(homeGrid);
+            this.#home = new IVisualizeGrid(homeGrid, new ƒ.Vector3(-2,0,0));
         }
 
         async showGrid(): Promise<void> {
             let visualizer = Provider.visualizer;
-            let tileGrid: ƒ.Node;
-            tileGrid = new VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
 
-            visualizer.addToScene(tileGrid);
+            // let grid: string[][] = [[, , , , , , ,], [], []];
 
-            let grid: string[][] = [[, , , , , , ,], [], []];
+            // this.#home.grid.forEachElement((el, pos) => {
+            //     if (!el) return;
+            //     let entity = (<VisualizeEntity>el).getEntity();
+            //     grid[pos[1]][2 - pos[0]] = `${entity.id}\n${entity.currentHealth} ♥️`;
+            //     el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
+            // })
+            // this.#away.grid.forEachElement((el, pos) => {
+            //     if (!el) return;
+            //     let entity = (<VisualizeEntity>el).getEntity();
+            //     grid[pos[1]][pos[0] + 4] = `${entity.id}\n${entity.currentHealth} ♥️`;
+            //     el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
+            // })
 
-            this.#home.grid.forEachElement((el, pos) => {
-                if (!el) return;
-                let entity = (<VisualizeEntity>el).getEntity();
-                grid[pos[1]][2 - pos[0]] = `${entity.id}\n${entity.currentHealth} ♥️`;
-                el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
-            })
-            this.#away.grid.forEachElement((el, pos) => {
-                if (!el) return;
-                let entity = (<VisualizeEntity>el).getEntity();
-                grid[pos[1]][pos[0] + 4] = `${entity.id}\n${entity.currentHealth} ♥️`;
-                el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
-            })
-
-            console.table(grid);
+            // console.table(grid);
             //draw the 3D scene
             visualizer.drawScene();
         }

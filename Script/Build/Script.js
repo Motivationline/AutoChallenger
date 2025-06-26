@@ -1392,32 +1392,27 @@ var Script;
         constructor(_fight) {
             let awayGrid = new Script.Grid();
             _fight.arena.away.forEachElement((entity, pos) => awayGrid.set(pos, entity?.getVisualizer()));
-            this.#away = new Script.VisualizeGridNull(awayGrid);
+            this.#away = new Script.IVisualizeGrid(awayGrid, new ƒ.Vector3(1, 0, 0));
             let homeGrid = new Script.Grid();
             _fight.arena.home.forEachElement((entity, pos) => homeGrid.set(pos, entity?.getVisualizer()));
-            this.#home = new Script.VisualizeGridNull(homeGrid);
+            this.#home = new Script.IVisualizeGrid(homeGrid, new ƒ.Vector3(-2, 0, 0));
         }
         async showGrid() {
             let visualizer = Script.Provider.visualizer;
-            let tileGrid;
-            tileGrid = new Script.VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
-            visualizer.addToScene(tileGrid);
-            let grid = [[, , , , , , ,], [], []];
-            this.#home.grid.forEachElement((el, pos) => {
-                if (!el)
-                    return;
-                let entity = el.getEntity();
-                grid[pos[1]][2 - pos[0]] = `${entity.id}\n${entity.currentHealth} ♥️`;
-                el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
-            });
-            this.#away.grid.forEachElement((el, pos) => {
-                if (!el)
-                    return;
-                let entity = el.getEntity();
-                grid[pos[1]][pos[0] + 4] = `${entity.id}\n${entity.currentHealth} ♥️`;
-                el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
-            });
-            console.table(grid);
+            // let grid: string[][] = [[, , , , , , ,], [], []];
+            // this.#home.grid.forEachElement((el, pos) => {
+            //     if (!el) return;
+            //     let entity = (<VisualizeEntity>el).getEntity();
+            //     grid[pos[1]][2 - pos[0]] = `${entity.id}\n${entity.currentHealth} ♥️`;
+            //     el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
+            // })
+            // this.#away.grid.forEachElement((el, pos) => {
+            //     if (!el) return;
+            //     let entity = (<VisualizeEntity>el).getEntity();
+            //     grid[pos[1]][pos[0] + 4] = `${entity.id}\n${entity.currentHealth} ♥️`;
+            //     el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
+            // })
+            // console.table(grid);
             //draw the 3D scene
             visualizer.drawScene();
         }
@@ -1643,25 +1638,57 @@ var Script;
     }
     Script.VisualizeTileGrid = VisualizeTileGrid;
 })(Script || (Script = {}));
+// namespace Script {
+//     import ƒ = FudgeCore;
+//     export interface IVisualizeGrid {
+//         getRealPosition(_pos: Position): any;
+//         updateVisuals(): void;
+//     }
+//     export class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
+//         grid: Grid<VisualizeEntity>;
+//         constructor(_grid: Grid<VisualizeEntity>) {
+//             super("VisualizeGridNull");
+//             this.grid = _grid;
+//             this.addComponent(new ƒ.ComponentTransform());
+//             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3(0, 0, 0));
+//         }
+//         updateVisuals(): void {
+//             this.grid.forEachElement((element) => {
+//                 element?.updateVisuals();
+//             });
+//         }
+//         getRealPosition(_pos: Position) {
+//             return _pos;
+//         }
+//     }
+// }
 var Script;
 (function (Script) {
+    //Visualize the Entities in the Grid
+    //Instances the Entities in the correct grid Position
     var ƒ = FudgeCore;
-    class VisualizeGridNull extends ƒ.Node {
-        constructor(_grid) {
-            super("VisualizeGridNull");
+    class IVisualizeGrid extends ƒ.Node {
+        constructor(_grid, _pos) {
+            super("VisualizeGrid");
             this.grid = _grid;
+            this.pos = _pos;
             this.addComponent(new ƒ.ComponentTransform());
-            this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3(0));
-        }
-        updateVisuals() {
-            this.grid.forEachElement((element) => {
-                element?.updateVisuals();
+            this.mtxLocal.translate(this.pos);
+            //add the Tile Grid
+            let tileGrid;
+            tileGrid = new Script.VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
+            Script.Provider.visualizer.addToScene(tileGrid);
+            //set the positions of the entities in the grid
+            this.grid.forEachElement((element, pos) => {
+                if (!element)
+                    return;
+                element.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]).add(this.pos);
+                this.addChild(element);
             });
-        }
-        getRealPosition(_pos) {
-            return _pos;
+            Script.Provider.visualizer.addToScene(this);
+            Script.Provider.visualizer.drawScene();
         }
     }
-    Script.VisualizeGridNull = VisualizeGridNull;
+    Script.IVisualizeGrid = IVisualizeGrid;
 })(Script || (Script = {}));
 //# sourceMappingURL=Script.js.map
