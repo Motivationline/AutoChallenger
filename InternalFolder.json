@@ -61,6 +61,31 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "FlameFlinger",
+                "entries": [
+                  {
+                    "name": "FireSprite",
+                    "entries": [
+                      {
+                        "idResource": "TextureImage|2025-06-26T17:24:10.616Z|64817"
+                      },
+                      {
+                        "idResource": "AnimationSprite|2025-06-26T17:24:38.690Z|99300"
+                      },
+                      {
+                        "idResource": "Graph|2025-06-26T17:26:34.710Z|43136"
+                      },
+                      {
+                        "idResource": "MeshSprite|2025-06-26T17:26:51.870Z|38890"
+                      },
+                      {
+                        "idResource": "Material|2025-06-26T17:27:15.461Z|18536"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           },
@@ -77,6 +102,17 @@
                         "idResource": "GraphGLTF|2025-06-24T12:17:49.187Z|53955"
                       }
                     ]
+                  }
+                ]
+              },
+              {
+                "name": "Wave",
+                "entries": [
+                  {
+                    "idResource": "GraphGLTF|2025-06-26T09:24:03.778Z|75082"
+                  },
+                  {
+                    "idResource": "AnimationGLTF|2025-06-26T09:24:03.778Z|67649"
                   }
                 ]
               }
