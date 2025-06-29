@@ -13,7 +13,7 @@ namespace Script {
         #home: IVisualizeGrid;
         #away: IVisualizeGrid;
         constructor(_fight: Fight) {
-            //TODO: Fix Scaling of the Grids and instance the Entities at given Positions from the Scen out of the Fudge Editor
+            //TODO: Fix Scaling of the Grids and instance the Entities at given Positions from the Scene out of the Fudge Editor
             let awayGrid = new Grid<VisualizeEntity>();
             _fight.arena.away.forEachElement((entity, pos) => awayGrid.set(pos, entity?.getVisualizer()));
             this.#away = new IVisualizeGrid(awayGrid, new ƒ.Vector3(1,0,0));

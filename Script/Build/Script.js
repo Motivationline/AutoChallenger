@@ -883,7 +883,12 @@ var Script;
     var ƒ = FudgeCore;
     class VisualizerNull {
         constructor() {
+            let FigthScene = ƒ.Project.getResourcesByName("FightScene")[0];
+            this.viewport.setBranch(FigthScene);
             this.root = new ƒ.Node("Root");
+            //attach the root node to the FightScene
+            //TODO: Fight Scene can also be added to empty scene
+            FigthScene.addChild(this.root);
             this.camera = new ƒ.ComponentCamera();
         }
         getEntity(_entity) {

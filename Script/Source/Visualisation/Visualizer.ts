@@ -8,6 +8,7 @@ namespace Script {
         getRoot(): ƒ.Node;
         initializeScene(_viewport: ƒ.Viewport): void;
         drawScene(): void;
+        getGraph(): ƒ.Graph;
     }
 
     import ƒ = FudgeCore;
@@ -18,7 +19,13 @@ namespace Script {
         viewport: ƒ.Viewport;
 
         constructor() {
+            let FigthScene: ƒ.Graph = ƒ.Project.getResourcesByName("FightScene")[0] as ƒ.Graph;
+            this.viewport.setBranch(FigthScene);
             this.root = new ƒ.Node("Root");
+            //attach the root node to the FightScene
+            //TODO: Fight Scene can also be added to empty scene
+            FigthScene.addChild(this.root);
+
             this.camera = new ƒ.ComponentCamera();
         }
         getEntity(_entity: IEntity): VisualizeEntity {
@@ -41,6 +48,7 @@ namespace Script {
             grid = new VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
 
             this.root.addChild(grid);
+
             console.log(this.root);
 
             //testing camera orientation
@@ -60,6 +68,9 @@ namespace Script {
         }
         getRoot(): ƒ.Node {
             return this.root;
+        }
+        getGraph(): ƒ.Graph {
+            return this.viewport.getBranch() as ƒ.Graph;
         }
         drawScene(): void {
             this.viewport.draw();
