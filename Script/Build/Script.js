@@ -62,6 +62,9 @@ var Script;
         DIRECTION_RELATIVE["LEFT"] = "left";
         DIRECTION_RELATIVE["RIGHT"] = "right";
     })(DIRECTION_RELATIVE = Script.DIRECTION_RELATIVE || (Script.DIRECTION_RELATIVE = {}));
+    /**Move the Entity based of the Grid Data then map the position to the empty nodes in the Graph with a mapping function
+     * this could also be done in the Visualizer with a function like mapPositionToNode(_pos: Position)
+    */
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -883,12 +886,7 @@ var Script;
     var ƒ = FudgeCore;
     class VisualizerNull {
         constructor() {
-            let FigthScene = ƒ.Project.getResourcesByName("FightScene")[0];
-            this.viewport.setBranch(FigthScene);
             this.root = new ƒ.Node("Root");
-            //attach the root node to the FightScene
-            //TODO: Fight Scene can also be added to empty scene
-            FigthScene.addChild(this.root);
             this.camera = new ƒ.ComponentCamera();
         }
         getEntity(_entity) {
@@ -914,7 +912,12 @@ var Script;
             this.camera.mtxPivot.translateZ(-10);
             this.camera.mtxPivot.translateY(6);
             this.camera.mtxPivot.rotateX(25);
-            _viewport.initialize("Viewport", this.root, this.camera, document.querySelector("canvas"));
+            let FigthScene = ƒ.Project.getResourcesByName("FightScene")[0];
+            //this.viewport.setBranch(FigthScene);
+            //attach the root node to the FightScene
+            //TODO: Fight Scene can also be added to empty scene
+            FigthScene.addChild(this.root);
+            _viewport.initialize("Viewport", FigthScene, this.camera, document.querySelector("canvas"));
             _viewport.draw();
         }
         addToScene(_el) {
@@ -926,6 +929,9 @@ var Script;
         }
         getRoot() {
             return this.root;
+        }
+        getGraph() {
+            return this.viewport.getBranch();
         }
         drawScene() {
             this.viewport.draw();
@@ -1395,7 +1401,7 @@ var Script;
         #home;
         #away;
         constructor(_fight) {
-            //TODO: Fix Scaling of the Grids and instance the Entities at given Positions from the Scen out of the Fudge Editor
+            //TODO: Fix Scaling of the Grids and instance the Entities at given Positions from the Scene out of the Fudge Editor
             let awayGrid = new Script.Grid();
             _fight.arena.away.forEachElement((entity, pos) => awayGrid.set(pos, entity?.getVisualizer()));
             this.#away = new Script.IVisualizeGrid(awayGrid, new ƒ.Vector3(1, 0, 0));
@@ -1684,16 +1690,31 @@ var Script;
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.translate(this.pos);
             //add the Tile Grid
-            let tileGrid;
-            tileGrid = new Script.VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
-            Script.Provider.visualizer.addToScene(tileGrid);
+            // let tileGrid: ƒ.Node;
+            // tileGrid = new VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
+            // Provider.visualizer.addToScene(tileGrid);
             //set the positions of the entities in the grid
             this.grid.forEachElement((element, pos) => {
                 if (!element)
                     return;
-                element.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]).add(this.pos);
+                //get the entities positions from placeholders in the scene
+                let home = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
+                //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
+                //TODO: Iterate through all anchors and set the Entities Position to the matching anchors Position
+                /**Anchors are named from 0-8 */
+                let anchor = this.getAnchor(home, pos[0], pos[1]);
+                let position = anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
+                console.log("position: " + position);
+                element.mtxLocal.translation = new ƒ.Vector3(position.x, position.y, position.z).add(this.pos);
                 this.addChild(element);
             });
+        }
+        getAnchor(_side, _x, _z) {
+            let anchor;
+            let pointer = _z * 3 + _x;
+            console.log("pointer: " + pointer);
+            anchor = _side.getChildByName(pointer.toString());
+            return anchor;
         }
     }
     Script.IVisualizeGrid = IVisualizeGrid;

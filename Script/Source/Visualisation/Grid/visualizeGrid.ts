@@ -21,22 +21,35 @@ namespace Script {
             this.mtxLocal.translate(this.pos);
 
             //add the Tile Grid
-            let tileGrid: ƒ.Node;
-            tileGrid = new VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
-            Provider.visualizer.addToScene(tileGrid);
+            // let tileGrid: ƒ.Node;
+            // tileGrid = new VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
+            // Provider.visualizer.addToScene(tileGrid);
 
             //set the positions of the entities in the grid
             this.grid.forEachElement((element, pos) => {
                 if (!element) return;
-                //get the entities positions from placeholders in the scene
-                let home: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("home")[0];
+
+                //get Placeholders from scene
+                let home: ƒ.Node = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
                 //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
-                let anchors = home.getChildren();
+
                 /**Anchors are named from 0-8 */
-                //TODO: Iterate through all anchors and set the Entities Position to the matching anchors Position
-                element.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]).add(this.pos);
+                let anchor: ƒ.Node = this.getAnchor(home, pos[0], pos[1]);
+                //get the Positions from the placeholders and translate the entities to it
+                let position: ƒ.Vector3 = anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
+                console.log("position: " + position);
+                //TODO: Fix Positions
+                element.mtxLocal.translation = new ƒ.Vector3(position.x, position.y, position.z).add(this.pos);
                 this.addChild(element);
             });
+
+        }
+        getAnchor(_side: ƒ.Node, _x: number, _z: number): ƒ.Node {
+            let anchor: ƒ.Node;
+            let pointer: number = _z * 3 + _x;
+            console.log("pointer: " + pointer);
+            anchor = _side.getChildByName(pointer.toString());
+            return anchor;
         }
     }
 

@@ -19,13 +19,7 @@ namespace Script {
         viewport: ƒ.Viewport;
 
         constructor() {
-            let FigthScene: ƒ.Graph = ƒ.Project.getResourcesByName("FightScene")[0] as ƒ.Graph;
-            this.viewport.setBranch(FigthScene);
             this.root = new ƒ.Node("Root");
-            //attach the root node to the FightScene
-            //TODO: Fight Scene can also be added to empty scene
-            FigthScene.addChild(this.root);
-
             this.camera = new ƒ.ComponentCamera();
         }
         getEntity(_entity: IEntity): VisualizeEntity {
@@ -56,7 +50,13 @@ namespace Script {
             this.camera.mtxPivot.translateY(6);
             this.camera.mtxPivot.rotateX(25);
 
-            _viewport.initialize("Viewport", this.root, this.camera, document.querySelector("canvas"));
+            let FigthScene: ƒ.Graph = ƒ.Project.getResourcesByName("FightScene")[0] as ƒ.Graph;
+            //this.viewport.setBranch(FigthScene);
+            //attach the root node to the FightScene
+            //TODO: Fight Scene can also be added to empty scene
+            FigthScene.addChild(this.root);
+
+            _viewport.initialize("Viewport", FigthScene, this.camera, document.querySelector("canvas"));
             _viewport.draw();
         }
         addToScene(_el: ƒ.Node): void {

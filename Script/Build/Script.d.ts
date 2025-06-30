@@ -69,6 +69,9 @@ declare namespace Script {
             attempts?: number;
         };
     }
+    /**Move the Entity based of the Grid Data then map the position to the empty nodes in the Graph with a mapping function
+     * this could also be done in the Visualizer with a function like mapPositionToNode(_pos: Position)
+    */
 }
 declare namespace Script {
     export enum SELECTION_ORDER {
@@ -341,6 +344,7 @@ declare namespace Script {
         getRoot(): ƒ.Node;
         initializeScene(_viewport: ƒ.Viewport): void;
         drawScene(): void;
+        getGraph(): ƒ.Graph;
     }
     import ƒ = FudgeCore;
     class VisualizerNull implements IVisualizer {
@@ -355,6 +359,7 @@ declare namespace Script {
         addToScene(_el: ƒ.Node): void;
         getCamera(): ƒ.ComponentCamera;
         getRoot(): ƒ.Node;
+        getGraph(): ƒ.Graph;
         drawScene(): void;
     }
 }
@@ -596,5 +601,6 @@ declare namespace Script {
         tiles: Grid<VisualizeTile>;
         pos: ƒ.Vector3;
         constructor(_grid: Grid<VisualizeEntity>, _pos: ƒ.Vector3);
+        getAnchor(_side: ƒ.Node, _x: number, _z: number): ƒ.Node;
     }
 }
