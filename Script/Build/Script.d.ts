@@ -362,6 +362,14 @@ declare namespace Script {
 declare namespace Script {
 }
 declare namespace Script {
+    import ƒ = FudgeCore;
+    class DataLink extends ƒ.ComponentScript {
+        static linkedNodes: Map<string, ƒ.Node>;
+        id: string;
+        constructor();
+    }
+}
+declare namespace Script {
     namespace DataContent {
         const relics: RelicData[];
     }

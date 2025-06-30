@@ -4,7 +4,7 @@
 
 namespace Script {
   import ƒ = FudgeCore;
-  ƒ.Debug.info("Main Program Template running!");
+  ƒ.Project.registerScriptNamespace(Script);  // Register the namespace to FUDGE for serialization
 
   let viewport: ƒ.Viewport;
   document.addEventListener("interactiveViewportStarted", <EventListener>start);
@@ -12,6 +12,7 @@ namespace Script {
   initProvider();
 
   async function initProvider() {
+    if (ƒ.Project.mode === ƒ.MODE.EDITOR) return;
     await Provider.data.load();
     //TODO load correct visualizer here
     run();
@@ -21,7 +22,7 @@ namespace Script {
     viewport = _event.detail;
 
     ƒ.Loop.addEventListener(ƒ.EVENT.LOOP_FRAME, update);
-    // ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
+    ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
   }
 
   function update(_event: Event): void {
