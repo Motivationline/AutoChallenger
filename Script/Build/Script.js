@@ -887,7 +887,7 @@ var Script;
     class VisualizerNull {
         constructor() {
             this.root = new ƒ.Node("Root");
-            this.camera = new ƒ.ComponentCamera();
+            //this.camera = new ƒ.ComponentCamera();
         }
         getEntity(_entity) {
             return new Script.VisualizeEntity(_entity);
@@ -901,21 +901,22 @@ var Script;
         initializeScene(_viewport) {
             this.viewport = _viewport;
             //let tile: Tile;
-            let grid;
+            //let grid: VisualizeTileGrid;
             let HUD = new Script.VisualizeHUD();
             HUD.sayHello(); // TODO remove this!
             //tile = new Tile("Tile", 1, new ƒ.Vector3(0, 0, 0));
-            grid = new Script.VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
-            this.root.addChild(grid);
+            //grid = new VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
+            //this.root.addChild(grid);
             console.log(this.root);
             //testing camera orientation
-            this.camera.mtxPivot.translateZ(-10);
-            this.camera.mtxPivot.translateY(6);
-            this.camera.mtxPivot.rotateX(25);
+            // this.camera.mtxPivot.translateZ(-10);
+            // this.camera.mtxPivot.translateY(6);
+            // this.camera.mtxPivot.rotateX(25);
             let FigthScene = ƒ.Project.getResourcesByName("FightScene")[0];
             //this.viewport.setBranch(FigthScene);
             //attach the root node to the FightScene
             //TODO: Fight Scene can also be added to empty scene
+            this.camera = FigthScene.getChildByName("Camera_Wrapper").getChildByName("Cam").getComponent(ƒ.ComponentCamera);
             FigthScene.addChild(this.root);
             _viewport.initialize("Viewport", FigthScene, this.camera, document.querySelector("canvas"));
             _viewport.draw();
@@ -1697,14 +1698,15 @@ var Script;
             this.grid.forEachElement((element, pos) => {
                 if (!element)
                     return;
-                //get the entities positions from placeholders in the scene
+                //get Placeholders from scene
                 let home = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
                 //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
-                //TODO: Iterate through all anchors and set the Entities Position to the matching anchors Position
                 /**Anchors are named from 0-8 */
                 let anchor = this.getAnchor(home, pos[0], pos[1]);
+                //get the Positions from the placeholders and translate the entities to it
                 let position = anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
                 console.log("position: " + position);
+                //TODO: Fix Positions
                 element.mtxLocal.translation = new ƒ.Vector3(position.x, position.y, position.z).add(this.pos);
                 this.addChild(element);
             });

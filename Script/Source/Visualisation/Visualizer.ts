@@ -20,7 +20,7 @@ namespace Script {
 
         constructor() {
             this.root = new ƒ.Node("Root");
-            this.camera = new ƒ.ComponentCamera();
+            //this.camera = new ƒ.ComponentCamera();
         }
         getEntity(_entity: IEntity): VisualizeEntity {
             return new VisualizeEntity(_entity);
@@ -34,26 +34,27 @@ namespace Script {
         initializeScene(_viewport: ƒ.Viewport): void {
             this.viewport = _viewport;
             //let tile: Tile;
-            let grid: VisualizeTileGrid;
+            //let grid: VisualizeTileGrid;
             let HUD: VisualizeHUD = new VisualizeHUD();
             HUD.sayHello();// TODO remove this!
 
             //tile = new Tile("Tile", 1, new ƒ.Vector3(0, 0, 0));
-            grid = new VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
+            //grid = new VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
 
-            this.root.addChild(grid);
+            //this.root.addChild(grid);
 
             console.log(this.root);
 
             //testing camera orientation
-            this.camera.mtxPivot.translateZ(-10);
-            this.camera.mtxPivot.translateY(6);
-            this.camera.mtxPivot.rotateX(25);
+            // this.camera.mtxPivot.translateZ(-10);
+            // this.camera.mtxPivot.translateY(6);
+            // this.camera.mtxPivot.rotateX(25);
 
             let FigthScene: ƒ.Graph = ƒ.Project.getResourcesByName("FightScene")[0] as ƒ.Graph;
             //this.viewport.setBranch(FigthScene);
             //attach the root node to the FightScene
             //TODO: Fight Scene can also be added to empty scene
+            this.camera = FigthScene.getChildByName("Camera_Wrapper").getChildByName("Cam").getComponent(ƒ.ComponentCamera);
             FigthScene.addChild(this.root);
 
             _viewport.initialize("Viewport", FigthScene, this.camera, document.querySelector("canvas"));
