@@ -599,8 +599,8 @@ declare namespace Script {
     class IVisualizeGrid extends ƒ.Node {
         grid: Grid<VisualizeEntity>;
         tiles: Grid<VisualizeTile>;
-        pos: ƒ.Vector3;
-        constructor(_grid: Grid<VisualizeEntity>, _pos: ƒ.Vector3);
+        side: string;
+        constructor(_grid: Grid<VisualizeEntity>, _side: string);
         getAnchor(_side: ƒ.Node, _x: number, _z: number): ƒ.Node;
     }
 }

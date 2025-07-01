@@ -7,8 +7,6 @@ namespace Script {
         fightEnd(): Promise<void>;
     }
 
-    import ƒ = FudgeCore;
-
     export class VisualizeFightNull implements IVisualizeFight {
         #home: IVisualizeGrid;
         #away: IVisualizeGrid;
@@ -16,10 +14,10 @@ namespace Script {
             //TODO: Fix Scaling of the Grids and instance the Entities at given Positions from the Scene out of the Fudge Editor
             let awayGrid = new Grid<VisualizeEntity>();
             _fight.arena.away.forEachElement((entity, pos) => awayGrid.set(pos, entity?.getVisualizer()));
-            this.#away = new IVisualizeGrid(awayGrid, new ƒ.Vector3(1,0,0));
+            this.#away = new IVisualizeGrid(awayGrid, "away");
             let homeGrid = new Grid<VisualizeEntity>();
             _fight.arena.home.forEachElement((entity, pos) => homeGrid.set(pos, entity?.getVisualizer()));
-            this.#home = new IVisualizeGrid(homeGrid, new ƒ.Vector3(-2,0,0));
+            this.#home = new IVisualizeGrid(homeGrid, "home");
 
             Provider.visualizer.addToScene(this.#away);
             Provider.visualizer.addToScene(this.#home);

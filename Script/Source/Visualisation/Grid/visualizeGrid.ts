@@ -10,36 +10,42 @@ namespace Script {
         grid: Grid<VisualizeEntity>;
         tiles: Grid<VisualizeTile>;
 
-        pos: ƒ.Vector3;
+        side: string;
 
-        constructor(_grid: Grid<VisualizeEntity>, _pos: ƒ.Vector3) {
+        constructor(_grid: Grid<VisualizeEntity>, _side: string) {
             super("VisualizeGrid");
             this.grid = _grid;
-            this.pos = _pos;
+            if (_side === "home" || "away") {
+                this.side = _side;
+            } else {
+                throw new Error("Use home or away for the side parameter");
+            }
+
 
             this.addComponent(new ƒ.ComponentTransform());
-            this.mtxLocal.translate(this.pos);
-
-            //add the Tile Grid
-            // let tileGrid: ƒ.Node;
-            // tileGrid = new VisualizeTileGrid(new ƒ.Vector3(0, 0, 0));
-            // Provider.visualizer.addToScene(tileGrid);
-
             //set the positions of the entities in the grid
             this.grid.forEachElement((element, pos) => {
                 if (!element) return;
 
+                let visSide: ƒ.Node;
+
                 //get Placeholders from scene
-                let home: ƒ.Node = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
+                if (this.side === "away") {
+                    visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
+                } else if (this.side === "home") {
+                    visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
+                }
+
                 //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
 
                 /**Anchors are named from 0-8 */
-                let anchor: ƒ.Node = this.getAnchor(home, pos[0], pos[1]);
+                let anchor: ƒ.Node = this.getAnchor(visSide, pos[0], pos[1]);
                 //get the Positions from the placeholders and translate the entities to it
                 let position: ƒ.Vector3 = anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
                 console.log("position: " + position);
                 //TODO: Fix Positions
-                element.mtxLocal.translation = new ƒ.Vector3(position.x, position.y, position.z).add(this.pos);
+                element.mtxLocal.translation = new ƒ.Vector3(position.x, position.y, position.z);
+                console.log("element position: " + element.mtxLocal.translation);
                 this.addChild(element);
             });
 
