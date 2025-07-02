@@ -430,6 +430,7 @@ declare namespace Script {
         constructor(_entity: EntityData, _vis: IVisualizer, _pos?: Position);
         get untargetable(): boolean;
         get stunned(): boolean;
+        updateEntityData(_newData: EntityData): void;
         getVisualizer(): Readonly<IVisualizeEntity>;
         damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
         affect(_spell: SpellData, _cause?: IEntity): Promise<number>;
@@ -443,6 +444,7 @@ declare namespace Script {
         protected getDamageOfAttacks(_attacks: Readonly<AttackDataNoTarget[]>, _consumeEffects: boolean): number;
         setGrids(_home: Grid<Entity>, _away: Grid<Entity>): void;
         registerEventListeners(): void;
+        removeEventListeners(): void;
         private abilityEventListener;
         protected runAbility(_ev: FightEvent): Promise<void>;
         private endOfRoundEventListener;
@@ -451,6 +453,14 @@ declare namespace Script {
         protected handleEndOfFight(_ev: FightEvent): Promise<void>;
     }
     export {};
+}
+declare namespace Script {
+    class Eumling extends Entity {
+        #private;
+        constructor(_startType: string, _vis: IVisualizer);
+        get types(): Readonly<string[]>;
+        addType(_type: string): void;
+    }
 }
 declare namespace Script {
     interface AbilityCondition {
@@ -541,6 +551,13 @@ declare namespace Script {
 declare namespace Script {
     function initEntitiesInGrid<T extends IEntity>(_grid: GridData<string>, _entity: new (...data: any) => T): Grid<T>;
     function waitMS(_ms: number): Promise<void>;
+}
+declare namespace Script {
+    /** Handles an entire run */
+    class Run {
+        eumlings: Eumling[];
+        progress: number;
+    }
 }
 declare namespace Script {
     interface IVisualizeFight {

@@ -1161,9 +1161,11 @@ var Script;
 (function (Script) {
     class Entity {
         #arena;
+        #triggers;
         constructor(_entity, _vis, _pos = [0, 0]) {
             this.resistancesSet = new Set();
             this.activeEffects = new Map();
+            this.#triggers = new Set();
             this.abilityEventListener = async (_ev) => {
                 // this extra step seems pointless, but this way we can
                 // overwrite `runAbility` in a derived class, which we can't do with
@@ -1180,16 +1182,7 @@ var Script;
             this.health = _entity.health ?? 1;
             this.currentHealth = this.health;
             this.position = _pos;
-            // this.moves = _entity.moves instanceof ;
-            if (_entity.moves)
-                this.moves = "selection" in _entity.moves ? _entity.moves : { options: [_entity.moves], selection: { order: Script.SELECTION_ORDER.ALL, amount: 1 } };
-            if (_entity.spells)
-                this.spells = "selection" in _entity.spells ? _entity.spells : { options: [_entity.spells], selection: { order: Script.SELECTION_ORDER.ALL, amount: 1 } };
-            if (_entity.attacks)
-                this.attacks = "selection" in _entity.attacks ? _entity.attacks : { options: [_entity.attacks], selection: { order: Script.SELECTION_ORDER.ALL, amount: 1 } };
-            this.abilities = _entity.abilities;
-            this.resistances = _entity.resistances;
-            this.resistancesSet = new Set(_entity.resistances);
+            this.updateEntityData(_entity);
             this.visualizer = _vis.getEntity(this);
         }
         get untargetable() {
@@ -1203,6 +1196,21 @@ var Script;
                 return true;
             }
             return false;
+        }
+        updateEntityData(_newData) {
+            this.id = _newData.id;
+            let healthDifference = (_newData.health ?? 1) - (this.health ?? 0);
+            this.currentHealth = (this.health ?? 0) + healthDifference;
+            this.health = _newData.health ?? 1;
+            if (_newData.moves)
+                this.moves = "selection" in _newData.moves ? _newData.moves : { options: [_newData.moves], selection: { order: Script.SELECTION_ORDER.ALL, amount: 1 } };
+            if (_newData.spells)
+                this.spells = "selection" in _newData.spells ? _newData.spells : { options: [_newData.spells], selection: { order: Script.SELECTION_ORDER.ALL, amount: 1 } };
+            if (_newData.attacks)
+                this.attacks = "selection" in _newData.attacks ? _newData.attacks : { options: [_newData.attacks], selection: { order: Script.SELECTION_ORDER.ALL, amount: 1 } };
+            this.abilities = _newData.abilities;
+            this.resistances = _newData.resistances;
+            this.resistancesSet = new Set(_newData.resistances);
         }
         getVisualizer() {
             return this.visualizer;
@@ -1411,26 +1419,33 @@ var Script;
         }
         registerEventListeners() {
             // register abilities
-            let triggers = new Set(); // get all triggers first to avoid duplication
+            this.#triggers = new Set(); // get all triggers first to avoid duplication
             if (this.abilities) {
                 for (let ability of this.abilities) {
                     if (Array.isArray(ability.on)) {
                         for (let ev of ability.on) {
-                            triggers.add(ev);
+                            this.#triggers.add(ev);
                         }
                     }
                     else {
-                        triggers.add(ability.on);
+                        this.#triggers.add(ability.on);
                     }
                 }
             }
-            for (let trigger of triggers.values()) {
+            for (let trigger of this.#triggers.values()) {
                 Script.EventBus.addEventListener(trigger, this.abilityEventListener);
             }
             // register end of turn effects
             Script.EventBus.addEventListener(Script.EVENT.ROUND_END, this.endOfRoundEventListener);
             // register end of fight effects
             Script.EventBus.addEventListener(Script.EVENT.FIGHT_END, this.endOfFightEventListener);
+        }
+        removeEventListeners() {
+            for (let trigger of this.#triggers.values()) {
+                Script.EventBus.removeEventListener(trigger, this.abilityEventListener);
+            }
+            Script.EventBus.removeEventListener(Script.EVENT.ROUND_END, this.endOfRoundEventListener);
+            Script.EventBus.removeEventListener(Script.EVENT.FIGHT_END, this.endOfFightEventListener);
         }
         async runAbility(_ev) {
             if (!this.abilities)
@@ -1460,6 +1475,38 @@ var Script;
         }
     }
     Script.Entity = Entity;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    class Eumling extends Script.Entity {
+        #types = [];
+        constructor(_startType, _vis) {
+            _startType = _startType.trim().toUpperCase();
+            const data = Script.Provider.data.getEntity(_startType + "-Eumling");
+            if (!data)
+                throw new Error("Tried to create an unknown Eumling type: " + _startType);
+            super(data, _vis);
+            this.#types = _startType.split("");
+        }
+        get types() {
+            return this.#types;
+        }
+        addType(_type) {
+            if (this.#types.length === 3)
+                throw new Error("Eumling already has 3 types, can't add more.");
+            if (_type.length !== 1)
+                throw new Error("Only one type can be added at a time.");
+            _type = _type.toUpperCase();
+            let newType = this.#types.join("") + _type + "-Eumling";
+            let newData = Script.Provider.data.getEntity(newType);
+            if (!newData)
+                throw new Error("Tried to create an invalid eumling: " + newType);
+            this.updateEntityData(newData);
+            this.removeEventListeners();
+            this.registerEventListeners();
+        }
+    }
+    Script.Eumling = Eumling;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -1674,6 +1721,13 @@ var Script;
         });
     }
     Script.waitMS = waitMS;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    /** Handles an entire run */
+    class Run {
+    }
+    Script.Run = Run;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {

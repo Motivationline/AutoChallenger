@@ -56,20 +56,15 @@ namespace Script {
         protected visualizer: IVisualizeEntity;
 
         #arena: Arena;
+        #triggers: Set<EVENT> = new Set();
 
         constructor(_entity: EntityData, _vis: IVisualizer, _pos: Position = [0, 0]) {
             this.id = _entity.id;
             this.health = _entity.health ?? 1;
             this.currentHealth = this.health;
             this.position = _pos;
-            // this.moves = _entity.moves instanceof ;
-            if (_entity.moves) this.moves = "selection" in _entity.moves ? _entity.moves : { options: [_entity.moves], selection: { order: SELECTION_ORDER.ALL, amount: 1 } };
-            if (_entity.spells) this.spells = "selection" in _entity.spells ? _entity.spells : { options: [_entity.spells], selection: { order: SELECTION_ORDER.ALL, amount: 1 } };
-            if (_entity.attacks) this.attacks = "selection" in _entity.attacks ? _entity.attacks : { options: [_entity.attacks], selection: { order: SELECTION_ORDER.ALL, amount: 1 } };
-            this.abilities = _entity.abilities;
-            this.resistances = _entity.resistances;
-            this.resistancesSet = new Set(_entity.resistances);
 
+            this.updateEntityData(_entity);
 
             this.visualizer = _vis.getEntity(this);
         }
@@ -86,6 +81,21 @@ namespace Script {
                 return true;
             }
             return false;
+        }
+
+        updateEntityData(_newData: EntityData) {
+            this.id = _newData.id;
+            
+            let healthDifference = (_newData.health ?? 1) - (this.health ?? 0);
+            this.currentHealth = (this.health ?? 0) + healthDifference;
+            this.health = _newData.health ?? 1;
+
+            if (_newData.moves) this.moves = "selection" in _newData.moves ? _newData.moves : { options: [_newData.moves], selection: { order: SELECTION_ORDER.ALL, amount: 1 } };
+            if (_newData.spells) this.spells = "selection" in _newData.spells ? _newData.spells : { options: [_newData.spells], selection: { order: SELECTION_ORDER.ALL, amount: 1 } };
+            if (_newData.attacks) this.attacks = "selection" in _newData.attacks ? _newData.attacks : { options: [_newData.attacks], selection: { order: SELECTION_ORDER.ALL, amount: 1 } };
+            this.abilities = _newData.abilities;
+            this.resistances = _newData.resistances;
+            this.resistancesSet = new Set(_newData.resistances);
         }
 
         getVisualizer(): Readonly<IVisualizeEntity> {
@@ -317,26 +327,35 @@ namespace Script {
 
         public registerEventListeners() {
             // register abilities
-            let triggers: Set<EVENT> = new Set(); // get all triggers first to avoid duplication
+            this.#triggers = new Set(); // get all triggers first to avoid duplication
             if (this.abilities) {
                 for (let ability of this.abilities) {
                     if (Array.isArray(ability.on)) {
                         for (let ev of ability.on) {
-                            triggers.add(ev);
+                            this.#triggers.add(ev);
                         }
                     } else {
-                        triggers.add(ability.on);
+                        this.#triggers.add(ability.on);
                     }
                 }
             }
-            for (let trigger of triggers.values()) {
+            for (let trigger of this.#triggers.values()) {
                 EventBus.addEventListener(trigger, this.abilityEventListener);
             }
-
+            
             // register end of turn effects
             EventBus.addEventListener(EVENT.ROUND_END, this.endOfRoundEventListener);
             // register end of fight effects
             EventBus.addEventListener(EVENT.FIGHT_END, this.endOfFightEventListener);
+        }
+        
+        public removeEventListeners() {
+            for (let trigger of this.#triggers.values()) {
+                EventBus.removeEventListener(trigger, this.abilityEventListener);
+            }
+
+            EventBus.removeEventListener(EVENT.ROUND_END, this.endOfRoundEventListener);
+            EventBus.removeEventListener(EVENT.FIGHT_END, this.endOfFightEventListener);
         }
 
         private abilityEventListener = async (_ev: FightEvent) => {
