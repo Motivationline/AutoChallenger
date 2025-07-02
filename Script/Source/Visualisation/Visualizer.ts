@@ -40,7 +40,7 @@ namespace Script {
             let FigthScene: ƒ.Graph = ƒ.Project.getResourcesByName("FightScene")[0] as ƒ.Graph;
             //attach the root node to the FightScene
             //TODO: Fight Scene can also be added to empty scene
-            this.camera = FigthScene.getChildByName("Camera_Wrapper").getChildByName("Cam").getComponent(ƒ.ComponentCamera);
+            this.camera = FigthScene.getChildByName("CameraRotator").getChildByName("Camera_Wrapper").getChildByName("Cam").getComponent(ƒ.ComponentCamera);
             FigthScene.addChild(this.root);
 
             _viewport.initialize("Viewport", FigthScene, this.camera, document.querySelector("canvas"));

@@ -33,65 +33,23 @@
         },
         {
           "ƒ.Node": {
-            "name": "Camera_Wrapper",
+            "name": "CameraRotator",
             "active": true,
-            "components": {
-              "ComponentTransform": [
-                {
-                  "ƒ.ComponentTransform": {
-                    "local": {
-                      "translation": "[4.500000000000002, 7.399749904632564, 0]",
-                      "rotation": "[54, -90, 0]",
-                      "scaling": "[0.9999999716376653, 1, 0.9999999716376653]"
-                    },
-                    "Component": {
-                      "active": true
-                    }
-                  }
-                }
-              ]
-            },
+            "components": {},
             "children": [
               {
                 "ƒ.Node": {
-                  "name": "Cam",
+                  "name": "Camera_Wrapper",
                   "active": true,
                   "components": {
-                    "ComponentCamera": [
+                    "ComponentTransform": [
                       {
-                        "ƒ.ComponentCamera": {
-                          "backgroundColor": {
-                            "r": 0,
-                            "g": 0,
-                            "b": 0,
-                            "a": 1
+                        "ƒ.ComponentTransform": {
+                          "local": {
+                            "translation": "[4.500000000000002, 7.399749904632564, 0]",
+                            "rotation": "[54, -90, 0]",
+                            "scaling": "[0.9999999716376653, 1, 0.9999999716376653]"
                           },
-                          "backgroundEnabled": true,
-                          "projection": "central",
-                          "fieldOfView": 45,
-                          "direction": "diagonal",
-                          "near": 1,
-                          "far": 2000,
-                          "aspect": 1.5896927651139743,
-                          "pivot": {
-                            "translation": "[0, 0, 0]",
-                            "rotation": "[0, 0, 0]",
-                            "scaling": "[1, 1, 1]"
-                          },
-                          "Component": {
-                            "active": true
-                          }
-                        }
-                      }
-                    ],
-                    "ComponentAmbientOcclusion": [
-                      {
-                        "ƒ.ComponentAmbientOcclusion": {
-                          "sampleRadius": 16,
-                          "bias": 0.20000000000000004,
-                          "attenuationConstant": 3.9999999999999845,
-                          "attenuationLinear": 1,
-                          "attenuationQuadratic": 1.0000000000000009,
                           "Component": {
                             "active": true
                           }
@@ -99,7 +57,58 @@
                       }
                     ]
                   },
-                  "children": []
+                  "children": [
+                    {
+                      "ƒ.Node": {
+                        "name": "Cam",
+                        "active": true,
+                        "components": {
+                          "ComponentCamera": [
+                            {
+                              "ƒ.ComponentCamera": {
+                                "backgroundColor": {
+                                  "r": 0,
+                                  "g": 0,
+                                  "b": 0,
+                                  "a": 1
+                                },
+                                "backgroundEnabled": true,
+                                "projection": "central",
+                                "fieldOfView": 45,
+                                "direction": "diagonal",
+                                "near": 1,
+                                "far": 2000,
+                                "aspect": 1.5896927651139743,
+                                "pivot": {
+                                  "translation": "[0, 0, 0]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ],
+                          "ComponentAmbientOcclusion": [
+                            {
+                              "ƒ.ComponentAmbientOcclusion": {
+                                "sampleRadius": 16,
+                                "bias": 0.20000000000000004,
+                                "attenuationConstant": 3.9999999999999845,
+                                "attenuationLinear": 1,
+                                "attenuationQuadratic": 1.0000000000000009,
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    }
+                  ]
                 }
               }
             ]
@@ -152,14 +161,7 @@
                             }
                           ]
                         },
-                        "children": [
-                          {
-                            "ƒ.GraphInstance": {
-                              "deserializeFromSource": true,
-                              "idSource": "Graph|2025-06-27T09:57:03.456Z|96888"
-                            }
-                          }
-                        ]
+                        "children": []
                       }
                     }
                   ]
@@ -170,38 +172,7 @@
                   "name": "TestEnemies",
                   "active": true,
                   "components": {},
-                  "children": [
-                    {
-                      "ƒ.Node": {
-                        "name": "WrapperCrawler",
-                        "active": true,
-                        "components": {
-                          "ComponentTransform": [
-                            {
-                              "ƒ.ComponentTransform": {
-                                "local": {
-                                  "translation": "[0, 0.5700000000000002, -1.4000000000000004]",
-                                  "rotation": "[0, 46, 0]",
-                                  "scaling": "[2, 2, 2]"
-                                },
-                                "Component": {
-                                  "active": true
-                                }
-                              }
-                            }
-                          ]
-                        },
-                        "children": [
-                          {
-                            "ƒ.GraphInstance": {
-                              "deserializeFromSource": true,
-                              "idSource": "Graph|2025-06-27T09:55:25.933Z|86643"
-                            }
-                          }
-                        ]
-                      }
-                    }
-                  ]
+                  "children": []
                 }
               },
               {
@@ -224,14 +195,7 @@
                       }
                     ]
                   },
-                  "children": [
-                    {
-                      "ƒ.GraphInstance": {
-                        "deserializeFromSource": true,
-                        "idSource": "Graph|2025-06-27T09:58:39.961Z|68260"
-                      }
-                    }
-                  ]
+                  "children": []
                 }
               }
             ]
@@ -1205,6 +1169,15 @@
       "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb"
     }
   },
+  "AnimationGLTF|2025-07-02T13:14:08.505Z|99344": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-02T13:14:08.505Z|99344",
+      "name": "PunchingPT_Idle",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb",
+      "events": {}
+    }
+  },
   "AnimationGLTF|2025-07-02T13:14:08.501Z|98547": {
     "ƒ.AnimationGLTF": {
       "idResource": "AnimationGLTF|2025-07-02T13:14:08.501Z|98547",
@@ -1227,15 +1200,6 @@
     "ƒ.AnimationGLTF": {
       "idResource": "AnimationGLTF|2025-07-02T13:14:08.504Z|43081",
       "name": "PunchingPT_hit",
-      "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb",
-      "events": {}
-    }
-  },
-  "AnimationGLTF|2025-07-02T13:14:08.505Z|99344": {
-    "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-07-02T13:14:08.505Z|99344",
-      "name": "PunchingPT_Idle",
       "type": "AnimationGLTF",
       "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb",
       "events": {}
