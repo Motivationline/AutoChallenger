@@ -998,7 +998,16 @@
     "ƒ.Graph": {
       "name": "CactusCrawler",
       "active": true,
-      "components": {},
+      "components": {
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "cactusCrawler"
+            }
+          }
+        ]
+      },
       "children": [
         {
           "ƒ.GraphInstance": {
@@ -1032,7 +1041,16 @@
     "ƒ.Graph": {
       "name": "FlameFlinger",
       "active": true,
-      "components": {},
+      "components": {
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "flameFlinger"
+            }
+          }
+        ]
+      },
       "children": [
         {
           "ƒ.GraphInstance": {
@@ -1078,6 +1096,148 @@
       "name": "Wave",
       "type": "AnimationGLTF",
       "url": "Assets\\GLTFs\\Environment\\FightMaps\\Beach\\Beach.glb",
+      "events": {}
+    }
+  },
+  "Graph|2025-07-02T13:09:42.912Z|28000": {
+    "ƒ.Graph": {
+      "name": "PunchingPalmTree",
+      "active": true,
+      "components": {
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "punchingPalmtree"
+            }
+          }
+        ]
+      },
+      "children": [],
+      "idResource": "Graph|2025-07-02T13:09:42.912Z|28000",
+      "type": "Graph"
+    }
+  },
+  "Graph|2025-07-02T13:09:51.312Z|23018": {
+    "ƒ.Graph": {
+      "name": "CountdownCoconut",
+      "active": true,
+      "components": {
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "countdownCoconut"
+            }
+          }
+        ]
+      },
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "GraphGLTF|2025-07-02T13:10:50.478Z|74955"
+          }
+        }
+      ],
+      "idResource": "Graph|2025-07-02T13:09:51.312Z|23018",
+      "type": "Graph"
+    }
+  },
+  "GraphGLTF|2025-07-02T13:10:50.478Z|74955": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {
+        "ComponentAnimation": [
+          {
+            "ƒ.ComponentAnimation": {
+              "Component": {
+                "active": true
+              },
+              "idAnimation": "AnimationGLTF|2025-07-02T13:10:50.478Z|01270",
+              "playmode": "loop",
+              "quantization": "continous",
+              "scale": 1,
+              "scaleWithGameTime": true,
+              "animateInEditor": true
+            }
+          }
+        ]
+      },
+      "idResource": "GraphGLTF|2025-07-02T13:10:50.478Z|74955",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\CountdownCoconut\\CountdownCoconut.glb"
+    }
+  },
+  "AnimationGLTF|2025-07-02T13:10:50.478Z|01270": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-02T13:10:50.478Z|01270",
+      "name": "countdownCoconut_idle",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\CountdownCoconut\\CountdownCoconut.glb",
+      "events": {}
+    }
+  },
+  "GraphGLTF|2025-07-02T13:14:08.501Z|10311": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {
+        "ComponentAnimation": [
+          {
+            "ƒ.ComponentAnimation": {
+              "Component": {
+                "active": true
+              },
+              "idAnimation": "AnimationGLTF|2025-07-02T13:14:08.505Z|99344",
+              "playmode": "loop",
+              "quantization": "continous",
+              "scale": 1,
+              "scaleWithGameTime": true,
+              "animateInEditor": true
+            }
+          }
+        ]
+      },
+      "idResource": "GraphGLTF|2025-07-02T13:14:08.501Z|10311",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb"
+    }
+  },
+  "AnimationGLTF|2025-07-02T13:14:08.501Z|98547": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-02T13:14:08.501Z|98547",
+      "name": "PunchingPT_attack",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-02T13:14:08.502Z|10408": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-02T13:14:08.502Z|10408",
+      "name": "PunchingPT_die",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-02T13:14:08.504Z|43081": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-02T13:14:08.504Z|43081",
+      "name": "PunchingPT_hit",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-02T13:14:08.505Z|99344": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-02T13:14:08.505Z|99344",
+      "name": "PunchingPT_Idle",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb",
       "events": {}
     }
   }

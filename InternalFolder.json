@@ -129,6 +129,73 @@
                     "entries": []
                   }
                 ]
+              },
+              {
+                "name": "PunchingPalmTree",
+                "entries": [
+                  {
+                    "name": "Prefab",
+                    "entries": [
+                      {
+                        "idResource": "Graph|2025-07-02T13:09:42.912Z|28000"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Model",
+                    "entries": [
+                      {
+                        "idResource": "GraphGLTF|2025-07-02T13:14:08.501Z|10311"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Animations",
+                    "entries": [
+                      {
+                        "idResource": "AnimationGLTF|2025-07-02T13:14:08.501Z|98547"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-07-02T13:14:08.502Z|10408"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-07-02T13:14:08.504Z|43081"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-07-02T13:14:08.505Z|99344"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "CountdownCoconut",
+                "entries": [
+                  {
+                    "name": "Prefab",
+                    "entries": [
+                      {
+                        "idResource": "Graph|2025-07-02T13:09:51.312Z|23018"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Model",
+                    "entries": [
+                      {
+                        "idResource": "GraphGLTF|2025-07-02T13:10:50.478Z|74955"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Animations",
+                    "entries": [
+                      {
+                        "idResource": "AnimationGLTF|2025-07-02T13:10:50.478Z|01270"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           },
