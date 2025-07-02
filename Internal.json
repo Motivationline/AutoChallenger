@@ -35,7 +35,22 @@
           "ƒ.Node": {
             "name": "CameraRotator",
             "active": true,
-            "components": {},
+            "components": {
+              "ComponentTransform": [
+                {
+                  "ƒ.ComponentTransform": {
+                    "local": {
+                      "translation": "[0, 0, 0]",
+                      "rotation": "[0, 0, 0]",
+                      "scaling": "[1, 1, 1]"
+                    },
+                    "Component": {
+                      "active": true
+                    }
+                  }
+                }
+              ]
+            },
             "children": [
               {
                 "ƒ.Node": {
@@ -46,8 +61,8 @@
                       {
                         "ƒ.ComponentTransform": {
                           "local": {
-                            "translation": "[4.500000000000002, 7.399749904632564, 0]",
-                            "rotation": "[54, -90, 0]",
+                            "translation": "[4.399999999999995, 8.399749904632564, 0]",
+                            "rotation": "[61, -90, 0]",
                             "scaling": "[0.9999999716376653, 1, 0.9999999716376653]"
                           },
                           "Component": {
@@ -78,7 +93,7 @@
                                 "direction": "diagonal",
                                 "near": 1,
                                 "far": 2000,
-                                "aspect": 1.5896927651139743,
+                                "aspect": 1.121559633027523,
                                 "pivot": {
                                   "translation": "[0, 0, 0]",
                                   "rotation": "[0, 0, 0]",
