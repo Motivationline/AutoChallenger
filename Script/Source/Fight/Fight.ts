@@ -19,6 +19,7 @@ namespace Script {
         rounds: number;
         arena: Arena;
         protected visualizer: IVisualizeFight;
+        protected HUD: VisualizeHUD;
 
         constructor(_fight: FightData, _home: Grid<IEntity>) {
             this.rounds = _fight.rounds;
@@ -34,12 +35,18 @@ namespace Script {
             });
 
             this.visualizer = Provider.visualizer.getFight(this);
+            this.HUD = Provider.visualizer.getHUD();
+        }
+
+        getRounds() {
+            return this.rounds;
         }
 
         async run(): Promise<void> {
             Fight.activeFight = this;
             // Eventlisteners
             EventBus.removeAllEventListeners();
+            this.HUD.addFightListeners();//replace main.ts instance with Provider.visualizer.getHUD() instance
             this.arena.home.forEachElement((el) => { el?.registerEventListeners() });
             this.arena.away.forEachElement((el) => { el?.registerEventListeners() });
             //TODO: Add relics
@@ -49,10 +56,10 @@ namespace Script {
             // run actual round
             for (let r: number = 0; r < this.rounds; r++) {
                 await this.visualizer.roundStart();
-                await EventBus.dispatchEvent({ type: EVENT.ROUND_START });
+                await EventBus.dispatchEvent({ type: EVENT.ROUND_START, value: r });
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
-                await EventBus.dispatchEvent({ type: EVENT.ROUND_END });
+                await EventBus.dispatchEvent({ type: EVENT.ROUND_END, value: r });
                 await this.visualizer.roundEnd();
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {
@@ -63,6 +70,7 @@ namespace Script {
                     await this.fightEnd();
                     return console.log("Player won");
                 }
+                
             }
             await this.fightEnd();
             return console.log("Player survived");
@@ -89,6 +97,5 @@ namespace Script {
                 await el.useAttack(_active, _passive);
             })
         }
-
     }
 }

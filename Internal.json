@@ -1,17 +1,691 @@
 {
   "Graph|2025-05-23T08:50:56.485Z|83150": {
     "ƒ.Graph": {
-      "name": "map",
+      "name": "FightScene",
       "active": true,
       "components": {},
-      "children": [],
+      "children": [
+        {
+          "ƒ.Node": {
+            "name": "Light",
+            "active": true,
+            "components": {
+              "ComponentLight": [
+                {
+                  "ƒ.ComponentLight": {
+                    "lightType": "LightAmbient",
+                    "pivot": {
+                      "translation": "[0, 0, 0]",
+                      "rotation": "[0, 0, 0]",
+                      "scaling": "[1, 1, 1]"
+                    },
+                    "color": "[1, 1, 1, 1]",
+                    "intensity": 1,
+                    "Component": {
+                      "active": true
+                    }
+                  }
+                }
+              ]
+            },
+            "children": []
+          }
+        },
+        {
+          "ƒ.Node": {
+            "name": "Camera_Wrapper",
+            "active": true,
+            "components": {
+              "ComponentTransform": [
+                {
+                  "ƒ.ComponentTransform": {
+                    "local": {
+                      "translation": "[4.500000000000002, 7.399749904632564, 0]",
+                      "rotation": "[54, -90, 0]",
+                      "scaling": "[0.9999999716376653, 1, 0.9999999716376653]"
+                    },
+                    "Component": {
+                      "active": true
+                    }
+                  }
+                }
+              ]
+            },
+            "children": [
+              {
+                "ƒ.Node": {
+                  "name": "Cam",
+                  "active": true,
+                  "components": {
+                    "ComponentCamera": [
+                      {
+                        "ƒ.ComponentCamera": {
+                          "backgroundColor": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 1
+                          },
+                          "backgroundEnabled": true,
+                          "projection": "central",
+                          "fieldOfView": 45,
+                          "direction": "diagonal",
+                          "near": 1,
+                          "far": 2000,
+                          "aspect": 1.5896927651139743,
+                          "pivot": {
+                            "translation": "[0, 0, 0]",
+                            "rotation": "[0, 0, 0]",
+                            "scaling": "[1, 1, 1]"
+                          },
+                          "Component": {
+                            "active": true
+                          }
+                        }
+                      }
+                    ],
+                    "ComponentAmbientOcclusion": [
+                      {
+                        "ƒ.ComponentAmbientOcclusion": {
+                          "sampleRadius": 16,
+                          "bias": 0.20000000000000004,
+                          "attenuationConstant": 3.9999999999999845,
+                          "attenuationLinear": 1,
+                          "attenuationQuadratic": 1.0000000000000009,
+                          "Component": {
+                            "active": true
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "children": []
+                }
+              }
+            ]
+          }
+        },
+        {
+          "ƒ.Node": {
+            "name": "Battle_Scene_Wrapper",
+            "active": true,
+            "components": {},
+            "children": [
+              {
+                "ƒ.GraphInstance": {
+                  "deserializeFromSource": true,
+                  "idSource": "Graph|2025-06-27T10:02:41.022Z|96882"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "ƒ.Node": {
+            "name": "Test",
+            "active": true,
+            "components": {},
+            "children": [
+              {
+                "ƒ.Node": {
+                  "name": "TestEumling",
+                  "active": true,
+                  "components": {},
+                  "children": [
+                    {
+                      "ƒ.Node": {
+                        "name": "Wrapper",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[0, 0.56, 1.3]",
+                                  "rotation": "[0, -40, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": [
+                          {
+                            "ƒ.GraphInstance": {
+                              "deserializeFromSource": true,
+                              "idSource": "Graph|2025-06-27T09:57:03.456Z|96888"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "ƒ.Node": {
+                  "name": "TestEnemies",
+                  "active": true,
+                  "components": {},
+                  "children": [
+                    {
+                      "ƒ.Node": {
+                        "name": "WrapperCrawler",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[0, 0.5700000000000002, -1.4000000000000004]",
+                                  "rotation": "[0, 46, 0]",
+                                  "scaling": "[2, 2, 2]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": [
+                          {
+                            "ƒ.GraphInstance": {
+                              "deserializeFromSource": true,
+                              "idSource": "Graph|2025-06-27T09:55:25.933Z|86643"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "ƒ.Node": {
+                  "name": "WarpperFire",
+                  "active": true,
+                  "components": {
+                    "ComponentTransform": [
+                      {
+                        "ƒ.ComponentTransform": {
+                          "local": {
+                            "translation": "[1.2000000476837158, 1.0888360738754272, -1.2999999523162842]",
+                            "rotation": "[0, 34.00000045507304, 0]",
+                            "scaling": "[0.9999999746668561, 1, 0.9999999746668561]"
+                          },
+                          "Component": {
+                            "active": true
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "children": [
+                    {
+                      "ƒ.GraphInstance": {
+                        "deserializeFromSource": true,
+                        "idSource": "Graph|2025-06-27T09:58:39.961Z|68260"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "ƒ.Node": {
+            "name": "Grids",
+            "active": true,
+            "components": {},
+            "children": [
+              {
+                "ƒ.Node": {
+                  "name": "home",
+                  "active": true,
+                  "components": {},
+                  "children": [
+                    {
+                      "ƒ.Node": {
+                        "name": "0",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[-1.1462314128875732, 0.5, 1.1856307983398438]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "1",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[-1.128272533416748, 0.5, 2.3804802894592285]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "2",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[-1.1160547733306885, 0.5, 3.465148448944092]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "3",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[0, 0.5, 1.254612922668457]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "4",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[0, 0.5, 2.3828482627868652]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "5",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[0, 0.5, 3.5078887939453125]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "6",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[1.004439115524292, 0.5, 1.2686535120010376]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "7",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[1.0665453672409058, 0.5, 2.4791245460510254]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "8",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[1.0997563600540161, 0.5, 3.478369951248169]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "ƒ.Node": {
+                  "name": "away",
+                  "active": true,
+                  "components": {},
+                  "children": [
+                    {
+                      "ƒ.Node": {
+                        "name": "0",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[-1.0550435781478882, 0.5, -1.3641459941864014]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "1",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[-1.0883709192276, 0.5, -2.44484281539917]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "2",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[-1.1037144660949707, 0.5, -3.5582618713378906]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "3",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[0, 0.5, -1.3488752841949463]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "4",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[0, 0.5, -2.4527931213378906]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "5",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[0, 0.5, -3.5507607460021973]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "6",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[1.1161549091339111, 0.5, -1.3598144054412842]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "7",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[1.1672481298446655, 0.5, -2.4483890533447266]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    },
+                    {
+                      "ƒ.Node": {
+                        "name": "8",
+                        "active": true,
+                        "components": {
+                          "ComponentTransform": [
+                            {
+                              "ƒ.ComponentTransform": {
+                                "local": {
+                                  "translation": "[1.112873911857605, 0.5, -3.53875994682312]",
+                                  "rotation": "[0, 0, 0]",
+                                  "scaling": "[1, 1, 1]"
+                                },
+                                "Component": {
+                                  "active": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
       "idResource": "Graph|2025-05-23T08:50:56.485Z|83150",
       "type": "Graph"
     }
   },
   "Graph|2025-05-23T08:51:59.177Z|75197": {
     "ƒ.Graph": {
-      "name": "fight",
+      "name": "ProgressMap",
       "active": true,
       "components": {},
       "children": [],
@@ -55,6 +729,15 @@
       "url": "Assets\\GLTFs\\Eumlinge\\Standard\\Standard_Eumling.glb"
     }
   },
+  "AnimationGLTF|2025-06-06T13:07:59.196Z|56237": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
+      "name": "standard_idle",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Eumlinge\\Standard\\Standard_Eumling.glb",
+      "events": {}
+    }
+  },
   "AnimationGLTF|2025-06-06T13:07:59.175Z|76196": {
     "ƒ.AnimationGLTF": {
       "idResource": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
@@ -64,12 +747,337 @@
       "events": {}
     }
   },
-  "AnimationGLTF|2025-06-06T13:07:59.196Z|56237": {
+  "GraphGLTF|2025-06-24T11:23:56.089Z|16435": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {
+        "ComponentAnimation": [
+          {
+            "ƒ.ComponentAnimation": {
+              "Component": {
+                "active": true
+              },
+              "idAnimation": "AnimationGLTF|2025-06-24T11:23:56.089Z|47567",
+              "playmode": "loop",
+              "quantization": "continous",
+              "scale": 1,
+              "scaleWithGameTime": true,
+              "animateInEditor": true
+            }
+          }
+        ]
+      },
+      "idResource": "GraphGLTF|2025-06-24T11:23:56.089Z|16435",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\CactusCrawler\\CactusCrawler.glb"
+    }
+  },
+  "AnimationGLTF|2025-06-24T11:23:56.089Z|47567": {
     "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-      "name": "standard_idle",
+      "idResource": "AnimationGLTF|2025-06-24T11:23:56.089Z|47567",
+      "name": "idle_cactus_crawler",
       "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Eumlinge\\Standard\\Standard_Eumling.glb",
+      "url": "Assets\\GLTFs\\Enemies\\CactusCrawler\\CactusCrawler.glb",
+      "events": {}
+    }
+  },
+  "GraphGLTF|2025-06-24T12:17:49.187Z|53955": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {},
+      "idResource": "GraphGLTF|2025-06-24T12:17:49.187Z|53955",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\Environment\\BattleTiles\\Grasfield\\Grasfield.glb"
+    }
+  },
+  "TextureImage|2025-06-26T17:24:10.616Z|64817": {
+    "ƒ.TextureImage": {
+      "url": "Assets\\GLTFs\\Enemies\\FlameFlinger\\fire_sprite.png",
+      "type": "TextureImage",
+      "Texture": {
+        "idResource": "TextureImage|2025-06-26T17:24:10.616Z|64817",
+        "name": "Assets\\GLTFs\\Enemies\\FlameFlinger\\fire_sprite.png",
+        "mipmap": "CRISP",
+        "wrap": "REPEAT"
+      }
+    }
+  },
+  "AnimationSprite|2025-06-26T17:24:38.690Z|99300": {
+    "ƒ.AnimationSprite": {
+      "idResource": "AnimationSprite|2025-06-26T17:24:38.690Z|99300",
+      "idTexture": "TextureImage|2025-06-26T17:24:10.616Z|64817",
+      "frames": 6,
+      "wrapAfter": 6,
+      "start": "[0, 0]",
+      "size": "[32, 64]",
+      "next": "[32, 0]",
+      "wrap": "[0, 64]",
+      "Animation": {
+        "idResource": "AnimationSprite|2025-06-26T17:24:38.690Z|99300",
+        "name": "AnimationSprite",
+        "labels": {},
+        "events": {},
+        "framesPerSecond": 8,
+        "animationStructure": {}
+      }
+    }
+  },
+  "MeshSprite|2025-06-26T17:26:51.870Z|38890": {
+    "ƒ.MeshSprite": {
+      "idResource": "MeshSprite|2025-06-26T17:26:51.870Z|38890",
+      "name": "MeshSprite",
+      "type": "MeshSprite"
+    }
+  },
+  "Material|2025-06-26T17:27:15.461Z|18536": {
+    "ƒ.Material": {
+      "name": "ShaderLitTextured",
+      "idResource": "Material|2025-06-26T17:27:15.461Z|18536",
+      "shader": "ShaderLitTextured",
+      "coat": {
+        "ƒ.CoatTextured": {
+          "alphaClip": 0.01,
+          "color": "[1, 1, 1, 1]",
+          "idTexture": "TextureImage|2025-06-26T17:24:10.616Z|64817"
+        }
+      }
+    }
+  },
+  "Graph|2025-06-26T17:26:34.710Z|43136": {
+    "ƒ.Graph": {
+      "name": "Fire",
+      "active": true,
+      "components": {},
+      "children": [
+        {
+          "ƒ.Node": {
+            "name": "Flame01",
+            "active": true,
+            "components": {
+              "ComponentMesh": [
+                {
+                  "ƒ.ComponentMesh": {
+                    "idMesh": "MeshSprite|2025-06-26T17:26:51.870Z|38890",
+                    "pivot": {
+                      "translation": "[0, 0, 0]",
+                      "rotation": "[0, 0, 0]",
+                      "scaling": "[1, 1, 1]"
+                    },
+                    "Component": {
+                      "active": true
+                    }
+                  }
+                }
+              ],
+              "ComponentMaterial": [
+                {
+                  "ƒ.ComponentMaterial": {
+                    "sortForAlpha": false,
+                    "clrPrimary": "[1, 1, 1, 1]",
+                    "clrSecondary": "[1, 1, 1, 1]",
+                    "pivot": {
+                      "translation": "[0.3333333333333333, 0]",
+                      "rotation": 0,
+                      "scaling": "[0.16666666666666666, 1]"
+                    },
+                    "Component": {
+                      "active": true
+                    },
+                    "idMaterial": "Material|2025-06-26T17:27:15.461Z|18536"
+                  }
+                }
+              ],
+              "ComponentAnimation": [
+                {
+                  "ƒ.ComponentAnimation": {
+                    "Component": {
+                      "active": true
+                    },
+                    "idAnimation": "AnimationSprite|2025-06-26T17:24:38.690Z|99300",
+                    "playmode": "loop",
+                    "quantization": "continous",
+                    "scale": 1,
+                    "scaleWithGameTime": true,
+                    "animateInEditor": true
+                  }
+                }
+              ]
+            },
+            "children": []
+          }
+        },
+        {
+          "ƒ.Node": {
+            "name": "Wrapper",
+            "active": true,
+            "components": {
+              "ComponentTransform": [
+                {
+                  "ƒ.ComponentTransform": {
+                    "local": {
+                      "translation": "[0, 0, 0]",
+                      "rotation": "[0, 90, 0]",
+                      "scaling": "[1, 1, 1]"
+                    },
+                    "Component": {
+                      "active": true
+                    }
+                  }
+                }
+              ]
+            },
+            "children": [
+              {
+                "ƒ.Node": {
+                  "name": "Flame01",
+                  "active": true,
+                  "components": {
+                    "ComponentMesh": [
+                      {
+                        "ƒ.ComponentMesh": {
+                          "idMesh": "MeshSprite|2025-06-26T17:26:51.870Z|38890",
+                          "pivot": {
+                            "translation": "[0, 0, 0]",
+                            "rotation": "[0, 0, 0]",
+                            "scaling": "[1, 1, 1]"
+                          },
+                          "Component": {
+                            "active": true
+                          }
+                        }
+                      }
+                    ],
+                    "ComponentMaterial": [
+                      {
+                        "ƒ.ComponentMaterial": {
+                          "sortForAlpha": false,
+                          "clrPrimary": "[1, 1, 1, 1]",
+                          "clrSecondary": "[1, 1, 1, 1]",
+                          "pivot": {
+                            "translation": "[0.3333333333333333, 0]",
+                            "rotation": 0,
+                            "scaling": "[0.16666666666666666, 1]"
+                          },
+                          "Component": {
+                            "active": true
+                          },
+                          "idMaterial": "Material|2025-06-26T17:27:15.461Z|18536"
+                        }
+                      }
+                    ],
+                    "ComponentAnimation": [
+                      {
+                        "ƒ.ComponentAnimation": {
+                          "Component": {
+                            "active": true
+                          },
+                          "idAnimation": "AnimationSprite|2025-06-26T17:24:38.690Z|99300",
+                          "playmode": "loop",
+                          "quantization": "continous",
+                          "scale": 1,
+                          "scaleWithGameTime": true,
+                          "animateInEditor": true
+                        }
+                      }
+                    ]
+                  },
+                  "children": []
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "idResource": "Graph|2025-06-26T17:26:34.710Z|43136",
+      "type": "Graph"
+    }
+  },
+  "Graph|2025-06-27T09:55:25.933Z|86643": {
+    "ƒ.Graph": {
+      "name": "CactusCrawler",
+      "active": true,
+      "components": {},
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "GraphGLTF|2025-06-24T11:23:56.089Z|16435"
+          }
+        }
+      ],
+      "idResource": "Graph|2025-06-27T09:55:25.933Z|86643",
+      "type": "Graph"
+    }
+  },
+  "Graph|2025-06-27T09:57:03.456Z|96888": {
+    "ƒ.Graph": {
+      "name": "StandardEumling",
+      "active": true,
+      "components": {},
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "GraphGLTF|2025-06-06T13:07:59.175Z|74632"
+          }
+        }
+      ],
+      "idResource": "Graph|2025-06-27T09:57:03.456Z|96888",
+      "type": "Graph"
+    }
+  },
+  "Graph|2025-06-27T09:58:39.961Z|68260": {
+    "ƒ.Graph": {
+      "name": "FlameFlinger",
+      "active": true,
+      "components": {},
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "Graph|2025-06-26T17:26:34.710Z|43136"
+          }
+        }
+      ],
+      "idResource": "Graph|2025-06-27T09:58:39.961Z|68260",
+      "type": "Graph"
+    }
+  },
+  "Graph|2025-06-27T10:02:41.022Z|96882": {
+    "ƒ.Graph": {
+      "name": "Beach",
+      "active": true,
+      "components": {},
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "GraphGLTF|2025-06-27T10:03:51.942Z|71133"
+          }
+        }
+      ],
+      "idResource": "Graph|2025-06-27T10:02:41.022Z|96882",
+      "type": "Graph"
+    }
+  },
+  "GraphGLTF|2025-06-27T10:03:51.942Z|71133": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {},
+      "idResource": "GraphGLTF|2025-06-27T10:03:51.942Z|71133",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\Environment\\FightMaps\\Beach\\Beach.glb"
+    }
+  },
+  "AnimationGLTF|2025-06-27T10:03:51.942Z|07263": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-06-27T10:03:51.942Z|07263",
+      "name": "Wave",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Environment\\FightMaps\\Beach\\Beach.glb",
       "events": {}
     }
   }

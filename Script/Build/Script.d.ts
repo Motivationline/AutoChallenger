@@ -72,6 +72,9 @@ declare namespace Script {
             attempts?: number;
         };
     }
+    /**Move the Entity based of the Grid Data then map the position to the empty nodes in the Graph with a mapping function
+     * this could also be done in the Visualizer with a function like mapPositionToNode(_pos: Position)
+    */
 }
 declare namespace Script {
     export enum SELECTION_ORDER {
@@ -335,7 +338,9 @@ declare namespace Script {
         rounds: number;
         arena: Arena;
         protected visualizer: IVisualizeFight;
+        protected HUD: VisualizeHUD;
         constructor(_fight: FightData, _home: Grid<IEntity>);
+        getRounds(): number;
         run(): Promise<void>;
         private fightEnd;
         private runOneSide;
@@ -343,12 +348,42 @@ declare namespace Script {
 }
 declare namespace Script {
     interface IVisualizer {
-        getEntity(_entity: IEntity): IVisualizeEntity;
+        getEntity(_entity: IEntity): VisualizeEntity;
         getFight(_fight: Fight): IVisualizeFight;
+        getHUD(): VisualizeHUD;
+        addToScene(_el: ƒ.Node): void;
+        getCamera(): ƒ.ComponentCamera;
+        getRoot(): ƒ.Node;
+        initializeScene(_viewport: ƒ.Viewport): void;
+        drawScene(): void;
+        getGraph(): ƒ.Graph;
     }
+    import ƒ = FudgeCore;
     class VisualizerNull implements IVisualizer {
-        getEntity(_entity: IEntity): IVisualizeEntity;
+        root: ƒ.Node;
+        camera: ƒ.ComponentCamera;
+        viewport: ƒ.Viewport;
+        constructor();
+        getEntity(_entity: IEntity): VisualizeEntity;
         getFight(_fight: Fight): IVisualizeFight;
+        getHUD(): VisualizeHUD;
+        initializeScene(_viewport: ƒ.Viewport): void;
+        addToScene(_el: ƒ.Node): void;
+        getCamera(): ƒ.ComponentCamera;
+        getRoot(): ƒ.Node;
+        getGraph(): ƒ.Graph;
+        drawScene(): void;
+    }
+}
+declare namespace Script {
+    interface VisualizeHUD {
+        sayHello(): void;
+        addFightListeners(): void;
+    }
+    class VisualizeHUD implements VisualizeHUD {
+        constructor();
+        private roundStart;
+        private updateRoundCounter;
     }
 }
 declare namespace Script {
@@ -356,6 +391,7 @@ declare namespace Script {
         #private;
         static get data(): Readonly<Data>;
         static get visualizer(): Readonly<IVisualizer>;
+        static get HUD(): Readonly<VisualizeHUD>;
         static setVisualizer(_vis: IVisualizer): void;
     }
 }
@@ -408,7 +444,7 @@ declare namespace Script {
         getOwnDamage(): number;
         updateVisuals(_arena: Arena): void;
         registerEventListeners(): void;
-        getVisualizer(): Readonly<IVisualizeEntity>;
+        getVisualizer(): VisualizeEntity;
         setGrids(_home: Grid<IEntity>, _away: Grid<IEntity>): void;
     }
     export class Entity implements IEntity {
@@ -426,12 +462,12 @@ declare namespace Script {
         resistancesSet?: Set<SPELL_TYPE>;
         startDirection?: number;
         activeEffects: Map<SPELL_TYPE, number>;
-        protected visualizer: IVisualizeEntity;
+        protected visualizer: VisualizeEntity;
         constructor(_entity: EntityData, _vis: IVisualizer, _pos?: Position);
         get untargetable(): boolean;
         get stunned(): boolean;
         updateEntityData(_newData: EntityData): void;
-        getVisualizer(): Readonly<IVisualizeEntity>;
+        getVisualizer(): VisualizeEntity;
         damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
         affect(_spell: SpellData, _cause?: IEntity): Promise<number>;
         setEffectLevel(_spell: SPELL_TYPE, value: number): Promise<void>;
@@ -578,7 +614,9 @@ declare namespace Script {
     }
 }
 declare namespace Script {
-    interface IVisualizeEntity {
+    import ƒ = FudgeCore;
+    interface VisualizeEntity {
+        idle(): Promise<void>;
         attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
         move(_move: MoveData): Promise<void>;
         hurt(_damage: number, _crit: boolean): Promise<void>;
@@ -589,29 +627,46 @@ declare namespace Script {
         /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
         updateVisuals(): void;
     }
-    class VisualizeEntityNull implements IVisualizeEntity {
-        #private;
+    class VisualizeEntity extends ƒ.Node {
+        private entity;
+        private static mesh;
+        private static material;
+        private size;
         constructor(_entity: IEntity);
-        attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
-        move(_move: MoveData): Promise<void>;
-        hurt(_damage: number, _crit: boolean): Promise<void>;
-        spell(_spell: SpellData, _targets: IEntity[]): Promise<void>;
-        showPreview(): Promise<void>;
-        hidePreview(): Promise<void>;
-        updateVisuals(): Promise<void>;
-        resist(): Promise<void>;
         getEntity(): Readonly<IEntity>;
     }
 }
 declare namespace Script {
-    interface IVisualizeGrid {
-        getRealPosition(_pos: Position): any;
-        updateVisuals(): void;
+    import ƒ = FudgeCore;
+    class VisualizeTile extends ƒ.Node {
+        private static mesh;
+        private static material;
+        private size;
+        private pos;
+        constructor(_name: string, _size: number, _pos: ƒ.Vector3);
     }
-    class VisualizeGridNull implements IVisualizeGrid {
-        grid: Grid<IVisualizeEntity>;
-        constructor(_grid: Grid<IVisualizeEntity>);
-        updateVisuals(): void;
-        getRealPosition(_pos: Position): Position;
+}
+declare namespace Script {
+    import ƒ = FudgeCore;
+    class VisualizeTileGrid extends ƒ.Node {
+        private tiles;
+        private tileSize;
+        private spacing;
+        private offset;
+        private position;
+        constructor(_position: ƒ.Vector3);
+        private generateGrid;
+        getTilePosition(_index: number, _side: string): ƒ.Vector3;
+        private layoutGrid;
+    }
+}
+declare namespace Script {
+    import ƒ = FudgeCore;
+    class IVisualizeGrid extends ƒ.Node {
+        grid: Grid<VisualizeEntity>;
+        tiles: Grid<VisualizeTile>;
+        side: string;
+        constructor(_grid: Grid<VisualizeEntity>, _side: string);
+        getAnchor(_side: ƒ.Node, _x: number, _z: number): ƒ.Node;
     }
 }

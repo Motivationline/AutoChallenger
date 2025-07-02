@@ -1,15 +1,16 @@
 /// <reference path="Data/Data.ts" />
 /// <reference path="Fight/Fight.ts" />
 /// <reference path="Misc/Provider.ts" />
+/// <reference path="Visualisation/UI/VisualizeHUD.ts"/>
 
 namespace Script {
   import ƒ = FudgeCore;
   ƒ.Project.registerScriptNamespace(Script);  // Register the namespace to FUDGE for serialization
 
+  ƒ.Debug.info("Main Program Template running!");
+  let visualizer: IVisualizer;
   let viewport: ƒ.Viewport;
   document.addEventListener("interactiveViewportStarted", <EventListener>start);
-
-  initProvider();
 
   async function initProvider() {
     if (ƒ.Project.mode === ƒ.MODE.EDITOR) return;
@@ -20,14 +21,17 @@ namespace Script {
 
   function start(_event: CustomEvent): void {
     viewport = _event.detail;
-
+    initProvider();
+    visualizer = Provider.visualizer;
+    visualizer.initializeScene(viewport);
+    visualizer.drawScene();
     ƒ.Loop.addEventListener(ƒ.EVENT.LOOP_FRAME, update);
     ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
   }
 
   function update(_event: Event): void {
     // ƒ.Physics.simulate();  // if physics is included and used
-    viewport.draw();
+
     ƒ.AudioManager.default.update();
   }
 
@@ -40,6 +44,13 @@ namespace Script {
     [eumlingData[2][0], eumlingData[2][2]] = [eumlingData[2][2], eumlingData[2][0]];
 
     let eumlings: Grid<IEntity> = initEntitiesInGrid(eumlingData, Entity);
+    // eumlings.forEachElement((eumling) => {
+    //   let visualizer = new VisualizeEntity(eumling);
+    //   root.addChild(visualizer);
+    // });
+    // console.log("Root: ", root);
+    // viewport.draw();
+
     // let tmp = eumlings.get([0, 0]);
     // eumlings.set([0, 0], eumlings.get([2, 0]));
     // eumlings.set([2, 0], tmp);
@@ -50,8 +61,10 @@ namespace Script {
     // eumlings.set([0, 0], eumlings.get([2, 0]));
     // eumlings.set([2, 0], tmp);
 
+    visualizer.drawScene();
     let fightData = Provider.data.fights[1];
     let fight = new Fight(fightData, eumlings);
+    console.log("Rounds: " + fight.getRounds());
     await fight.run();
   }
 }

@@ -8,44 +8,59 @@ namespace Script {
     }
 
     export class VisualizeFightNull implements IVisualizeFight {
-        #home: VisualizeGridNull;
-        #away: VisualizeGridNull;
+        #home: IVisualizeGrid;
+        #away: IVisualizeGrid;
         constructor(_fight: Fight) {
-            let awayGrid = new Grid<IVisualizeEntity>();
+            //TODO: Fix Scaling of the Grids and instance the Entities at given Positions from the Scene out of the Fudge Editor
+            let awayGrid = new Grid<VisualizeEntity>();
             _fight.arena.away.forEachElement((entity, pos) => awayGrid.set(pos, entity?.getVisualizer()));
-            this.#away = new VisualizeGridNull(awayGrid);
-            let homeGrid = new Grid<IVisualizeEntity>();
+            this.#away = new IVisualizeGrid(awayGrid, "away");
+            let homeGrid = new Grid<VisualizeEntity>();
             _fight.arena.home.forEachElement((entity, pos) => homeGrid.set(pos, entity?.getVisualizer()));
-            this.#home = new VisualizeGridNull(homeGrid);
+            this.#home = new IVisualizeGrid(homeGrid, "home");
+
+            Provider.visualizer.addToScene(this.#away);
+            Provider.visualizer.addToScene(this.#home);
+            Provider.visualizer.drawScene();
         }
 
         async showGrid(): Promise<void> {
-            let grid: string[][] = [[,,,,,,,],[],[]];
+            let visualizer = Provider.visualizer;
 
-            this.#home.grid.forEachElement((el, pos) => {
-                if(!el) return;
-                let entity = (<VisualizeEntityNull>el).getEntity();
-            grid[pos[1]][2 - pos[0]] = `${entity.id}\n${entity.currentHealth} ♥️`;
-            })
-            this.#away.grid.forEachElement((el, pos) => {
-                if(!el) return;
-                let entity = (<VisualizeEntityNull>el).getEntity();
-            grid[pos[1]][pos[0] + 4] = `${entity.id}\n${entity.currentHealth} ♥️`;
-            })
+            // let grid: string[][] = [[, , , , , , ,], [], []];
 
-            console.table(grid);
+            // this.#home.grid.forEachElement((el, pos) => {
+            //     if (!el) return;
+            //     let entity = (<VisualizeEntity>el).getEntity();
+            //     grid[pos[1]][2 - pos[0]] = `${entity.id}\n${entity.currentHealth} ♥️`;
+            //     el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
+            // })
+            // this.#away.grid.forEachElement((el, pos) => {
+            //     if (!el) return;
+            //     let entity = (<VisualizeEntity>el).getEntity();
+            //     grid[pos[1]][pos[0] + 4] = `${entity.id}\n${entity.currentHealth} ♥️`;
+            //     el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
+            // })
+
+            // console.table(grid);
+            //draw the 3D scene
+            visualizer.drawScene();
         }
+
         async fightStart(): Promise<void> {
             console.log("Fight Start!");
             await this.showGrid();
         }
+
         async roundStart(): Promise<void> {
             console.log("Round Start!");
         }
+
         async roundEnd(): Promise<void> {
             await this.showGrid();
             console.log("Round End");
         }
+
         async fightEnd(): Promise<void> {
             console.log("Fight End!");
         }

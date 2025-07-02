@@ -101,6 +101,9 @@ var Script;
         DIRECTION_RELATIVE["LEFT"] = "left";
         DIRECTION_RELATIVE["RIGHT"] = "right";
     })(DIRECTION_RELATIVE = Script.DIRECTION_RELATIVE || (Script.DIRECTION_RELATIVE = {}));
+    /**Move the Entity based of the Grid Data then map the position to the empty nodes in the Graph with a mapping function
+     * this could also be done in the Visualizer with a function like mapPositionToNode(_pos: Position)
+    */
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -921,11 +924,16 @@ var Script;
                 el?.setGrids(this.arena.away, this.arena.home);
             });
             this.visualizer = Script.Provider.visualizer.getFight(this);
+            this.HUD = Script.Provider.visualizer.getHUD();
+        }
+        getRounds() {
+            return this.rounds;
         }
         async run() {
             Fight.activeFight = this;
             // Eventlisteners
             Script.EventBus.removeAllEventListeners();
+            this.HUD.addFightListeners(); //replace main.ts instance with Provider.visualizer.getHUD() instance
             this.arena.home.forEachElement((el) => { el?.registerEventListeners(); });
             this.arena.away.forEachElement((el) => { el?.registerEventListeners(); });
             //TODO: Add relics
@@ -934,10 +942,10 @@ var Script;
             // run actual round
             for (let r = 0; r < this.rounds; r++) {
                 await this.visualizer.roundStart();
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_START });
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_START, value: r });
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_END });
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_END, value: r });
                 await this.visualizer.roundEnd();
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {
@@ -977,28 +985,94 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
+    var ƒ = FudgeCore;
     class VisualizerNull {
+        constructor() {
+            this.root = new ƒ.Node("Root");
+        }
         getEntity(_entity) {
-            return new Script.VisualizeEntityNull(_entity);
+            return new Script.VisualizeEntity(_entity);
         }
         getFight(_fight) {
             return new Script.VisualizeFightNull(_fight);
         }
+        getHUD() {
+            return new Script.VisualizeHUD();
+        }
+        initializeScene(_viewport) {
+            this.viewport = _viewport;
+            let HUD = new Script.VisualizeHUD();
+            HUD.sayHello(); // TODO remove this!
+            console.log(this.root);
+            let FigthScene = ƒ.Project.getResourcesByName("FightScene")[0];
+            //attach the root node to the FightScene
+            //TODO: Fight Scene can also be added to empty scene
+            this.camera = FigthScene.getChildByName("Camera_Wrapper").getChildByName("Cam").getComponent(ƒ.ComponentCamera);
+            FigthScene.addChild(this.root);
+            _viewport.initialize("Viewport", FigthScene, this.camera, document.querySelector("canvas"));
+            _viewport.draw();
+        }
+        addToScene(_el) {
+            this.root.addChild(_el);
+            console.log("Root: " + this.root);
+        }
+        getCamera() {
+            return this.camera;
+        }
+        getRoot() {
+            return this.root;
+        }
+        getGraph() {
+            return this.viewport.getBranch();
+        }
+        drawScene() {
+            this.viewport.draw();
+        }
     }
     Script.VisualizerNull = VisualizerNull;
 })(Script || (Script = {}));
+var Script;
+(function (Script) {
+    // TODO: add Provider to pass UI elements without hardcoding
+    class VisualizeHUD {
+        constructor() {
+            this.roundStart = async (_ev) => {
+                this.updateRoundCounter(_ev);
+            };
+        }
+        sayHello() {
+            console.log("Hello from HUD");
+        }
+        updateRoundCounter(_ev) {
+            let round = _ev.value;
+            const roundCounter = document.querySelector(".RoundCounter");
+            roundCounter.innerText = `Round: ${round + 1}`;
+            console.log(`Update Round: ${round + 1}`);
+        }
+        addFightListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.roundStart);
+        }
+    }
+    Script.VisualizeHUD = VisualizeHUD;
+})(Script || (Script = {}));
 /// <reference path="../Visualisation/Visualizer.ts" />
+/// <reference path="../Visualisation/UI/VisualizeHUD.ts" />
 var Script;
 /// <reference path="../Visualisation/Visualizer.ts" />
+/// <reference path="../Visualisation/UI/VisualizeHUD.ts" />
 (function (Script) {
     class Provider {
         static #data = new Script.Data();
         static #visualizer = new Script.VisualizerNull();
+        static #HUD = new Script.VisualizeHUD();
         static get data() {
             return this.#data;
         }
         static get visualizer() {
             return this.#visualizer;
+        }
+        static get HUD() {
+            return this.#HUD;
         }
         static setVisualizer(_vis) {
             if (!_vis) {
@@ -1013,16 +1087,19 @@ var Script;
 /// <reference path="Data/Data.ts" />
 /// <reference path="Fight/Fight.ts" />
 /// <reference path="Misc/Provider.ts" />
+/// <reference path="Visualisation/UI/VisualizeHUD.ts"/>
 var Script;
 /// <reference path="Data/Data.ts" />
 /// <reference path="Fight/Fight.ts" />
 /// <reference path="Misc/Provider.ts" />
+/// <reference path="Visualisation/UI/VisualizeHUD.ts"/>
 (function (Script) {
     var ƒ = FudgeCore;
     ƒ.Project.registerScriptNamespace(Script); // Register the namespace to FUDGE for serialization
+    ƒ.Debug.info("Main Program Template running!");
+    let visualizer;
     let viewport;
     document.addEventListener("interactiveViewportStarted", start);
-    initProvider();
     async function initProvider() {
         if (ƒ.Project.mode === ƒ.MODE.EDITOR)
             return;
@@ -1032,12 +1109,15 @@ var Script;
     }
     function start(_event) {
         viewport = _event.detail;
+        initProvider();
+        visualizer = Script.Provider.visualizer;
+        visualizer.initializeScene(viewport);
+        visualizer.drawScene();
         ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
         ƒ.Loop.start(); // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
     }
     function update(_event) {
         // ƒ.Physics.simulate();  // if physics is included and used
-        viewport.draw();
         ƒ.AudioManager.default.update();
     }
     async function run() {
@@ -1048,6 +1128,12 @@ var Script;
         [eumlingData[1][0], eumlingData[1][2]] = [eumlingData[1][2], eumlingData[1][0]];
         [eumlingData[2][0], eumlingData[2][2]] = [eumlingData[2][2], eumlingData[2][0]];
         let eumlings = Script.initEntitiesInGrid(eumlingData, Script.Entity);
+        // eumlings.forEachElement((eumling) => {
+        //   let visualizer = new VisualizeEntity(eumling);
+        //   root.addChild(visualizer);
+        // });
+        // console.log("Root: ", root);
+        // viewport.draw();
         // let tmp = eumlings.get([0, 0]);
         // eumlings.set([0, 0], eumlings.get([2, 0]));
         // eumlings.set([2, 0], tmp);
@@ -1057,8 +1143,10 @@ var Script;
         // tmp = eumlings.get([0, 0]);
         // eumlings.set([0, 0], eumlings.get([2, 0]));
         // eumlings.set([2, 0], tmp);
+        visualizer.drawScene();
         let fightData = Script.Provider.data.fights[1];
         let fight = new Script.Fight(fightData, eumlings);
+        console.log("Rounds: " + fight.getRounds());
         await fight.run();
     }
 })(Script || (Script = {}));
@@ -1704,6 +1792,7 @@ var Script;
         const grid = new Script.Grid(_grid);
         const newGrid = new Script.Grid();
         const data = Script.Provider.data;
+        //const visualizer = Provider.visualizer;
         grid.forEachElement((entityId, pos) => {
             if (!entityId)
                 return;
@@ -1712,6 +1801,7 @@ var Script;
                 throw new Error(`Entity ${entityId} not found.`);
             newGrid.set(pos, new _entity(entityData, Script.Provider.visualizer, pos));
         });
+        console.log("init Grid: " + newGrid);
         return newGrid;
     }
     Script.initEntitiesInGrid = initEntitiesInGrid;
@@ -1735,28 +1825,35 @@ var Script;
         #home;
         #away;
         constructor(_fight) {
+            //TODO: Fix Scaling of the Grids and instance the Entities at given Positions from the Scene out of the Fudge Editor
             let awayGrid = new Script.Grid();
             _fight.arena.away.forEachElement((entity, pos) => awayGrid.set(pos, entity?.getVisualizer()));
-            this.#away = new Script.VisualizeGridNull(awayGrid);
+            this.#away = new Script.IVisualizeGrid(awayGrid, "away");
             let homeGrid = new Script.Grid();
             _fight.arena.home.forEachElement((entity, pos) => homeGrid.set(pos, entity?.getVisualizer()));
-            this.#home = new Script.VisualizeGridNull(homeGrid);
+            this.#home = new Script.IVisualizeGrid(homeGrid, "home");
+            Script.Provider.visualizer.addToScene(this.#away);
+            Script.Provider.visualizer.addToScene(this.#home);
+            Script.Provider.visualizer.drawScene();
         }
         async showGrid() {
-            let grid = [[, , , , , , ,], [], []];
-            this.#home.grid.forEachElement((el, pos) => {
-                if (!el)
-                    return;
-                let entity = el.getEntity();
-                grid[pos[1]][2 - pos[0]] = `${entity.id}\n${entity.currentHealth} ♥️`;
-            });
-            this.#away.grid.forEachElement((el, pos) => {
-                if (!el)
-                    return;
-                let entity = el.getEntity();
-                grid[pos[1]][pos[0] + 4] = `${entity.id}\n${entity.currentHealth} ♥️`;
-            });
-            console.table(grid);
+            let visualizer = Script.Provider.visualizer;
+            // let grid: string[][] = [[, , , , , , ,], [], []];
+            // this.#home.grid.forEachElement((el, pos) => {
+            //     if (!el) return;
+            //     let entity = (<VisualizeEntity>el).getEntity();
+            //     grid[pos[1]][2 - pos[0]] = `${entity.id}\n${entity.currentHealth} ♥️`;
+            //     el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
+            // })
+            // this.#away.grid.forEachElement((el, pos) => {
+            //     if (!el) return;
+            //     let entity = (<VisualizeEntity>el).getEntity();
+            //     grid[pos[1]][pos[0] + 4] = `${entity.id}\n${entity.currentHealth} ♥️`;
+            //     el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
+            // })
+            // console.table(grid);
+            //draw the 3D scene
+            visualizer.drawScene();
         }
         async fightStart() {
             console.log("Fight Start!");
@@ -1777,62 +1874,281 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
-    class VisualizeEntityNull {
-        #entity;
-        constructor(_entity) { this.#entity = _entity; }
+    var ƒ = FudgeCore;
+    class VisualizeEntity extends ƒ.Node /*implements VisualizeEntity*/ {
+        //private grid: VisualizeGridNull;
+        //create a mesh and material for the tile
+        static { this.mesh = new ƒ.MeshCube("EntityMesh"); }
+        static { this.material = new ƒ.Material("EntityMat", ƒ.ShaderLitTextured); }
+        constructor(_entity) {
+            super("entity");
+            this.size = 0.5;
+            this.entity = _entity;
+            const entityMesh = new ƒ.ComponentMesh(VisualizeEntity.mesh);
+            const entityMat = new ƒ.ComponentMaterial(VisualizeEntity.material);
+            this.addComponent(entityMesh);
+            this.addComponent(entityMat);
+            entityMesh.mtxPivot.scale(ƒ.Vector3.ONE(this.size));
+            entityMat.clrPrimary.setCSS("white");
+            this.addComponent(new ƒ.ComponentTransform());
+            this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
+            Script.Provider.visualizer.addToScene(this);
+        }
+        async idle() {
+            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
+            await Script.waitMS(200);
+        }
         async attack(_attack, _targets) {
-            console.log("entity visualizer null: attack", { attacker: this.#entity, attack: _attack, targets: _targets });
+            console.log("entity visualizer null: attack", { attacker: this.entity, attack: _attack, targets: _targets });
+            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("blue");
             await Script.waitMS(200);
         }
         async move(_move) {
+            //TODO: add movement logic here
+            this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
             console.log("entity visualizer null: move", _move);
             await Script.waitMS(200);
         }
         async hurt(_damage, _crit) {
-            console.log("entity visualizer null: hurt", { hurtEntity: this.#entity, damage: _damage, wasCrit: _crit });
+            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("red");
             await Script.waitMS(200);
         }
         async spell(_spell, _targets) {
-            console.log("entity visualizer null: spell", { caster: this.#entity, spell: _spell, targets: _targets });
+            console.log("entity visualizer null: spell", { caster: this.entity, spell: _spell, targets: _targets });
             await Script.waitMS(200);
         }
         async showPreview() {
-            console.log("entity visualizer null: show preview", this.#entity);
+            console.log("entity visualizer null: show preview", this.entity);
             await Script.waitMS(200);
         }
         async hidePreview() {
-            console.log("entity visualizer null: hide preview", this.#entity);
+            console.log("entity visualizer null: hide preview", this.entity);
             await Script.waitMS(200);
         }
         async updateVisuals() {
-            // console.log("entity visualizer null: updateVisuals", this.#entity);
+            // console.log("entity visualizer null: updateVisuals", this.entity);
             // await waitMS(200);
         }
         async resist() {
-            console.log("entity visualizer null: resisting", this.#entity);
+            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("gray");
+            console.log("entity visualizer null: resisting", this.entity);
             await Script.waitMS(200);
         }
         getEntity() {
-            return this.#entity;
+            return this.entity;
         }
     }
-    Script.VisualizeEntityNull = VisualizeEntityNull;
+    Script.VisualizeEntity = VisualizeEntity;
+})(Script || (Script = {}));
+// namespace Script {
+//     export interface IVisualizeEntity {
+//         attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
+//         move(_move: MoveData): Promise<void>;
+//         hurt(_damage: number, _crit: boolean): Promise<void>;
+//         resist(): Promise<void>;
+//         spell(_spell: SpellData, _targets: IEntity[]): Promise<void>;
+//         showPreview(): Promise<void>;
+//         hidePreview(): Promise<void>;
+//         /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
+//         updateVisuals(): void;
+//     }
+//     export class VisualizeEntityNull implements IVisualizeEntity {
+//         #entity: IEntity;
+//         constructor(_entity: IEntity) { this.#entity = _entity; }
+//         async attack(_attack: AttackData, _targets: IEntity[]): Promise<void> {
+//             console.log("entity visualizer null: attack", {attacker: this.#entity, attack: _attack, targets: _targets});
+//             await waitMS(200);
+//         }
+//         async move(_move: MoveData): Promise<void> {
+//             console.log("entity visualizer null: move", _move);
+//             await waitMS(200);
+//         }
+//         async hurt(_damage: number, _crit: boolean): Promise<void> {
+//             console.log("entity visualizer null: hurt", {hurtEntity: this.#entity, damage: _damage, wasCrit: _crit});
+//             await waitMS(200);
+//         }
+//         async spell(_spell: SpellData, _targets: IEntity[]): Promise<void> {
+//             console.log("entity visualizer null: spell", {caster: this.#entity, spell: _spell, targets: _targets});
+//             await waitMS(200);
+//         }
+//         async showPreview(): Promise<void> {
+//             console.log("entity visualizer null: show preview", this.#entity);
+//             await waitMS(200);
+//         }
+//         async hidePreview(): Promise<void> {
+//             console.log("entity visualizer null: hide preview", this.#entity);
+//             await waitMS(200);
+//         }
+//         async updateVisuals(): Promise<void> {
+//             // console.log("entity visualizer null: updateVisuals", this.#entity);
+//             // await waitMS(200);
+//         }
+//         async resist(): Promise<void> {
+//             console.log("entity visualizer null: resisting", this.#entity);
+//             await waitMS(200);    
+//         }
+//         getEntity(): Readonly<IEntity> {
+//             return this.#entity;
+//         }
+//     }
+// }
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    class VisualizeTile extends ƒ.Node {
+        //create a mesh and material for the tile
+        static { this.mesh = new ƒ.MeshCube("TileMesh"); }
+        static { this.material = new ƒ.Material("TileMat", ƒ.ShaderLitTextured); }
+        constructor(_name, _size, _pos) {
+            super(_name);
+            this.size = _size;
+            this.pos = _pos;
+            const tileMesh = new ƒ.ComponentMesh(VisualizeTile.mesh);
+            tileMesh.mtxPivot.scale(new ƒ.Vector3(this.size, 0.001, this.size));
+            tileMesh.mtxPivot.translate(this.pos);
+            tileMesh.mtxPivot.rotateZ(90);
+            //const sphere: ƒ.ComponentMesh = new ƒ.ComponentMesh(new ƒ.MeshSphere("Tile"));
+            const tileMat = new ƒ.ComponentMaterial(VisualizeTile.material);
+            tileMat.clrPrimary.setCSS("white");
+            this.addComponent(tileMesh);
+            this.addComponent(tileMat);
+            this.addComponent(new ƒ.ComponentTransform());
+        }
+    }
+    Script.VisualizeTile = VisualizeTile;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
-    class VisualizeGridNull {
-        constructor(_grid) {
-            this.grid = _grid;
+    var ƒ = FudgeCore;
+    class VisualizeTileGrid extends ƒ.Node {
+        constructor(_position) {
+            super("VisualizeGrid");
+            this.position = _position;
+            this.tiles = 9; //3x3
+            this.tileSize = 1;
+            this.spacing = 0.4; //large values = smaller spacing between 0 and 0.5
+            this.offset = 0.5;
+            this.addComponent(new ƒ.ComponentTransform());
+            this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(this.position);
+            this.generateGrid();
         }
-        updateVisuals() {
-            this.grid.forEachElement((element) => {
-                element?.updateVisuals();
-            });
+        //create a grid with 2 Sides: home | away
+        //each having a 3x3 grid of tiles
+        generateGrid() {
+            let home = new ƒ.Node("home");
+            let away = new ƒ.Node("away");
+            home.addComponent(new ƒ.ComponentTransform);
+            away.addComponent(new ƒ.ComponentTransform);
+            //create the tile grid for each side
+            this.layoutGrid(home, 1);
+            this.layoutGrid(away, -1);
+            //add the sides as children to the grid Object
+            this.addChild(home);
+            this.addChild(away);
         }
-        getRealPosition(_pos) {
-            return _pos;
+        //TODO: consider world position or relative position?
+        getTilePosition(_index, _side) {
+            let i = _index;
+            if (_side === "home") {
+                let x = i % 3;
+                let z = Math.floor(i / 3);
+                return new ƒ.Vector3(x, 0, z);
+            }
+            else if (_side === "away") {
+                let x = -(i % 3);
+                let z = Math.floor(i / 3);
+                return new ƒ.Vector3(x, 0, z);
+            }
+            else {
+                throw new Error("Invalide side. Expected 'home' or 'away'.");
+            }
+        }
+        //Layout the tiles in a grid with a given direction and add them as childs to the given parent node
+        layoutGrid(_parent, direction = 1) {
+            for (let i = 0; i < this.tiles; i++) {
+                let x = i % 3;
+                let z = Math.floor(i / 3);
+                let tilePos = new ƒ.Vector3(direction * (this.offset + x * (this.tileSize - this.spacing)), 0, z * (this.tileSize - this.spacing));
+                let tile = new Script.VisualizeTile(`Tile_${i}: ${x}, ${z}`, this.tileSize, tilePos);
+                tile.getComponent(ƒ.ComponentTransform).mtxLocal.translate(tilePos);
+                _parent.addChild(tile);
+            }
         }
     }
-    Script.VisualizeGridNull = VisualizeGridNull;
+    Script.VisualizeTileGrid = VisualizeTileGrid;
+})(Script || (Script = {}));
+// namespace Script {
+//     import ƒ = FudgeCore;
+//     export interface IVisualizeGrid {
+//         getRealPosition(_pos: Position): any;
+//         updateVisuals(): void;
+//     }
+//     export class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
+//         grid: Grid<VisualizeEntity>;
+//         constructor(_grid: Grid<VisualizeEntity>) {
+//             super("VisualizeGridNull");
+//             this.grid = _grid;
+//             this.addComponent(new ƒ.ComponentTransform());
+//             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3(0, 0, 0));
+//         }
+//         updateVisuals(): void {
+//             this.grid.forEachElement((element) => {
+//                 element?.updateVisuals();
+//             });
+//         }
+//         getRealPosition(_pos: Position) {
+//             return _pos;
+//         }
+//     }
+// }
+var Script;
+(function (Script) {
+    //Visualize the Entities in the Grid
+    //Instances the Entities in the correct grid Position
+    var ƒ = FudgeCore;
+    class IVisualizeGrid extends ƒ.Node {
+        constructor(_grid, _side) {
+            super("VisualizeGrid");
+            this.grid = _grid;
+            if (_side === "home" || "away") {
+                this.side = _side;
+            }
+            else {
+                throw new Error("Use home or away for the side parameter");
+            }
+            this.addComponent(new ƒ.ComponentTransform());
+            //set the positions of the entities in the grid
+            this.grid.forEachElement((element, pos) => {
+                if (!element)
+                    return;
+                let visSide;
+                //get Placeholders from scene
+                if (this.side === "away") {
+                    visSide = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
+                }
+                else if (this.side === "home") {
+                    visSide = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
+                }
+                //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
+                /**Anchors are named from 0-8 */
+                let anchor = this.getAnchor(visSide, pos[0], pos[1]);
+                //get the Positions from the placeholders and translate the entities to it
+                let position = anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
+                console.log("position: " + position);
+                //TODO: Fix Positions
+                element.mtxLocal.translation = new ƒ.Vector3(position.x, position.y, position.z);
+                console.log("element position: " + element.mtxLocal.translation);
+                this.addChild(element);
+            });
+        }
+        getAnchor(_side, _x, _z) {
+            let anchor;
+            let pointer = _z * 3 + _x;
+            console.log("pointer: " + pointer);
+            anchor = _side.getChildByName(pointer.toString());
+            return anchor;
+        }
+    }
+    Script.IVisualizeGrid = IVisualizeGrid;
 })(Script || (Script = {}));
 //# sourceMappingURL=Script.js.map

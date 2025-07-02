@@ -21,4 +21,8 @@ namespace Script {
             attempts?: number,
         }
     }
+
+    /**Move the Entity based of the Grid Data then map the position to the empty nodes in the Graph with a mapping function
+     * this could also be done in the Visualizer with a function like mapPositionToNode(_pos: Position)
+    */
 }

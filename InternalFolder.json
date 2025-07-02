@@ -26,7 +26,12 @@
                 "name": "Standard",
                 "entries": [
                   {
-                    "idResource": "GraphGLTF|2025-06-06T13:07:59.175Z|74632"
+                    "name": "Prefab",
+                    "entries": [
+                      {
+                        "idResource": "Graph|2025-06-27T09:57:03.456Z|96888"
+                      }
+                    ]
                   },
                   {
                     "name": "Animations",
@@ -36,6 +41,142 @@
                       },
                       {
                         "idResource": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Model",
+                    "entries": [
+                      {
+                        "idResource": "GraphGLTF|2025-06-06T13:07:59.175Z|74632"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Enemies",
+            "entries": [
+              {
+                "name": "CactusCrawler",
+                "entries": [
+                  {
+                    "name": "Prefab",
+                    "entries": [
+                      {
+                        "idResource": "Graph|2025-06-27T09:55:25.933Z|86643"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Animations",
+                    "entries": [
+                      {
+                        "idResource": "AnimationGLTF|2025-06-24T11:23:56.089Z|47567"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Model",
+                    "entries": [
+                      {
+                        "idResource": "GraphGLTF|2025-06-24T11:23:56.089Z|16435"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "FlameFlinger",
+                "entries": [
+                  {
+                    "name": "Prefab",
+                    "entries": [
+                      {
+                        "idResource": "Graph|2025-06-27T09:58:39.961Z|68260"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Model",
+                    "entries": [
+                      {
+                        "name": "FireSprite",
+                        "entries": [
+                          {
+                            "idResource": "TextureImage|2025-06-26T17:24:10.616Z|64817"
+                          },
+                          {
+                            "idResource": "AnimationSprite|2025-06-26T17:24:38.690Z|99300"
+                          },
+                          {
+                            "idResource": "Graph|2025-06-26T17:26:34.710Z|43136"
+                          },
+                          {
+                            "idResource": "MeshSprite|2025-06-26T17:26:51.870Z|38890"
+                          },
+                          {
+                            "idResource": "Material|2025-06-26T17:27:15.461Z|18536"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Animations",
+                    "entries": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Environment",
+            "entries": [
+              {
+                "name": "BattleTiles",
+                "entries": [
+                  {
+                    "name": "GrasField",
+                    "entries": [
+                      {
+                        "idResource": "GraphGLTF|2025-06-24T12:17:49.187Z|53955"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "FightMaps",
+                "entries": [
+                  {
+                    "name": "Beach",
+                    "entries": [
+                      {
+                        "name": "Prefab",
+                        "entries": [
+                          {
+                            "idResource": "Graph|2025-06-27T10:02:41.022Z|96882"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "Animations",
+                        "entries": [
+                          {
+                            "idResource": "AnimationGLTF|2025-06-27T10:03:51.942Z|07263"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "Model",
+                        "entries": [
+                          {
+                            "idResource": "GraphGLTF|2025-06-27T10:03:51.942Z|71133"
+                          }
+                        ]
                       }
                     ]
                   }
