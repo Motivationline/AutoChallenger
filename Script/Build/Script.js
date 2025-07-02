@@ -429,7 +429,11 @@ var Script;
                 health: 10,
             },
             {
-                id: "attackTests",
+                id: "kacki",
+                health: 10,
+            },
+            {
+                id: "defaultSkin",
                 attacks: {
                     options: [
                         {
@@ -831,7 +835,7 @@ var Script;
                 // remember, opponents are usually to the left of this, so the eumling grid is mirrored internally.
                 // But for your convenience right now during the test it's the way you'd see it ingame.
                 entities: [
-                    ["attackTests", , ,],
+                    ["defaultSkin", , ,],
                     [, , ,],
                     [, , ,]
                 ],
@@ -851,6 +855,15 @@ var Script;
                     [, , ,],
                     [, "attackRandomEnemy", ,],
                     [, , ,]
+                ],
+            },
+            {
+                //test entity visualizer with models
+                rounds: 3,
+                entities: [
+                    ["kacki", "kacki", "kacki",],
+                    ["kacki", "kacki", "kacki",],
+                    ["kacki", "kacki", "kacki",]
                 ],
             }
         ];
@@ -1014,7 +1027,7 @@ var Script;
         }
         addToScene(_el) {
             this.root.addChild(_el);
-            console.log("Root: " + this.root);
+            //console.log("Root: " + this.root);
         }
         getCamera() {
             return this.camera;
@@ -1144,7 +1157,7 @@ var Script;
         // eumlings.set([0, 0], eumlings.get([2, 0]));
         // eumlings.set([2, 0], tmp);
         visualizer.drawScene();
-        let fightData = Script.Provider.data.fights[1];
+        let fightData = Script.Provider.data.fights[3];
         let fight = new Script.Fight(fightData, eumlings);
         console.log("Rounds: " + fight.getRounds());
         await fight.run();
@@ -1884,23 +1897,28 @@ var Script;
             super("entity");
             this.size = 0.5;
             this.entity = _entity;
-            const entityMesh = new ƒ.ComponentMesh(VisualizeEntity.mesh);
-            const entityMat = new ƒ.ComponentMaterial(VisualizeEntity.material);
-            this.addComponent(entityMesh);
-            this.addComponent(entityMat);
-            entityMesh.mtxPivot.scale(ƒ.Vector3.ONE(this.size));
-            entityMat.clrPrimary.setCSS("white");
+            //get the correct mesh and material
+            this.model = new ƒ.Node("");
+            console.log("ID: " + this.entity.id);
+            //this.model.deserialize(DataLink.linkedNodes.get(this.entity.id.toString()).serialize());
+            this.loadModel(this.entity.id);
+            // const entityMesh = new ƒ.ComponentMesh(VisualizeEntity.mesh);
+            // const entityMat = new ƒ.ComponentMaterial(VisualizeEntity.material);
+            // this.addComponent(entityMesh);
+            // this.addComponent(entityMat);
+            // entityMesh.mtxPivot.scale(ƒ.Vector3.ONE(this.size));
+            // entityMat.clrPrimary.setCSS("white");
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
             Script.Provider.visualizer.addToScene(this);
         }
         async idle() {
-            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
+            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
             await Script.waitMS(200);
         }
         async attack(_attack, _targets) {
             console.log("entity visualizer null: attack", { attacker: this.entity, attack: _attack, targets: _targets });
-            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("blue");
+            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("blue");
             await Script.waitMS(200);
         }
         async move(_move) {
@@ -1910,7 +1928,7 @@ var Script;
             await Script.waitMS(200);
         }
         async hurt(_damage, _crit) {
-            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("red");
+            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("red");
             await Script.waitMS(200);
         }
         async spell(_spell, _targets) {
@@ -1930,9 +1948,14 @@ var Script;
             // await waitMS(200);
         }
         async resist() {
-            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("gray");
+            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("gray");
             console.log("entity visualizer null: resisting", this.entity);
             await Script.waitMS(200);
+        }
+        async loadModel(_id) {
+            let model = new ƒ.Node(_id);
+            await model.deserialize(Script.DataLink.linkedNodes.get(_id).serialize());
+            this.addChild(model);
         }
         getEntity() {
             return this.entity;
@@ -1992,7 +2015,9 @@ var Script;
 //         }
 //     }
 // }
+//!!!Unused!!!
 var Script;
+//!!!Unused!!!
 (function (Script) {
     var ƒ = FudgeCore;
     class VisualizeTile extends ƒ.Node {
@@ -2017,7 +2042,9 @@ var Script;
     }
     Script.VisualizeTile = VisualizeTile;
 })(Script || (Script = {}));
+//!!!Unused!!!
 var Script;
+//!!!Unused!!!
 (function (Script) {
     var ƒ = FudgeCore;
     class VisualizeTileGrid extends ƒ.Node {
@@ -2135,7 +2162,6 @@ var Script;
                 //get the Positions from the placeholders and translate the entities to it
                 let position = anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
                 console.log("position: " + position);
-                //TODO: Fix Positions
                 element.mtxLocal.translation = new ƒ.Vector3(position.x, position.y, position.z);
                 console.log("element position: " + element.mtxLocal.translation);
                 this.addChild(element);

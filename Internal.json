@@ -1080,5 +1080,57 @@
       "url": "Assets\\GLTFs\\Environment\\FightMaps\\Beach\\Beach.glb",
       "events": {}
     }
+  },
+  "Graph|2025-07-02T13:26:02.843Z|14722": {
+    "ƒ.Graph": {
+      "name": "defaultSkin",
+      "active": true,
+      "components": {
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "defaultSkin"
+            }
+          }
+        ]
+      },
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "Graph|2025-06-27T09:57:03.456Z|96888"
+          }
+        }
+      ],
+      "idResource": "Graph|2025-07-02T13:26:02.843Z|14722",
+      "type": "Graph"
+    }
+  },
+  "Graph|2025-07-02T13:27:13.298Z|17385": {
+    "ƒ.Graph": {
+      "name": "kacki",
+      "active": true,
+      "components": {
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "kacki"
+            }
+          }
+        ]
+      },
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "Graph|2025-06-27T09:55:25.933Z|86643"
+          }
+        }
+      ],
+      "idResource": "Graph|2025-07-02T13:27:13.298Z|17385",
+      "type": "Graph"
+    }
   }
 }

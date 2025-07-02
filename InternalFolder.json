@@ -185,6 +185,17 @@
             ]
           }
         ]
+      },
+      {
+        "name": "tempModels",
+        "entries": [
+          {
+            "idResource": "Graph|2025-07-02T13:26:02.843Z|14722"
+          },
+          {
+            "idResource": "Graph|2025-07-02T13:27:13.298Z|17385"
+          }
+        ]
       }
     ]
   }

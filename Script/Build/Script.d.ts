@@ -629,10 +629,12 @@ declare namespace Script {
     }
     class VisualizeEntity extends ƒ.Node {
         private entity;
+        private model;
         private static mesh;
         private static material;
         private size;
         constructor(_entity: IEntity);
+        loadModel(_id: string): Promise<void>;
         getEntity(): Readonly<IEntity>;
     }
 }
@@ -664,7 +666,6 @@ declare namespace Script {
     import ƒ = FudgeCore;
     class IVisualizeGrid extends ƒ.Node {
         grid: Grid<VisualizeEntity>;
-        tiles: Grid<VisualizeTile>;
         side: string;
         constructor(_grid: Grid<VisualizeEntity>, _side: string);
         getAnchor(_side: ƒ.Node, _x: number, _z: number): ƒ.Node;

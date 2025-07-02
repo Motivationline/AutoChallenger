@@ -8,7 +8,6 @@ namespace Script {
     export class IVisualizeGrid extends ƒ.Node {
 
         grid: Grid<VisualizeEntity>;
-        tiles: Grid<VisualizeTile>;
 
         side: string;
 
@@ -43,7 +42,7 @@ namespace Script {
                 //get the Positions from the placeholders and translate the entities to it
                 let position: ƒ.Vector3 = anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
                 console.log("position: " + position);
-                //TODO: Fix Positions
+                
                 element.mtxLocal.translation = new ƒ.Vector3(position.x, position.y, position.z);
                 console.log("element position: " + element.mtxLocal.translation);
                 this.addChild(element);

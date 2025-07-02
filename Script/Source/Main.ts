@@ -62,7 +62,7 @@ namespace Script {
     // eumlings.set([2, 0], tmp);
 
     visualizer.drawScene();
-    let fightData = Provider.data.fights[1];
+    let fightData = Provider.data.fights[3];
     let fight = new Fight(fightData, eumlings);
     console.log("Rounds: " + fight.getRounds());
     await fight.run();

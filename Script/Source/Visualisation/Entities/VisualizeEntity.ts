@@ -16,6 +16,7 @@ namespace Script {
     export class VisualizeEntity extends ƒ.Node /*implements VisualizeEntity*/ {
 
         private entity: IEntity;
+        private model: ƒ.Node;
         //private grid: VisualizeGridNull;
 
         //create a mesh and material for the tile
@@ -27,27 +28,33 @@ namespace Script {
         constructor(_entity: IEntity) {
             super("entity");
             this.entity = _entity;
+            //get the correct mesh and material
+            this.model = new ƒ.Node("");
+            console.log("ID: " + this.entity.id);
+            //this.model.deserialize(DataLink.linkedNodes.get(this.entity.id.toString()).serialize());
+            this.loadModel(this.entity.id)
 
-            const entityMesh = new ƒ.ComponentMesh(VisualizeEntity.mesh);
-            const entityMat = new ƒ.ComponentMaterial(VisualizeEntity.material);
-            this.addComponent(entityMesh);
-            this.addComponent(entityMat);
-            entityMesh.mtxPivot.scale(ƒ.Vector3.ONE(this.size));
-            entityMat.clrPrimary.setCSS("white");
+            // const entityMesh = new ƒ.ComponentMesh(VisualizeEntity.mesh);
+            // const entityMat = new ƒ.ComponentMaterial(VisualizeEntity.material);
+            // this.addComponent(entityMesh);
+            // this.addComponent(entityMat);
+            // entityMesh.mtxPivot.scale(ƒ.Vector3.ONE(this.size));
+            // entityMat.clrPrimary.setCSS("white");
 
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
             Provider.visualizer.addToScene(this);
+
         }
 
         async idle(): Promise<void> {
-            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
+            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
             await waitMS(200);
         }
 
         async attack(_attack: AttackData, _targets: IEntity[]): Promise<void> {
             console.log("entity visualizer null: attack", {attacker: this.entity, attack: _attack, targets: _targets});
-            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("blue");
+            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("blue");
             await waitMS(200);
         }
 
@@ -59,7 +66,7 @@ namespace Script {
         }
 
         async hurt(_damage: number, _crit: boolean): Promise<void> {
-            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("red");
+            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("red");
             await waitMS(200);
         }
 
@@ -84,9 +91,15 @@ namespace Script {
         }
 
         async resist(): Promise<void> {
-            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("gray");
+            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("gray");
             console.log("entity visualizer null: resisting", this.entity);
             await waitMS(200);
+        }
+
+        async loadModel(_id: string) {
+            let model: ƒ.Node = new ƒ.Node(_id);
+            await model.deserialize(DataLink.linkedNodes.get(_id).serialize());
+            this.addChild(model);
         }
 
         getEntity(): Readonly<IEntity> {

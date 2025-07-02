@@ -54,7 +54,11 @@ namespace Script {
                 health: 10,
             },
             {
-                id: "attackTests",
+                id: "kacki",
+                health: 10,
+            },
+            {
+                id: "defaultSkin",
                 attacks: {
                     options: [
                         {

@@ -48,7 +48,7 @@ namespace Script {
         }
         addToScene(_el: ƒ.Node): void {
             this.root.addChild(_el);
-            console.log("Root: " + this.root);
+            //console.log("Root: " + this.root);
         }
         getCamera(): ƒ.ComponentCamera {
             return this.camera;
