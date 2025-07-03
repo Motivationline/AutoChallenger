@@ -340,8 +340,8 @@ namespace Script {
                 }
             },
             {
-                id: "idioticIcicle", // enemy that attacks the entire mirrored column for 1
-                health: 1,
+                id: "boxingBush", // enemy that attacks the entire mirrored column for 1
+                health: 2,
                 attacks: {
                     options: [
                         {
@@ -383,7 +383,7 @@ namespace Script {
                 }
             },
             {
-                id: "graveGrinder", // enemy that attacks a plus, but spawns in round 2 (not implemented yet)
+                id: "sandSitter", // enemy that attacks a plus, but spawns in round 2 (not implemented yet)
                 health: 1,
                 attacks: {
                     options: [
@@ -422,7 +422,7 @@ namespace Script {
             },
             {
                 id: "countdownCoconut", // coconut that blows up on the final turn
-                health: 1,
+                health: 2,
                 abilities: [
                     {
                         on: EVENT.ROUND_END,
@@ -439,7 +439,7 @@ namespace Script {
                             side: TARGET_SIDE.OPPONENT,
                         },
                         attack: {
-                            baseDamage: 1,
+                            baseDamage: 2,
                         }, // NEEDS TO BLOW UP ITSELF ASWELL
                     },
                 ]
