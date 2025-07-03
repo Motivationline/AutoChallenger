@@ -32,9 +32,7 @@ namespace Script {
         damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
         affect(_spell: SpellData, _cause?: IEntity): Promise<number>;
         getOwnDamage(): number;
-        updateVisuals(_arena: Arena): void;
         registerEventListeners(): void;
-        getVisualizer(): VisualizeEntity;
         setGrids(_home: Grid<IEntity>, _away: Grid<IEntity>): void;
     }
 
@@ -53,20 +51,16 @@ namespace Script {
         startDirection?: number;
         activeEffects = new Map<SPELL_TYPE, number>();
 
-        protected visualizer: VisualizeEntity;
-
         #arena: Arena;
         #triggers: Set<EVENT> = new Set();
 
-        constructor(_entity: EntityData, _vis: IVisualizer, _pos: Position = [0, 0]) {
+        constructor(_entity: EntityData, _pos: Position = [0, 0]) {
             this.id = _entity.id;
             this.health = _entity.health ?? 1;
             this.currentHealth = this.health;
             this.position = _pos;
 
             this.updateEntityData(_entity);
-
-            this.visualizer = _vis.getEntity(this);
         }
 
         public get untargetable() {
@@ -85,7 +79,7 @@ namespace Script {
 
         updateEntityData(_newData: EntityData) {
             this.id = _newData.id;
-            
+
             let healthDifference = (_newData.health ?? 1) - (this.health ?? 0);
             this.currentHealth = (this.health ?? 0) + healthDifference;
             this.health = _newData.health ?? 1;
@@ -96,10 +90,6 @@ namespace Script {
             this.abilities = _newData.abilities;
             this.resistances = _newData.resistances;
             this.resistancesSet = new Set(_newData.resistances);
-        }
-
-        getVisualizer(): VisualizeEntity {
-            return this.visualizer;
         }
 
         async damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number> {
@@ -113,7 +103,7 @@ namespace Script {
             if (this.activeEffects.has(SPELL_TYPE.MIRROR) && _cause) {
                 let mirrors = Math.max(0, this.activeEffects.get(SPELL_TYPE.MIRROR));
                 if (mirrors > 0) {
-                    _cause.damage(_amt, _critChance, this);
+                    await _cause.damage(_amt, _critChance, this);
                     mirrors--;
                     this.setEffectLevel(SPELL_TYPE.MIRROR, mirrors);
                     // TODO: Event for mirror effect?
@@ -153,23 +143,22 @@ namespace Script {
             if (this.activeEffects.has(SPELL_TYPE.THORNS) && _cause) {
                 let thorns = Math.max(0, this.activeEffects.get(SPELL_TYPE.THORNS));
                 if (thorns > 0) {
-                    _cause.damage(thorns, 0, this);
+                    await _cause.damage(thorns, 0, this);
                 }
                 this.setEffectLevel(SPELL_TYPE.THORNS, 0);
             }
 
 
-            await EventBus.dispatchEvent({ type: EVENT.ENTITY_HURT_BEFORE, target: this, value: amount, cause: _cause });
+            await EventBus.dispatchEvent({ type: EVENT.ENTITY_HURT_BEFORE, target: this, detail: { amount, crit: wasCrit }, cause: _cause });
             this.currentHealth -= amount;
-            this.visualizer.hurt(amount, wasCrit);
 
-            await EventBus.dispatchEvent({ type: EVENT.ENTITY_HURT, target: this, cause: _cause, value: amount });
+            await EventBus.dispatchEvent({ type: EVENT.ENTITY_HURT, target: this, cause: _cause, detail: { amount, crit: wasCrit } });
 
             if (this.currentHealth <= 0) {
                 //this entity died
-                await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIES, target: this, cause: _cause, value: amount });
+                await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIES, target: this, cause: _cause, detail: { amount } });
 
-                await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIED, target: this, cause: _cause, value: amount });
+                await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIED, target: this, cause: _cause, detail: { amount } });
             }
             return this.currentHealth;
         }
@@ -180,30 +169,30 @@ namespace Script {
             }
             if (this.resistancesSet.has(_spell.type)) {
                 // resisted this spell
-                await this.visualizer.resist();
+                // TODO: dispatch event
                 return 0;
             }
 
             const instantEffects: Set<SPELL_TYPE> = new Set([SPELL_TYPE.HEAL]);
             let amount = _spell.level ?? 1;
 
-            await EventBus.dispatchEvent({ type: EVENT.ENTITY_AFFECT, value: amount, trigger: _spell, target: this, cause: _cause })
+            await EventBus.dispatchEvent({ type: EVENT.ENTITY_AFFECT, detail: { level: amount }, trigger: _spell, target: this, cause: _cause })
             if (!instantEffects.has(_spell.type)) {
                 let value = this.activeEffects.get(_spell.type) ?? 0;
                 value += amount;
                 this.activeEffects.set(_spell.type, value);
-                await EventBus.dispatchEvent({ type: EVENT.ENTITY_AFFECTED, value: amount, trigger: _spell, target: this, cause: _cause })
+                await EventBus.dispatchEvent({ type: EVENT.ENTITY_AFFECTED, detail: { level: amount }, trigger: _spell, target: this, cause: _cause })
                 return value;
             }
 
             switch (_spell.type) {
                 case SPELL_TYPE.HEAL: {
-                    await EventBus.dispatchEvent({ type: EVENT.ENTITY_HEAL, value: amount, trigger: _spell, target: this, cause: _cause })
+                    await EventBus.dispatchEvent({ type: EVENT.ENTITY_HEAL, detail: { level: amount }, trigger: _spell, target: this, cause: _cause })
                     // TODO: call Visualizer
                     // TODO: prevent overheal?
                     this.currentHealth += amount;
-                    await EventBus.dispatchEvent({ type: EVENT.ENTITY_HEALED, value: amount, trigger: _spell, target: this, cause: _cause })
-                    await EventBus.dispatchEvent({ type: EVENT.ENTITY_AFFECTED, value: amount, trigger: _spell, target: this, cause: _cause })
+                    await EventBus.dispatchEvent({ type: EVENT.ENTITY_HEALED, detail: { level: amount }, trigger: _spell, target: this, cause: _cause })
+                    await EventBus.dispatchEvent({ type: EVENT.ENTITY_AFFECTED, detail: { level: amount }, trigger: _spell, target: this, cause: _cause })
                     break;
                 }
             }
@@ -219,6 +208,7 @@ namespace Script {
         }
 
         async move(): Promise<void> {
+            //TODO: add movement logic here
             ;
         }
         async useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells: SpellData[] = this.select(this.spells, true), _targetsOverride?: IEntity[]): Promise<void> {
@@ -229,7 +219,6 @@ namespace Script {
             }
             for (let spell of _spells) {
                 let targets = _targetsOverride ?? getTargets(spell.target, _friendly, _opponent, this);
-                await this.visualizer.spell(spell, targets);
                 for (let target of targets) {
                     await EventBus.dispatchEvent({ type: EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target })
                     await target.affect(spell, this);
@@ -238,7 +227,7 @@ namespace Script {
             }
         }
         async useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks: AttackData[] = this.select(this.attacks, true), _targetsOverride?: IEntity[]): Promise<void> {
-            if (!_attacks) return;
+            if (!_attacks || _attacks.length === 0) return;
             if (this.stunned) {
                 // TODO: Event/Visualization for stunned
                 return;
@@ -247,13 +236,12 @@ namespace Script {
                 // get the target(s)
                 let targets = _targetsOverride ?? getTargets(attack.target, _friendly, _opponent, this);
                 // execute the attacks
-                await this.visualizer.attack(attack, targets);
                 let attackDmg = this.getDamageOfAttacks([attack], true);
+                await EventBus.dispatchEvent({ type: EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } })
                 for (let target of targets) {
-                    EventBus.dispatchEvent({ type: EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, value: attackDmg })
                     await target.damage(attackDmg, attack.baseCritChance, this);
-                    EventBus.dispatchEvent({ type: EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, value: attackDmg })
                 }
+                await EventBus.dispatchEvent({ type: EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } })
             }
         }
 
@@ -261,10 +249,6 @@ namespace Script {
             const attacks = this.select(this.attacks, false);
             let total: number = this.getDamageOfAttacks(attacks, false);
             return total;
-        }
-
-        updateVisuals(): void {
-            this.visualizer.updateVisuals();
         }
 
         protected select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[] {
@@ -342,13 +326,13 @@ namespace Script {
             for (let trigger of this.#triggers.values()) {
                 EventBus.addEventListener(trigger, this.abilityEventListener);
             }
-            
+
             // register end of turn effects
             EventBus.addEventListener(EVENT.ROUND_END, this.endOfRoundEventListener);
             // register end of fight effects
             EventBus.addEventListener(EVENT.FIGHT_END, this.endOfFightEventListener);
         }
-        
+
         public removeEventListeners() {
             for (let trigger of this.#triggers.values()) {
                 EventBus.removeEventListener(trigger, this.abilityEventListener);
@@ -385,7 +369,7 @@ namespace Script {
                 let value = this.activeEffects.get(spell);
                 if (value > 0) {
                     if (damagingSpells.includes(spell)) {
-                        this.damage(value, 0);
+                        await this.damage(value, 0);
                     }
                 }
                 this.setEffectLevel(spell, --value);

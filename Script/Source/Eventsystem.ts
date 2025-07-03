@@ -1,10 +1,13 @@
 namespace Script {
 
     export enum EVENT {
+        RUN_START = "runStart",
+        RUN_END = "runEnd",
         FIGHT_PREPARE = "fightPrepare",
         FIGHT_PREPARE_COMPLETED = "fightPrepareCompleted",
         FIGHT_START = "fightStart",
         FIGHT_END = "fightEnd",
+        FIGHT_ENDED = "fightEnded",
         ROUND_START = "roundStart",
         ROUND_END = "roundEnd",
         ENTITY_SPELL_BEFORE = "entitySpellBefore",
@@ -34,17 +37,17 @@ namespace Script {
      * 
     */
 
-    export interface FightEvent {
+    export interface FightEvent<T = any> {
         /** What kind of event happened? */
         type: EVENT,
         /** Who sent this event? undefined if system */
         target?: IEntity,
         /** Who or what caused the event? Might be empty. */
         cause?: IEntity,
-        /** Optional value field for relevant events. Might be empty. */
-        value?: number,
         /** Optional value for whatever triggered this event. */
         trigger?: AttackData | SpellData | MoveData | AbilityData,
+        /** Optional data with more details about this specific event. */
+        detail?: T;
     }
 
     export type FightEventListener = (_ev?: FightEvent) => Promise<void>;
@@ -71,7 +74,7 @@ namespace Script {
             listeners.splice(index, 1);
         }
 
-        static async dispatchEvent(_ev: FightEvent) {
+        static async dispatchEvent<T>(_ev: FightEvent<T>) {
             if(!this.listeners.has(_ev.type)) return;
             for (let listener of this.listeners.get(_ev.type)) {
                 await listener(_ev);

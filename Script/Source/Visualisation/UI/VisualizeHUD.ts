@@ -17,7 +17,7 @@ namespace Script {
         }
 
         private updateRoundCounter(_ev: FightEvent) { //TODO: make private somehow
-            let round = _ev.value;
+            let round = _ev.detail.round;
             const roundCounter: HTMLDivElement = document.querySelector(".RoundCounter");
             roundCounter.innerText = `Round: ${round + 1}`;
             console.log(`Update Round: ${round + 1}`);

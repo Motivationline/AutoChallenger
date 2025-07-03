@@ -263,6 +263,29 @@
             "idResource": "Graph|2025-07-02T13:27:13.298Z|17385"
           }
         ]
+      },
+      {
+        "name": "tempVisuals",
+        "entries": [
+          {
+            "idResource": "MeshQuad|2025-07-03T06:11:04.933Z|59310"
+          },
+          {
+            "idResource": "Material|2025-07-03T06:11:17.977Z|13805"
+          },
+          {
+            "idResource": "Graph|2025-07-03T06:08:54.152Z|30006"
+          },
+          {
+            "idResource": "Graph|2025-07-03T06:11:40.900Z|67230"
+          },
+          {
+            "idResource": "Graph|2025-07-03T06:11:56.936Z|16504"
+          },
+          {
+            "idResource": "Graph|2025-07-03T06:11:57.203Z|19846"
+          }
+        ]
       }
     ]
   }

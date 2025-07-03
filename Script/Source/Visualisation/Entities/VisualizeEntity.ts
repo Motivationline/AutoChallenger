@@ -2,11 +2,11 @@ namespace Script {
     import ƒ = FudgeCore;
     export interface VisualizeEntity {
         idle(): Promise<void>;
-        attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
+        attack(_ev: FightEvent): Promise<void>;
         move(_move: MoveData): Promise<void>;
-        hurt(_damage: number, _crit: boolean): Promise<void>;
+        getHurt(_ev: FightEvent): Promise<void>;
         resist(): Promise<void>;
-        spell(_spell: SpellData, _targets: IEntity[]): Promise<void>;
+        useSpell(_ev: FightEvent): Promise<void>;
         showPreview(): Promise<void>;
         hidePreview(): Promise<void>;
         /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
@@ -44,37 +44,62 @@ namespace Script {
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
             Provider.visualizer.addToScene(this);
-
+            this.addEventListeners();
         }
 
         async idle(): Promise<void> {
-            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
+            // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
             await waitMS(200);
         }
 
-        async attack(_attack: AttackData, _targets: IEntity[]): Promise<void> {
-            console.log("entity visualizer null: attack", {attacker: this.entity, attack: _attack, targets: _targets});
-            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("blue");
-            await waitMS(200);
+        //#region Do something
+        async attack(_ev: FightEvent): Promise<void> {
+            console.log("entity visualizer null: attack", { attacker: this.entity, attack: _ev.trigger, targets: _ev.detail.targets });
+            let node = await getCloneNodeFromRegistry("attack");
+            if (node) this.addChild(node);
+            await waitMS(1000);
+            if (node) this.removeChild(node);
         }
 
         async move(_move: MoveData): Promise<void> {
-            //TODO: add movement logic here
             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
             console.log("entity visualizer null: move", _move);
             await waitMS(200);
         }
 
-        async hurt(_damage: number, _crit: boolean): Promise<void> {
-            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("red");
+        async useSpell(_ev: FightEvent): Promise<void> {
+            console.log("entity visualizer null: spell", { caster: this.entity, spell: _ev.trigger, targets: _ev.detail?.targets });
+            let node = await getCloneNodeFromRegistry("spell");
+            if (node) this.addChild(node);
+            await waitMS(1000);
+            if (node) this.removeChild(node);
+        }
+        //#endregion
+
+        //#region Something happened
+        async getHurt(_ev: FightEvent): Promise<void> {
+            let node = await getCloneNodeFromRegistry("hurt");
+            if (node) this.addChild(node);
+            await waitMS(1000);
+            if (node) this.removeChild(node);
+        }
+        async getAffected(_ev: FightEvent): Promise<void> {
+            let node = await getCloneNodeFromRegistry("affected");
+            if (node) this.addChild(node);
+            await waitMS(1000);
+            if (node) this.removeChild(node);
+        }
+        async die(_ev: FightEvent): Promise<void> {
+            // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("hotpink");
+            await waitMS(1000);
+            // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
+        }
+        async resist(): Promise<void> {
+            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("gray");
+            console.log("entity visualizer null: resisting", this.entity);
             await waitMS(200);
         }
-
-        async spell(_spell: SpellData, _targets: IEntity[]): Promise<void> {
-            console.log("entity visualizer null: spell", {caster: this.entity, spell: _spell, targets: _targets});
-            await waitMS(200);
-        }
-
+        //#endregion
         async showPreview(): Promise<void> {
             console.log("entity visualizer null: show preview", this.entity);
             await waitMS(200);
@@ -90,11 +115,6 @@ namespace Script {
             // await waitMS(200);
         }
 
-        async resist(): Promise<void> {
-            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("gray");
-            console.log("entity visualizer null: resisting", this.entity);
-            await waitMS(200);
-        }
 
         async loadModel(_id: string) {
             let model: ƒ.Node = new ƒ.Node(_id);
@@ -104,6 +124,63 @@ namespace Script {
 
         getEntity(): Readonly<IEntity> {
             return this.entity;
+        }
+
+        addEventListeners() {
+            EventBus.addEventListener(EVENT.FIGHT_ENDED, this.eventListener);
+            EventBus.addEventListener(EVENT.ENTITY_ATTACK, this.eventListener);
+            EventBus.addEventListener(EVENT.ENTITY_HURT, this.eventListener);
+            EventBus.addEventListener(EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
+            EventBus.addEventListener(EVENT.ENTITY_AFFECTED, this.eventListener);
+            EventBus.addEventListener(EVENT.ENTITY_DIES, this.eventListener);
+        }
+
+        removeEventListeners() {
+
+        }
+
+        eventListener = async (_ev: FightEvent) => {
+            await this.handleEvent(_ev);
+        }
+
+        async handleEvent(_ev: FightEvent) {
+            if (_ev.cause === this.entity) {
+                // this entity is doing something
+                switch (_ev.type) {
+                    case EVENT.ENTITY_ATTACK: {
+                        await this.attack(_ev);
+                        break;
+                    }
+                    case EVENT.ENTITY_SPELL_BEFORE: {
+                        await this.useSpell(_ev);
+                        break;
+                    }
+                }
+            } else if (_ev.target === this.entity) {
+                // this entity is affected by something
+                switch (_ev.type) {
+                    case EVENT.ENTITY_HURT: {
+                        await this.getHurt(_ev);
+                        break;
+                    }
+                    case EVENT.ENTITY_AFFECTED: {
+                        await this.getAffected(_ev);
+                        break;
+                    }
+                    case EVENT.ENTITY_DIES: {
+                        await this.die(_ev);
+                        break;
+                    }
+                }
+            } else {
+                // independent events
+                switch (_ev.type) {
+                    case EVENT.FIGHT_ENDED: {
+                        this.removeEventListeners();
+                        break;
+                    }
+                }
+            }
         }
     }
 }

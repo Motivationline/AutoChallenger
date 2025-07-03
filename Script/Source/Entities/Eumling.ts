@@ -1,11 +1,11 @@
 namespace Script {
     export class Eumling extends Entity {
         #types: string[] = [];
-        constructor(_startType: string, _vis: IVisualizer) {
+        constructor(_startType: string) {
             _startType = _startType.trim().toUpperCase();
             const data = Provider.data.getEntity(_startType + "-Eumling");
             if (!data) throw new Error("Tried to create an unknown Eumling type: " + _startType);
-            super(data, _vis);
+            super(data);
             this.#types = _startType.split("");
         }
 

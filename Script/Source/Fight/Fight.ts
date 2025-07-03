@@ -45,7 +45,7 @@ namespace Script {
         async run(): Promise<void> {
             Fight.activeFight = this;
             // Eventlisteners
-            EventBus.removeAllEventListeners();
+            // EventBus.removeAllEventListeners();
             this.HUD.addFightListeners();//replace main.ts instance with Provider.visualizer.getHUD() instance
             this.arena.home.forEachElement((el) => { el?.registerEventListeners() });
             this.arena.away.forEachElement((el) => { el?.registerEventListeners() });
@@ -56,10 +56,10 @@ namespace Script {
             // run actual round
             for (let r: number = 0; r < this.rounds; r++) {
                 await this.visualizer.roundStart();
-                await EventBus.dispatchEvent({ type: EVENT.ROUND_START, value: r });
+                await EventBus.dispatchEvent({ type: EVENT.ROUND_START, detail: {round: r }});
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
-                await EventBus.dispatchEvent({ type: EVENT.ROUND_END, value: r });
+                await EventBus.dispatchEvent({ type: EVENT.ROUND_END, detail: {round: r }});
                 await this.visualizer.roundEnd();
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {

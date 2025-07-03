@@ -43,13 +43,14 @@ namespace Script {
                 let validTargets = getTargets(condition.cause, _arena.home, _arena.away, this);
                 if (!validTargets.includes(_ev.cause)) return false;
             }
-            if (condition.value && _ev.value !== undefined) {
+            let level = _ev.detail.level;
+            if (condition.value && level !== undefined) {
                 if (typeof condition.value === "number") {
-                    if (condition.value !== _ev.value) return false;
+                    if (condition.value !== level) return false;
                 } else {
                     let min = condition.value.min ?? -Infinity;
                     let max = condition.value.max ?? Infinity;
-                    if (min > _ev.value || max < _ev.value) return false;
+                    if (min > level || max < level) return false;
                 }
             }
         }

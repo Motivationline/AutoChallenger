@@ -1,9 +1,12 @@
 declare namespace Script {
     enum EVENT {
+        RUN_START = "runStart",
+        RUN_END = "runEnd",
         FIGHT_PREPARE = "fightPrepare",
         FIGHT_PREPARE_COMPLETED = "fightPrepareCompleted",
         FIGHT_START = "fightStart",
         FIGHT_END = "fightEnd",
+        FIGHT_ENDED = "fightEnded",
         ROUND_START = "roundStart",
         ROUND_END = "roundEnd",
         ENTITY_SPELL_BEFORE = "entitySpellBefore",
@@ -29,17 +32,17 @@ declare namespace Script {
      *
      *
     */
-    interface FightEvent {
+    interface FightEvent<T = any> {
         /** What kind of event happened? */
         type: EVENT;
         /** Who sent this event? undefined if system */
         target?: IEntity;
         /** Who or what caused the event? Might be empty. */
         cause?: IEntity;
-        /** Optional value field for relevant events. Might be empty. */
-        value?: number;
         /** Optional value for whatever triggered this event. */
         trigger?: AttackData | SpellData | MoveData | AbilityData;
+        /** Optional data with more details about this specific event. */
+        detail?: T;
     }
     type FightEventListener = (_ev?: FightEvent) => Promise<void>;
     class EventBus {
@@ -47,7 +50,7 @@ declare namespace Script {
         static removeAllEventListeners(): void;
         static addEventListener(_ev: EVENT, _fn: FightEventListener): void;
         static removeEventListener(_ev: EVENT, _fn: FightEventListener): void;
-        static dispatchEvent(_ev: FightEvent): Promise<void>;
+        static dispatchEvent<T>(_ev: FightEvent<T>): Promise<void>;
     }
 }
 declare namespace Script {
@@ -442,9 +445,7 @@ declare namespace Script {
         damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
         affect(_spell: SpellData, _cause?: IEntity): Promise<number>;
         getOwnDamage(): number;
-        updateVisuals(_arena: Arena): void;
         registerEventListeners(): void;
-        getVisualizer(): VisualizeEntity;
         setGrids(_home: Grid<IEntity>, _away: Grid<IEntity>): void;
     }
     export class Entity implements IEntity {
@@ -462,12 +463,10 @@ declare namespace Script {
         resistancesSet?: Set<SPELL_TYPE>;
         startDirection?: number;
         activeEffects: Map<SPELL_TYPE, number>;
-        protected visualizer: VisualizeEntity;
-        constructor(_entity: EntityData, _vis: IVisualizer, _pos?: Position);
+        constructor(_entity: EntityData, _pos?: Position);
         get untargetable(): boolean;
         get stunned(): boolean;
         updateEntityData(_newData: EntityData): void;
-        getVisualizer(): VisualizeEntity;
         damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
         affect(_spell: SpellData, _cause?: IEntity): Promise<number>;
         setEffectLevel(_spell: SPELL_TYPE, value: number): Promise<void>;
@@ -475,7 +474,6 @@ declare namespace Script {
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells?: SpellData[], _targetsOverride?: IEntity[]): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks?: AttackData[], _targetsOverride?: IEntity[]): Promise<void>;
         getOwnDamage(): number;
-        updateVisuals(): void;
         protected select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[];
         protected getDamageOfAttacks(_attacks: Readonly<AttackDataNoTarget[]>, _consumeEffects: boolean): number;
         setGrids(_home: Grid<Entity>, _away: Grid<Entity>): void;
@@ -493,7 +491,7 @@ declare namespace Script {
 declare namespace Script {
     class Eumling extends Entity {
         #private;
-        constructor(_startType: string, _vis: IVisualizer);
+        constructor(_startType: string);
         get types(): Readonly<string[]>;
         addType(_type: string): void;
     }
@@ -585,14 +583,18 @@ declare namespace Script {
     }
 }
 declare namespace Script {
+    import ƒ = FudgeCore;
     function initEntitiesInGrid<T extends IEntity>(_grid: GridData<string>, _entity: new (...data: any) => T): Grid<T>;
     function waitMS(_ms: number): Promise<void>;
+    function getCloneNodeFromRegistry(id: string): Promise<ƒ.Node | undefined>;
 }
 declare namespace Script {
     /** Handles an entire run */
     class Run {
         eumlings: Eumling[];
         progress: number;
+        start(): Promise<void>;
+        chooseNext(): Promise<void>;
     }
 }
 declare namespace Script {
@@ -617,11 +619,11 @@ declare namespace Script {
     import ƒ = FudgeCore;
     interface VisualizeEntity {
         idle(): Promise<void>;
-        attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
+        attack(_ev: FightEvent): Promise<void>;
         move(_move: MoveData): Promise<void>;
-        hurt(_damage: number, _crit: boolean): Promise<void>;
+        getHurt(_ev: FightEvent): Promise<void>;
         resist(): Promise<void>;
-        spell(_spell: SpellData, _targets: IEntity[]): Promise<void>;
+        useSpell(_ev: FightEvent): Promise<void>;
         showPreview(): Promise<void>;
         hidePreview(): Promise<void>;
         /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
@@ -634,32 +636,14 @@ declare namespace Script {
         private static material;
         private size;
         constructor(_entity: IEntity);
+        getAffected(_ev: FightEvent): Promise<void>;
+        die(_ev: FightEvent): Promise<void>;
         loadModel(_id: string): Promise<void>;
         getEntity(): Readonly<IEntity>;
-    }
-}
-declare namespace Script {
-    import ƒ = FudgeCore;
-    class VisualizeTile extends ƒ.Node {
-        private static mesh;
-        private static material;
-        private size;
-        private pos;
-        constructor(_name: string, _size: number, _pos: ƒ.Vector3);
-    }
-}
-declare namespace Script {
-    import ƒ = FudgeCore;
-    class VisualizeTileGrid extends ƒ.Node {
-        private tiles;
-        private tileSize;
-        private spacing;
-        private offset;
-        private position;
-        constructor(_position: ƒ.Vector3);
-        private generateGrid;
-        getTilePosition(_index: number, _side: string): ƒ.Vector3;
-        private layoutGrid;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+        eventListener: (_ev: FightEvent) => Promise<void>;
+        handleEvent(_ev: FightEvent): Promise<void>;
     }
 }
 declare namespace Script {

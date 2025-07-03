@@ -37,10 +37,13 @@ var Script;
 (function (Script) {
     let EVENT;
     (function (EVENT) {
+        EVENT["RUN_START"] = "runStart";
+        EVENT["RUN_END"] = "runEnd";
         EVENT["FIGHT_PREPARE"] = "fightPrepare";
         EVENT["FIGHT_PREPARE_COMPLETED"] = "fightPrepareCompleted";
         EVENT["FIGHT_START"] = "fightStart";
         EVENT["FIGHT_END"] = "fightEnd";
+        EVENT["FIGHT_ENDED"] = "fightEnded";
         EVENT["ROUND_START"] = "roundStart";
         EVENT["ROUND_END"] = "roundEnd";
         EVENT["ENTITY_SPELL_BEFORE"] = "entitySpellBefore";
@@ -945,7 +948,7 @@ var Script;
         async run() {
             Fight.activeFight = this;
             // Eventlisteners
-            Script.EventBus.removeAllEventListeners();
+            // EventBus.removeAllEventListeners();
             this.HUD.addFightListeners(); //replace main.ts instance with Provider.visualizer.getHUD() instance
             this.arena.home.forEachElement((el) => { el?.registerEventListeners(); });
             this.arena.away.forEachElement((el) => { el?.registerEventListeners(); });
@@ -955,10 +958,10 @@ var Script;
             // run actual round
             for (let r = 0; r < this.rounds; r++) {
                 await this.visualizer.roundStart();
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_START, value: r });
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_START, detail: { round: r } });
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_END, value: r });
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_END, detail: { round: r } });
                 await this.visualizer.roundEnd();
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {
@@ -1057,7 +1060,7 @@ var Script;
             console.log("Hello from HUD");
         }
         updateRoundCounter(_ev) {
-            let round = _ev.value;
+            let round = _ev.detail.round;
             const roundCounter = document.querySelector(".RoundCounter");
             roundCounter.innerText = `Round: ${round + 1}`;
             console.log(`Update Round: ${round + 1}`);
@@ -1131,6 +1134,7 @@ var Script;
     }
     function update(_event) {
         // ƒ.Physics.simulate();  // if physics is included and used
+        viewport.draw();
         ƒ.AudioManager.default.update();
     }
     async function run() {
@@ -1263,7 +1267,7 @@ var Script;
     class Entity {
         #arena;
         #triggers;
-        constructor(_entity, _vis, _pos = [0, 0]) {
+        constructor(_entity, _pos = [0, 0]) {
             this.resistancesSet = new Set();
             this.activeEffects = new Map();
             this.#triggers = new Set();
@@ -1284,7 +1288,6 @@ var Script;
             this.currentHealth = this.health;
             this.position = _pos;
             this.updateEntityData(_entity);
-            this.visualizer = _vis.getEntity(this);
         }
         get untargetable() {
             if (this.activeEffects.get(Script.SPELL_TYPE.UNTARGETABLE) > 0) {
@@ -1313,9 +1316,6 @@ var Script;
             this.resistances = _newData.resistances;
             this.resistancesSet = new Set(_newData.resistances);
         }
-        getVisualizer() {
-            return this.visualizer;
-        }
         async damage(_amt, _critChance, _cause) {
             if (this.untargetable) {
                 return this.health;
@@ -1326,7 +1326,7 @@ var Script;
             if (this.activeEffects.has(Script.SPELL_TYPE.MIRROR) && _cause) {
                 let mirrors = Math.max(0, this.activeEffects.get(Script.SPELL_TYPE.MIRROR));
                 if (mirrors > 0) {
-                    _cause.damage(_amt, _critChance, this);
+                    await _cause.damage(_amt, _critChance, this);
                     mirrors--;
                     this.setEffectLevel(Script.SPELL_TYPE.MIRROR, mirrors);
                     // TODO: Event for mirror effect?
@@ -1362,18 +1362,17 @@ var Script;
             if (this.activeEffects.has(Script.SPELL_TYPE.THORNS) && _cause) {
                 let thorns = Math.max(0, this.activeEffects.get(Script.SPELL_TYPE.THORNS));
                 if (thorns > 0) {
-                    _cause.damage(thorns, 0, this);
+                    await _cause.damage(thorns, 0, this);
                 }
                 this.setEffectLevel(Script.SPELL_TYPE.THORNS, 0);
             }
-            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HURT_BEFORE, target: this, value: amount, cause: _cause });
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HURT_BEFORE, target: this, detail: { amount, crit: wasCrit }, cause: _cause });
             this.currentHealth -= amount;
-            this.visualizer.hurt(amount, wasCrit);
-            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HURT, target: this, cause: _cause, value: amount });
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HURT, target: this, cause: _cause, detail: { amount, crit: wasCrit } });
             if (this.currentHealth <= 0) {
                 //this entity died
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_DIES, target: this, cause: _cause, value: amount });
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_DIED, target: this, cause: _cause, value: amount });
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_DIES, target: this, cause: _cause, detail: { amount } });
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_DIED, target: this, cause: _cause, detail: { amount } });
             }
             return this.currentHealth;
         }
@@ -1383,27 +1382,27 @@ var Script;
             }
             if (this.resistancesSet.has(_spell.type)) {
                 // resisted this spell
-                await this.visualizer.resist();
+                // TODO: dispatch event
                 return 0;
             }
             const instantEffects = new Set([Script.SPELL_TYPE.HEAL]);
             let amount = _spell.level ?? 1;
-            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_AFFECT, value: amount, trigger: _spell, target: this, cause: _cause });
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_AFFECT, detail: { level: amount }, trigger: _spell, target: this, cause: _cause });
             if (!instantEffects.has(_spell.type)) {
                 let value = this.activeEffects.get(_spell.type) ?? 0;
                 value += amount;
                 this.activeEffects.set(_spell.type, value);
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_AFFECTED, value: amount, trigger: _spell, target: this, cause: _cause });
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_AFFECTED, detail: { level: amount }, trigger: _spell, target: this, cause: _cause });
                 return value;
             }
             switch (_spell.type) {
                 case Script.SPELL_TYPE.HEAL: {
-                    await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HEAL, value: amount, trigger: _spell, target: this, cause: _cause });
+                    await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HEAL, detail: { level: amount }, trigger: _spell, target: this, cause: _cause });
                     // TODO: call Visualizer
                     // TODO: prevent overheal?
                     this.currentHealth += amount;
-                    await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HEALED, value: amount, trigger: _spell, target: this, cause: _cause });
-                    await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_AFFECTED, value: amount, trigger: _spell, target: this, cause: _cause });
+                    await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HEALED, detail: { level: amount }, trigger: _spell, target: this, cause: _cause });
+                    await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_AFFECTED, detail: { level: amount }, trigger: _spell, target: this, cause: _cause });
                     break;
                 }
             }
@@ -1418,6 +1417,7 @@ var Script;
             }
         }
         async move() {
+            //TODO: add movement logic here
             ;
         }
         async useSpell(_friendly, _opponent, _spells = this.select(this.spells, true), _targetsOverride) {
@@ -1429,7 +1429,6 @@ var Script;
             }
             for (let spell of _spells) {
                 let targets = _targetsOverride ?? Script.getTargets(spell.target, _friendly, _opponent, this);
-                await this.visualizer.spell(spell, targets);
                 for (let target of targets) {
                     await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target });
                     await target.affect(spell, this);
@@ -1438,7 +1437,7 @@ var Script;
             }
         }
         async useAttack(_friendly, _opponent, _attacks = this.select(this.attacks, true), _targetsOverride) {
-            if (!_attacks)
+            if (!_attacks || _attacks.length === 0)
                 return;
             if (this.stunned) {
                 // TODO: Event/Visualization for stunned
@@ -1448,22 +1447,18 @@ var Script;
                 // get the target(s)
                 let targets = _targetsOverride ?? Script.getTargets(attack.target, _friendly, _opponent, this);
                 // execute the attacks
-                await this.visualizer.attack(attack, targets);
                 let attackDmg = this.getDamageOfAttacks([attack], true);
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } });
                 for (let target of targets) {
-                    Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, value: attackDmg });
                     await target.damage(attackDmg, attack.baseCritChance, this);
-                    Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, value: attackDmg });
                 }
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } });
             }
         }
         getOwnDamage() {
             const attacks = this.select(this.attacks, false);
             let total = this.getDamageOfAttacks(attacks, false);
             return total;
-        }
-        updateVisuals() {
-            this.visualizer.updateVisuals();
         }
         select(_options, _use) {
             if (!_options)
@@ -1565,7 +1560,7 @@ var Script;
                 let value = this.activeEffects.get(spell);
                 if (value > 0) {
                     if (damagingSpells.includes(spell)) {
-                        this.damage(value, 0);
+                        await this.damage(value, 0);
                     }
                 }
                 this.setEffectLevel(spell, --value);
@@ -1581,12 +1576,12 @@ var Script;
 (function (Script) {
     class Eumling extends Script.Entity {
         #types = [];
-        constructor(_startType, _vis) {
+        constructor(_startType) {
             _startType = _startType.trim().toUpperCase();
             const data = Script.Provider.data.getEntity(_startType + "-Eumling");
             if (!data)
                 throw new Error("Tried to create an unknown Eumling type: " + _startType);
-            super(data, _vis);
+            super(data);
             this.#types = _startType.split("");
         }
         get types() {
@@ -1626,15 +1621,16 @@ var Script;
                 if (!validTargets.includes(_ev.cause))
                     return false;
             }
-            if (condition.value && _ev.value !== undefined) {
+            let level = _ev.detail.level;
+            if (condition.value && level !== undefined) {
                 if (typeof condition.value === "number") {
-                    if (condition.value !== _ev.value)
+                    if (condition.value !== level)
                         return false;
                 }
                 else {
                     let min = condition.value.min ?? -Infinity;
                     let max = condition.value.max ?? Infinity;
-                    if (min > _ev.value || max < _ev.value)
+                    if (min > level || max < level)
                         return false;
                 }
             }
@@ -1801,6 +1797,7 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
+    var ƒ = FudgeCore;
     function initEntitiesInGrid(_grid, _entity) {
         const grid = new Script.Grid(_grid);
         const newGrid = new Script.Grid();
@@ -1812,7 +1809,7 @@ var Script;
             let entityData = data.getEntity(entityId);
             if (!entityData)
                 throw new Error(`Entity ${entityId} not found.`);
-            newGrid.set(pos, new _entity(entityData, Script.Provider.visualizer, pos));
+            newGrid.set(pos, new _entity(entityData, pos));
         });
         console.log("init Grid: " + newGrid);
         return newGrid;
@@ -1824,11 +1821,36 @@ var Script;
         });
     }
     Script.waitMS = waitMS;
+    async function getCloneNodeFromRegistry(id) {
+        let node = Script.DataLink.linkedNodes.get(id);
+        if (!node)
+            return undefined;
+        const newNode = new ƒ.Node("");
+        await newNode.deserialize(node.serialize());
+        return newNode;
+    }
+    Script.getCloneNodeFromRegistry = getCloneNodeFromRegistry;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
     /** Handles an entire run */
     class Run {
+        constructor() {
+            this.eumlings = [];
+            this.progress = 0;
+        }
+        async start() {
+            // TODO: Select Start-Eumling Properly
+            let eumling;
+            while (eumling !== "R" && eumling !== "S") {
+                eumling = prompt("Which eumling you want to start with? (R or S)", "R").trim().toUpperCase();
+            }
+            this.eumlings.push(new Script.Eumling(eumling));
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.RUN_START });
+        }
+        async chooseNext() {
+            // 
+        }
     }
     Script.Run = Run;
 })(Script || (Script = {}));
@@ -1840,10 +1862,16 @@ var Script;
         constructor(_fight) {
             //TODO: Fix Scaling of the Grids and instance the Entities at given Positions from the Scene out of the Fudge Editor
             let awayGrid = new Script.Grid();
-            _fight.arena.away.forEachElement((entity, pos) => awayGrid.set(pos, entity?.getVisualizer()));
+            _fight.arena.away.forEachElement((entity, pos) => {
+                if (entity)
+                    awayGrid.set(pos, new Script.VisualizeEntity(entity));
+            });
             this.#away = new Script.IVisualizeGrid(awayGrid, "away");
             let homeGrid = new Script.Grid();
-            _fight.arena.home.forEachElement((entity, pos) => homeGrid.set(pos, entity?.getVisualizer()));
+            _fight.arena.home.forEachElement((entity, pos) => {
+                if (entity)
+                    homeGrid.set(pos, new Script.VisualizeEntity(entity));
+            });
             this.#home = new Script.IVisualizeGrid(homeGrid, "home");
             Script.Provider.visualizer.addToScene(this.#away);
             Script.Provider.visualizer.addToScene(this.#home);
@@ -1896,6 +1924,9 @@ var Script;
         constructor(_entity) {
             super("entity");
             this.size = 0.5;
+            this.eventListener = async (_ev) => {
+                await this.handleEvent(_ev);
+            };
             this.entity = _entity;
             //get the correct mesh and material
             this.model = new ƒ.Node("");
@@ -1911,30 +1942,65 @@ var Script;
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
             Script.Provider.visualizer.addToScene(this);
+            this.addEventListeners();
         }
         async idle() {
-            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
+            // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
             await Script.waitMS(200);
         }
-        async attack(_attack, _targets) {
-            console.log("entity visualizer null: attack", { attacker: this.entity, attack: _attack, targets: _targets });
-            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("blue");
-            await Script.waitMS(200);
+        //#region Do something
+        async attack(_ev) {
+            console.log("entity visualizer null: attack", { attacker: this.entity, attack: _ev.trigger, targets: _ev.detail.targets });
+            let node = await Script.getCloneNodeFromRegistry("attack");
+            if (node)
+                this.addChild(node);
+            await Script.waitMS(1000);
+            if (node)
+                this.removeChild(node);
         }
         async move(_move) {
-            //TODO: add movement logic here
             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
             console.log("entity visualizer null: move", _move);
             await Script.waitMS(200);
         }
-        async hurt(_damage, _crit) {
-            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("red");
+        async useSpell(_ev) {
+            console.log("entity visualizer null: spell", { caster: this.entity, spell: _ev.trigger, targets: _ev.detail?.targets });
+            let node = await Script.getCloneNodeFromRegistry("spell");
+            if (node)
+                this.addChild(node);
+            await Script.waitMS(1000);
+            if (node)
+                this.removeChild(node);
+        }
+        //#endregion
+        //#region Something happened
+        async getHurt(_ev) {
+            let node = await Script.getCloneNodeFromRegistry("hurt");
+            if (node)
+                this.addChild(node);
+            await Script.waitMS(1000);
+            if (node)
+                this.removeChild(node);
+        }
+        async getAffected(_ev) {
+            let node = await Script.getCloneNodeFromRegistry("affected");
+            if (node)
+                this.addChild(node);
+            await Script.waitMS(1000);
+            if (node)
+                this.removeChild(node);
+        }
+        async die(_ev) {
+            // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("hotpink");
+            await Script.waitMS(1000);
+            // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
+        }
+        async resist() {
+            this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("gray");
+            console.log("entity visualizer null: resisting", this.entity);
             await Script.waitMS(200);
         }
-        async spell(_spell, _targets) {
-            console.log("entity visualizer null: spell", { caster: this.entity, spell: _spell, targets: _targets });
-            await Script.waitMS(200);
-        }
+        //#endregion
         async showPreview() {
             console.log("entity visualizer null: show preview", this.entity);
             await Script.waitMS(200);
@@ -1947,11 +2013,6 @@ var Script;
             // console.log("entity visualizer null: updateVisuals", this.entity);
             // await waitMS(200);
         }
-        async resist() {
-            //this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("gray");
-            console.log("entity visualizer null: resisting", this.entity);
-            await Script.waitMS(200);
-        }
         async loadModel(_id) {
             let model = new ƒ.Node(_id);
             await model.deserialize(Script.DataLink.linkedNodes.get(_id).serialize());
@@ -1959,6 +2020,57 @@ var Script;
         }
         getEntity() {
             return this.entity;
+        }
+        addEventListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.FIGHT_ENDED, this.eventListener);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_ATTACK, this.eventListener);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_HURT, this.eventListener);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_AFFECTED, this.eventListener);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_DIES, this.eventListener);
+        }
+        removeEventListeners() {
+        }
+        async handleEvent(_ev) {
+            if (_ev.cause === this.entity) {
+                // this entity is doing something
+                switch (_ev.type) {
+                    case Script.EVENT.ENTITY_ATTACK: {
+                        await this.attack(_ev);
+                        break;
+                    }
+                    case Script.EVENT.ENTITY_SPELL_BEFORE: {
+                        await this.useSpell(_ev);
+                        break;
+                    }
+                }
+            }
+            else if (_ev.target === this.entity) {
+                // this entity is affected by something
+                switch (_ev.type) {
+                    case Script.EVENT.ENTITY_HURT: {
+                        await this.getHurt(_ev);
+                        break;
+                    }
+                    case Script.EVENT.ENTITY_AFFECTED: {
+                        await this.getAffected(_ev);
+                        break;
+                    }
+                    case Script.EVENT.ENTITY_DIES: {
+                        await this.die(_ev);
+                        break;
+                    }
+                }
+            }
+            else {
+                // independent events
+                switch (_ev.type) {
+                    case Script.EVENT.FIGHT_ENDED: {
+                        this.removeEventListeners();
+                        break;
+                    }
+                }
+            }
         }
     }
     Script.VisualizeEntity = VisualizeEntity;
@@ -2015,95 +2127,6 @@ var Script;
 //         }
 //     }
 // }
-//!!!Unused!!!
-var Script;
-//!!!Unused!!!
-(function (Script) {
-    var ƒ = FudgeCore;
-    class VisualizeTile extends ƒ.Node {
-        //create a mesh and material for the tile
-        static { this.mesh = new ƒ.MeshCube("TileMesh"); }
-        static { this.material = new ƒ.Material("TileMat", ƒ.ShaderLitTextured); }
-        constructor(_name, _size, _pos) {
-            super(_name);
-            this.size = _size;
-            this.pos = _pos;
-            const tileMesh = new ƒ.ComponentMesh(VisualizeTile.mesh);
-            tileMesh.mtxPivot.scale(new ƒ.Vector3(this.size, 0.001, this.size));
-            tileMesh.mtxPivot.translate(this.pos);
-            tileMesh.mtxPivot.rotateZ(90);
-            //const sphere: ƒ.ComponentMesh = new ƒ.ComponentMesh(new ƒ.MeshSphere("Tile"));
-            const tileMat = new ƒ.ComponentMaterial(VisualizeTile.material);
-            tileMat.clrPrimary.setCSS("white");
-            this.addComponent(tileMesh);
-            this.addComponent(tileMat);
-            this.addComponent(new ƒ.ComponentTransform());
-        }
-    }
-    Script.VisualizeTile = VisualizeTile;
-})(Script || (Script = {}));
-//!!!Unused!!!
-var Script;
-//!!!Unused!!!
-(function (Script) {
-    var ƒ = FudgeCore;
-    class VisualizeTileGrid extends ƒ.Node {
-        constructor(_position) {
-            super("VisualizeGrid");
-            this.position = _position;
-            this.tiles = 9; //3x3
-            this.tileSize = 1;
-            this.spacing = 0.4; //large values = smaller spacing between 0 and 0.5
-            this.offset = 0.5;
-            this.addComponent(new ƒ.ComponentTransform());
-            this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(this.position);
-            this.generateGrid();
-        }
-        //create a grid with 2 Sides: home | away
-        //each having a 3x3 grid of tiles
-        generateGrid() {
-            let home = new ƒ.Node("home");
-            let away = new ƒ.Node("away");
-            home.addComponent(new ƒ.ComponentTransform);
-            away.addComponent(new ƒ.ComponentTransform);
-            //create the tile grid for each side
-            this.layoutGrid(home, 1);
-            this.layoutGrid(away, -1);
-            //add the sides as children to the grid Object
-            this.addChild(home);
-            this.addChild(away);
-        }
-        //TODO: consider world position or relative position?
-        getTilePosition(_index, _side) {
-            let i = _index;
-            if (_side === "home") {
-                let x = i % 3;
-                let z = Math.floor(i / 3);
-                return new ƒ.Vector3(x, 0, z);
-            }
-            else if (_side === "away") {
-                let x = -(i % 3);
-                let z = Math.floor(i / 3);
-                return new ƒ.Vector3(x, 0, z);
-            }
-            else {
-                throw new Error("Invalide side. Expected 'home' or 'away'.");
-            }
-        }
-        //Layout the tiles in a grid with a given direction and add them as childs to the given parent node
-        layoutGrid(_parent, direction = 1) {
-            for (let i = 0; i < this.tiles; i++) {
-                let x = i % 3;
-                let z = Math.floor(i / 3);
-                let tilePos = new ƒ.Vector3(direction * (this.offset + x * (this.tileSize - this.spacing)), 0, z * (this.tileSize - this.spacing));
-                let tile = new Script.VisualizeTile(`Tile_${i}: ${x}, ${z}`, this.tileSize, tilePos);
-                tile.getComponent(ƒ.ComponentTransform).mtxLocal.translate(tilePos);
-                _parent.addChild(tile);
-            }
-        }
-    }
-    Script.VisualizeTileGrid = VisualizeTileGrid;
-})(Script || (Script = {}));
 // namespace Script {
 //     import ƒ = FudgeCore;
 //     export interface IVisualizeGrid {
