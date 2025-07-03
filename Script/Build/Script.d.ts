@@ -336,6 +336,11 @@ declare namespace Script {
         home: Grid<IEntity>;
         away: Grid<IEntity>;
     }
+    enum FIGHT_RESULT {
+        WIN = "win",
+        SURVIVE = "survive",
+        DEFEAT = "defeat"
+    }
     class Fight {
         static activeFight: Fight;
         rounds: number;
@@ -344,7 +349,7 @@ declare namespace Script {
         protected HUD: VisualizeHUD;
         constructor(_fight: FightData, _home: Grid<IEntity>);
         getRounds(): number;
-        run(): Promise<void>;
+        run(): Promise<FIGHT_RESULT>;
         private fightEnd;
         private runOneSide;
     }
@@ -593,8 +598,13 @@ declare namespace Script {
     class Run {
         eumlings: Eumling[];
         progress: number;
+        encountersUntilBoss: number;
         start(): Promise<void>;
-        chooseNext(): Promise<void>;
+        nextStep(): Promise<void>;
+        chooseNext(): Promise<FightData>;
+        runFight(_fight: FightData): Promise<void>;
+        addEventListeners(): void;
+        removeEventListeners(): void;
     }
 }
 declare namespace Script {

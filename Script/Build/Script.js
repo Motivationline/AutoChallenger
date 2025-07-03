@@ -719,8 +719,8 @@ var Script;
                 }
             },
             {
-                id: "idioticIcicle", // enemy that attacks the entire mirrored column for 1
-                health: 1,
+                id: "boxingBush", // enemy that attacks the entire mirrored column for 1
+                health: 2,
                 attacks: {
                     options: [
                         {
@@ -762,7 +762,7 @@ var Script;
                 }
             },
             {
-                id: "graveGrinder", // enemy that attacks a plus, but spawns in round 2 (not implemented yet)
+                id: "sandSitter", // enemy that attacks a plus, but spawns in round 2 (not implemented yet)
                 health: 1,
                 attacks: {
                     options: [
@@ -801,7 +801,7 @@ var Script;
             },
             {
                 id: "countdownCoconut", // coconut that blows up on the final turn
-                health: 1,
+                health: 2,
                 abilities: [
                     {
                         on: Script.EVENT.ROUND_END,
@@ -819,7 +819,7 @@ var Script;
                             side: Script.TARGET_SIDE.OPPONENT,
                         },
                         attack: {
-                            baseDamage: 1,
+                            baseDamage: 2,
                         }, // NEEDS TO BLOW UP ITSELF ASWELL
                     },
                 ]
@@ -926,6 +926,12 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
+    let FIGHT_RESULT;
+    (function (FIGHT_RESULT) {
+        FIGHT_RESULT["WIN"] = "win";
+        FIGHT_RESULT["SURVIVE"] = "survive";
+        FIGHT_RESULT["DEFEAT"] = "defeat";
+    })(FIGHT_RESULT = Script.FIGHT_RESULT || (Script.FIGHT_RESULT = {}));
     class Fight {
         constructor(_fight, _home) {
             this.rounds = _fight.rounds;
@@ -958,6 +964,7 @@ var Script;
             // run actual round
             for (let r = 0; r < this.rounds; r++) {
                 await this.visualizer.roundStart();
+                await Script.waitMS(2000);
                 await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_START, detail: { round: r } });
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
@@ -965,21 +972,19 @@ var Script;
                 await this.visualizer.roundEnd();
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {
-                    await this.fightEnd();
-                    return console.log("Player lost");
+                    return await this.fightEnd(FIGHT_RESULT.DEFEAT);
                 }
                 if (this.arena.away.occupiedSpots === 0) {
-                    await this.fightEnd();
-                    return console.log("Player won");
+                    return await this.fightEnd(FIGHT_RESULT.WIN);
                 }
             }
-            await this.fightEnd();
-            return console.log("Player survived");
+            return await this.fightEnd(FIGHT_RESULT.SURVIVE);
         }
-        async fightEnd() {
+        async fightEnd(_result) {
             await this.visualizer.fightEnd();
-            await Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_END });
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_END, detail: { result: _result } });
             Fight.activeFight = undefined;
+            return _result;
         }
         async runOneSide(_active, _passive) {
             // TODO: moves
@@ -1838,6 +1843,7 @@ var Script;
         constructor() {
             this.eumlings = [];
             this.progress = 0;
+            this.encountersUntilBoss = 10;
         }
         async start() {
             // TODO: Select Start-Eumling Properly
@@ -1847,9 +1853,37 @@ var Script;
             }
             this.eumlings.push(new Script.Eumling(eumling));
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.RUN_START });
+            await this.nextStep();
+        }
+        async nextStep() {
+            this.progress++;
+            let nextEncounter = await this.chooseNext();
+            await this.runFight(nextEncounter);
+            if (this.progress > this.encountersUntilBoss) {
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.RUN_END });
+                return;
+            }
+            await this.nextStep();
         }
         async chooseNext() {
-            // 
+            // TODO: replace this with a proper selection system, for now you can directly choose only fights
+            let chosenFight = -1;
+            if (this.progress === this.encountersUntilBoss) {
+                chosenFight = 0;
+            }
+            const fights = Script.Provider.data.fights;
+            while (isNaN(chosenFight) || chosenFight < 0 || chosenFight >= fights.length) {
+                chosenFight = parseInt(prompt(`Next fight id (0 - ${fights.length - 1})`));
+            }
+            return fights[chosenFight];
+        }
+        async runFight(_fight) {
+            // TODO: prepare fight positioning etc.
+            // actually run the fight
+        }
+        addEventListeners() {
+        }
+        removeEventListeners() {
         }
     }
     Script.Run = Run;

@@ -14,6 +14,12 @@ namespace Script {
         away: Grid<IEntity>;
     }
 
+    export enum FIGHT_RESULT {
+        WIN = "win",
+        SURVIVE = "survive",
+        DEFEAT = "defeat",
+    }
+
     export class Fight {
         static activeFight: Fight;
         rounds: number;
@@ -42,7 +48,7 @@ namespace Script {
             return this.rounds;
         }
 
-        async run(): Promise<void> {
+        async run(): Promise<FIGHT_RESULT> {
             Fight.activeFight = this;
             // Eventlisteners
             // EventBus.removeAllEventListeners();
@@ -56,30 +62,30 @@ namespace Script {
             // run actual round
             for (let r: number = 0; r < this.rounds; r++) {
                 await this.visualizer.roundStart();
-                await EventBus.dispatchEvent({ type: EVENT.ROUND_START, detail: {round: r }});
+                await waitMS(2000);
+                await EventBus.dispatchEvent({ type: EVENT.ROUND_START, detail: { round: r } });
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
-                await EventBus.dispatchEvent({ type: EVENT.ROUND_END, detail: {round: r }});
+                await EventBus.dispatchEvent({ type: EVENT.ROUND_END, detail: { round: r } });
                 await this.visualizer.roundEnd();
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {
-                    await this.fightEnd();
-                    return console.log("Player lost");
+                    return await this.fightEnd(FIGHT_RESULT.DEFEAT);
                 }
                 if (this.arena.away.occupiedSpots === 0) {
-                    await this.fightEnd();
-                    return console.log("Player won");
+                    return await this.fightEnd(FIGHT_RESULT.WIN);
                 }
-                
+
             }
-            await this.fightEnd();
-            return console.log("Player survived");
+            return await this.fightEnd(FIGHT_RESULT.SURVIVE);
         }
 
-        private async fightEnd() {
+        private async fightEnd(_result: FIGHT_RESULT): Promise<FIGHT_RESULT> {
             await this.visualizer.fightEnd();
-            await EventBus.dispatchEvent({ type: EVENT.FIGHT_END });
+            await EventBus.dispatchEvent({ type: EVENT.FIGHT_END, detail: { result: _result } });
             Fight.activeFight = undefined;
+
+            return _result;
         }
 
         private async runOneSide(_active: Grid<IEntity>, _passive: Grid<IEntity>): Promise<void> {
