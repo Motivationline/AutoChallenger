@@ -196,6 +196,47 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "SandSitter",
+                "entries": [
+                  {
+                    "name": "Prefab",
+                    "entries": [
+                      {
+                        "idResource": "Graph|2025-07-04T10:21:05.334Z|07945"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Model",
+                    "entries": [
+                      {
+                        "idResource": "GraphGLTF|2025-07-04T10:20:56.775Z|37241"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Animations",
+                    "entries": [
+                      {
+                        "idResource": "AnimationGLTF|2025-07-04T10:20:56.775Z|95217"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-07-04T10:20:56.777Z|14422"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-07-04T10:20:56.778Z|42884"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-07-04T10:20:56.780Z|15246"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-07-04T10:20:56.783Z|19131"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           },

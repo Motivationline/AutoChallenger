@@ -1,4 +1,23 @@
 {
+  "MeshQuad|2025-07-03T06:11:04.933Z|59310": {
+    "ƒ.MeshQuad": {
+      "idResource": "MeshQuad|2025-07-03T06:11:04.933Z|59310",
+      "name": "MeshQuad"
+    }
+  },
+  "Material|2025-07-03T06:11:17.977Z|13805": {
+    "ƒ.Material": {
+      "name": "ShaderLitTextured",
+      "idResource": "Material|2025-07-03T06:11:17.977Z|13805",
+      "shader": "ShaderLitTextured",
+      "coat": {
+        "ƒ.CoatTextured": {
+          "alphaClip": 0.01,
+          "color": "[1, 1, 1, 1]"
+        }
+      }
+    }
+  },
   "Graph|2025-05-23T08:50:56.485Z|83150": {
     "ƒ.Graph": {
       "name": "FightScene",
@@ -41,7 +60,7 @@
                   "ƒ.ComponentTransform": {
                     "local": {
                       "translation": "[0, 0, 0]",
-                      "rotation": "[0, 0, 0]",
+                      "rotation": "[0, -90, 0]",
                       "scaling": "[1, 1, 1]"
                     },
                     "Component": {
@@ -93,7 +112,7 @@
                                 "direction": "diagonal",
                                 "near": 1,
                                 "far": 2000,
-                                "aspect": 1.121559633027523,
+                                "aspect": 1.1933701657458564,
                                 "pivot": {
                                   "translation": "[0, 0, 0]",
                                   "rotation": "[0, 0, 0]",
@@ -453,7 +472,7 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[-1.0550435781478882, 0.5, -1.3641459941864014]",
+                                  "translation": "[-1.0550435781478882, 0.524, -1.3641459941864014]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
@@ -2566,25 +2585,6 @@
       "type": "Graph"
     }
   },
-  "MeshQuad|2025-07-03T06:11:04.933Z|59310": {
-    "ƒ.MeshQuad": {
-      "idResource": "MeshQuad|2025-07-03T06:11:04.933Z|59310",
-      "name": "MeshQuad"
-    }
-  },
-  "Material|2025-07-03T06:11:17.977Z|13805": {
-    "ƒ.Material": {
-      "name": "ShaderLitTextured",
-      "idResource": "Material|2025-07-03T06:11:17.977Z|13805",
-      "shader": "ShaderLitTextured",
-      "coat": {
-        "ƒ.CoatTextured": {
-          "alphaClip": 0.01,
-          "color": "[1, 1, 1, 1]"
-        }
-      }
-    }
-  },
   "Graph|2025-07-03T06:08:54.152Z|30006": {
     "ƒ.Graph": {
       "name": "attack",
@@ -3266,6 +3266,94 @@
         }
       ],
       "idResource": "Graph|2025-07-04T08:58:49.156Z|06751",
+      "type": "Graph"
+    }
+  },
+  "GraphGLTF|2025-07-04T10:20:56.775Z|37241": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {
+        "ComponentAnimation": [
+          {
+            "ƒ.ComponentAnimation": {
+              "Component": {
+                "active": true
+              },
+              "idAnimation": "AnimationGLTF|2025-07-04T10:20:56.778Z|42884",
+              "playmode": "loop",
+              "quantization": "continous",
+              "scale": 1,
+              "scaleWithGameTime": true,
+              "animateInEditor": true
+            }
+          }
+        ]
+      },
+      "idResource": "GraphGLTF|2025-07-04T10:20:56.775Z|37241",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\SandSitter\\SandSitter.glb"
+    }
+  },
+  "AnimationGLTF|2025-07-04T10:20:56.778Z|42884": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-04T10:20:56.778Z|42884",
+      "name": "sandsitter_idle_hidden",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\SandSitter\\SandSitter.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-04T10:20:56.775Z|95217": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-04T10:20:56.775Z|95217",
+      "name": "SandSitter_attack",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\SandSitter\\SandSitter.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-04T10:20:56.777Z|14422": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-04T10:20:56.777Z|14422",
+      "name": "SandSitter_die",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\SandSitter\\SandSitter.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-04T10:20:56.780Z|15246": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-04T10:20:56.780Z|15246",
+      "name": "SandSitter_idle_revealed",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\SandSitter\\SandSitter.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-04T10:20:56.783Z|19131": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-04T10:20:56.783Z|19131",
+      "name": "SandSitter_reveal",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\SandSitter\\SandSitter.glb",
+      "events": {}
+    }
+  },
+  "Graph|2025-07-04T10:21:05.334Z|07945": {
+    "ƒ.Graph": {
+      "name": "SandSitter",
+      "active": true,
+      "components": {},
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "GraphGLTF|2025-07-04T10:20:56.775Z|37241"
+          }
+        }
+      ],
+      "idResource": "Graph|2025-07-04T10:21:05.334Z|07945",
       "type": "Graph"
     }
   }
