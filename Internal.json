@@ -3344,7 +3344,16 @@
     "ƒ.Graph": {
       "name": "SandSitter",
       "active": true,
-      "components": {},
+      "components": {
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "sandSitter"
+            }
+          }
+        ]
+      },
       "children": [
         {
           "ƒ.GraphInstance": {
