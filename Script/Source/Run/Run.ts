@@ -2,12 +2,25 @@ namespace Script {
 
     /** Handles an entire run */
     export class Run {
+        static currentRun: Run;
         eumlings: Eumling[] = [];
         stones: Stone[] = [];
         progress: number = 0;
         encountersUntilBoss: number = 10;
+        #gold: number = 0;
+
+        get gold() {
+            return this.#gold;
+        }
+
+        changeGold(_amt: number) {
+            if (this.#gold < -_amt) throw new Error("Can't spend more than you have!");
+            this.#gold += _amt;
+            EventBus.dispatchEvent({ type: EVENT.GOLD_CHANGE, detail: { amount: this.#gold } })
+        }
 
         async start() {
+            Run.currentRun = this;
             // TODO: Select Start-Eumling Properly
             let eumling: string;
             while (eumling !== "R" && eumling !== "S") {
@@ -59,11 +72,40 @@ namespace Script {
                     pos = newPos;
                 }
                 eumlingsGrid.set(pos, eumling);
+                eumling.position = pos;
             }
 
             // actually run the fight
             const fight = new Fight(_fight, eumlingsGrid);
             const result = await fight.run();
+
+            if (result === FIGHT_RESULT.DEFEAT) {
+                return result;
+            }
+
+            // give rewards
+            let gold: number = 1;
+            let xp: number = 1;
+            let oldFightData = new Grid(_fight.entities);
+            let prevEnemyAmt = oldFightData.occupiedSpots;
+            let remainingEnemyAmt = fight.arena.away.occupiedSpots;
+            let defeatedEnemyAmt = prevEnemyAmt - remainingEnemyAmt;
+            gold += remainingEnemyAmt;
+            xp += defeatedEnemyAmt;
+
+            this.changeGold(gold);
+
+            while (xp > 0) {
+                let index = NaN;
+                while (isNaN(index) || index < 0 || index >= this.eumlings.length) {
+                    index = parseInt(prompt(`You have ${xp} xp to distribute. Which Eumling do you want to give it to?\n${this.eumlings.reduce((prev, current, index) => prev + `${index}: ${current.type} (${current.xp} / ${current.requiredXPForLevelup} xp)\n`, "")}`));
+                }
+
+                let eumling = this.eumlings[index];
+                eumling.addXP(1);
+                xp--;
+            }
+
             return result;
         }
 

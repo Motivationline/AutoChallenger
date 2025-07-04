@@ -293,6 +293,20 @@ namespace Script {
                 }
             },
             {
+                id: "RA-Eumling",
+                health: 4,
+                attacks: {
+                    baseDamage: 1,
+                    target: {
+                        side: TARGET_SIDE.OPPONENT,
+                        area: {
+                            position: AREA_POSITION.RELATIVE_FIRST_IN_ROW,
+                            shape: AREA_SHAPE.ROW,
+                        },
+                    }
+                }
+            },
+            {
                 id: "S-Eumling",
                 health: 4,
                 spells: {
@@ -448,6 +462,10 @@ namespace Script {
 
                 id: "Björn", // Björn's entity for testing
                 health: 100000000
+            },
+            {
+                id: "pushover",
+                health: 1,
             }
         ]
     }

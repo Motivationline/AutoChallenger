@@ -64,6 +64,7 @@ var Script;
         EVENT["ENTITY_MOVED"] = "entityMoved";
         EVENT["TRIGGER_ABILITY"] = "triggerAbility";
         EVENT["TRIGGERED_ABILITY"] = "triggeredAbility";
+        EVENT["GOLD_CHANGE"] = "goldChange";
     })(EVENT = Script.EVENT || (Script.EVENT = {}));
     class EventBus {
         static { this.listeners = new Map(); }
@@ -671,6 +672,20 @@ var Script;
                 }
             },
             {
+                id: "RA-Eumling",
+                health: 4,
+                attacks: {
+                    baseDamage: 1,
+                    target: {
+                        side: Script.TARGET_SIDE.OPPONENT,
+                        area: {
+                            position: Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW,
+                            shape: Script.AREA_SHAPE.ROW,
+                        },
+                    }
+                }
+            },
+            {
                 id: "S-Eumling",
                 health: 4,
                 spells: {
@@ -826,6 +841,10 @@ var Script;
             {
                 id: "Björn", // Björn's entity for testing
                 health: 100000000
+            },
+            {
+                id: "pushover",
+                health: 1,
             }
         ];
     })(DataContent = Script.DataContent || (Script.DataContent = {}));
@@ -835,6 +854,10 @@ var Script;
     let DataContent;
     (function (DataContent) {
         DataContent.fights = [
+            {
+                rounds: 3,
+                entities: [["pushover", "pushover", "pushover",], [, , ,], [, , ,]]
+            },
             {
                 // test eumlings
                 rounds: 3, // ignore this
@@ -1198,8 +1221,14 @@ var Script;
             roundCounter.innerText = `Round: ${round + 1}`;
             console.log(`Update Round: ${round + 1}`);
         }
+        updateGoldCounter(_ev) {
+            let amount = _ev.detail.amount;
+            const goldCounter = document.querySelector(".GoldCounter");
+            goldCounter.innerText = `Gold: ${amount}`;
+        }
         addFightListeners() {
             Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.roundStart);
+            Script.EventBus.addEventListener(Script.EVENT.GOLD_CHANGE, this.updateGoldCounter);
         }
     }
     Script.VisualizeHUD = VisualizeHUD;
@@ -1713,7 +1742,9 @@ var Script;
 var Script;
 (function (Script) {
     class Eumling extends Script.Entity {
+        static { this.xpRequirements = [3, 6]; }
         #types = [];
+        #xp = 0;
         constructor(_startType) {
             _startType = _startType.trim().toUpperCase();
             const data = Script.Provider.data.getEntity(_startType + "-Eumling");
@@ -1738,6 +1769,39 @@ var Script;
             this.updateEntityData(newData);
             this.removeEventListeners();
             this.registerEventListeners();
+            this.#types.push(_type);
+        }
+        get type() {
+            return this.#types.join("") + "-Eumling";
+        }
+        get xp() {
+            return this.#xp;
+        }
+        get requiredXPForLevelup() {
+            return Eumling.xpRequirements[this.#types.length - 1];
+        }
+        async addXP(_amount) {
+            while (this.#types.length < 3 && _amount > 0) { // can only upgrade until lvl 3
+                let requiredUntilLevelup = this.requiredXPForLevelup;
+                if (requiredUntilLevelup === undefined)
+                    return;
+                if (_amount > 0) {
+                    this.#xp += 1;
+                    _amount--;
+                    if (requiredUntilLevelup <= this.#xp) {
+                        await this.levelup();
+                    }
+                }
+            }
+        }
+        async levelup() {
+            let specialisationOptions = this.#types.length === 1 ? ["A", "I"] : ["C", "E"];
+            let chosenSpecial;
+            while (!specialisationOptions.includes(chosenSpecial)) {
+                chosenSpecial = prompt(`Your ${this.type} leveld up. Which Specialisation do you want to add? ${specialisationOptions.join(" or ")}`).trim().toUpperCase();
+            }
+            this.addType(chosenSpecial);
+            this.#xp = 0;
         }
     }
     Script.Eumling = Eumling;
@@ -1994,8 +2058,20 @@ var Script;
             this.stones = [];
             this.progress = 0;
             this.encountersUntilBoss = 10;
+            this.#gold = 0;
+        }
+        #gold;
+        get gold() {
+            return this.#gold;
+        }
+        changeGold(_amt) {
+            if (this.#gold < -_amt)
+                throw new Error("Can't spend more than you have!");
+            this.#gold += _amt;
+            Script.EventBus.dispatchEvent({ type: Script.EVENT.GOLD_CHANGE, detail: { amount: this.#gold } });
         }
         async start() {
+            Run.currentRun = this;
             // TODO: Select Start-Eumling Properly
             let eumling;
             while (eumling !== "R" && eumling !== "S") {
@@ -2045,10 +2121,33 @@ var Script;
                     pos = newPos;
                 }
                 eumlingsGrid.set(pos, eumling);
+                eumling.position = pos;
             }
             // actually run the fight
             const fight = new Script.Fight(_fight, eumlingsGrid);
             const result = await fight.run();
+            if (result === Script.FIGHT_RESULT.DEFEAT) {
+                return result;
+            }
+            // give rewards
+            let gold = 1;
+            let xp = 1;
+            let oldFightData = new Script.Grid(_fight.entities);
+            let prevEnemyAmt = oldFightData.occupiedSpots;
+            let remainingEnemyAmt = fight.arena.away.occupiedSpots;
+            let defeatedEnemyAmt = prevEnemyAmt - remainingEnemyAmt;
+            gold += remainingEnemyAmt;
+            xp += defeatedEnemyAmt;
+            this.changeGold(gold);
+            while (xp > 0) {
+                let index = NaN;
+                while (isNaN(index) || index < 0 || index >= this.eumlings.length) {
+                    index = parseInt(prompt(`You have ${xp} xp to distribute. Which Eumling do you want to give it to?\n${this.eumlings.reduce((prev, current, index) => prev + `${index}: ${current.type} (${current.xp} / ${current.requiredXPForLevelup} xp)\n`, "")}`));
+                }
+                let eumling = this.eumlings[index];
+                eumling.addXP(1);
+                xp--;
+            }
             return result;
         }
         async end() {
@@ -2224,6 +2323,7 @@ var Script;
             await Script.waitMS(200);
         }
         async updateVisuals() {
+            //TODO: remove this from Scene Graph if this is an enemy, Player should not be removed just repositioned in the next run
             this.removeAllChildren();
             // console.log("entity visualizer null: updateVisuals", this.entity);
             // await waitMS(200);

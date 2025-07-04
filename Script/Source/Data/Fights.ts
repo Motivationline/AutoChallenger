@@ -2,6 +2,10 @@ namespace Script {
     export namespace DataContent {
         export const fights: FightData[] = [
             {
+                rounds: 3,
+                entities: [["pushover","pushover","pushover",],[,,,],[,,,]]
+            },
+            {
                 // test eumlings
                 rounds: 3, // ignore this
                 // remember, opponents are usually to the left of this, so the eumling grid is mirrored internally.

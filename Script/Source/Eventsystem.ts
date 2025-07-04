@@ -28,6 +28,7 @@ namespace Script {
         ENTITY_MOVED = "entityMoved", // unused for now
         TRIGGER_ABILITY = "triggerAbility",
         TRIGGERED_ABILITY = "triggeredAbility",
+        GOLD_CHANGE = "goldChange",
     }
 
     /**
@@ -50,7 +51,7 @@ namespace Script {
         detail?: T;
     }
 
-    export type FightEventListener = (_ev?: FightEvent) => Promise<void>;
+    export type FightEventListener = (_ev?: FightEvent) => Promise<void> | void;
 
     export class EventBus {
         static listeners = new Map<EVENT, FightEventListener[]>();

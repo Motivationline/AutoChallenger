@@ -22,9 +22,15 @@ namespace Script {
             roundCounter.innerText = `Round: ${round + 1}`;
             console.log(`Update Round: ${round + 1}`);
         }
+        private updateGoldCounter(_ev: FightEvent) {
+            let amount = _ev.detail.amount;
+            const goldCounter: HTMLDivElement = document.querySelector(".GoldCounter");
+            goldCounter.innerText = `Gold: ${amount}`;
+        }
 
         addFightListeners() {
             EventBus.addEventListener(EVENT.ROUND_START, this.roundStart);
+            EventBus.addEventListener(EVENT.GOLD_CHANGE, this.updateGoldCounter);
         }
     }
 }

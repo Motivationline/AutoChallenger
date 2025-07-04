@@ -1,6 +1,8 @@
 namespace Script {
     export class Eumling extends Entity {
+        static xpRequirements: number[] = [3, 6];
         #types: string[] = [];
+        #xp: number = 0;
         constructor(_startType: string) {
             _startType = _startType.trim().toUpperCase();
             const data = Provider.data.getEntity(_startType + "-Eumling");
@@ -26,6 +28,47 @@ namespace Script {
             this.removeEventListeners();
             this.registerEventListeners();
 
+            this.#types.push(_type);
+        }
+
+        get type() {
+            return this.#types.join("") + "-Eumling";
+        }
+
+        get xp() {
+            return this.#xp;
+        }
+
+        get requiredXPForLevelup() {
+            return Eumling.xpRequirements[this.#types.length - 1];
+        }
+
+        async addXP(_amount: number) {
+            
+            while (this.#types.length < 3 && _amount > 0) { // can only upgrade until lvl 3
+                let requiredUntilLevelup = this.requiredXPForLevelup;
+                if (requiredUntilLevelup === undefined) return;
+
+                if (_amount > 0) {
+                    this.#xp += 1;
+                    _amount--;
+                    if (requiredUntilLevelup <= this.#xp) {
+                        await this.levelup();
+                    }
+                }
+            }
+        }
+
+        async levelup() {
+            let specialisationOptions: string[] = this.#types.length === 1 ? ["A", "I"] : ["C", "E"];
+
+            let chosenSpecial: string;
+            while (!specialisationOptions.includes(chosenSpecial)) {
+                chosenSpecial = prompt(`Your ${this.type} leveld up. Which Specialisation do you want to add? ${specialisationOptions.join(" or ")}`).trim().toUpperCase();
+            }
+
+            this.addType(chosenSpecial);
+            this.#xp = 0;
         }
     }
 }

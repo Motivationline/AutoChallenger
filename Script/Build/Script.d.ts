@@ -24,7 +24,8 @@ declare namespace Script {
         ENTITY_MOVE = "entityMove",// unused for now
         ENTITY_MOVED = "entityMoved",// unused for now
         TRIGGER_ABILITY = "triggerAbility",
-        TRIGGERED_ABILITY = "triggeredAbility"
+        TRIGGERED_ABILITY = "triggeredAbility",
+        GOLD_CHANGE = "goldChange"
     }
     /**
      * There are a lot of callbacks / events that things inside the game can hook into to do something at a specific point in time.
@@ -44,7 +45,7 @@ declare namespace Script {
         /** Optional data with more details about this specific event. */
         detail?: T;
     }
-    type FightEventListener = (_ev?: FightEvent) => Promise<void>;
+    type FightEventListener = (_ev?: FightEvent) => Promise<void> | void;
     class EventBus {
         static listeners: Map<EVENT, FightEventListener[]>;
         static removeAllEventListeners(): void;
@@ -395,6 +396,7 @@ declare namespace Script {
         constructor();
         private roundStart;
         private updateRoundCounter;
+        private updateGoldCounter;
     }
 }
 declare namespace Script {
@@ -499,9 +501,15 @@ declare namespace Script {
 declare namespace Script {
     class Eumling extends Entity {
         #private;
+        static xpRequirements: number[];
         constructor(_startType: string);
         get types(): Readonly<string[]>;
         addType(_type: string): void;
+        get type(): string;
+        get xp(): number;
+        get requiredXPForLevelup(): number;
+        addXP(_amount: number): Promise<void>;
+        levelup(): Promise<void>;
     }
 }
 declare namespace Script {
@@ -606,10 +614,14 @@ declare namespace Script {
 declare namespace Script {
     /** Handles an entire run */
     class Run {
+        #private;
+        static currentRun: Run;
         eumlings: Eumling[];
         stones: Stone[];
         progress: number;
         encountersUntilBoss: number;
+        get gold(): number;
+        changeGold(_amt: number): void;
         start(): Promise<void>;
         nextStep(): Promise<void>;
         chooseNext(): Promise<FightData>;
