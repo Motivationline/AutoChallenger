@@ -49,6 +49,16 @@ namespace Script {
             //draw the 3D scene
             visualizer.drawScene();
         }
+        async nukeGrid(): Promise<void> {
+            this.#home.grid.forEachElement((el) =>{
+                if (!el) return;
+                el.updateVisuals();
+            });
+            this.#away.grid.forEachElement((el) =>{
+                if (!el) return;
+                el.updateVisuals();
+            });
+        }
 
         async fightStart(): Promise<void> {
             console.log("Fight Start!");
@@ -66,6 +76,7 @@ namespace Script {
 
         async fightEnd(): Promise<void> {
             // TODO @Björn clean up visible entities
+            await this.nukeGrid();
             console.log("Fight End!");
         }
 

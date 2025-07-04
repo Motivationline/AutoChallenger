@@ -631,6 +631,7 @@ declare namespace Script {
         #private;
         constructor(_fight: Fight);
         showGrid(): Promise<void>;
+        nukeGrid(): Promise<void>;
         fightStart(): Promise<void>;
         roundStart(): Promise<void>;
         roundEnd(): Promise<void>;

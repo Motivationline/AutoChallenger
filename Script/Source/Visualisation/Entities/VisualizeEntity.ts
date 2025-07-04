@@ -105,6 +105,8 @@ namespace Script {
         }
 
         async updateVisuals(): Promise<void> {
+            //TODO: remove this from Scene Graph if this is an enemy, Player should not be removed just repositioned in the next run
+            this.removeAllChildren();
             // console.log("entity visualizer null: updateVisuals", this.entity);
             // await waitMS(200);
         }
@@ -113,6 +115,7 @@ namespace Script {
         async loadModel(_id: string) {
             let model: ƒ.Node = new ƒ.Node(_id);
             let original = DataLink.linkedNodes.get(_id);
+            //if the model is not found use a placeholder
             try {
                 await model.deserialize(original.serialize());
             } catch (error) {
@@ -122,6 +125,7 @@ namespace Script {
             this.addChild(model);
         }
 
+        //retuns a placeholder if needed
         givePlaceholderPls(): ƒ.Node {
             let placeholder: ƒ.Node = new ƒ.Node("Placeholder");
             let mesh: ƒ.Mesh = new ƒ.MeshCube("EntityMesh");
@@ -129,8 +133,6 @@ namespace Script {
             placeholder.addComponent(new ƒ.ComponentMesh(mesh));
             placeholder.addComponent(new ƒ.ComponentMaterial(material));
             placeholder.addComponent(new ƒ.ComponentTransform());
-            console.log("placeholder");
-            console.log(placeholder);
             return placeholder;
         }
 

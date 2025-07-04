@@ -2100,6 +2100,18 @@ var Script;
             //draw the 3D scene
             visualizer.drawScene();
         }
+        async nukeGrid() {
+            this.#home.grid.forEachElement((el) => {
+                if (!el)
+                    return;
+                el.updateVisuals();
+            });
+            this.#away.grid.forEachElement((el) => {
+                if (!el)
+                    return;
+                el.updateVisuals();
+            });
+        }
         async fightStart() {
             console.log("Fight Start!");
             await this.showGrid();
@@ -2113,6 +2125,7 @@ var Script;
         }
         async fightEnd() {
             // TODO @Björn clean up visible entities
+            await this.nukeGrid();
             console.log("Fight End!");
         }
     }
@@ -2211,12 +2224,14 @@ var Script;
             await Script.waitMS(200);
         }
         async updateVisuals() {
+            this.removeAllChildren();
             // console.log("entity visualizer null: updateVisuals", this.entity);
             // await waitMS(200);
         }
         async loadModel(_id) {
             let model = new ƒ.Node(_id);
             let original = Script.DataLink.linkedNodes.get(_id);
+            //if the model is not found use a placeholder
             try {
                 await model.deserialize(original.serialize());
             }
@@ -2226,6 +2241,7 @@ var Script;
             }
             this.addChild(model);
         }
+        //retuns a placeholder if needed
         givePlaceholderPls() {
             let placeholder = new ƒ.Node("Placeholder");
             let mesh = new ƒ.MeshCube("EntityMesh");
@@ -2233,8 +2249,6 @@ var Script;
             placeholder.addComponent(new ƒ.ComponentMesh(mesh));
             placeholder.addComponent(new ƒ.ComponentMaterial(material));
             placeholder.addComponent(new ƒ.ComponentTransform());
-            console.log("placeholder");
-            console.log(placeholder);
             return placeholder;
         }
         getEntity() {
