@@ -822,6 +822,10 @@ var Script;
                         }, // NEEDS TO BLOW UP ITSELF ASWELL
                     },
                 ]
+            },
+            {
+                id: "Björn", // Björn's entity for testing
+                health: 100000000
             }
         ];
     })(DataContent = Script.DataContent || (Script.DataContent = {}));
@@ -863,7 +867,7 @@ var Script;
                 //test entity visualizer with models
                 rounds: 3,
                 entities: [
-                    ["kacki", "kacki", "kacki",],
+                    ["kacki", "Björn", "kacki",],
                     ["kacki", "kacki", "kacki",],
                     ["kacki", "kacki", "kacki",]
                 ],
@@ -1152,7 +1156,6 @@ var Script;
             console.log(this.root);
             let FigthScene = ƒ.Project.getResourcesByName("FightScene")[0];
             //attach the root node to the FightScene
-            //TODO: Fight Scene can also be added to empty scene
             this.camera = FigthScene.getChildByName("CameraRotator").getChildByName("Camera_Wrapper").getChildByName("Cam").getComponent(ƒ.ComponentCamera);
             FigthScene.addChild(this.root);
             _viewport.initialize("Viewport", FigthScene, this.camera, document.querySelector("canvas"));
@@ -1179,7 +1182,7 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
-    // TODO: add Provider to pass UI elements without hardcoding
+    // TODO: add Provider to pass UI elements without hardcoding???
     class VisualizeHUD {
         constructor() {
             this.roundStart = async (_ev) => {
@@ -2064,7 +2067,6 @@ var Script;
         #home;
         #away;
         constructor(_fight) {
-            //TODO: Fix Scaling of the Grids and instance the Entities at given Positions from the Scene out of the Fudge Editor
             let awayGrid = new Script.Grid();
             _fight.arena.away.forEachElement((entity, pos) => {
                 awayGrid.set(pos, new Script.VisualizeEntity(entity));
@@ -2121,20 +2123,14 @@ var Script;
     var ƒ = FudgeCore;
     class VisualizeEntity extends ƒ.Node /*implements VisualizeEntity*/ {
         //private grid: VisualizeGridNull;
-        //create a mesh and material for the tile
-        static { this.mesh = new ƒ.MeshCube("EntityMesh"); }
-        static { this.material = new ƒ.Material("EntityMat", ƒ.ShaderLitTextured); }
         constructor(_entity) {
             super("entity");
-            this.size = 0.5;
             this.eventListener = async (_ev) => {
                 await this.handleEvent(_ev);
             };
             this.entity = _entity;
-            //get the correct mesh and material
-            this.model = new ƒ.Node("");
+            //get the correct
             console.log("ID: " + this.entity.id);
-            //this.model.deserialize(DataLink.linkedNodes.get(this.entity.id.toString()).serialize());
             this.loadModel(this.entity.id);
             // const entityMesh = new ƒ.ComponentMesh(VisualizeEntity.mesh);
             // const entityMat = new ƒ.ComponentMaterial(VisualizeEntity.material);
@@ -2221,9 +2217,25 @@ var Script;
         async loadModel(_id) {
             let model = new ƒ.Node(_id);
             let original = Script.DataLink.linkedNodes.get(_id);
-            // TODO @Björn lade placeholder wenn gewolltes modell nicht existiert, damit irgendwas sichtbar ist
-            await model.deserialize(original.serialize());
+            try {
+                await model.deserialize(original.serialize());
+            }
+            catch (error) {
+                model = this.givePlaceholderPls();
+                console.warn(`Model with ID: ${_id} not found, using placeholder instead 👉👈`);
+            }
             this.addChild(model);
+        }
+        givePlaceholderPls() {
+            let placeholder = new ƒ.Node("Placeholder");
+            let mesh = new ƒ.MeshCube("EntityMesh");
+            let material = new ƒ.Material("EntityMat", ƒ.ShaderLitTextured);
+            placeholder.addComponent(new ƒ.ComponentMesh(mesh));
+            placeholder.addComponent(new ƒ.ComponentMaterial(material));
+            placeholder.addComponent(new ƒ.ComponentTransform());
+            console.log("placeholder");
+            console.log(placeholder);
+            return placeholder;
         }
         getEntity() {
             return this.entity;

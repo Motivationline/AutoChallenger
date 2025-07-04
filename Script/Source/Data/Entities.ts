@@ -443,6 +443,11 @@ namespace Script {
                         }, // NEEDS TO BLOW UP ITSELF ASWELL
                     },
                 ]
+            },
+            {
+
+                id: "Björn", // Björn's entity for testing
+                health: 100000000
             }
         ]
     }

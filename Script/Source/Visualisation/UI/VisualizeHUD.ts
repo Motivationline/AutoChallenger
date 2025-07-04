@@ -3,7 +3,7 @@ namespace Script {
         sayHello(): void;
         addFightListeners(): void;
     }
-    // TODO: add Provider to pass UI elements without hardcoding
+    // TODO: add Provider to pass UI elements without hardcoding???
     export class VisualizeHUD implements VisualizeHUD {
 
         constructor() {}
@@ -16,7 +16,7 @@ namespace Script {
             this.updateRoundCounter(_ev);
         }
 
-        private updateRoundCounter(_ev: FightEvent) { //TODO: make private somehow
+        private updateRoundCounter(_ev: FightEvent) {
             let round = _ev.detail.round;
             const roundCounter: HTMLDivElement = document.querySelector(".RoundCounter");
             roundCounter.innerText = `Round: ${round + 1}`;

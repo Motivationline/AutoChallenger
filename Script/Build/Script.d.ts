@@ -654,13 +654,11 @@ declare namespace Script {
     class VisualizeEntity extends ƒ.Node {
         private entity;
         private model;
-        private static mesh;
-        private static material;
-        private size;
         constructor(_entity: IEntity);
         getAffected(_ev: FightEvent): Promise<void>;
         die(_ev: FightEvent): Promise<void>;
         loadModel(_id: string): Promise<void>;
+        givePlaceholderPls(): ƒ.Node;
         getEntity(): Readonly<IEntity>;
         addEventListeners(): void;
         removeEventListeners(): void;

@@ -30,7 +30,7 @@ namespace Script {
                 //test entity visualizer with models
                 rounds: 3,
                 entities: [
-                    ["kacki", "kacki", "kacki",],
+                    ["kacki", "Björn", "kacki",],
                     ["kacki", "kacki", "kacki",],
                     ["kacki", "kacki", "kacki",]],
             },

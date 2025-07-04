@@ -19,19 +19,11 @@ namespace Script {
         private model: ƒ.Node;
         //private grid: VisualizeGridNull;
 
-        //create a mesh and material for the tile
-        private static mesh: ƒ.Mesh = new ƒ.MeshCube("EntityMesh");
-        private static material: ƒ.Material = new ƒ.Material("EntityMat", ƒ.ShaderLitTextured);
-
-        private size: number = 0.5;
-
         constructor(_entity: IEntity) {
             super("entity");
             this.entity = _entity;
-            //get the correct mesh and material
-            this.model = new ƒ.Node("");
+            //get the correct
             console.log("ID: " + this.entity.id);
-            //this.model.deserialize(DataLink.linkedNodes.get(this.entity.id.toString()).serialize());
             this.loadModel(this.entity.id)
 
             // const entityMesh = new ƒ.ComponentMesh(VisualizeEntity.mesh);
@@ -121,9 +113,25 @@ namespace Script {
         async loadModel(_id: string) {
             let model: ƒ.Node = new ƒ.Node(_id);
             let original = DataLink.linkedNodes.get(_id);
-            // TODO @Björn lade placeholder wenn gewolltes modell nicht existiert, damit irgendwas sichtbar ist
-            await model.deserialize(original.serialize());
+            try {
+                await model.deserialize(original.serialize());
+            } catch (error) {
+                model = this.givePlaceholderPls();
+                console.warn(`Model with ID: ${_id} not found, using placeholder instead 👉👈`);
+            }
             this.addChild(model);
+        }
+
+        givePlaceholderPls(): ƒ.Node {
+            let placeholder: ƒ.Node = new ƒ.Node("Placeholder");
+            let mesh: ƒ.Mesh = new ƒ.MeshCube("EntityMesh");
+            let material: ƒ.Material = new ƒ.Material("EntityMat", ƒ.ShaderLitTextured);
+            placeholder.addComponent(new ƒ.ComponentMesh(mesh));
+            placeholder.addComponent(new ƒ.ComponentMaterial(material));
+            placeholder.addComponent(new ƒ.ComponentTransform());
+            console.log("placeholder");
+            console.log(placeholder);
+            return placeholder;
         }
 
         getEntity(): Readonly<IEntity> {
@@ -138,7 +146,7 @@ namespace Script {
             EventBus.addEventListener(EVENT.ENTITY_AFFECTED, this.eventListener);
             EventBus.addEventListener(EVENT.ENTITY_DIES, this.eventListener);
         }
-        
+
         removeEventListeners() {
             EventBus.removeEventListener(EVENT.FIGHT_ENDED, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_ATTACK, this.eventListener);
