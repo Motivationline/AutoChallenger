@@ -217,14 +217,7 @@ namespace Script {
                 // TODO: Event/Visualization for stunned
                 return;
             }
-            for (let spell of _spells) {
-                let targets = _targetsOverride ?? getTargets(spell.target, _friendly, _opponent, this);
-                for (let target of targets) {
-                    await EventBus.dispatchEvent({ type: EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target })
-                    await target.affect(spell, this);
-                    await EventBus.dispatchEvent({ type: EVENT.ENTITY_SPELL, trigger: spell, cause: this, target })
-                }
-            }
+            await executeSpell.call(this, _spells, _friendly, _opponent, _targetsOverride);
         }
         async useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks: AttackData[] = this.select(this.attacks, true), _targetsOverride?: IEntity[]): Promise<void> {
             if (!_attacks || _attacks.length === 0) return;
@@ -232,17 +225,7 @@ namespace Script {
                 // TODO: Event/Visualization for stunned
                 return;
             }
-            for (let attack of _attacks) {
-                // get the target(s)
-                let targets = _targetsOverride ?? getTargets(attack.target, _friendly, _opponent, this);
-                // execute the attacks
-                let attackDmg = this.getDamageOfAttacks([attack], true);
-                await EventBus.dispatchEvent({ type: EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } })
-                for (let target of targets) {
-                    await target.damage(attackDmg, attack.baseCritChance, this);
-                }
-                await EventBus.dispatchEvent({ type: EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } })
-            }
+            await executeAttack.call(this, _attacks, _friendly, _opponent, _targetsOverride);
         }
 
         getOwnDamage(): number {
@@ -351,8 +334,9 @@ namespace Script {
 
         protected async runAbility(_ev: FightEvent) {
             if (!this.abilities) return;
+            // TODO: should abilities be blocked by stun?
             for (let ability of this.abilities) {
-                executeAbility.call(this, ability, this.#arena, _ev);
+                await executeAbility.call(this, ability, this.#arena, _ev);
             }
         }
 

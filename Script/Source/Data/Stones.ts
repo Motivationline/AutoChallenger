@@ -36,12 +36,12 @@ namespace Script {
                 abilityLevels: [
                     {
                         on: EVENT.FIGHT_START,
-                        target: { side: TARGET_SIDE.ALLY, area: { absolutePosition: [0, 0], shape: AREA_SHAPE.ROW, position: AREA_POSITION.ABSOLUTE } },
+                        target: { side: TARGET_SIDE.ALLY, area: { absolutePosition: [0, 0], shape: AREA_SHAPE.COLUMN, position: AREA_POSITION.ABSOLUTE } },
                         spell: {type: SPELL_TYPE.SHIELD, level: 1}
                     },
                     {
                         on: EVENT.FIGHT_START,
-                        target: { side: TARGET_SIDE.ALLY, area: { absolutePosition: [0, 0], shape: AREA_SHAPE.ROW, position: AREA_POSITION.ABSOLUTE } },
+                        target: { side: TARGET_SIDE.ALLY, area: { absolutePosition: [0, 0], shape: AREA_SHAPE.COLUMN, position: AREA_POSITION.ABSOLUTE } },
                         spell: {type: SPELL_TYPE.SHIELD, level: 2}
                     }
                 ]

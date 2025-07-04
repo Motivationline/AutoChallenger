@@ -29,4 +29,23 @@ namespace Script {
         await newNode.deserialize(node.serialize());
         return newNode;
     }
+
+    export function randomRange(min: number = 0, max: number = 1): number {
+        const range = max - min;
+        return Math.random() * range + min;
+    }
+
+    export function chooseRandomElementsFromArray<T>(_array: readonly T[], _max: number, _exclude: T[] = []): T[] {
+        let filteredOptions = _array.filter((element) => !_exclude.includes(element));
+        if (filteredOptions.length < _max) {
+            return filteredOptions;
+        }
+
+        let result: T[] = [];
+        for (let i: number = 0; i < _max; i++) {
+            const index = Math.floor(Math.random() * filteredOptions.length);
+            result.push(...filteredOptions.splice(index, 1));
+        }
+        return result;
+    }
 }

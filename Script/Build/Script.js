@@ -1415,12 +1415,12 @@ var Script;
                 abilityLevels: [
                     {
                         on: Script.EVENT.FIGHT_START,
-                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [0, 0], shape: Script.AREA_SHAPE.ROW, position: Script.AREA_POSITION.ABSOLUTE } },
+                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [0, 0], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
                         spell: { type: Script.SPELL_TYPE.SHIELD, level: 1 }
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
-                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [0, 0], shape: Script.AREA_SHAPE.ROW, position: Script.AREA_POSITION.ABSOLUTE } },
+                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [0, 0], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
                         spell: { type: Script.SPELL_TYPE.SHIELD, level: 2 }
                     }
                 ]
@@ -1593,14 +1593,7 @@ var Script;
                 // TODO: Event/Visualization for stunned
                 return;
             }
-            for (let spell of _spells) {
-                let targets = _targetsOverride ?? Script.getTargets(spell.target, _friendly, _opponent, this);
-                for (let target of targets) {
-                    await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target });
-                    await target.affect(spell, this);
-                    await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL, trigger: spell, cause: this, target });
-                }
-            }
+            await Script.executeSpell.call(this, _spells, _friendly, _opponent, _targetsOverride);
         }
         async useAttack(_friendly, _opponent, _attacks = this.select(this.attacks, true), _targetsOverride) {
             if (!_attacks || _attacks.length === 0)
@@ -1609,17 +1602,7 @@ var Script;
                 // TODO: Event/Visualization for stunned
                 return;
             }
-            for (let attack of _attacks) {
-                // get the target(s)
-                let targets = _targetsOverride ?? Script.getTargets(attack.target, _friendly, _opponent, this);
-                // execute the attacks
-                let attackDmg = this.getDamageOfAttacks([attack], true);
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } });
-                for (let target of targets) {
-                    await target.damage(attackDmg, attack.baseCritChance, this);
-                }
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } });
-            }
+            await Script.executeAttack.call(this, _attacks, _friendly, _opponent, _targetsOverride);
         }
         getOwnDamage() {
             const attacks = this.select(this.attacks, false);
@@ -1712,8 +1695,9 @@ var Script;
         async runAbility(_ev) {
             if (!this.abilities)
                 return;
+            // TODO: should abilities be blocked by stun?
             for (let ability of this.abilities) {
-                Script.executeAbility.call(this, ability, this.#arena, _ev);
+                await Script.executeAbility.call(this, ability, this.#arena, _ev);
             }
         }
         async handleEndOfTurn(_ev) {
@@ -1872,14 +1856,43 @@ var Script;
             return;
         await Script.EventBus.dispatchEvent({ type: Script.EVENT.TRIGGER_ABILITY, cause: this, target: this, trigger: _ability });
         if (_ability.attack) {
-            await this.useAttack(_arena.home, _arena.away, [{ target: undefined, ..._ability.attack }], targets);
+            await executeAttack([{ target: undefined, ..._ability.attack }], _arena.home, _arena.away, targets);
         }
         if (_ability.spell) {
-            await this.useSpell(_arena.home, _arena.away, [{ target: undefined, ..._ability.spell }], targets);
+            await executeSpell([{ target: undefined, ..._ability.spell }], _arena.home, _arena.away, targets);
         }
         await Script.EventBus.dispatchEvent({ type: Script.EVENT.TRIGGERED_ABILITY, cause: this, target: this, trigger: _ability });
     }
     Script.executeAbility = executeAbility;
+    async function executeSpell(_spells, _friendly, _opponent, _targetsOverride) {
+        if (!_spells)
+            return;
+        for (let spell of _spells) {
+            let targets = _targetsOverride ?? Script.getTargets(spell.target, _friendly, _opponent, this);
+            for (let target of targets) {
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target });
+                await target.affect(spell, this);
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL, trigger: spell, cause: this, target });
+            }
+        }
+    }
+    Script.executeSpell = executeSpell;
+    async function executeAttack(_attacks, _friendly, _opponent, _targetsOverride) {
+        if (!_attacks || _attacks.length === 0)
+            return;
+        for (let attack of _attacks) {
+            // get the target(s)
+            let targets = _targetsOverride ?? Script.getTargets(attack.target, _friendly, _opponent, this);
+            // execute the attacks
+            let attackDmg = this.getDamageOfAttacks([attack], true);
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } });
+            for (let target of targets) {
+                await target.damage(attackDmg, attack.baseCritChance, this);
+            }
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } });
+        }
+    }
+    Script.executeAttack = executeAttack;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -1890,11 +1903,17 @@ var Script;
         #triggers;
         constructor(_data, _level = 0) {
             this.#triggers = new Set();
+            this.removeEventListeners = () => {
+                for (let trigger of this.#triggers) {
+                    Script.EventBus.removeEventListener(trigger, this.abilityEventListener);
+                }
+                Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.removeEventListeners);
+            };
             this.abilityEventListener = async (_ev) => {
                 await this.runAbility(_ev);
             };
-            this.level = _level;
             this.#abilityLevels = _data.abilityLevels;
+            this.level = _level;
             this.#id = _data.id;
             for (let ability of this.#abilityLevels) {
                 if (Array.isArray(ability.on)) {
@@ -1906,6 +1925,7 @@ var Script;
                     this.#triggers.add(ability.on);
                 }
             }
+            this.addEventListeners();
         }
         set level(_lvl) {
             this.#level = Math.max(0, Math.min(this.#abilityLevels.length - 1, _lvl));
@@ -1913,21 +1933,17 @@ var Script;
         get id() {
             return this.#id;
         }
-        registerEventListeners() {
+        addEventListeners() {
             for (let trigger of this.#triggers) {
                 Script.EventBus.addEventListener(trigger, this.abilityEventListener);
             }
-        }
-        removeEventListeners() {
-            for (let trigger of this.#triggers) {
-                Script.EventBus.removeEventListener(trigger, this.abilityEventListener);
-            }
+            Script.EventBus.addEventListener(Script.EVENT.RUN_END, this.removeEventListeners);
         }
         async runAbility(_ev) {
             let ability = this.#abilityLevels[this.#level];
             if (!ability)
                 return;
-            Script.executeAbility.call(this, ability, Script.Fight.activeFight.arena, _ev);
+            await Script.executeAbility.call(this, ability, Script.Fight.activeFight.arena, _ev);
         }
     }
     Script.Stone = Stone;
@@ -2048,6 +2064,24 @@ var Script;
         return newNode;
     }
     Script.getCloneNodeFromRegistry = getCloneNodeFromRegistry;
+    function randomRange(min = 0, max = 1) {
+        const range = max - min;
+        return Math.random() * range + min;
+    }
+    Script.randomRange = randomRange;
+    function chooseRandomElementsFromArray(_array, _max, _exclude = []) {
+        let filteredOptions = _array.filter((element) => !_exclude.includes(element));
+        if (filteredOptions.length < _max) {
+            return filteredOptions;
+        }
+        let result = [];
+        for (let i = 0; i < _max; i++) {
+            const index = Math.floor(Math.random() * filteredOptions.length);
+            result.push(...filteredOptions.splice(index, 1));
+        }
+        return result;
+    }
+    Script.chooseRandomElementsFromArray = chooseRandomElementsFromArray;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -2072,12 +2106,18 @@ var Script;
         }
         async start() {
             Run.currentRun = this;
-            // TODO: Select Start-Eumling Properly
+            // TODO: Proper UI
             let eumling;
             while (eumling !== "R" && eumling !== "S") {
                 eumling = prompt("Which eumling you want to start with? (R or S)", "R").trim().toUpperCase();
             }
             this.eumlings.push(new Script.Eumling(eumling));
+            let stonesToChooseFrom = Script.chooseRandomElementsFromArray(Script.Provider.data.stones, 3);
+            let chosenStone = -1;
+            while (isNaN(chosenStone) || chosenStone < 0 || chosenStone >= stonesToChooseFrom.length) {
+                chosenStone = parseInt(prompt(`Choose a stone to start with.\n${stonesToChooseFrom.reduce((prev, current, index) => prev + `${index}: ${current.id}\n`, "")}`));
+            }
+            this.stones.push(new Script.Stone(stonesToChooseFrom[chosenStone]));
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.RUN_START });
             await this.nextStep();
         }

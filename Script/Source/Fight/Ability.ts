@@ -58,7 +58,7 @@ namespace Script {
     }
 
     export async function executeAbility(_ability: AbilityData, _arena: Arena, _ev: FightEvent) {
-        if(!_ability || !_ev) return;
+        if (!_ability || !_ev) return;
         // correct type of event
         if (Array.isArray(_ability.on)) {
             if (!_ability.on.includes(_ev.type)) return;
@@ -87,13 +87,40 @@ namespace Script {
 
         await EventBus.dispatchEvent({ type: EVENT.TRIGGER_ABILITY, cause: this, target: this, trigger: _ability });
         if (_ability.attack) {
-            await this.useAttack(_arena.home, _arena.away, [{ target: undefined, ..._ability.attack }], targets);
+            await executeAttack([{ target: undefined, ..._ability.attack }], _arena.home, _arena.away, targets);
         }
 
         if (_ability.spell) {
-            await this.useSpell(_arena.home, _arena.away, [{ target: undefined, ..._ability.spell }], targets);
+            await executeSpell([{ target: undefined, ..._ability.spell }], _arena.home, _arena.away, targets);
         }
         await EventBus.dispatchEvent({ type: EVENT.TRIGGERED_ABILITY, cause: this, target: this, trigger: _ability });
     }
 
+
+    export async function executeSpell(_spells: SpellData[], _friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _targetsOverride?: IEntity[]) {
+        if (!_spells) return;
+        for (let spell of _spells) {
+            let targets = _targetsOverride ?? getTargets(spell.target, _friendly, _opponent, this);
+            for (let target of targets) {
+                await EventBus.dispatchEvent({ type: EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target })
+                await target.affect(spell, this);
+                await EventBus.dispatchEvent({ type: EVENT.ENTITY_SPELL, trigger: spell, cause: this, target })
+            }
+        }
+    }
+
+    export async function executeAttack(_attacks: AttackData[], _friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _targetsOverride?: IEntity[]) {
+        if (!_attacks || _attacks.length === 0) return;
+        for (let attack of _attacks) {
+            // get the target(s)
+            let targets = _targetsOverride ?? getTargets(attack.target, _friendly, _opponent, this);
+            // execute the attacks
+            let attackDmg = this.getDamageOfAttacks([attack], true);
+            await EventBus.dispatchEvent({ type: EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } })
+            for (let target of targets) {
+                await target.damage(attackDmg, attack.baseCritChance, this);
+            }
+            await EventBus.dispatchEvent({ type: EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } })
+        }
+    }
 }

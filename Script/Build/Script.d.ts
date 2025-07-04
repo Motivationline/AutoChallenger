@@ -546,6 +546,8 @@ declare namespace Script {
     }
     function areAbilityConditionsMet(_ability: AbilityData, _arena: Arena, _ev: FightEvent): boolean;
     function executeAbility(_ability: AbilityData, _arena: Arena, _ev: FightEvent): Promise<void>;
+    function executeSpell(_spells: SpellData[], _friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _targetsOverride?: IEntity[]): Promise<void>;
+    function executeAttack(_attacks: AttackData[], _friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _targetsOverride?: IEntity[]): Promise<void>;
 }
 declare namespace Script {
     interface AttackDataNoTarget {
@@ -567,8 +569,8 @@ declare namespace Script {
         constructor(_data: StoneData, _level?: number);
         set level(_lvl: number);
         get id(): string;
-        registerEventListeners(): void;
-        removeEventListeners(): void;
+        private addEventListeners;
+        private removeEventListeners;
         private abilityEventListener;
         protected runAbility(_ev: FightEvent): Promise<void>;
     }
@@ -610,6 +612,8 @@ declare namespace Script {
     function initEntitiesInGrid<T extends IEntity>(_grid: GridData<string>, _entity: new (...data: any) => T): Grid<T>;
     function waitMS(_ms: number): Promise<void>;
     function getCloneNodeFromRegistry(id: string): Promise<ƒ.Node | undefined>;
+    function randomRange(min?: number, max?: number): number;
+    function chooseRandomElementsFromArray<T>(_array: readonly T[], _max: number, _exclude?: T[]): T[];
 }
 declare namespace Script {
     /** Handles an entire run */

@@ -21,12 +21,19 @@ namespace Script {
 
         async start() {
             Run.currentRun = this;
-            // TODO: Select Start-Eumling Properly
+            // TODO: Proper UI
             let eumling: string;
             while (eumling !== "R" && eumling !== "S") {
                 eumling = prompt("Which eumling you want to start with? (R or S)", "R").trim().toUpperCase();
             }
             this.eumlings.push(new Eumling(eumling));
+            
+            let stonesToChooseFrom = chooseRandomElementsFromArray(Provider.data.stones, 3);
+            let chosenStone: number = -1;
+            while(isNaN(chosenStone) || chosenStone < 0 || chosenStone >= stonesToChooseFrom.length){
+                chosenStone = parseInt(prompt(`Choose a stone to start with.\n${stonesToChooseFrom.reduce((prev, current, index) => prev + `${index}: ${current.id}\n`, "")}`));
+            }
+            this.stones.push(new Stone(stonesToChooseFrom[chosenStone]));
 
             await EventBus.dispatchEvent({ type: EVENT.RUN_START });
 
