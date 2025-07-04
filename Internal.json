@@ -2379,7 +2379,14 @@
           }
         ]
       },
-      "children": [],
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "GraphGLTF|2025-07-02T13:14:08.501Z|10311"
+          }
+        }
+      ],
       "idResource": "Graph|2025-07-02T13:09:42.912Z|28000",
       "type": "Graph"
     }
@@ -2551,7 +2558,7 @@
         {
           "ƒ.GraphInstance": {
             "deserializeFromSource": true,
-            "idSource": "Graph|2025-06-27T09:55:25.933Z|86643"
+            "idSource": "GraphGLTF|2025-06-24T11:23:56.089Z|16435"
           }
         }
       ],
