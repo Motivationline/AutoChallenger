@@ -12,7 +12,8 @@ namespace Script {
             super();
             if (ƒ.Project.mode === ƒ.MODE.EDITOR) return;
             ƒ.Project.addEventListener(ƒ.EVENT.RESOURCES_LOADED, () => {
-                DataLink.linkedNodes.set(this.id, this.node);
+                if (this.node instanceof ƒ.Graph)
+                    DataLink.linkedNodes.set(this.id, this.node);
             });
         }
     }

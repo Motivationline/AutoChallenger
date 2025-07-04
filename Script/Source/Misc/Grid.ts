@@ -14,6 +14,7 @@ namespace Script {
 
     export class Grid<T> {
         grid: GridData<T>;
+        private static readonly GRIDSIZE: number = 3;
 
         constructor(_content: GridData<T> = Grid.EMPTY<T>()) {
             /* 
@@ -31,8 +32,8 @@ namespace Script {
              thus, we're rotating it so it's more intuitive for the end user.
             */
             this.grid = Grid.EMPTY<T>();
-            for (let x: number = 0; x < 3; x++) {
-                for (let y: number = 0; y < 3; y++) {
+            for (let x: number = 0; x < Grid.GRIDSIZE; x++) {
+                for (let y: number = 0; y < Grid.GRIDSIZE; y++) {
                     this.grid[x][y] = _content[y][x];
                 }
             }
@@ -43,37 +44,55 @@ namespace Script {
         }
 
         public get(_pos: Position) {
-            if (this.outOfBounds(_pos)) return undefined;
+            if (Grid.outOfBounds(_pos)) return undefined;
             return this.grid[_pos[0]][_pos[1]];
         }
         public set(_pos: Position, _el: T) {
-            if (this.outOfBounds(_pos)) return undefined;
+            if (Grid.outOfBounds(_pos)) return undefined;
             return this.grid[_pos[0]][_pos[1]] = _el;
         }
-        public forEachElement(callback: (element?: T, pos?: Position) => void): void {
-            for (let y: number = 0; y < 3; y++)
-                for (let x: number = 0; x < 3; x++) {
+        /** Runs through each **POSITION** of the grid, regardless of whether it is set */
+        public forEachPosition(callback: (element?: T, pos?: Position) => void): void {
+            for (let y: number = 0; y < Grid.GRIDSIZE; y++)
+                for (let x: number = 0; x < Grid.GRIDSIZE; x++) {
                     callback(this.grid[x][y], [x, y]);
                 }
         }
 
-        public async forEachElementAsync(callback: (element?: T, pos?: Position) => Promise<void>): Promise<void> {
-            for (let y: number = 0; y < 3; y++)
-                for (let x: number = 0; x < 3; x++) {
+        /** Runs through each **POSITION** of the grid, regardless of whether it is set, **await**ing each callback */
+        public async forEachPositionAsync(callback: (element?: T, pos?: Position) => Promise<void>): Promise<void> {
+            for (let y: number = 0; y < Grid.GRIDSIZE; y++)
+                for (let x: number = 0; x < Grid.GRIDSIZE; x++) {
                     await callback(this.grid[x][y], [x, y]);
+                }
+        }
+        
+        /** Runs through each **ELEMENT** present in the grid, skips empty spots */
+        public forEachElement(callback: (element?: T, pos?: Position) => void): void {
+            for (let y: number = 0; y < Grid.GRIDSIZE; y++)
+                for (let x: number = 0; x < Grid.GRIDSIZE; x++) {
+                    if (this.grid[x][y]) callback(this.grid[x][y], [x, y]);
+                }
+        }
+
+        /** Runs through each **ELEMENT** present in the grid, skips empty spots, **await**ing each callback */
+        public async forEachElementAsync(callback: (element?: T, pos?: Position) => Promise<void>): Promise<void> {
+            for (let y: number = 0; y < Grid.GRIDSIZE; y++)
+                for (let x: number = 0; x < Grid.GRIDSIZE; x++) {
+                    if (this.grid[x][y]) await callback(this.grid[x][y], [x, y]);
                 }
         }
 
         public get occupiedSpots(): number {
             let total: number = 0;
-            this.forEachElement((el) => {
-                if (el) total++;
+            this.forEachElement(() => {
+                total++;
             })
             return total;
         }
 
-        private outOfBounds(_pos: Position): boolean {
-            return _pos[0] < 0 || _pos[0] > 2 || _pos[1] < 0 || _pos[1] > 2;
+        public static outOfBounds(_pos: Position): boolean {
+            return _pos[0] < 0 || _pos[0] >= Grid.GRIDSIZE || _pos[1] < 0 || _pos[1] >= Grid.GRIDSIZE;
         }
     }
 }

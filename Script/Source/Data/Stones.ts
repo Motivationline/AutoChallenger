@@ -1,6 +1,6 @@
 namespace Script {
     export namespace DataContent {
-        export const relics: RelicData[] = [
+        export const stones: StoneData[] = [
             {
                 id: "healstone",
                 abilityLevels: [

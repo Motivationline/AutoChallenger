@@ -1,8 +1,9 @@
 namespace Script {
-    import ƒ = FudgeCore;
+
     /** Handles an entire run */
     export class Run {
         eumlings: Eumling[] = [];
+        stones: Stone[] = [];
         progress: number = 0;
         encountersUntilBoss: number = 10;
 
@@ -22,11 +23,13 @@ namespace Script {
         async nextStep() {
             this.progress++;
             let nextEncounter = await this.chooseNext();
-            await this.runFight(nextEncounter);
+            const result = await this.runFight(nextEncounter);
+            if (result === FIGHT_RESULT.DEFEAT) {
+                return this.end();
+            }
 
             if (this.progress > this.encountersUntilBoss) {
-                await EventBus.dispatchEvent({ type: EVENT.RUN_END });
-                return;
+                return this.end();
             }
             await this.nextStep();
         }
@@ -43,9 +46,29 @@ namespace Script {
         }
 
         async runFight(_fight: FightData) {
-            // TODO: prepare fight positioning etc.
+            // TODO: proper prepare fight positioning etc. This here is just a temp solution
+            let eumlingsGrid: Grid<Eumling> = new Grid<Eumling>();
+            for (let eumling of this.eumlings) {
+                let pos: Position = [-1, -1];
+                while (Grid.outOfBounds(pos)) {
+                    let input = prompt(`Where do you want to put your ${eumling.id}? Format: x,y, but x-mirrored!`, "1,1");
+                    let split = input.split(",");
+                    if (split.length !== 2) continue;
+                    let newPos: Position = [parseInt(split[0]), parseInt(split[1])];
+                    if (isNaN(newPos[0]) || isNaN(newPos[1])) continue;
+                    pos = newPos;
+                }
+                eumlingsGrid.set(pos, eumling);
+            }
 
             // actually run the fight
+            const fight = new Fight(_fight, eumlingsGrid);
+            const result = await fight.run();
+            return result;
+        }
+
+        async end() {
+            await EventBus.dispatchEvent({ type: EVENT.RUN_END });
         }
 
         addEventListeners() {

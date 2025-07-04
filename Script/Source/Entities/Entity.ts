@@ -382,6 +382,7 @@ namespace Script {
 
         protected async handleEndOfFight(_ev: FightEvent) {
             this.activeEffects.clear();
+            this.removeEventListeners();
         }
 
     }

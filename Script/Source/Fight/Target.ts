@@ -318,7 +318,7 @@ namespace Script {
                     break;
                 case AREA_SHAPE.PATTERN: {
                     if (_target.area.shape === AREA_SHAPE.PATTERN) { // only so that TS doesn't complain.
-                        new Grid(_target.area.pattern).forEachElement((element, pos) => {
+                        new Grid(_target.area.pattern).forEachPosition((element, pos) => {
                             pattern.set(pos, !!element);
                         });
                     }
@@ -328,7 +328,7 @@ namespace Script {
                 // 1, 1 is the center, so the difference to that is how much the pattern is supposed to be moved
                 let delta: Position = [pos[0] - 1, pos[1] - 1];
                 let movedPattern: Grid<boolean> = new Grid();
-                pattern.forEachElement((el, pos) => {
+                pattern.forEachPosition((el, pos) => {
                     let newPos: Position = [pos[0] + delta[0], pos[1] + delta[1]];
 
                     movedPattern.set(newPos, !!el);
@@ -338,7 +338,6 @@ namespace Script {
 
             // final pattern achieved, get the actual entities in these areas now
             side.forEachElement((el, pos) => {
-                if (!el) return;
                 if (el.untargetable) return;
                 if (pattern.get(pos))
                     targets.push(el);

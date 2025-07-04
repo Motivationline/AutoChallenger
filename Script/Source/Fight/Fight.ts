@@ -34,14 +34,16 @@ namespace Script {
                 home: _home,
             }
             this.arena.home.forEachElement((el) => {
-                el?.setGrids(this.arena.home, this.arena.away);
+                el.setGrids(this.arena.home, this.arena.away);
             });
             this.arena.away.forEachElement((el) => {
-                el?.setGrids(this.arena.away, this.arena.home);
+                el.setGrids(this.arena.away, this.arena.home);
             });
 
             this.visualizer = Provider.visualizer.getFight(this);
             this.HUD = Provider.visualizer.getHUD();
+
+            this.addEventListeners();
         }
 
         getRounds() {
@@ -53,9 +55,9 @@ namespace Script {
             // Eventlisteners
             // EventBus.removeAllEventListeners();
             this.HUD.addFightListeners();//replace main.ts instance with Provider.visualizer.getHUD() instance
-            this.arena.home.forEachElement((el) => { el?.registerEventListeners() });
-            this.arena.away.forEachElement((el) => { el?.registerEventListeners() });
-            //TODO: Add relics
+            this.arena.home.forEachElement((el) => { el.registerEventListeners() });
+            this.arena.away.forEachElement((el) => { el.registerEventListeners() });
+            //TODO: Add stones
             await this.visualizer.fightStart();
             await EventBus.dispatchEvent({ type: EVENT.FIGHT_START });
 
@@ -84,7 +86,9 @@ namespace Script {
             await this.visualizer.fightEnd();
             await EventBus.dispatchEvent({ type: EVENT.FIGHT_END, detail: { result: _result } });
             Fight.activeFight = undefined;
-
+            
+            await EventBus.dispatchEvent({ type: EVENT.FIGHT_ENDED, detail: { result: _result } });
+            this.removeEventListeners();
             return _result;
         }
 
@@ -93,15 +97,32 @@ namespace Script {
 
             // spells
             await _active.forEachElementAsync(async (el) => {
-                if (!el) return;
                 await el.useSpell(_active, _passive);
             })
 
             // attacks
             await _active.forEachElementAsync(async (el) => {
-                if (!el) return;
                 await el.useAttack(_active, _passive);
             })
+        }
+
+        private handleDeadEntity = async (_ev: FightEvent) => {
+            let deadEntity = _ev.target;
+            this.arena.home.forEachElement((el, pos) => {
+                if (el !== deadEntity) return;
+                this.arena.home.set(pos, undefined);
+            })
+            this.arena.away.forEachElement((el, pos) => {
+                if (el !== deadEntity) return;
+                this.arena.away.set(pos, undefined);
+            })
+        }
+
+        private addEventListeners() {
+            EventBus.addEventListener(EVENT.ENTITY_DIED, this.handleDeadEntity);
+        }
+        private removeEventListeners() {
+            EventBus.removeEventListener(EVENT.ENTITY_DIED, this.handleDeadEntity);
         }
     }
 }

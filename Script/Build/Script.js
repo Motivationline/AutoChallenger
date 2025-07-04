@@ -88,7 +88,8 @@ var Script;
         static async dispatchEvent(_ev) {
             if (!this.listeners.has(_ev.type))
                 return;
-            for (let listener of this.listeners.get(_ev.type)) {
+            const listeners = [...this.listeners.get(_ev.type)]; // copying this so removing listeners doesn't skip any
+            for (let listener of listeners) {
                 await listener(_ev);
             }
         }
@@ -306,7 +307,7 @@ var Script;
                     break;
                 case Script.AREA_SHAPE.PATTERN: {
                     if (_target.area.shape === Script.AREA_SHAPE.PATTERN) { // only so that TS doesn't complain.
-                        new Script.Grid(_target.area.pattern).forEachElement((element, pos) => {
+                        new Script.Grid(_target.area.pattern).forEachPosition((element, pos) => {
                             pattern.set(pos, !!element);
                         });
                     }
@@ -316,7 +317,7 @@ var Script;
                 // 1, 1 is the center, so the difference to that is how much the pattern is supposed to be moved
                 let delta = [pos[0] - 1, pos[1] - 1];
                 let movedPattern = new Script.Grid();
-                pattern.forEachElement((el, pos) => {
+                pattern.forEachPosition((el, pos) => {
                     let newPos = [pos[0] + delta[0], pos[1] + delta[1]];
                     movedPattern.set(newPos, !!el);
                 });
@@ -324,8 +325,6 @@ var Script;
             }
             // final pattern achieved, get the actual entities in these areas now
             side.forEachElement((el, pos) => {
-                if (!el)
-                    return;
                 if (el.untargetable)
                     return;
                 if (pattern.get(pos))
@@ -868,7 +867,115 @@ var Script;
                     ["kacki", "kacki", "kacki",],
                     ["kacki", "kacki", "kacki",]
                 ],
-            }
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    ["boxingBush", , ,],
+                    [, "boxingBush", ,],
+                    [, , "boxingBush",]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, , ,],
+                    [, "flameFlinger", "punchingPalmtree",],
+                    [, , ,]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    ["flameFlinger", , ,],
+                    [, "sandSitter", "boxingBush",],
+                    ["flameFlinger", , ,]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, "flameFlinger", ,],
+                    ["flameFlinger", "punchingPalmtree", "flameFlinger",],
+                    [, "flameFlinger", ,]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, , "flameFlinger",],
+                    [, "sandSitter", ,],
+                    ["boxingBush", , "flameFlinger",]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, "punchingPalmtree", ,],
+                    ["boxingBush", , ,],
+                    [, "punchingPalmtree", ,]
+                ],
+            },
+            {
+                difficulty: 1,
+                rounds: 3,
+                entities: [
+                    [, , "punchingPalmtree",],
+                    ["worriedWall", "countdownCoconut", ,],
+                    [, , ,]
+                ],
+            },
+            {
+                difficulty: 1,
+                rounds: 3,
+                entities: [
+                    ["worriedWall", , "cactusCrawler",],
+                    [, "cactusCrawler", ,],
+                    ["cactusCrawler", "worriedWall", ,]
+                ],
+            },
+            {
+                difficulty: 1,
+                rounds: 3,
+                entities: [
+                    ["cactusCrawler", , "sandSitter",],
+                    [, , ,],
+                    [, "cactusCrawler", "sandSitter",]
+                ],
+            },
+            {
+                difficulty: 2,
+                rounds: 3,
+                entities: [
+                    ["worriedWall", "boxingBush", "sandSitter",],
+                    ["worriedWall", "cactusCrawler", "countdownCoconut",],
+                    [, , ,]
+                ],
+            },
+            {
+                difficulty: 2,
+                rounds: 3,
+                entities: [
+                    ["boxingBush", , "flameFlinger",],
+                    ["cactusCrawler", "sandSitter", ,],
+                    ["flameFlinger", , "boxingBush",]
+                ],
+            },
+            {
+                difficulty: 2,
+                rounds: 3,
+                entities: [
+                    ["cactusCrawler", "countdownCoconut", "cactusCrawler",],
+                    [, "cactusCrawler", ,],
+                    ["cactusCrawler", , "countdownCoconut",]
+                ],
+            },
         ];
     })(DataContent = Script.DataContent || (Script.DataContent = {}));
 })(Script || (Script = {}));
@@ -885,7 +992,7 @@ var Script;
         async load() {
             this.data.fights = Script.DataContent.fights;
             this.data.entities = Script.DataContent.entities;
-            this.data.relics = Script.DataContent.relics;
+            this.data.stones = Script.DataContent.stones;
             // copy to map for quicker access through getEntity
             this.data.entityMap = {};
             for (let entity of this.data.entities) {
@@ -907,8 +1014,8 @@ var Script;
         get entities() {
             return this.data.entities;
         }
-        get relics() {
-            return this.data.relics;
+        get stones() {
+            return this.data.stones;
         }
         getEntity(_id) {
             return this.data.entityMap[_id];
@@ -934,19 +1041,33 @@ var Script;
     })(FIGHT_RESULT = Script.FIGHT_RESULT || (Script.FIGHT_RESULT = {}));
     class Fight {
         constructor(_fight, _home) {
+            this.handleDeadEntity = async (_ev) => {
+                let deadEntity = _ev.target;
+                this.arena.home.forEachElement((el, pos) => {
+                    if (el !== deadEntity)
+                        return;
+                    this.arena.home.set(pos, undefined);
+                });
+                this.arena.away.forEachElement((el, pos) => {
+                    if (el !== deadEntity)
+                        return;
+                    this.arena.away.set(pos, undefined);
+                });
+            };
             this.rounds = _fight.rounds;
             this.arena = {
                 away: Script.initEntitiesInGrid(_fight.entities, Script.Entity),
                 home: _home,
             };
             this.arena.home.forEachElement((el) => {
-                el?.setGrids(this.arena.home, this.arena.away);
+                el.setGrids(this.arena.home, this.arena.away);
             });
             this.arena.away.forEachElement((el) => {
-                el?.setGrids(this.arena.away, this.arena.home);
+                el.setGrids(this.arena.away, this.arena.home);
             });
             this.visualizer = Script.Provider.visualizer.getFight(this);
             this.HUD = Script.Provider.visualizer.getHUD();
+            this.addEventListeners();
         }
         getRounds() {
             return this.rounds;
@@ -956,9 +1077,9 @@ var Script;
             // Eventlisteners
             // EventBus.removeAllEventListeners();
             this.HUD.addFightListeners(); //replace main.ts instance with Provider.visualizer.getHUD() instance
-            this.arena.home.forEachElement((el) => { el?.registerEventListeners(); });
-            this.arena.away.forEachElement((el) => { el?.registerEventListeners(); });
-            //TODO: Add relics
+            this.arena.home.forEachElement((el) => { el.registerEventListeners(); });
+            this.arena.away.forEachElement((el) => { el.registerEventListeners(); });
+            //TODO: Add stones
             await this.visualizer.fightStart();
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_START });
             // run actual round
@@ -984,22 +1105,26 @@ var Script;
             await this.visualizer.fightEnd();
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_END, detail: { result: _result } });
             Fight.activeFight = undefined;
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_ENDED, detail: { result: _result } });
+            this.removeEventListeners();
             return _result;
         }
         async runOneSide(_active, _passive) {
             // TODO: moves
             // spells
             await _active.forEachElementAsync(async (el) => {
-                if (!el)
-                    return;
                 await el.useSpell(_active, _passive);
             });
             // attacks
             await _active.forEachElementAsync(async (el) => {
-                if (!el)
-                    return;
                 await el.useAttack(_active, _passive);
             });
+        }
+        addEventListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_DIED, this.handleDeadEntity);
+        }
+        removeEventListeners() {
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_DIED, this.handleDeadEntity);
         }
     }
     Script.Fight = Fight;
@@ -1143,13 +1268,13 @@ var Script;
         ƒ.AudioManager.default.update();
     }
     async function run() {
-        const eumlingData = Script.Provider.data.fights[0].entities;
+        // const eumlingData = Provider.data.fights[0].entities;
         // rotate entities in first fight around because they're meant to be testing eumlings for now
         // TODO: remove this once this sort of testing is obsolete.
-        [eumlingData[0][0], eumlingData[0][2]] = [eumlingData[0][2], eumlingData[0][0]];
-        [eumlingData[1][0], eumlingData[1][2]] = [eumlingData[1][2], eumlingData[1][0]];
-        [eumlingData[2][0], eumlingData[2][2]] = [eumlingData[2][2], eumlingData[2][0]];
-        let eumlings = Script.initEntitiesInGrid(eumlingData, Script.Entity);
+        // [eumlingData[0][0], eumlingData[0][2]] = [eumlingData[0][2], eumlingData[0][0]];
+        // [eumlingData[1][0], eumlingData[1][2]] = [eumlingData[1][2], eumlingData[1][0]];
+        // [eumlingData[2][0], eumlingData[2][2]] = [eumlingData[2][2], eumlingData[2][0]];
+        // let eumlings: Grid<IEntity> = initEntitiesInGrid(eumlingData, Entity);
         // eumlings.forEachElement((eumling) => {
         //   let visualizer = new VisualizeEntity(eumling);
         //   root.addChild(visualizer);
@@ -1165,11 +1290,14 @@ var Script;
         // tmp = eumlings.get([0, 0]);
         // eumlings.set([0, 0], eumlings.get([2, 0]));
         // eumlings.set([2, 0], tmp);
-        visualizer.drawScene();
-        let fightData = Script.Provider.data.fights[3];
-        let fight = new Script.Fight(fightData, eumlings);
-        console.log("Rounds: " + fight.getRounds());
-        await fight.run();
+        // visualizer.drawScene();
+        // let fightData = Provider.data.fights[3];
+        // let fight = new Fight(fightData, eumlings);
+        // console.log("Rounds: " + fight.getRounds());
+        // await fight.run();
+        const run = new Script.Run();
+        await run.start();
+        console.log("run over");
     }
 })(Script || (Script = {}));
 var Script;
@@ -1203,7 +1331,8 @@ var Script;
                 if (ƒ.Project.mode === ƒ.MODE.EDITOR)
                     return;
                 ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
-                    DataLink.linkedNodes.set(this.id, this.node);
+                    if (this.node instanceof ƒ.Graph)
+                        DataLink.linkedNodes.set(this.id, this.node);
                 });
             }
             static {
@@ -1218,7 +1347,7 @@ var Script;
 (function (Script) {
     let DataContent;
     (function (DataContent) {
-        DataContent.relics = [
+        DataContent.stones = [
             {
                 id: "healstone",
                 abilityLevels: [
@@ -1573,6 +1702,7 @@ var Script;
         }
         async handleEndOfFight(_ev) {
             this.activeEffects.clear();
+            this.removeEventListeners();
         }
     }
     Script.Entity = Entity;
@@ -1686,7 +1816,7 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
-    class Relic {
+    class Stone {
         #level;
         #abilityLevels;
         #id;
@@ -1733,11 +1863,12 @@ var Script;
             Script.executeAbility.call(this, ability, Script.Fight.activeFight.arena, _ev);
         }
     }
-    Script.Relic = Relic;
+    Script.Stone = Stone;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
     class Grid {
+        static { this.GRIDSIZE = 3; }
         constructor(_content = Grid.EMPTY()) {
             /*
             gotta rotate the grid because when entered like this:
@@ -1754,8 +1885,8 @@ var Script;
              thus, we're rotating it so it's more intuitive for the end user.
             */
             this.grid = Grid.EMPTY();
-            for (let x = 0; x < 3; x++) {
-                for (let y = 0; y < 3; y++) {
+            for (let x = 0; x < Grid.GRIDSIZE; x++) {
+                for (let y = 0; y < Grid.GRIDSIZE; y++) {
                     this.grid[x][y] = _content[y][x];
                 }
             }
@@ -1765,37 +1896,54 @@ var Script;
             return [[, , ,], [, , ,], [, , ,]];
         }
         get(_pos) {
-            if (this.outOfBounds(_pos))
+            if (Grid.outOfBounds(_pos))
                 return undefined;
             return this.grid[_pos[0]][_pos[1]];
         }
         set(_pos, _el) {
-            if (this.outOfBounds(_pos))
+            if (Grid.outOfBounds(_pos))
                 return undefined;
             return this.grid[_pos[0]][_pos[1]] = _el;
         }
-        forEachElement(callback) {
-            for (let y = 0; y < 3; y++)
-                for (let x = 0; x < 3; x++) {
+        /** Runs through each **POSITION** of the grid, regardless of whether it is set */
+        forEachPosition(callback) {
+            for (let y = 0; y < Grid.GRIDSIZE; y++)
+                for (let x = 0; x < Grid.GRIDSIZE; x++) {
                     callback(this.grid[x][y], [x, y]);
                 }
         }
-        async forEachElementAsync(callback) {
-            for (let y = 0; y < 3; y++)
-                for (let x = 0; x < 3; x++) {
+        /** Runs through each **POSITION** of the grid, regardless of whether it is set, **await**ing each callback */
+        async forEachPositionAsync(callback) {
+            for (let y = 0; y < Grid.GRIDSIZE; y++)
+                for (let x = 0; x < Grid.GRIDSIZE; x++) {
                     await callback(this.grid[x][y], [x, y]);
+                }
+        }
+        /** Runs through each **ELEMENT** present in the grid, skips empty spots */
+        forEachElement(callback) {
+            for (let y = 0; y < Grid.GRIDSIZE; y++)
+                for (let x = 0; x < Grid.GRIDSIZE; x++) {
+                    if (this.grid[x][y])
+                        callback(this.grid[x][y], [x, y]);
+                }
+        }
+        /** Runs through each **ELEMENT** present in the grid, skips empty spots, **await**ing each callback */
+        async forEachElementAsync(callback) {
+            for (let y = 0; y < Grid.GRIDSIZE; y++)
+                for (let x = 0; x < Grid.GRIDSIZE; x++) {
+                    if (this.grid[x][y])
+                        await callback(this.grid[x][y], [x, y]);
                 }
         }
         get occupiedSpots() {
             let total = 0;
-            this.forEachElement((el) => {
-                if (el)
-                    total++;
+            this.forEachElement(() => {
+                total++;
             });
             return total;
         }
-        outOfBounds(_pos) {
-            return _pos[0] < 0 || _pos[0] > 2 || _pos[1] < 0 || _pos[1] > 2;
+        static outOfBounds(_pos) {
+            return _pos[0] < 0 || _pos[0] >= Grid.GRIDSIZE || _pos[1] < 0 || _pos[1] >= Grid.GRIDSIZE;
         }
     }
     Script.Grid = Grid;
@@ -1809,8 +1957,6 @@ var Script;
         const data = Script.Provider.data;
         //const visualizer = Provider.visualizer;
         grid.forEachElement((entityId, pos) => {
-            if (!entityId)
-                return;
             let entityData = data.getEntity(entityId);
             if (!entityData)
                 throw new Error(`Entity ${entityId} not found.`);
@@ -1842,6 +1988,7 @@ var Script;
     class Run {
         constructor() {
             this.eumlings = [];
+            this.stones = [];
             this.progress = 0;
             this.encountersUntilBoss = 10;
         }
@@ -1858,10 +2005,12 @@ var Script;
         async nextStep() {
             this.progress++;
             let nextEncounter = await this.chooseNext();
-            await this.runFight(nextEncounter);
+            const result = await this.runFight(nextEncounter);
+            if (result === Script.FIGHT_RESULT.DEFEAT) {
+                return this.end();
+            }
             if (this.progress > this.encountersUntilBoss) {
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.RUN_END });
-                return;
+                return this.end();
             }
             await this.nextStep();
         }
@@ -1878,8 +2027,29 @@ var Script;
             return fights[chosenFight];
         }
         async runFight(_fight) {
-            // TODO: prepare fight positioning etc.
+            // TODO: proper prepare fight positioning etc. This here is just a temp solution
+            let eumlingsGrid = new Script.Grid();
+            for (let eumling of this.eumlings) {
+                let pos = [-1, -1];
+                while (Script.Grid.outOfBounds(pos)) {
+                    let input = prompt(`Where do you want to put your ${eumling.id}? Format: x,y, but x-mirrored!`, "1,1");
+                    let split = input.split(",");
+                    if (split.length !== 2)
+                        continue;
+                    let newPos = [parseInt(split[0]), parseInt(split[1])];
+                    if (isNaN(newPos[0]) || isNaN(newPos[1]))
+                        continue;
+                    pos = newPos;
+                }
+                eumlingsGrid.set(pos, eumling);
+            }
             // actually run the fight
+            const fight = new Script.Fight(_fight, eumlingsGrid);
+            const result = await fight.run();
+            return result;
+        }
+        async end() {
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.RUN_END });
         }
         addEventListeners() {
         }
@@ -1897,14 +2067,12 @@ var Script;
             //TODO: Fix Scaling of the Grids and instance the Entities at given Positions from the Scene out of the Fudge Editor
             let awayGrid = new Script.Grid();
             _fight.arena.away.forEachElement((entity, pos) => {
-                if (entity)
-                    awayGrid.set(pos, new Script.VisualizeEntity(entity));
+                awayGrid.set(pos, new Script.VisualizeEntity(entity));
             });
             this.#away = new Script.IVisualizeGrid(awayGrid, "away");
             let homeGrid = new Script.Grid();
             _fight.arena.home.forEachElement((entity, pos) => {
-                if (entity)
-                    homeGrid.set(pos, new Script.VisualizeEntity(entity));
+                homeGrid.set(pos, new Script.VisualizeEntity(entity));
             });
             this.#home = new Script.IVisualizeGrid(homeGrid, "home");
             Script.Provider.visualizer.addToScene(this.#away);
@@ -1942,6 +2110,7 @@ var Script;
             console.log("Round End");
         }
         async fightEnd() {
+            // TODO @Björn clean up visible entities
             console.log("Fight End!");
         }
     }
@@ -2025,6 +2194,8 @@ var Script;
                 this.removeChild(node);
         }
         async die(_ev) {
+            // TODO: this is a temp, should probably better be done in the visualizer above this, not this one.
+            this.removeAllChildren();
             // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("hotpink");
             await Script.waitMS(1000);
             // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
@@ -2049,7 +2220,9 @@ var Script;
         }
         async loadModel(_id) {
             let model = new ƒ.Node(_id);
-            await model.deserialize(Script.DataLink.linkedNodes.get(_id).serialize());
+            let original = Script.DataLink.linkedNodes.get(_id);
+            // TODO @Björn lade placeholder wenn gewolltes modell nicht existiert, damit irgendwas sichtbar ist
+            await model.deserialize(original.serialize());
             this.addChild(model);
         }
         getEntity() {
@@ -2064,6 +2237,12 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_DIES, this.eventListener);
         }
         removeEventListeners() {
+            Script.EventBus.removeEventListener(Script.EVENT.FIGHT_ENDED, this.eventListener);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_ATTACK, this.eventListener);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_HURT, this.eventListener);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_AFFECTED, this.eventListener);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_DIES, this.eventListener);
         }
         async handleEvent(_ev) {
             if (_ev.cause === this.entity) {
@@ -2203,8 +2382,6 @@ var Script;
             this.addComponent(new ƒ.ComponentTransform());
             //set the positions of the entities in the grid
             this.grid.forEachElement((element, pos) => {
-                if (!element)
-                    return;
                 let visSide;
                 //get Placeholders from scene
                 if (this.side === "away") {

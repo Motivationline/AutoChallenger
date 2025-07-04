@@ -14,7 +14,7 @@ namespace Script {
                     {
                         on: EVENT.ENTITY_HURT,
                         target: "cause",
-                        conditions: [{target: {entity: {}, side: TARGET_SIDE.ALLY}}],
+                        conditions: [{ target: { entity: {}, side: TARGET_SIDE.ALLY } }],
                         attack: {
                             baseDamage: 1,
                         }
@@ -296,9 +296,9 @@ namespace Script {
                 id: "S-Eumling",
                 health: 4,
                 spells: {
-                        target: TARGET.SELF,
-                        type: SPELL_TYPE.HEAL,
-                        level: 1,
+                    target: TARGET.SELF,
+                    type: SPELL_TYPE.HEAL,
+                    level: 1,
                 },
             },
             {

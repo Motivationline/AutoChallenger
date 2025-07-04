@@ -308,7 +308,7 @@ declare namespace Script {
     interface DataData {
         fights: FightData[];
         entities: EntityData[];
-        relics: RelicData[];
+        stones: StoneData[];
         entityMap: {
             [id: string]: EntityData;
         };
@@ -318,7 +318,7 @@ declare namespace Script {
         load(): Promise<void>;
         get fights(): readonly FightData[];
         get entities(): readonly EntityData[];
-        get relics(): readonly RelicData[];
+        get stones(): readonly StoneData[];
         getEntity(_id: string): Readonly<EntityData> | undefined;
         private resolveParent;
     }
@@ -352,6 +352,9 @@ declare namespace Script {
         run(): Promise<FIGHT_RESULT>;
         private fightEnd;
         private runOneSide;
+        private handleDeadEntity;
+        private addEventListeners;
+        private removeEventListeners;
     }
 }
 declare namespace Script {
@@ -415,7 +418,7 @@ declare namespace Script {
 }
 declare namespace Script {
     namespace DataContent {
-        const relics: RelicData[];
+        const stones: StoneData[];
     }
 }
 declare namespace Script {
@@ -547,13 +550,13 @@ declare namespace Script {
     }
 }
 declare namespace Script {
-    interface RelicData {
+    interface StoneData {
         id: string;
         abilityLevels: AbilityData[];
     }
-    class Relic {
+    class Stone {
         #private;
-        constructor(_data: RelicData, _level?: number);
+        constructor(_data: StoneData, _level?: number);
         set level(_lvl: number);
         get id(): string;
         registerEventListeners(): void;
@@ -577,14 +580,21 @@ declare namespace Script {
     type GridData<T> = [[T, T, T], [T, T, T], [T, T, T]];
     class Grid<T> {
         grid: GridData<T>;
+        private static readonly GRIDSIZE;
         constructor(_content?: GridData<T>);
         static EMPTY<T>(): GridData<T | undefined>;
         get(_pos: Position): T;
         set(_pos: Position, _el: T): T;
+        /** Runs through each **POSITION** of the grid, regardless of whether it is set */
+        forEachPosition(callback: (element?: T, pos?: Position) => void): void;
+        /** Runs through each **POSITION** of the grid, regardless of whether it is set, **await**ing each callback */
+        forEachPositionAsync(callback: (element?: T, pos?: Position) => Promise<void>): Promise<void>;
+        /** Runs through each **ELEMENT** present in the grid, skips empty spots */
         forEachElement(callback: (element?: T, pos?: Position) => void): void;
+        /** Runs through each **ELEMENT** present in the grid, skips empty spots, **await**ing each callback */
         forEachElementAsync(callback: (element?: T, pos?: Position) => Promise<void>): Promise<void>;
         get occupiedSpots(): number;
-        private outOfBounds;
+        static outOfBounds(_pos: Position): boolean;
     }
 }
 declare namespace Script {
@@ -597,12 +607,14 @@ declare namespace Script {
     /** Handles an entire run */
     class Run {
         eumlings: Eumling[];
+        stones: Stone[];
         progress: number;
         encountersUntilBoss: number;
         start(): Promise<void>;
         nextStep(): Promise<void>;
         chooseNext(): Promise<FightData>;
-        runFight(_fight: FightData): Promise<void>;
+        runFight(_fight: FightData): Promise<FIGHT_RESULT>;
+        end(): Promise<void>;
         addEventListeners(): void;
         removeEventListeners(): void;
     }

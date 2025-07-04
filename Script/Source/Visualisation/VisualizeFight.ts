@@ -14,12 +14,12 @@ namespace Script {
             //TODO: Fix Scaling of the Grids and instance the Entities at given Positions from the Scene out of the Fudge Editor
             let awayGrid = new Grid<VisualizeEntity>();
             _fight.arena.away.forEachElement((entity, pos) => {
-                if (entity) awayGrid.set(pos, new VisualizeEntity(entity))
+                awayGrid.set(pos, new VisualizeEntity(entity))
             });
             this.#away = new IVisualizeGrid(awayGrid, "away");
             let homeGrid = new Grid<VisualizeEntity>();
             _fight.arena.home.forEachElement((entity, pos) => {
-                if (entity) homeGrid.set(pos, new VisualizeEntity(entity))
+                homeGrid.set(pos, new VisualizeEntity(entity))
             });
             this.#home = new IVisualizeGrid(homeGrid, "home");
 
@@ -66,6 +66,7 @@ namespace Script {
         }
 
         async fightEnd(): Promise<void> {
+            // TODO @Björn clean up visible entities
             console.log("Fight End!");
         }
 

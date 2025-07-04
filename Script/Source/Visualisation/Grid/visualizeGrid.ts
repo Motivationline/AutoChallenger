@@ -24,8 +24,6 @@ namespace Script {
             this.addComponent(new ƒ.ComponentTransform());
             //set the positions of the entities in the grid
             this.grid.forEachElement((element, pos) => {
-                if (!element) return;
-
                 let visSide: ƒ.Node;
 
                 //get Placeholders from scene

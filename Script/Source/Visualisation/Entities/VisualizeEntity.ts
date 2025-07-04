@@ -90,6 +90,8 @@ namespace Script {
             if (node) this.removeChild(node);
         }
         async die(_ev: FightEvent): Promise<void> {
+            // TODO: this is a temp, should probably better be done in the visualizer above this, not this one.
+            this.removeAllChildren();
             // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("hotpink");
             await waitMS(1000);
             // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
@@ -118,7 +120,9 @@ namespace Script {
 
         async loadModel(_id: string) {
             let model: ƒ.Node = new ƒ.Node(_id);
-            await model.deserialize(DataLink.linkedNodes.get(_id).serialize());
+            let original = DataLink.linkedNodes.get(_id);
+            // TODO @Björn lade placeholder wenn gewolltes modell nicht existiert, damit irgendwas sichtbar ist
+            await model.deserialize(original.serialize());
             this.addChild(model);
         }
 
@@ -134,9 +138,14 @@ namespace Script {
             EventBus.addEventListener(EVENT.ENTITY_AFFECTED, this.eventListener);
             EventBus.addEventListener(EVENT.ENTITY_DIES, this.eventListener);
         }
-
+        
         removeEventListeners() {
-
+            EventBus.removeEventListener(EVENT.FIGHT_ENDED, this.eventListener);
+            EventBus.removeEventListener(EVENT.ENTITY_ATTACK, this.eventListener);
+            EventBus.removeEventListener(EVENT.ENTITY_HURT, this.eventListener);
+            EventBus.removeEventListener(EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
+            EventBus.removeEventListener(EVENT.ENTITY_AFFECTED, this.eventListener);
+            EventBus.removeEventListener(EVENT.ENTITY_DIES, this.eventListener);
         }
 
         eventListener = async (_ev: FightEvent) => {

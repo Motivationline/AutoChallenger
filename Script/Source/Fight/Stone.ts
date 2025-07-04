@@ -1,16 +1,16 @@
 namespace Script {
-    export interface RelicData {
+    export interface StoneData {
         id: string;
         abilityLevels: AbilityData[];
     }
 
-    export class Relic {
+    export class Stone {
         #level: number;
         #abilityLevels: AbilityData[];
         #id: string;
         #triggers: Set<EVENT> = new Set();
 
-        constructor(_data: RelicData, _level: number = 0) {
+        constructor(_data: StoneData, _level: number = 0) {
             this.level = _level;
             this.#abilityLevels = _data.abilityLevels;
             this.#id = _data.id;

@@ -76,7 +76,8 @@ namespace Script {
 
         static async dispatchEvent<T>(_ev: FightEvent<T>) {
             if(!this.listeners.has(_ev.type)) return;
-            for (let listener of this.listeners.get(_ev.type)) {
+            const listeners = [...this.listeners.get(_ev.type)]; // copying this so removing listeners doesn't skip any
+            for (let listener of listeners) {
                 await listener(_ev);
             }
         }

@@ -7,7 +7,6 @@ namespace Script {
         const data = Provider.data;
         //const visualizer = Provider.visualizer;
         grid.forEachElement((entityId, pos) => {
-            if (!entityId) return;
             let entityData = data.getEntity(entityId);
             if (!entityData) throw new Error(`Entity ${entityId} not found.`);
             newGrid.set(pos, new _entity(entityData, pos));

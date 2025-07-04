@@ -36,14 +36,14 @@ namespace Script {
   }
 
   async function run() {
-    const eumlingData = Provider.data.fights[0].entities;
+    // const eumlingData = Provider.data.fights[0].entities;
     // rotate entities in first fight around because they're meant to be testing eumlings for now
     // TODO: remove this once this sort of testing is obsolete.
-    [eumlingData[0][0], eumlingData[0][2]] = [eumlingData[0][2], eumlingData[0][0]];
-    [eumlingData[1][0], eumlingData[1][2]] = [eumlingData[1][2], eumlingData[1][0]];
-    [eumlingData[2][0], eumlingData[2][2]] = [eumlingData[2][2], eumlingData[2][0]];
+    // [eumlingData[0][0], eumlingData[0][2]] = [eumlingData[0][2], eumlingData[0][0]];
+    // [eumlingData[1][0], eumlingData[1][2]] = [eumlingData[1][2], eumlingData[1][0]];
+    // [eumlingData[2][0], eumlingData[2][2]] = [eumlingData[2][2], eumlingData[2][0]];
 
-    let eumlings: Grid<IEntity> = initEntitiesInGrid(eumlingData, Entity);
+    // let eumlings: Grid<IEntity> = initEntitiesInGrid(eumlingData, Entity);
     // eumlings.forEachElement((eumling) => {
     //   let visualizer = new VisualizeEntity(eumling);
     //   root.addChild(visualizer);
@@ -61,10 +61,14 @@ namespace Script {
     // eumlings.set([0, 0], eumlings.get([2, 0]));
     // eumlings.set([2, 0], tmp);
 
-    visualizer.drawScene();
-    let fightData = Provider.data.fights[3];
-    let fight = new Fight(fightData, eumlings);
-    console.log("Rounds: " + fight.getRounds());
-    await fight.run();
+    // visualizer.drawScene();
+    // let fightData = Provider.data.fights[3];
+    // let fight = new Fight(fightData, eumlings);
+    // console.log("Rounds: " + fight.getRounds());
+    // await fight.run();
+
+    const run = new Run();
+    await run.start();
+    console.log("run over");
   }
 }
