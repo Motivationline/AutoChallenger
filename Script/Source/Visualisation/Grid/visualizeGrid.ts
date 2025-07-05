@@ -26,7 +26,7 @@ namespace Script {
             this.grid.forEachElement((element, pos) => {
                 let visSide: ƒ.Node;
 
-                //get Placeholders from scene
+                //get Anchors from scene
                 if (this.side === "away") {
                     visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
                 } else if (this.side === "home") {

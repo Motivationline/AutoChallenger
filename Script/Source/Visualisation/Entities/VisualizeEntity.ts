@@ -1,7 +1,7 @@
 namespace Script {
     import ƒ = FudgeCore;
     export interface VisualizeEntity {
-        idle(): Promise<void>;
+        //idle(): Promise<void>;
         attack(_ev: FightEvent): Promise<void>;
         move(_move: MoveData): Promise<void>;
         getHurt(_ev: FightEvent): Promise<void>;
@@ -39,10 +39,10 @@ namespace Script {
             this.addEventListeners();
         }
 
-        async idle(): Promise<void> {
-            // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
-            await waitMS(200);
-        }
+        // async idle(): Promise<void> {
+        //     // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
+        //     await waitMS(200);
+        // }
 
         //#region Do something
         async attack(_ev: FightEvent): Promise<void> {
