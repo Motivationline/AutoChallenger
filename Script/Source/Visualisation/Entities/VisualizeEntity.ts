@@ -105,7 +105,7 @@ namespace Script {
         }
 
         async updateVisuals(): Promise<void> {
-            //TODO: remove this from Scene Graph if this is an enemy, Player should not be removed just repositioned in the next run
+            //TODO: remove the Entity from Scene Graph if this is an enemy, Player should not be removed just repositioned in the next run
             this.removeAllChildren();
             // console.log("entity visualizer null: updateVisuals", this.entity);
             // await waitMS(200);
