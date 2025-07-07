@@ -17,6 +17,8 @@ namespace Script {
 
         private entity: IEntity;
         private model: ƒ.Node;
+        private cmpAnimation: ƒ.ComponentAnimation;
+        private defaultAnimation: ƒ.Animation;
         //private grid: VisualizeGridNull;
 
         constructor(_entity: IEntity) {
@@ -46,42 +48,31 @@ namespace Script {
 
         //#region Do something
         async attack(_ev: FightEvent): Promise<void> {
-            console.log("entity visualizer null: attack", { attacker: this.entity, attack: _ev.trigger, targets: _ev.detail.targets });
-            let node = await getCloneNodeFromRegistry("attack");
-            if (node) this.addChild(node);
-            await waitMS(1000);
-            if (node) this.removeChild(node);
+            console.log("entity visualizer: attack", { attacker: this.entity, attack: _ev.trigger, targets: _ev.detail.targets });
+            await this.playAnimationIfPossible(ANIMATION.ATTACK);
         }
 
         async move(_move: MoveData): Promise<void> {
             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
-            console.log("entity visualizer null: move", _move);
-            await waitMS(200);
+            console.log("entity visualizer: move", _move);
+            await this.playAnimationIfPossible(ANIMATION.MOVE);
         }
 
         async useSpell(_ev: FightEvent): Promise<void> {
-            console.log("entity visualizer null: spell", { caster: this.entity, spell: _ev.trigger, targets: _ev.detail?.targets });
-            let node = await getCloneNodeFromRegistry("spell");
-            if (node) this.addChild(node);
-            await waitMS(1000);
-            if (node) this.removeChild(node);
+            console.log("entity visualizer: spell", { caster: this.entity, spell: _ev.trigger, targets: _ev.detail?.targets });
+            await this.playAnimationIfPossible(ANIMATION.SPELL);
         }
         //#endregion
 
         //#region Something happened
         async getHurt(_ev: FightEvent): Promise<void> {
-            let node = await getCloneNodeFromRegistry("hurt");
-            if (node) this.addChild(node);
-            await waitMS(1000);
-            if (node) this.removeChild(node);
+            await this.playAnimationIfPossible(ANIMATION.HURT);
         }
         async getAffected(_ev: FightEvent): Promise<void> {
-            let node = await getCloneNodeFromRegistry("affected");
-            if (node) this.addChild(node);
-            await waitMS(1000);
-            if (node) this.removeChild(node);
+            await this.playAnimationIfPossible(ANIMATION.AFFECTED);
         }
         async die(_ev: FightEvent): Promise<void> {
+            await this.playAnimationIfPossible(ANIMATION.DIE);
             // TODO: this is a temp, should probably better be done in the visualizer above this, not this one.
             this.removeAllChildren();
             // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("hotpink");
@@ -118,6 +109,8 @@ namespace Script {
             //if the model is not found use a placeholder
             try {
                 await model.deserialize(original.serialize());
+                this.cmpAnimation = model.getChild(0)?.getComponent(ƒ.ComponentAnimation);
+                this.defaultAnimation = this.cmpAnimation?.animation;
             } catch (error) {
                 model = this.givePlaceholderPls();
                 console.warn(`Model with ID: ${_id} not found, using placeholder instead 👉👈`);
@@ -134,6 +127,24 @@ namespace Script {
             placeholder.addComponent(new ƒ.ComponentMaterial(material));
             placeholder.addComponent(new ƒ.ComponentTransform());
             return placeholder;
+        }
+
+        private async playAnimationIfPossible(_anim: ANIMATION) {
+            if (!this.cmpAnimation) return this.showFallbackText(_anim);
+            let animation = AnimationLink.linkedAnimations.get(this.entity.id)?.get(_anim);
+            if (!animation) return this.showFallbackText(_anim);
+            this.cmpAnimation.animation = animation;
+            this.cmpAnimation.time = 0;
+            console.log({ totalTime: animation.totalTime });
+            await waitMS(animation.totalTime);
+            this.cmpAnimation.animation = this.defaultAnimation; // TODO: check if we should instead default back to idle or nothing at all
+
+        }
+        private async showFallbackText(_text: string) {
+            let node = await getCloneNodeFromRegistry(_text);
+            if (node) this.addChild(node);
+            await waitMS(1000);
+            if (node) this.removeChild(node);
         }
 
         getEntity(): Readonly<IEntity> {
