@@ -20,6 +20,8 @@ namespace Script {
 
         constructor() {
             this.root = new ƒ.Node("Root");
+            //TODO: trigger this after the HTML is loaded
+            //this.hideUI();
         }
         getEntity(_entity: IEntity): VisualizeEntity {
             return new VisualizeEntity(_entity);
@@ -60,6 +62,24 @@ namespace Script {
         }
         drawScene(): void {
             this.viewport.draw();
+        }
+        hideUI(): void{
+            document.getElementById("#Fight").hidden = true;
+            document.getElementById("#Menu").hidden = true;
+            document.getElementById("#Map").hidden = true;
+            document.getElementById("#Shop").hidden = true;
+        }
+
+        //first test switching through the differnet Menus
+        private fightStart = async (_ev: FightEvent) => {
+            document.getElementById("#Fight").hidden = false;
+            document.getElementById("#Menu").hidden = true;
+            document.getElementById("#Map").hidden = true;
+            document.getElementById("#Shop").hidden = true;
+        }
+
+        addFightListeners() {
+            EventBus.addEventListener(EVENT.FIGHT_START, this.fightStart);
         }
     }
 }

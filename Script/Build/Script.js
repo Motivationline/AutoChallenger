@@ -1161,7 +1161,15 @@ var Script;
     var ƒ = FudgeCore;
     class VisualizerNull {
         constructor() {
+            //first test switching through the differnet Menus
+            this.fightStart = async (_ev) => {
+                document.getElementById("#Fight").hidden = false;
+                document.getElementById("#Menu").hidden = true;
+                document.getElementById("#Map").hidden = true;
+                document.getElementById("#Shop").hidden = true;
+            };
             this.root = new ƒ.Node("Root");
+            //this.hideUI();
         }
         getEntity(_entity) {
             return new Script.VisualizeEntity(_entity);
@@ -1199,6 +1207,15 @@ var Script;
         }
         drawScene() {
             this.viewport.draw();
+        }
+        hideUI() {
+            document.getElementById("#Fight").hidden = true;
+            document.getElementById("#Menu").hidden = true;
+            document.getElementById("#Map").hidden = true;
+            document.getElementById("#Shop").hidden = true;
+        }
+        addFightListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.FIGHT_START, this.fightStart);
         }
     }
     Script.VisualizerNull = VisualizerNull;

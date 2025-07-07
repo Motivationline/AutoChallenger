@@ -385,6 +385,9 @@ declare namespace Script {
         getRoot(): ƒ.Node;
         getGraph(): ƒ.Graph;
         drawScene(): void;
+        hideUI(): void;
+        private fightStart;
+        addFightListeners(): void;
     }
 }
 declare namespace Script {
