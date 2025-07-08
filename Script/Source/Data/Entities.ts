@@ -296,23 +296,184 @@ namespace Script {
                 id: "RA-Eumling",
                 health: 4,
                 attacks: {
+                    options: [
+                        {
+                            baseDamage: 1,
+                            target: {
+                                side: TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: AREA_POSITION.RELATIVE_MIRRORED,
+                                    shape: AREA_SHAPE.ROW,
+                                },
+                            },
+                        },
+                        {
+                            baseDamage: 1,
+                            target: {
+                                side: TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: AREA_POSITION.RELATIVE_MIRRORED,
+                                    shape: AREA_SHAPE.COLUMN,
+                                },
+                            },
+                        },
+                        {
+                            baseDamage: 1,
+                            target: {
+                                side: TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: AREA_POSITION.RELATIVE_MIRRORED,
+                                    shape: AREA_SHAPE.DIAGONALS,
+                                },
+                            },
+                        },
+                    ],
+                    selection: {
+                        order: SELECTION_ORDER.RANDOM_EACH_FIGHT,
+                        amount: 1,
+                    }
+                }
+            },
+            {
+                id: "RI-Eumling",
+                health: 4,
+                attacks: {
                     baseDamage: 1,
+                    baseCritChance: 25,
                     target: {
                         side: TARGET_SIDE.OPPONENT,
                         area: {
-                            position: AREA_POSITION.RELATIVE_FIRST_IN_ROW,
+                            position: AREA_POSITION.RELATIVE_FIRST_IN_ROW, // TODO: NEEDS TO ATTACK NEXT ROW IF NO ENEMY
+                            shape: AREA_SHAPE.SINGLE,
+                        },
+                    }
+                }
+            },
+            {
+                id: "RAC-Eumling",
+                health: 5,
+                spells: {
+                    options: [
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.RELATIVE_SAME,
+                                    shape: AREA_SHAPE.ROW,
+                                },
+                            },
+                            type: SPELL_TYPE.STRENGTH,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.RELATIVE_SAME,
+                                    shape: AREA_SHAPE.COLUMN,
+                                },
+                            },
+                            type: SPELL_TYPE.STRENGTH,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.RELATIVE_SAME,
+                                    shape: AREA_SHAPE.DIAGONALS,
+                                },
+                            },
+                            type: SPELL_TYPE.STRENGTH,
+                        },
+                    ],
+                    selection: {
+                        order: SELECTION_ORDER.RANDOM_EACH_FIGHT,
+                        amount: 1,
+                    }
+                }
+            },
+            {
+                id: "RAE-Eumling",
+                health: 5,
+                attacks: {
+                    options: [
+                        {
+                            baseDamage: 1,
+                            target: {
+                                side: TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: AREA_POSITION.RELATIVE_MIRRORED,
+                                    shape: AREA_SHAPE.ROW,
+                                },
+                            },
+                        },
+                        {
+                            baseDamage: 1,
+                            target: {
+                                side: TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: AREA_POSITION.RELATIVE_MIRRORED,
+                                    shape: AREA_SHAPE.COLUMN,
+                                },
+                            },
+                        },
+                        {
+                            baseDamage: 1,
+                            target: {
+                                side: TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: AREA_POSITION.RELATIVE_MIRRORED,
+                                    shape: AREA_SHAPE.DIAGONALS,
+                                },
+                            },
+                        },
+                    ],
+                    selection: {
+                        order: SELECTION_ORDER.RANDOM_EACH_FIGHT,
+                        amount: 1,
+                    }
+                },
+                abilities: [ // TODO: Needs to earn +1 gold for each damage dealt
+                ]
+            },
+            {
+                id: "RIC-Eumling",
+                health: 5,
+                attacks: {
+                    baseDamage: 1,
+                    baseCritChance: 25,
+                    target: {
+                        side: TARGET_SIDE.OPPONENT,
+                        area: {
+                            position: AREA_POSITION.RELATIVE_MIRRORED, // TODO: NEEDS TO ATTACK NEXT ROW IF NO ENEMY
                             shape: AREA_SHAPE.ROW,
                         },
                     }
                 }
             },
             {
+                id: "RIE-Eumling",
+                health: 5,
+                attacks: {
+                    baseDamage: 1,
+                    baseCritChance: 50,
+                    target: {
+                        side: TARGET_SIDE.OPPONENT,
+                        area: {
+                            position: AREA_POSITION.RELATIVE_FIRST_IN_ROW, // TODO: NEEDS TO ATTACK NEXT ROW IF NO ENEMY
+                            shape: AREA_SHAPE.SINGLE,
+                        },
+                    }
+                },
+                abilities: [ // TODO: Needs to earn +2 gold every time it crits
+                ]
+            },
+            {
                 id: "S-Eumling",
                 health: 4,
                 spells: {
-                    target: TARGET.SELF,
-                    type: SPELL_TYPE.HEAL,
-                    level: 1,
+                        target: TARGET.SELF,
+                        type: SPELL_TYPE.HEAL,
+                        level: 1,
                 },
             },
             {
