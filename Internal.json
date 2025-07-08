@@ -2384,6 +2384,42 @@
       "events": {}
     }
   },
+  "AnimationGLTF|2025-07-02T13:14:08.505Z|99344": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-02T13:14:08.505Z|99344",
+      "name": "PunchingPT_Idle",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-02T13:14:08.502Z|10408": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-02T13:14:08.502Z|10408",
+      "name": "PunchingPT_die",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-02T13:14:08.504Z|43081": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-02T13:14:08.504Z|43081",
+      "name": "PunchingPT_hit",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-02T13:14:08.501Z|98547": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-02T13:14:08.501Z|98547",
+      "name": "PunchingPT_attack",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb",
+      "events": {}
+    }
+  },
   "Graph|2025-07-02T13:09:42.912Z|28000": {
     "ƒ.Graph": {
       "name": "PunchingPalmTree",
@@ -2394,6 +2430,36 @@
             "Script.DataLink": {
               "active": true,
               "id": "punchingPalmtree"
+            }
+          }
+        ],
+        "AnimationLink": [
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-02T13:14:08.505Z|99344",
+              "animType": "idle"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-02T13:14:08.502Z|10408",
+              "animType": "die"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-02T13:14:08.504Z|43081",
+              "animType": "hurt"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-02T13:14:08.501Z|98547",
+              "animType": "attack"
             }
           }
         ]
@@ -2495,42 +2561,6 @@
       "idResource": "GraphGLTF|2025-07-02T13:14:08.501Z|10311",
       "type": "GraphGLTF",
       "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb"
-    }
-  },
-  "AnimationGLTF|2025-07-02T13:14:08.505Z|99344": {
-    "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-07-02T13:14:08.505Z|99344",
-      "name": "PunchingPT_Idle",
-      "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb",
-      "events": {}
-    }
-  },
-  "AnimationGLTF|2025-07-02T13:14:08.501Z|98547": {
-    "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-07-02T13:14:08.501Z|98547",
-      "name": "PunchingPT_attack",
-      "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb",
-      "events": {}
-    }
-  },
-  "AnimationGLTF|2025-07-02T13:14:08.502Z|10408": {
-    "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-07-02T13:14:08.502Z|10408",
-      "name": "PunchingPT_die",
-      "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb",
-      "events": {}
-    }
-  },
-  "AnimationGLTF|2025-07-02T13:14:08.504Z|43081": {
-    "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-07-02T13:14:08.504Z|43081",
-      "name": "PunchingPT_hit",
-      "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Enemies\\PunchingPalmTree\\PunchingPalmTree.glb",
-      "events": {}
     }
   },
   "Graph|2025-07-02T13:26:02.843Z|14722": {

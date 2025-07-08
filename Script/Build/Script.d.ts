@@ -385,6 +385,9 @@ declare namespace Script {
         getRoot(): ƒ.Node;
         getGraph(): ƒ.Graph;
         drawScene(): void;
+        hideUI(): void;
+        private fightStart;
+        addFightListeners(): void;
     }
 }
 declare namespace Script {
@@ -415,6 +418,22 @@ declare namespace Script {
     class DataLink extends ƒ.ComponentScript {
         static linkedNodes: Map<string, ƒ.Node>;
         id: string;
+        constructor();
+    }
+    enum ANIMATION {
+        IDLE = "idle",
+        MOVE = "move",
+        HURT = "hurt",
+        AFFECTED = "affected",
+        DIE = "die",
+        ATTACK = "attack",
+        SPELL = "spell"
+    }
+    class AnimationLink extends ƒ.Component {
+        static linkedAnimations: Map<string, Map<ANIMATION, ƒ.Animation>>;
+        protected singleton: boolean;
+        animation: ƒ.Animation;
+        animType: ANIMATION;
         constructor();
     }
 }
@@ -657,7 +676,6 @@ declare namespace Script {
 declare namespace Script {
     import ƒ = FudgeCore;
     interface VisualizeEntity {
-        idle(): Promise<void>;
         attack(_ev: FightEvent): Promise<void>;
         move(_move: MoveData): Promise<void>;
         getHurt(_ev: FightEvent): Promise<void>;
@@ -671,11 +689,15 @@ declare namespace Script {
     class VisualizeEntity extends ƒ.Node {
         private entity;
         private model;
+        private cmpAnimation;
+        private defaultAnimation;
         constructor(_entity: IEntity);
         getAffected(_ev: FightEvent): Promise<void>;
         die(_ev: FightEvent): Promise<void>;
         loadModel(_id: string): Promise<void>;
         givePlaceholderPls(): ƒ.Node;
+        private playAnimationIfPossible;
+        private showFallbackText;
         getEntity(): Readonly<IEntity>;
         addEventListeners(): void;
         removeEventListeners(): void;

@@ -1161,7 +1161,15 @@ var Script;
     var ƒ = FudgeCore;
     class VisualizerNull {
         constructor() {
+            //first test switching through the differnet Menus
+            this.fightStart = async (_ev) => {
+                document.getElementById("#Fight").hidden = false;
+                document.getElementById("#Menu").hidden = true;
+                document.getElementById("#Map").hidden = true;
+                document.getElementById("#Shop").hidden = true;
+            };
             this.root = new ƒ.Node("Root");
+            //this.hideUI();
         }
         getEntity(_entity) {
             return new Script.VisualizeEntity(_entity);
@@ -1199,6 +1207,15 @@ var Script;
         }
         drawScene() {
             this.viewport.draw();
+        }
+        hideUI() {
+            document.getElementById("#Fight").hidden = true;
+            document.getElementById("#Menu").hidden = true;
+            document.getElementById("#Map").hidden = true;
+            document.getElementById("#Shop").hidden = true;
+        }
+        addFightListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.FIGHT_START, this.fightStart);
         }
     }
     Script.VisualizerNull = VisualizerNull;
@@ -1374,6 +1391,69 @@ var Script;
         return DataLink = _classThis;
     })();
     Script.DataLink = DataLink;
+    let ANIMATION;
+    (function (ANIMATION) {
+        ANIMATION["IDLE"] = "idle";
+        ANIMATION["MOVE"] = "move";
+        ANIMATION["HURT"] = "hurt";
+        ANIMATION["AFFECTED"] = "affected";
+        ANIMATION["DIE"] = "die";
+        ANIMATION["ATTACK"] = "attack";
+        ANIMATION["SPELL"] = "spell";
+    })(ANIMATION = Script.ANIMATION || (Script.ANIMATION = {}));
+    let AnimationLink = (() => {
+        var _a;
+        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _classSuper = ƒ.Component;
+        let _animation_decorators;
+        let _animation_initializers = [];
+        let _animation_extraInitializers = [];
+        let _animType_decorators;
+        let _animType_initializers = [];
+        let _animType_extraInitializers = [];
+        var AnimationLink = class extends _classSuper {
+            static { _classThis = this; }
+            static {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                _animation_decorators = [ƒ.serialize(ƒ.Animation)];
+                _animType_decorators = [ƒ.serialize(ANIMATION)];
+                __esDecorate(null, null, _animation_decorators, { kind: "field", name: "animation", static: false, private: false, access: { has: obj => "animation" in obj, get: obj => obj.animation, set: (obj, value) => { obj.animation = value; } }, metadata: _metadata }, _animation_initializers, _animation_extraInitializers);
+                __esDecorate(null, null, _animType_decorators, { kind: "field", name: "animType", static: false, private: false, access: { has: obj => "animType" in obj, get: obj => obj.animType, set: (obj, value) => { obj.animType = value; } }, metadata: _metadata }, _animType_initializers, _animType_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                AnimationLink = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            }
+            static { this.linkedAnimations = new Map(); }
+            constructor() {
+                super();
+                this.singleton = false;
+                this.animation = __runInitializers(this, _animation_initializers, void 0);
+                this.animType = (__runInitializers(this, _animation_extraInitializers), __runInitializers(this, _animType_initializers, void 0));
+                __runInitializers(this, _animType_extraInitializers);
+                if (ƒ.Project.mode === ƒ.MODE.EDITOR)
+                    return;
+                ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
+                    if (this.node instanceof ƒ.Graph) {
+                        let link = this.node.getComponent(DataLink);
+                        if (!link)
+                            return;
+                        if (!AnimationLink.linkedAnimations.has(link.id)) {
+                            AnimationLink.linkedAnimations.set(link.id, new Map());
+                        }
+                        AnimationLink.linkedAnimations.get(link.id).set(this.animType, this.animation);
+                    }
+                });
+            }
+            static {
+                __runInitializers(_classThis, _classExtraInitializers);
+            }
+        };
+        return AnimationLink = _classThis;
+    })();
+    Script.AnimationLink = AnimationLink;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -2295,53 +2375,34 @@ var Script;
             Script.Provider.visualizer.addToScene(this);
             this.addEventListeners();
         }
-        async idle() {
-            // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
-            await Script.waitMS(200);
-        }
+        // async idle(): Promise<void> {
+        //     // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
+        //     await waitMS(200);
+        // }
         //#region Do something
         async attack(_ev) {
-            console.log("entity visualizer null: attack", { attacker: this.entity, attack: _ev.trigger, targets: _ev.detail.targets });
-            let node = await Script.getCloneNodeFromRegistry("attack");
-            if (node)
-                this.addChild(node);
-            await Script.waitMS(1000);
-            if (node)
-                this.removeChild(node);
+            console.log("entity visualizer: attack", { attacker: this.entity, attack: _ev.trigger, targets: _ev.detail.targets });
+            await this.playAnimationIfPossible(Script.ANIMATION.ATTACK);
         }
         async move(_move) {
             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
-            console.log("entity visualizer null: move", _move);
-            await Script.waitMS(200);
+            console.log("entity visualizer: move", _move);
+            await this.playAnimationIfPossible(Script.ANIMATION.MOVE);
         }
         async useSpell(_ev) {
-            console.log("entity visualizer null: spell", { caster: this.entity, spell: _ev.trigger, targets: _ev.detail?.targets });
-            let node = await Script.getCloneNodeFromRegistry("spell");
-            if (node)
-                this.addChild(node);
-            await Script.waitMS(1000);
-            if (node)
-                this.removeChild(node);
+            console.log("entity visualizer: spell", { caster: this.entity, spell: _ev.trigger, targets: _ev.detail?.targets });
+            await this.playAnimationIfPossible(Script.ANIMATION.SPELL);
         }
         //#endregion
         //#region Something happened
         async getHurt(_ev) {
-            let node = await Script.getCloneNodeFromRegistry("hurt");
-            if (node)
-                this.addChild(node);
-            await Script.waitMS(1000);
-            if (node)
-                this.removeChild(node);
+            await this.playAnimationIfPossible(Script.ANIMATION.HURT);
         }
         async getAffected(_ev) {
-            let node = await Script.getCloneNodeFromRegistry("affected");
-            if (node)
-                this.addChild(node);
-            await Script.waitMS(1000);
-            if (node)
-                this.removeChild(node);
+            await this.playAnimationIfPossible(Script.ANIMATION.AFFECTED);
         }
         async die(_ev) {
+            await this.playAnimationIfPossible(Script.ANIMATION.DIE);
             // TODO: this is a temp, should probably better be done in the visualizer above this, not this one.
             this.removeAllChildren();
             // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("hotpink");
@@ -2363,7 +2424,7 @@ var Script;
             await Script.waitMS(200);
         }
         async updateVisuals() {
-            //TODO: remove this from Scene Graph if this is an enemy, Player should not be removed just repositioned in the next run
+            //TODO: remove the Entity from Scene Graph if this is an enemy, Player should not be removed just repositioned in the next run
             this.removeAllChildren();
             // console.log("entity visualizer null: updateVisuals", this.entity);
             // await waitMS(200);
@@ -2374,6 +2435,8 @@ var Script;
             //if the model is not found use a placeholder
             try {
                 await model.deserialize(original.serialize());
+                this.cmpAnimation = model.getChild(0)?.getComponent(ƒ.ComponentAnimation);
+                this.defaultAnimation = this.cmpAnimation?.animation;
             }
             catch (error) {
                 model = this.givePlaceholderPls();
@@ -2390,6 +2453,26 @@ var Script;
             placeholder.addComponent(new ƒ.ComponentMaterial(material));
             placeholder.addComponent(new ƒ.ComponentTransform());
             return placeholder;
+        }
+        async playAnimationIfPossible(_anim) {
+            if (!this.cmpAnimation)
+                return this.showFallbackText(_anim);
+            let animation = Script.AnimationLink.linkedAnimations.get(this.entity.id)?.get(_anim);
+            if (!animation)
+                return this.showFallbackText(_anim);
+            this.cmpAnimation.animation = animation;
+            this.cmpAnimation.time = 0;
+            console.log({ totalTime: animation.totalTime });
+            await Script.waitMS(animation.totalTime);
+            this.cmpAnimation.animation = this.defaultAnimation; // TODO: check if we should instead default back to idle or nothing at all
+        }
+        async showFallbackText(_text) {
+            let node = await Script.getCloneNodeFromRegistry(_text);
+            if (node)
+                this.addChild(node);
+            await Script.waitMS(1000);
+            if (node)
+                this.removeChild(node);
         }
         getEntity() {
             return this.entity;
@@ -2549,7 +2632,7 @@ var Script;
             //set the positions of the entities in the grid
             this.grid.forEachElement((element, pos) => {
                 let visSide;
-                //get Placeholders from scene
+                //get Anchors from scene
                 if (this.side === "away") {
                     visSide = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
                 }
