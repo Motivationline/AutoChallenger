@@ -367,7 +367,7 @@ var Script;
         /** Entity cannot act at all this turn */
         SPELL_TYPE["STUN"] = "stun";
         // not fight related
-        // GOLD = "gold",
+        SPELL_TYPE["GOLD"] = "gold";
     })(SPELL_TYPE = Script.SPELL_TYPE || (Script.SPELL_TYPE = {}));
 })(Script || (Script = {}));
 /// <reference path="../Fight/Move.ts" />
@@ -675,15 +675,176 @@ var Script;
                 id: "RA-Eumling",
                 health: 4,
                 attacks: {
+                    options: [
+                        {
+                            baseDamage: 1,
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.RELATIVE_MIRRORED,
+                                    shape: Script.AREA_SHAPE.ROW,
+                                },
+                            },
+                        },
+                        {
+                            baseDamage: 1,
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.RELATIVE_MIRRORED,
+                                    shape: Script.AREA_SHAPE.COLUMN,
+                                },
+                            },
+                        },
+                        {
+                            baseDamage: 1,
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.RELATIVE_MIRRORED,
+                                    shape: Script.AREA_SHAPE.DIAGONALS,
+                                },
+                            },
+                        },
+                    ],
+                    selection: {
+                        order: Script.SELECTION_ORDER.RANDOM_EACH_FIGHT,
+                        amount: 1,
+                    }
+                }
+            },
+            {
+                id: "RI-Eumling",
+                health: 4,
+                attacks: {
                     baseDamage: 1,
+                    baseCritChance: 25,
                     target: {
                         side: Script.TARGET_SIDE.OPPONENT,
                         area: {
-                            position: Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW,
+                            position: Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW, // TODO: NEEDS TO ATTACK NEXT ROW IF NO ENEMY
+                            shape: Script.AREA_SHAPE.SINGLE,
+                        },
+                    }
+                }
+            },
+            {
+                id: "RAC-Eumling",
+                health: 5,
+                spells: {
+                    options: [
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.ALLY,
+                                area: {
+                                    position: Script.AREA_POSITION.RELATIVE_SAME,
+                                    shape: Script.AREA_SHAPE.ROW,
+                                },
+                            },
+                            type: Script.SPELL_TYPE.STRENGTH,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.ALLY,
+                                area: {
+                                    position: Script.AREA_POSITION.RELATIVE_SAME,
+                                    shape: Script.AREA_SHAPE.COLUMN,
+                                },
+                            },
+                            type: Script.SPELL_TYPE.STRENGTH,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.ALLY,
+                                area: {
+                                    position: Script.AREA_POSITION.RELATIVE_SAME,
+                                    shape: Script.AREA_SHAPE.DIAGONALS,
+                                },
+                            },
+                            type: Script.SPELL_TYPE.STRENGTH,
+                        },
+                    ],
+                    selection: {
+                        order: Script.SELECTION_ORDER.RANDOM_EACH_FIGHT,
+                        amount: 1,
+                    }
+                }
+            },
+            {
+                id: "RAE-Eumling",
+                health: 5,
+                attacks: {
+                    options: [
+                        {
+                            baseDamage: 1,
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.RELATIVE_MIRRORED,
+                                    shape: Script.AREA_SHAPE.ROW,
+                                },
+                            },
+                        },
+                        {
+                            baseDamage: 1,
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.RELATIVE_MIRRORED,
+                                    shape: Script.AREA_SHAPE.COLUMN,
+                                },
+                            },
+                        },
+                        {
+                            baseDamage: 1,
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.RELATIVE_MIRRORED,
+                                    shape: Script.AREA_SHAPE.DIAGONALS,
+                                },
+                            },
+                        },
+                    ],
+                    selection: {
+                        order: Script.SELECTION_ORDER.RANDOM_EACH_FIGHT,
+                        amount: 1,
+                    }
+                },
+                abilities: [ // TODO: Needs to earn +1 gold for each damage dealt
+                ]
+            },
+            {
+                id: "RIC-Eumling",
+                health: 5,
+                attacks: {
+                    baseDamage: 1,
+                    baseCritChance: 25,
+                    target: {
+                        side: Script.TARGET_SIDE.OPPONENT,
+                        area: {
+                            position: Script.AREA_POSITION.RELATIVE_MIRRORED, // TODO: NEEDS TO ATTACK NEXT ROW IF NO ENEMY
                             shape: Script.AREA_SHAPE.ROW,
                         },
                     }
                 }
+            },
+            {
+                id: "RIE-Eumling",
+                health: 5,
+                attacks: {
+                    baseDamage: 1,
+                    baseCritChance: 50,
+                    target: {
+                        side: Script.TARGET_SIDE.OPPONENT,
+                        area: {
+                            position: Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW, // TODO: NEEDS TO ATTACK NEXT ROW IF NO ENEMY
+                            shape: Script.AREA_SHAPE.SINGLE,
+                        },
+                    }
+                },
+                abilities: [ // TODO: Needs to earn +2 gold every time it crits
+                ]
             },
             {
                 id: "S-Eumling",
@@ -1169,6 +1330,7 @@ var Script;
                 document.getElementById("#Shop").hidden = true;
             };
             this.root = new ƒ.Node("Root");
+            //TODO: trigger this after the HTML is loaded
             //this.hideUI();
         }
         getEntity(_entity) {
@@ -1178,12 +1340,11 @@ var Script;
             return new Script.VisualizeFightNull(_fight);
         }
         getHUD() {
-            return new Script.VisualizeHUD();
+            return new Script.VisualizeGUI();
         }
         initializeScene(_viewport) {
             this.viewport = _viewport;
-            let HUD = new Script.VisualizeHUD();
-            HUD.sayHello(); // TODO remove this!
+            let HUD = new Script.VisualizeGUI();
             console.log(this.root);
             let FigthScene = ƒ.Project.getResourcesByName("FightScene")[0];
             //attach the root node to the FightScene
@@ -1222,21 +1383,105 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
-    // TODO: add Provider to pass UI elements without hardcoding???
-    class VisualizeHUD {
+    class UILayer {
+        onAdd(_zindex) {
+            this.element.hidden = false;
+            this.element.style.zIndex = _zindex.toString();
+            this.addEventListeners();
+        }
+        onShow() {
+            this.element.hidden = false;
+        }
+        onHide() {
+            this.element.hidden = true; // TODO should it really get hidden? or just disabled?
+        }
+        onRemove() {
+            this.element.hidden = true;
+            this.removeEventListeners();
+        }
+    }
+    Script.UILayer = UILayer;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class FightUI extends Script.UILayer {
         constructor() {
-            this.roundStart = async (_ev) => {
-                this.updateRoundCounter(_ev);
+            super();
+            this.updateRoundCounter = async (_ev) => {
+                let round = _ev.detail.round;
+                const roundCounter = document.querySelector(".RoundCounter");
+                roundCounter.innerText = `Round: ${round + 1}`;
+                roundCounter.classList.add("animate");
+                await Script.waitMS(1000);
+                roundCounter.classList.remove("animate");
             };
+            this.element = document.getElementById("Fight");
         }
-        sayHello() {
-            console.log("Hello from HUD");
+        addEventListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateRoundCounter);
         }
-        updateRoundCounter(_ev) {
-            let round = _ev.detail.round;
-            const roundCounter = document.querySelector(".RoundCounter");
-            roundCounter.innerText = `Round: ${round + 1}`;
-            console.log(`Update Round: ${round + 1}`);
+        removeEventListeners() {
+            Script.EventBus.removeEventListener(Script.EVENT.ROUND_START, this.updateRoundCounter);
+        }
+    }
+    Script.FightUI = FightUI;
+})(Script || (Script = {}));
+/// <reference path="FightUI.ts" />
+var Script;
+/// <reference path="FightUI.ts" />
+(function (Script) {
+    // TODO: add Provider to pass UI elements without hardcoding???
+    class VisualizeGUI {
+        constructor() {
+            this.uis = new Map();
+            this.activeLayers = [];
+            this.switchUI = (_ev) => {
+                switch (_ev.type) {
+                    case Script.EVENT.FIGHT_START: {
+                        this.addUI("fight");
+                    }
+                }
+            };
+            this.uis.clear();
+            this.uis.set("fight", new Script.FightUI());
+            this.addFightListeners();
+            for (let ui of this.uis.values()) {
+                ui.onRemove();
+            }
+        }
+        get topmostLevel() {
+            if (this.activeLayers.length === 0)
+                return undefined;
+            return this.activeLayers[this.activeLayers.length - 1];
+        }
+        addUI(_id) {
+            let ui = this.uis.get(_id);
+            if (!ui)
+                return;
+            let prevTop = this.topmostLevel;
+            if (prevTop)
+                prevTop.onHide();
+            this.activeLayers.push(ui);
+            ui.onAdd(1000 + this.activeLayers.length);
+        }
+        replaceUI(_id) {
+            this.removeTopmostUI();
+            this.addUI(_id);
+        }
+        removeTopmostUI() {
+            let last = this.activeLayers.pop();
+            last?.onHide();
+            last?.onRemove();
+            let newTop = this.topmostLevel;
+            if (newTop)
+                newTop.onShow();
+        }
+        removeAllLayers() {
+            while (this.activeLayers.length > 0) {
+                this.removeTopmostUI();
+            }
         }
         updateGoldCounter(_ev) {
             let amount = _ev.detail.amount;
@@ -1244,30 +1489,30 @@ var Script;
             goldCounter.innerText = `Gold: ${amount}`;
         }
         addFightListeners() {
-            Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.roundStart);
             Script.EventBus.addEventListener(Script.EVENT.GOLD_CHANGE, this.updateGoldCounter);
+            Script.EventBus.addEventListener(Script.EVENT.FIGHT_START, this.switchUI);
         }
     }
-    Script.VisualizeHUD = VisualizeHUD;
+    Script.VisualizeGUI = VisualizeGUI;
 })(Script || (Script = {}));
 /// <reference path="../Visualisation/Visualizer.ts" />
-/// <reference path="../Visualisation/UI/VisualizeHUD.ts" />
+/// <reference path="../Visualisation/UI/VisualizeGUI.ts" />
 var Script;
 /// <reference path="../Visualisation/Visualizer.ts" />
-/// <reference path="../Visualisation/UI/VisualizeHUD.ts" />
+/// <reference path="../Visualisation/UI/VisualizeGUI.ts" />
 (function (Script) {
     class Provider {
         static #data = new Script.Data();
         static #visualizer = new Script.VisualizerNull();
-        static #HUD = new Script.VisualizeHUD();
+        static #GUI = new Script.VisualizeGUI();
         static get data() {
             return this.#data;
         }
         static get visualizer() {
             return this.#visualizer;
         }
-        static get HUD() {
-            return this.#HUD;
+        static get GUI() {
+            return this.#GUI;
         }
         static setVisualizer(_vis) {
             if (!_vis) {
@@ -1282,12 +1527,12 @@ var Script;
 /// <reference path="Data/Data.ts" />
 /// <reference path="Fight/Fight.ts" />
 /// <reference path="Misc/Provider.ts" />
-/// <reference path="Visualisation/UI/VisualizeHUD.ts"/>
+/// <reference path="Visualisation/UI/VisualizeGUI.ts"/>
 var Script;
 /// <reference path="Data/Data.ts" />
 /// <reference path="Fight/Fight.ts" />
 /// <reference path="Misc/Provider.ts" />
-/// <reference path="Visualisation/UI/VisualizeHUD.ts"/>
+/// <reference path="Visualisation/UI/VisualizeGUI.ts"/>
 (function (Script) {
     var ƒ = FudgeCore;
     ƒ.Project.registerScriptNamespace(Script); // Register the namespace to FUDGE for serialization
@@ -2129,6 +2374,8 @@ var Script;
         return newGrid;
     }
     Script.initEntitiesInGrid = initEntitiesInGrid;
+    // TODO: replace this with a fudge timeout so it scales with gametime
+    // Alternatively, make a second one that does that and replace where reasonable
     async function waitMS(_ms) {
         return new Promise((resolve) => {
             setTimeout(resolve, _ms);
@@ -2173,16 +2420,23 @@ var Script;
             this.progress = 0;
             this.encountersUntilBoss = 10;
             this.#gold = 0;
+            this.handleGoldAbility = async (_ev) => {
+                if (!_ev.trigger)
+                    return;
+                if (_ev.trigger?.type !== Script.SPELL_TYPE.GOLD)
+                    return;
+                let amount = _ev.trigger.level ?? 1;
+                await this.changeGold(amount);
+            };
         }
         #gold;
         get gold() {
             return this.#gold;
         }
-        changeGold(_amt) {
-            if (this.#gold < -_amt)
-                throw new Error("Can't spend more than you have!");
-            this.#gold += _amt;
-            Script.EventBus.dispatchEvent({ type: Script.EVENT.GOLD_CHANGE, detail: { amount: this.#gold } });
+        async changeGold(_amt) {
+            // if (this.#gold < -_amt) throw new Error("Can't spend more than you have!");
+            this.#gold = Math.max(0, this.#gold + _amt);
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.GOLD_CHANGE, detail: { amount: this.#gold } });
         }
         async start() {
             Run.currentRun = this;
@@ -2258,7 +2512,7 @@ var Script;
             let defeatedEnemyAmt = prevEnemyAmt - remainingEnemyAmt;
             gold += remainingEnemyAmt;
             xp += defeatedEnemyAmt;
-            this.changeGold(gold);
+            await this.changeGold(gold);
             while (xp > 0) {
                 let index = NaN;
                 while (isNaN(index) || index < 0 || index >= this.eumlings.length) {
@@ -2274,8 +2528,10 @@ var Script;
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.RUN_END });
         }
         addEventListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL, this.handleGoldAbility);
         }
         removeEventListeners() {
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_SPELL, this.handleGoldAbility);
         }
     }
     Script.Run = Run;

@@ -14,7 +14,9 @@ namespace Script {
         console.log("init Grid: " + newGrid);
         return newGrid;
     }
-
+    
+    // TODO: replace this with a fudge timeout so it scales with gametime
+    // Alternatively, make a second one that does that and replace where reasonable
     export async function waitMS(_ms: number): Promise<void> {
         return new Promise((resolve) => {
             setTimeout(resolve, _ms);

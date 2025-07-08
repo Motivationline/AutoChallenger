@@ -2,7 +2,7 @@ namespace Script {
     export interface IVisualizer {
         getEntity(_entity: IEntity): VisualizeEntity;
         getFight(_fight: Fight): IVisualizeFight;
-        getHUD(): VisualizeHUD;
+        getHUD(): VisualizeGUI;
         addToScene(_el: ƒ.Node):void;
         getCamera(): ƒ.ComponentCamera;
         getRoot(): ƒ.Node;
@@ -29,13 +29,12 @@ namespace Script {
         getFight(_fight: Fight): IVisualizeFight {
             return new VisualizeFightNull(_fight);
         }
-        getHUD(): VisualizeHUD {
-            return new VisualizeHUD();
+        getHUD(): VisualizeGUI {
+            return new VisualizeGUI();
         }
         initializeScene(_viewport: ƒ.Viewport): void {
             this.viewport = _viewport;
-            let HUD: VisualizeHUD = new VisualizeHUD();
-            HUD.sayHello();// TODO remove this!
+            let HUD: VisualizeGUI = new VisualizeGUI();
 
             console.log(this.root);
 

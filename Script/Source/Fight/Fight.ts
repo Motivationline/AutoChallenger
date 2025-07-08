@@ -25,7 +25,7 @@ namespace Script {
         rounds: number;
         arena: Arena;
         protected visualizer: IVisualizeFight;
-        protected HUD: VisualizeHUD;
+        protected HUD: VisualizeGUI;
 
         constructor(_fight: FightData, _home: Grid<IEntity>) {
             this.rounds = _fight.rounds;

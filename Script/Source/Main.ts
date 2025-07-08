@@ -1,7 +1,7 @@
 /// <reference path="Data/Data.ts" />
 /// <reference path="Fight/Fight.ts" />
 /// <reference path="Misc/Provider.ts" />
-/// <reference path="Visualisation/UI/VisualizeHUD.ts"/>
+/// <reference path="Visualisation/UI/VisualizeGUI.ts"/>
 
 namespace Script {
   import ƒ = FudgeCore;

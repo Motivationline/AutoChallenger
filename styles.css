@@ -56,3 +56,14 @@ canvas.fullscreen {
   justify-self: center;
   align-self: center;
 }
+
+.RoundCounter.animate {
+  transform-origin: top center;
+  animation: grow 1s linear;
+}
+
+@keyframes grow {
+  0% {scale: 1}
+  50% {scale: 2}
+  100% {scale: 1}
+}

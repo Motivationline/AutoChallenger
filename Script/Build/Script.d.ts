@@ -274,7 +274,8 @@ declare namespace Script {
         /** Deals 1 damage at the end of the round. Removes 1 per round. */
         FIRE = "fire",
         /** Entity cannot act at all this turn */
-        STUN = "stun"
+        STUN = "stun",
+        GOLD = "gold"
     }
     interface SpellDataNoTarget {
         type: SPELL_TYPE;
@@ -347,7 +348,7 @@ declare namespace Script {
         rounds: number;
         arena: Arena;
         protected visualizer: IVisualizeFight;
-        protected HUD: VisualizeHUD;
+        protected HUD: VisualizeGUI;
         constructor(_fight: FightData, _home: Grid<IEntity>);
         getRounds(): number;
         run(): Promise<FIGHT_RESULT>;
@@ -362,7 +363,7 @@ declare namespace Script {
     interface IVisualizer {
         getEntity(_entity: IEntity): VisualizeEntity;
         getFight(_fight: Fight): IVisualizeFight;
-        getHUD(): VisualizeHUD;
+        getHUD(): VisualizeGUI;
         addToScene(_el: ƒ.Node): void;
         getCamera(): ƒ.ComponentCamera;
         getRoot(): ƒ.Node;
@@ -378,7 +379,7 @@ declare namespace Script {
         constructor();
         getEntity(_entity: IEntity): VisualizeEntity;
         getFight(_fight: Fight): IVisualizeFight;
-        getHUD(): VisualizeHUD;
+        getHUD(): VisualizeGUI;
         initializeScene(_viewport: ƒ.Viewport): void;
         addToScene(_el: ƒ.Node): void;
         getCamera(): ƒ.ComponentCamera;
@@ -391,15 +392,37 @@ declare namespace Script {
     }
 }
 declare namespace Script {
-    interface VisualizeHUD {
-        sayHello(): void;
-        addFightListeners(): void;
+    abstract class UILayer {
+        protected element: HTMLElement;
+        onAdd(_zindex: number): void;
+        onShow(): void;
+        onHide(): void;
+        onRemove(): void;
+        abstract addEventListeners(): void;
+        abstract removeEventListeners(): void;
     }
-    class VisualizeHUD implements VisualizeHUD {
+}
+declare namespace Script {
+    class FightUI extends UILayer {
         constructor();
-        private roundStart;
         private updateRoundCounter;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+    }
+}
+declare namespace Script {
+    class VisualizeGUI {
+        readonly uis: Map<string, UILayer>;
+        readonly activeLayers: UILayer[];
+        constructor();
+        private get topmostLevel();
+        addUI(_id: string): void;
+        replaceUI(_id: string): void;
+        removeTopmostUI(): void;
+        removeAllLayers(): void;
         private updateGoldCounter;
+        addFightListeners(): void;
+        switchUI: (_ev: FightEvent) => void;
     }
 }
 declare namespace Script {
@@ -407,7 +430,7 @@ declare namespace Script {
         #private;
         static get data(): Readonly<Data>;
         static get visualizer(): Readonly<IVisualizer>;
-        static get HUD(): Readonly<VisualizeHUD>;
+        static get GUI(): Readonly<VisualizeGUI>;
         static setVisualizer(_vis: IVisualizer): void;
     }
 }
@@ -644,12 +667,13 @@ declare namespace Script {
         progress: number;
         encountersUntilBoss: number;
         get gold(): number;
-        changeGold(_amt: number): void;
+        changeGold(_amt: number): Promise<void>;
         start(): Promise<void>;
         nextStep(): Promise<void>;
         chooseNext(): Promise<FightData>;
         runFight(_fight: FightData): Promise<FIGHT_RESULT>;
         end(): Promise<void>;
+        private handleGoldAbility;
         addEventListeners(): void;
         removeEventListeners(): void;
     }

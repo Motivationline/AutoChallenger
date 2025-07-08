@@ -1,12 +1,12 @@
 /// <reference path="../Visualisation/Visualizer.ts" />
-/// <reference path="../Visualisation/UI/VisualizeHUD.ts" />
+/// <reference path="../Visualisation/UI/VisualizeGUI.ts" />
 
 
 namespace Script {
     export class Provider {
         static #data: Data = new Data();
         static #visualizer: IVisualizer = new VisualizerNull();
-        static #HUD: VisualizeHUD = new VisualizeHUD();
+        static #GUI: VisualizeGUI = new VisualizeGUI();
 
         static get data(): Readonly<Data> {
             return this.#data;
@@ -16,8 +16,8 @@ namespace Script {
             return this.#visualizer;
         }
 
-        static get HUD(): Readonly<VisualizeHUD> {
-            return this.#HUD;
+        static get GUI(): Readonly<VisualizeGUI> {
+            return this.#GUI;
         }
 
         static setVisualizer(_vis: IVisualizer): void {
