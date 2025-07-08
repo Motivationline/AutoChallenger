@@ -210,8 +210,8 @@ namespace Script {
         async move(): Promise<void> {
             //TODO: add movement logic here
             let move: MoveData = {
-                rotateBy: 1,
-                direction: DIRECTION_RELATIVE,
+                rotateBy: Math.floor(Math.random() * 8),
+                //direction: DIRECTION_RELATIVE,
                 distance: 1,
                 /** If this unit is blocked from moving in the desired direction, what should it do? */
                 blocked: {
@@ -221,7 +221,37 @@ namespace Script {
                     attempts: 8,
                 }
             };
+
+            //calculate new position from data here
+            this.position = [this.position[0], this.position[1]]
+
+            let offset: Position = this.getOffsetPositionByMoveData(move, this.position)
+
         }
+
+        getOffsetPositionByMoveData(_move: MoveData, position: Position): Position{
+            switch (_move.rotateBy) {
+                case 0:
+                    //E
+                case 1:
+                    //SE
+                case 2:
+                    //S
+                case 3:
+                    //SW
+                case 4:
+                    //W
+                case 5:
+                    //NW
+                case 6:
+                    //N
+                case 7:
+                    //NE
+            }
+            return [1,1];
+        }
+
+
         async useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells: SpellData[] = this.select(this.spells, true), _targetsOverride?: IEntity[]): Promise<void> {
             if (!_spells) return;
             if (this.stunned) {
