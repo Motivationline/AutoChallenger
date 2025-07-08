@@ -209,7 +209,18 @@ namespace Script {
 
         async move(): Promise<void> {
             //TODO: add movement logic here
-            ;
+            let move: MoveData = {
+                rotateBy: 1,
+                direction: DIRECTION_RELATIVE,
+                distance: 1,
+                /** If this unit is blocked from moving in the desired direction, what should it do? */
+                blocked: {
+                    /** how many increments of 45° should it rotate _(clockwise)_ to try again? */
+                    rotateBy: 1,
+                    /** How many attempts should it make to rotate and move again? default: 1, max 8 */
+                    attempts: 8,
+                }
+            };
         }
         async useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells: SpellData[] = this.select(this.spells, true), _targetsOverride?: IEntity[]): Promise<void> {
             if (!_spells) return;
