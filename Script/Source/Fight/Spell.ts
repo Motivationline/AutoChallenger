@@ -29,7 +29,7 @@ namespace Script {
         STUN = "stun",
 
         // not fight related
-        // GOLD = "gold",
+        GOLD = "gold",
     }
 
     export interface SpellDataNoTarget {

@@ -13,10 +13,10 @@ namespace Script {
             return this.#gold;
         }
 
-        changeGold(_amt: number) {
-            if (this.#gold < -_amt) throw new Error("Can't spend more than you have!");
-            this.#gold += _amt;
-            EventBus.dispatchEvent({ type: EVENT.GOLD_CHANGE, detail: { amount: this.#gold } })
+        async changeGold(_amt: number) {
+            // if (this.#gold < -_amt) throw new Error("Can't spend more than you have!");
+            this.#gold = Math.max(0, this.#gold + _amt);
+            await EventBus.dispatchEvent({ type: EVENT.GOLD_CHANGE, detail: { amount: this.#gold } })
         }
 
         async start() {
@@ -27,10 +27,10 @@ namespace Script {
                 eumling = prompt("Which eumling you want to start with? (R or S)", "R").trim().toUpperCase();
             }
             this.eumlings.push(new Eumling(eumling));
-            
+
             let stonesToChooseFrom = chooseRandomElementsFromArray(Provider.data.stones, 3);
             let chosenStone: number = -1;
-            while(isNaN(chosenStone) || chosenStone < 0 || chosenStone >= stonesToChooseFrom.length){
+            while (isNaN(chosenStone) || chosenStone < 0 || chosenStone >= stonesToChooseFrom.length) {
                 chosenStone = parseInt(prompt(`Choose a stone to start with.\n${stonesToChooseFrom.reduce((prev, current, index) => prev + `${index}: ${current.id}\n`, "")}`));
             }
             this.stones.push(new Stone(stonesToChooseFrom[chosenStone]));
@@ -100,7 +100,7 @@ namespace Script {
             gold += remainingEnemyAmt;
             xp += defeatedEnemyAmt;
 
-            this.changeGold(gold);
+            await this.changeGold(gold);
 
             while (xp > 0) {
                 let index = NaN;
@@ -120,11 +120,19 @@ namespace Script {
             await EventBus.dispatchEvent({ type: EVENT.RUN_END });
         }
 
-        addEventListeners() {
+        private handleGoldAbility = async (_ev: FightEvent) => {
+            if (!_ev.trigger) return;
+            if ((<SpellData>_ev.trigger)?.type !== SPELL_TYPE.GOLD) return;
+            let amount = (<SpellData>_ev.trigger).level ?? 1;
+            await this.changeGold(amount);
+        }
 
+        addEventListeners() {
+            EventBus.addEventListener(EVENT.ENTITY_SPELL, this.handleGoldAbility)
         }
 
         removeEventListeners() {
+            EventBus.removeEventListener(EVENT.ENTITY_SPELL, this.handleGoldAbility)
 
         }
     }
