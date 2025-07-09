@@ -208,7 +208,6 @@ namespace Script {
         }
 
         async move(): Promise<void> {
-            //TODO: add movement logic here
             let move: MoveData = {
                 rotateBy: Math.floor(Math.random() * 8),
                 //direction: DIRECTION_RELATIVE,
@@ -222,33 +221,145 @@ namespace Script {
                 }
             };
 
-            //calculate new position from data here
+            //TODO: calculate new position from data here
             this.position = [this.position[0], this.position[1]]
+            //TODO: get the entities grid side
+            let side = "home";
+            let OldGrid = new Grid<Entity>;//TODO: get the correct Grid 
+            //create new grid and place entities in it
+            let NewGrid = new Grid<Entity>//TODO: replace old Grid
+            //get the occupied Spots position data
+            let pos: Position;
+            let occupiedSpots: Position[];
+            OldGrid.forEachElement((el) => (occupiedSpots.push(el.position)));//get the positions from entities in the Grid
 
-            let offset: Position = this.getOffsetPositionByMoveData(move, this.position)
+            let offset: Position = this.getOffsetPositionByMoveData(move, this.position, side, occupiedSpots);
 
         }
 
-        getOffsetPositionByMoveData(_move: MoveData, position: Position): Position{
-            switch (_move.rotateBy) {
-                case 0:
-                    //E
-                case 1:
-                    //SE
-                case 2:
-                    //S
-                case 3:
-                    //SW
-                case 4:
-                    //W
-                case 5:
-                    //NW
-                case 6:
-                    //N
-                case 7:
-                    //NE
+        getOffsetPositionByMoveData(_move: MoveData, position: Position, _side: string, _occupiedSpots: Position[]): Position {
+            let posX: number = position[0];
+            let posY: number = position[1];
+            let outOfBounds: boolean = false;
+            //repeat until not out of bounds
+            while (!outOfBounds) {
+                switch (_move.rotateBy) {
+                    case 0:
+                        //E
+                        //x + 1
+                        //check out of bounds
+                        if (posX == 2) {
+                            //out of bounds -> try again
+                            outOfBounds = true;
+                            break;
+                        } else {
+                            let pos: Position = [posX + 1, posY]
+                            //TODO: fix this, position array
+                            if (_occupiedSpots.find(pos) == undefined) {
+                                outOfBounds = false;
+                                //calculate position
+                                posX += 1;
+                            }
+                        }
+                    case 1:
+                        //SE
+                        //x,y + 1
+                        //check out of bounds
+                        if (posX == 2 || posY == 2) {
+                            //out of bounds -> try again
+                            outOfBounds = true;
+                            break;
+                        } else {
+                            outOfBounds = false;
+                            //calculate position
+                            posX += 1;
+                            posY += 1;
+                        }
+                    case 2:
+                        //S
+                        //y + 1
+                        //check out of bounds
+                        if (posY == 2) {
+                            //out of bounds -> try again
+                            outOfBounds = true;
+                            break;
+                        } else {
+                            outOfBounds = false;
+                            //calculate position
+                            posY += 1;
+                        }
+                    case 3:
+                        //SW
+                        //y + 1, x - 1
+                        //check out of bounds
+                        if (posX == 0 || posY == 2) {
+                            //out of bounds -> try again
+                            outOfBounds = true;
+                            break;
+                        } else {
+                            outOfBounds = false;
+                            //calculate position
+                            posX -= 1;
+                            posY += 1;
+                        }
+                    case 4:
+                        //W
+                        //x - 1
+                        //check out of bounds
+                        if (posX == 0) {
+                            //out of bounds -> try again
+                            outOfBounds = true;
+                            break;
+                        } else {
+                            outOfBounds = false;
+                            //calculate position
+                            posX -= 1;
+                        }
+                    case 5:
+                        //NW
+                        //x - 1, y - 1
+                        //check out of bounds
+                        if (posX == 0 || posY == 0) {
+                            //out of bounds -> try again
+                            outOfBounds = true;
+                            break;
+                        } else {
+                            outOfBounds = false;
+                            //calculate position
+                            posX -= 1;
+                            posY -= 1;
+                        }
+                    case 6:
+                        //N
+                        //y - 1
+                        //check out of bounds
+                        if (posY == 0) {
+                            //out of bounds -> try again
+                            outOfBounds = true;
+                            break;
+                        } else {
+                            outOfBounds = false;
+                            //calculate position
+                            posY -= 1;
+                        }
+                    case 7:
+                        //NE
+                        //y - 1, x + 1
+                        //check out of bounds
+                        if (posX == 2 || posY == 0) {
+                            //out of bounds -> try again
+                            outOfBounds = true;
+                            break;
+                        } else {
+                            outOfBounds = false;
+                            //calculate position
+                            posX += 1;
+                            posY -= 1;
+                        }
+                }
             }
-            return [1,1];
+
+            return [posX, posY];
         }
 
 
