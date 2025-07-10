@@ -243,6 +243,7 @@ namespace Script {
             let outOfBounds: boolean = false;
             //repeat until not out of bounds
             while (!outOfBounds) {
+                //move in random dir given by _move.rotateBy
                 switch (_move.rotateBy) {
                     case 0:
                         //E
@@ -254,11 +255,14 @@ namespace Script {
                             break;
                         } else {
                             let pos: Position = [posX + 1, posY]
-                            //TODO: fix this, position array
-                            if (_occupiedSpots.find(pos) == undefined) {
+                            //check if the position is occupied
+                            if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+                                //position is valid
                                 outOfBounds = false;
-                                //calculate position
-                                posX += 1;
+                                return pos
+                            } else {
+                                //spot is occupied -> try again
+                                outOfBounds = true;
                             }
                         }
                     case 1:
@@ -270,10 +274,16 @@ namespace Script {
                             outOfBounds = true;
                             break;
                         } else {
-                            outOfBounds = false;
-                            //calculate position
-                            posX += 1;
-                            posY += 1;
+                            let pos: Position = [posX + 1, posY + 1]
+                            //check if the position is occupied
+                            if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+                                //position is valid
+                                outOfBounds = false;
+                                return pos
+                            } else {
+                                //spot is occupied -> try again
+                                outOfBounds = true;
+                            }
                         }
                     case 2:
                         //S
@@ -284,9 +294,16 @@ namespace Script {
                             outOfBounds = true;
                             break;
                         } else {
-                            outOfBounds = false;
-                            //calculate position
-                            posY += 1;
+                            let pos: Position = [posX, posY + 1]
+                            //check if the position is occupied
+                            if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+                                //position is valid
+                                outOfBounds = false;
+                                return pos
+                            } else {
+                                //spot is occupied -> try again
+                                outOfBounds = true;
+                            }
                         }
                     case 3:
                         //SW
@@ -297,10 +314,16 @@ namespace Script {
                             outOfBounds = true;
                             break;
                         } else {
-                            outOfBounds = false;
-                            //calculate position
-                            posX -= 1;
-                            posY += 1;
+                            let pos: Position = [posX - 1, posY + 1]
+                            //check if the position is occupied
+                            if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+                                //position is valid
+                                outOfBounds = false;
+                                return pos
+                            } else {
+                                //spot is occupied -> try again
+                                outOfBounds = true;
+                            }
                         }
                     case 4:
                         //W
@@ -311,9 +334,16 @@ namespace Script {
                             outOfBounds = true;
                             break;
                         } else {
-                            outOfBounds = false;
-                            //calculate position
-                            posX -= 1;
+                            let pos: Position = [posX - 1, posY]
+                            //check if the position is occupied
+                            if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+                                //position is valid
+                                outOfBounds = false;
+                                return pos
+                            } else {
+                                //spot is occupied -> try again
+                                outOfBounds = true;
+                            }
                         }
                     case 5:
                         //NW
@@ -324,10 +354,16 @@ namespace Script {
                             outOfBounds = true;
                             break;
                         } else {
-                            outOfBounds = false;
-                            //calculate position
-                            posX -= 1;
-                            posY -= 1;
+                            let pos: Position = [posX - 1, posY - 1]
+                            //check if the position is occupied
+                            if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+                                //position is valid
+                                outOfBounds = false;
+                                return pos
+                            } else {
+                                //spot is occupied -> try again
+                                outOfBounds = true;
+                            }
                         }
                     case 6:
                         //N
@@ -338,9 +374,16 @@ namespace Script {
                             outOfBounds = true;
                             break;
                         } else {
-                            outOfBounds = false;
-                            //calculate position
-                            posY -= 1;
+                            let pos: Position = [posX, posY - 1]
+                            //check if the position is occupied
+                            if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+                                //position is valid
+                                outOfBounds = false;
+                                return pos
+                            } else {
+                                //spot is occupied -> try again
+                                outOfBounds = true;
+                            }
                         }
                     case 7:
                         //NE
@@ -351,15 +394,33 @@ namespace Script {
                             outOfBounds = true;
                             break;
                         } else {
-                            outOfBounds = false;
-                            //calculate position
-                            posX += 1;
-                            posY -= 1;
+                            let pos: Position = [posX + 1, posY - 1]
+                            //check if the position is occupied
+                            if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+                                //position is valid
+                                outOfBounds = false;
+                                return pos
+                            } else {
+                                //spot is occupied -> try again
+                                outOfBounds = true;
+                            }
                         }
                 }
             }
 
-            return [posX, posY];
+            //return [posX, posY];
+        }
+
+        checkPosOccupied(_posX: number, _posY: number, _occupiedSpots: Position[]): boolean {
+            let pos: Position = [_posX, _posY]
+            //check if the position is occupied
+            if (!_occupiedSpots.some(spot => spot[0] === pos[0] && spot[1] === pos[1])) {
+                //position is valid
+                return true;
+            } else {
+                //spot is occupied -> try again
+                return false;
+            }
         }
 
 
