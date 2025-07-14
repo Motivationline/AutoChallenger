@@ -1,30 +1,33 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
+
 <head>
     <title>AutoChallenger</title>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="styles.css" />
 
     <!--Editor settings of this project-->
-    <meta type="settings" autoview="Graph|2025-05-23T08:52:13.386Z|08098" project="{'name':'AutoChallenger','graphAutoView':'Graph|2025-05-23T08:52:13.386Z|08098'}" />
+    <meta type="settings" autoview="Graph|2025-05-23T08:52:13.386Z|08098"
+        project="{'name':'AutoChallenger','graphAutoView':'Graph|2025-05-23T08:52:13.386Z|08098'}" />
 
     <!--Activate the following line to include the FUDGE-version of Oimo-Physics. You may want to download a local copy to work offline and be independent from future changes!-->
     <!--<script type="text/javascript" src="https://hs-furtwangen.github.io/FUDGE/Distribution/OimoPhysics.js"></script>-->
 
     <!--Load FUDGE. You may want to download local copies to work offline and be independent from future changes! Developers working on FUDGE itself may want to create symlinks-->
     <!-- <script type="text/javascript" src="https://hs-furtwangen.github.io/FUDGE/Distribution/FudgeCore.js"></script> -->
-    <script type="text/javascript" src="Script/FudgeCore.js" defer></script>
-    <script type="text/javascript" src="Script/FudgeAid.js" defer></script>
+    <script type="text/javascript" src="Script/FudgeCore.js"></script>
+    <script type="text/javascript" src="Script/FudgeAid.js"></script>
 
 
     <!--Link internal resources. The editor only loads the first, but at runtime, multiple fi   les can contribute-->
     <link type="resources" src="Internal.json" />
 
     <!--Load custom scripts-->
-    <script type="text/javascript" src="Script/Build/Script.js" editor="true" defer></script>
+    <script type="text/javascript" src="Script/Build/Script.js" editor="true"></script>
 
     <!--Load Autoview script-->
-    <script type="text/javascript" src="Autoview.js" defer></script>
+    <script type="text/javascript" src="Autoview.js"></script>
 
 </head>
 
@@ -36,30 +39,105 @@
         <p>click to start</p>
     </dialog>
 
-    <div id="Fight">
-        <!--Fight UI-->
-        <div class="UI">
-        <div class="UI_header">
-            <div>AutoChallenger</div>
-            <div class="RoundCounter">Rounds: </div>
-            <div class="GoldCounter">Gold: 0</div>
-        </div>
-        <div class="UI_footer">
-
-        </div>
-    </div>
-    </div>
-    <div id="Menu">
+    <div id="MainMenu" class="UI" hidden="">
         <!--Menu UI-->
     </div>
-    <div id="Map">
-        <!--Map UI-->
+
+    <div id="ChooseEumling" class="UI" hidden="">
+        <div id="ChooseEumlingInner">
+            <span>Choose an Eumling</span>
+            <div id="ChooseEumlingOptions">
+            </div>
+        </div>
     </div>
-    <div id="Shop">
+    <div id="ChooseStone" class="UI" hidden="">
+        <div id="ChooseStoneInner">
+            <span>Choose a Stone</span>
+            <div id="ChooseStoneOptions">
+            </div>
+        </div>
+    </div>
+
+    <div id="Map" class="UI" hidden="">
+        <!--Map UI-->
+        <div id="MapOptions">
+        </div>
+        <div id="MapCharacter">
+        </div>
+        <div id="MapActionButtonWrapper">
+            <button id="MapActionButton">Select</button>
+        </div>
+        <div id="MapProgressBarWrapper">
+            <div id="MapProgressBar">
+                <div id="MapProgressBarCurrent">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="FightPrep" class="UI no-interact" hidden="">
+        <div id="FightPrepStones" class="interact">
+        </div>
+        <div id="FightStartWrapper" class="interact">
+            <button id="FightStart">Start</button>
+        </div>
+        <div id="FightPrepEumlings" class="interact">
+        </div>
+    </div>
+    <div id="Fight" class="UI" hidden="">
+        <!--Fight UI-->
+        <div id="FightStones">
+        </div>
+        <div id="FightProgress">
+        </div>
+        <div id="FightSpeedOptions">
+        </div>
+        <div class="GoldCounter">Gold: 0</div>
+        <div id="FightPhaseOverlay">
+        </div>
+    </div>
+    <div id="FightReward" class="UI" hidden="">
+        <div id="FightRewardRewards">
+        </div>
+        <div id="FightRewardXP">
+        </div>
+        <div id="FightRewardContinueWrapper">
+            <button id="FightRewardContinue">Continue</button>
+        </div>
+    </div>
+
+    <div id="EumlingLevelup" class="UI" hidden="">
+        <div id="EumlingLevelupEumling">
+        </div>
+        <div id="EumlingLevelupOptions">
+        </div>
+        <div id="EumlingLevelupInfo">
+        </div>
+    </div>
+
+    <div id="Defeated" class="UI" hidden="">
+        <div>
+            <h2>Defeat</h2>
+            <p>You lost. :(</p>
+            <p>Better luck next time!</p>
+            <button id="Restart">Restart</button>
+        </div>
+    </div>
+
+    <div id="Shop" class="UI" hidden="">
         <!--Shop UI-->
+        <div id="ShopStones">
+        </div>
+        <div id="ShopStoneUpgrades">
+        </div>
+        <div id="ShopEumlingHeal">
+        </div>
+    </div>
+    <div id="Options" class="UI" hidden="">
     </div>
     <!--Canvas for FUDGE to render to-->
-    <canvas class="fullscreen">
+    <canvas class="fullscreen" id="GameCanvas">
     </canvas>
 </body>
+
 </html>

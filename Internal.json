@@ -256,13 +256,22 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[-1.1462314128875732, 0.5, 1.1856307983398438]",
+                                  "translation": "[-1.0590081214904785, 0.5, 1.296144962310791]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
                                 "Component": {
                                   "active": true
                                 }
+                              }
+                            }
+                          ],
+                          "PickSphere": [
+                            {
+                              "Script.PickSphere": {
+                                "active": true,
+                                "radius": 0.5000000000000001,
+                                "offset": "[0, 0, 0]"
                               }
                             }
                           ]
@@ -279,13 +288,22 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[-1.128272533416748, 0.5, 2.3804802894592285]",
+                                  "translation": "[-1.049545407295227, 0.5, 2.39726185798645]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
                                 "Component": {
                                   "active": true
                                 }
+                              }
+                            }
+                          ],
+                          "PickSphere": [
+                            {
+                              "Script.PickSphere": {
+                                "active": true,
+                                "radius": 0.5,
+                                "offset": "[0, 0, 0]"
                               }
                             }
                           ]
@@ -302,13 +320,22 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[-1.1160547733306885, 0.5, 3.465148448944092]",
+                                  "translation": "[-1.0542306900024414, 0.5, 3.502429485321045]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
                                 "Component": {
                                   "active": true
                                 }
+                              }
+                            }
+                          ],
+                          "PickSphere": [
+                            {
+                              "Script.PickSphere": {
+                                "active": true,
+                                "radius": 0.5,
+                                "offset": "[0, 0, 0]"
                               }
                             }
                           ]
@@ -325,13 +352,22 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[0, 0.5, 1.254612922668457]",
+                                  "translation": "[0.04891351982951164, 0.5, 1.3063740730285645]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
                                 "Component": {
                                   "active": true
                                 }
+                              }
+                            }
+                          ],
+                          "PickSphere": [
+                            {
+                              "Script.PickSphere": {
+                                "active": true,
+                                "radius": 0.5,
+                                "offset": "[0, 0, 0]"
                               }
                             }
                           ]
@@ -348,13 +384,22 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[0, 0.5, 2.3828482627868652]",
+                                  "translation": "[0.04923165217041969, 0.5, 2.399242639541626]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
                                 "Component": {
                                   "active": true
                                 }
+                              }
+                            }
+                          ],
+                          "PickSphere": [
+                            {
+                              "Script.PickSphere": {
+                                "active": true,
+                                "radius": 0.5,
+                                "offset": "[0, 0, 0]"
                               }
                             }
                           ]
@@ -371,13 +416,22 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[0, 0.5, 3.5078887939453125]",
+                                  "translation": "[0.08170110732316971, 0.5, 3.5078887939453125]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
                                 "Component": {
                                   "active": true
                                 }
+                              }
+                            }
+                          ],
+                          "PickSphere": [
+                            {
+                              "Script.PickSphere": {
+                                "active": true,
+                                "radius": 0.5,
+                                "offset": "[0, 0, 0]"
                               }
                             }
                           ]
@@ -394,13 +448,22 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[1.004439115524292, 0.5, 1.2686535120010376]",
+                                  "translation": "[1.1625099182128906, 0.5, 1.3095719814300537]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
                                 "Component": {
                                   "active": true
                                 }
+                              }
+                            }
+                          ],
+                          "PickSphere": [
+                            {
+                              "Script.PickSphere": {
+                                "active": true,
+                                "radius": 0.5,
+                                "offset": "[0, 0, 0]"
                               }
                             }
                           ]
@@ -417,13 +480,22 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[1.0665453672409058, 0.5, 2.4791245460510254]",
+                                  "translation": "[1.1597472429275513, 0.5, 2.414928674697876]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
                                 "Component": {
                                   "active": true
                                 }
+                              }
+                            }
+                          ],
+                          "PickSphere": [
+                            {
+                              "Script.PickSphere": {
+                                "active": true,
+                                "radius": 0.5,
+                                "offset": "[0, 0, 0]"
                               }
                             }
                           ]
@@ -440,13 +512,22 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[1.0997563600540161, 0.5, 3.478369951248169]",
+                                  "translation": "[1.1590694189071655, 0.5, 3.506058931350708]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
                                 "Component": {
                                   "active": true
                                 }
+                              }
+                            }
+                          ],
+                          "PickSphere": [
+                            {
+                              "Script.PickSphere": {
+                                "active": true,
+                                "radius": 0.5,
+                                "offset": "[0, 0, 0]"
                               }
                             }
                           ]

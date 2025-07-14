@@ -50,4 +50,32 @@ namespace Script {
         }
         return result;
     }
+
+    interface CreateElementAdvancedOptions {
+        classes: string[],
+        id: string,
+        innerHTML: string,
+        attributes: [string, string][],
+    }
+    
+    export function createElementAdvanced<K extends keyof HTMLElementTagNameMap>(_type: K, _options: Partial<CreateElementAdvancedOptions> = {}): HTMLElementTagNameMap[K] {
+        let el = document.createElement(_type);
+
+        if (_options.id) {
+            el.id = _options.id;
+        }
+        if (_options.classes) {
+            el.classList.add(..._options.classes);
+        }
+        if (_options.innerHTML) {
+            el.innerHTML = _options.innerHTML;
+        }
+        if (_options.attributes) {
+            for (let attribute of _options.attributes) {
+                el.setAttribute(attribute[0], attribute[1]);
+            }
+        }
+
+        return el;
+    }
 }

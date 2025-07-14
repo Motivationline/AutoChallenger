@@ -1,6 +1,7 @@
 namespace Script {
 
     export enum EVENT {
+        RUN_PREPARE = "runPrepare",
         RUN_START = "runStart",
         RUN_END = "runEnd",
         FIGHT_PREPARE = "fightPrepare",
@@ -29,6 +30,16 @@ namespace Script {
         TRIGGER_ABILITY = "triggerAbility",
         TRIGGERED_ABILITY = "triggeredAbility",
         GOLD_CHANGE = "goldChange",
+        CHOOSE_EUMLING = "chooseEumling",
+        CHOSEN_EUMLING = "chosenEumling",
+        CHOOSE_STONE = "chooseStone",
+        CHOSEN_STONE = "chosenStone",
+        CHOOSE_ENCOUNTER = "chooseEncounter",
+        CHOSEN_ENCOUNTER = "chosenEncounter",
+        SHOP_OPEN = "shopOpen",
+        SHOP_CLOSE = "shopClose",
+        REWARDS_OPEN = "rewardsOpen",
+        REWARDS_CLOSE = "rewardsClose",
     }
 
     /**
@@ -76,11 +87,22 @@ namespace Script {
         }
 
         static async dispatchEvent<T>(_ev: FightEvent<T>) {
-            if(!this.listeners.has(_ev.type)) return;
+            // TODO think about whether it makes sense to allow only one event active at a time, e.g. through a queue
+            if (!this.listeners.has(_ev.type)) return;
             const listeners = [...this.listeners.get(_ev.type)]; // copying this so removing listeners doesn't skip any
             for (let listener of listeners) {
                 await listener(_ev);
             }
+        }
+
+        static async awaitSpecificEvent(_type: EVENT): Promise<FightEvent> {
+            return new Promise((resolve) => {
+                const resolver = (_ev: FightEvent) => {
+                    this.removeEventListener(_type, resolver);
+                    resolve(_ev);
+                }
+                this.addEventListener(_type, resolver);
+            })
         }
     }
 }

@@ -26,6 +26,7 @@ namespace Script {
         arena: Arena;
         protected visualizer: IVisualizeFight;
         protected HUD: VisualizeGUI;
+        #enemyStartCount: number;
 
         constructor(_fight: FightData, _home: Grid<IEntity>) {
             this.rounds = _fight.rounds;
@@ -40,10 +41,16 @@ namespace Script {
                 el.setGrids(this.arena.away, this.arena.home);
             });
 
+            this.#enemyStartCount = this.arena.away.occupiedSpots;
+
             this.visualizer = Provider.visualizer.getFight(this);
-            this.HUD = Provider.visualizer.getHUD();
+            this.HUD = Provider.visualizer.getGUI();
 
             this.addEventListeners();
+        }
+
+        get enemyCountAtStart() {
+            return this.#enemyStartCount;
         }
 
         getRounds() {
@@ -86,7 +93,7 @@ namespace Script {
             await this.visualizer.fightEnd();
             await EventBus.dispatchEvent({ type: EVENT.FIGHT_END, detail: { result: _result } });
             Fight.activeFight = undefined;
-            
+
             await EventBus.dispatchEvent({ type: EVENT.FIGHT_ENDED, detail: { result: _result } });
             this.removeEventListeners();
             return _result;

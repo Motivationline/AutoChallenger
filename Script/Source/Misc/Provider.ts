@@ -5,8 +5,7 @@
 namespace Script {
     export class Provider {
         static #data: Data = new Data();
-        static #visualizer: IVisualizer = new VisualizerNull();
-        static #GUI: VisualizeGUI = new VisualizeGUI();
+        static #visualizer: IVisualizer;
 
         static get data(): Readonly<Data> {
             return this.#data;
@@ -17,10 +16,10 @@ namespace Script {
         }
 
         static get GUI(): Readonly<VisualizeGUI> {
-            return this.#GUI;
+            return this.#visualizer.getGUI();
         }
 
-        static setVisualizer(_vis: IVisualizer): void {
+        static setVisualizer(_vis?: IVisualizer): void {
             if (!_vis) {
                 this.#visualizer = new VisualizerNull;
                 return;

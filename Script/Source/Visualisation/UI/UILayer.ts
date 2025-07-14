@@ -1,7 +1,7 @@
 namespace Script {
     export abstract class UILayer {
         protected element: HTMLElement;
-        onAdd(_zindex: number): void {
+        onAdd(_zindex: number, _ev?: FightEvent): void {
             this.element.hidden = false;
             this.element.style.zIndex = _zindex.toString();
             this.addEventListeners();

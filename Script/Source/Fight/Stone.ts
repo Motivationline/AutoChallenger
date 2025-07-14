@@ -31,6 +31,10 @@ namespace Script {
             this.#level = Math.max(0, Math.min(this.#abilityLevels.length - 1, _lvl));
         }
 
+        get level() {
+            return this.#level;
+        }
+
         get id() {
             return this.#id;
         }

@@ -9,22 +9,24 @@ namespace Script {
 
   ƒ.Debug.info("Main Program Template running!");
   let visualizer: IVisualizer;
-  let viewport: ƒ.Viewport;
+  export let viewport: ƒ.Viewport;
   document.addEventListener("interactiveViewportStarted", <EventListener>start);
 
   async function initProvider() {
     if (ƒ.Project.mode === ƒ.MODE.EDITOR) return;
     await Provider.data.load();
     //TODO load correct visualizer here
+    Provider.setVisualizer();
+    visualizer = Provider.visualizer;
+    visualizer.initializeScene(viewport);
+    visualizer.drawScene();
+
     run();
   }
 
   function start(_event: CustomEvent): void {
     viewport = _event.detail;
     initProvider();
-    visualizer = Provider.visualizer;
-    visualizer.initializeScene(viewport);
-    visualizer.drawScene();
     ƒ.Loop.addEventListener(ƒ.EVENT.LOOP_FRAME, update);
     ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
   }
@@ -68,7 +70,6 @@ namespace Script {
     // await fight.run();
 
     const run = new Run();
-    await run.start();
-    console.log("run over");
+    run.start();
   }
 }

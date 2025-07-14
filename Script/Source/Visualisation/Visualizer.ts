@@ -2,8 +2,8 @@ namespace Script {
     export interface IVisualizer {
         getEntity(_entity: IEntity): VisualizeEntity;
         getFight(_fight: Fight): IVisualizeFight;
-        getHUD(): VisualizeGUI;
-        addToScene(_el: ƒ.Node):void;
+        getGUI(): VisualizeGUI;
+        addToScene(_el: ƒ.Node): void;
         getCamera(): ƒ.ComponentCamera;
         getRoot(): ƒ.Node;
         initializeScene(_viewport: ƒ.Viewport): void;
@@ -17,6 +17,7 @@ namespace Script {
         root: ƒ.Node;
         camera: ƒ.ComponentCamera;
         viewport: ƒ.Viewport;
+        #gui: VisualizeGUI;
 
         constructor() {
             this.root = new ƒ.Node("Root");
@@ -29,8 +30,9 @@ namespace Script {
         getFight(_fight: Fight): IVisualizeFight {
             return new VisualizeFightNull(_fight);
         }
-        getHUD(): VisualizeGUI {
-            return new VisualizeGUI();
+        getGUI(): VisualizeGUI {
+            if (!this.#gui) this.#gui = new VisualizeGUI();
+            return this.#gui;
         }
         initializeScene(_viewport: ƒ.Viewport): void {
             this.viewport = _viewport;
@@ -62,7 +64,7 @@ namespace Script {
         drawScene(): void {
             this.viewport.draw();
         }
-        hideUI(): void{
+        hideUI(): void {
             document.getElementById("#Fight").hidden = true;
             document.getElementById("#Menu").hidden = true;
             document.getElementById("#Map").hidden = true;

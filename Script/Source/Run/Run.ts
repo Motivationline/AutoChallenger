@@ -8,6 +8,37 @@ namespace Script {
         progress: number = 0;
         encountersUntilBoss: number = 10;
         #gold: number = 0;
+        #currentFight: Fight;
+        /* TODO: This is a crutch for now, later we might come up with a better solution than hardcoding all encounter chances for each level */
+        #levelDifficultyChances: number[][] = [
+            [1, 0, 0],
+            [0.9, 0.1, 0],
+            [0.8, 0.2, 0],
+            [0.7, 0.3, 0],
+            [0.6, 0.3, 0.1],
+            [0.5, 0.3, 0.2],
+            [0.4, 0.3, 0.3],
+            [0.2, 0.4, 0.4],
+            [0, 0.5, 0.5],
+            [0, 0, 1],
+        ]
+        #shopChance: number[] =
+            [
+                0,
+                0,
+                1,
+                0,
+                0.25,
+                0.25,
+                0.25,
+                0,
+                1,
+                0,
+            ];
+
+        constructor() {
+            this.addEventListeners();
+        }
 
         get gold() {
             return this.#gold;
@@ -19,105 +50,135 @@ namespace Script {
             await EventBus.dispatchEvent({ type: EVENT.GOLD_CHANGE, detail: { amount: this.#gold } })
         }
 
+        //#region Prepare Run
         async start() {
             Run.currentRun = this;
-            // TODO: Proper UI
-            let eumling: string;
-            while (eumling !== "R" && eumling !== "S") {
-                eumling = prompt("Which eumling you want to start with? (R or S)", "R").trim().toUpperCase();
-            }
-            this.eumlings.push(new Eumling(eumling));
+            await EventBus.dispatchEvent({ type: EVENT.RUN_PREPARE });
 
-            let stonesToChooseFrom = chooseRandomElementsFromArray(Provider.data.stones, 3);
-            let chosenStone: number = -1;
-            while (isNaN(chosenStone) || chosenStone < 0 || chosenStone >= stonesToChooseFrom.length) {
-                chosenStone = parseInt(prompt(`Choose a stone to start with.\n${stonesToChooseFrom.reduce((prev, current, index) => prev + `${index}: ${current.id}\n`, "")}`));
-            }
-            this.stones.push(new Stone(stonesToChooseFrom[chosenStone]));
+            await this.chooseEumling();
+
+            await this.chooseStone();
 
             await EventBus.dispatchEvent({ type: EVENT.RUN_START });
-
-            await this.nextStep();
+            
+            for (this.progress = 0; this.progress < this.encountersUntilBoss; this.progress++) {
+                let shouldContinue = await this.runStep();
+                if (!shouldContinue) break;
+            }
+            if (this.progress === this.encountersUntilBoss) {
+                // bossfight here
+            }
+            
+            await this.end();
         }
 
-        async nextStep() {
-            this.progress++;
-            let nextEncounter = await this.chooseNext();
-            const result = await this.runFight(nextEncounter);
+        private async chooseEumling() {
+            EventBus.dispatchEvent({ type: EVENT.CHOOSE_EUMLING });
+            let event = await EventBus.awaitSpecificEvent(EVENT.CHOSEN_EUMLING);
+            this.eumlings.push(new Eumling(event.detail.eumling));
+        }
+        private async chooseStone() {
+            EventBus.dispatchEvent({ type: EVENT.CHOOSE_STONE });
+            let event = await EventBus.awaitSpecificEvent(EVENT.CHOSEN_STONE);
+            this.stones.push(new Stone(event.detail.stone));
+        }
+
+        //#endregion
+
+        //#region Run
+
+        private async runStep(): Promise<boolean> {
+            let encounter = await this.chooseNextEncounter();
+            if (encounter < 0) { //shop
+                EventBus.dispatchEvent({ type: EVENT.SHOP_OPEN });
+                await EventBus.awaitSpecificEvent(EVENT.SHOP_CLOSE);
+                return true;
+            }
+
+            let nextFight = await this.nextEncounter(encounter);
+            await this.prepareFight(nextFight);
+            let result = await this.runFight();
             if (result === FIGHT_RESULT.DEFEAT) {
-                return this.end();
+                return false;
             }
 
-            if (this.progress > this.encountersUntilBoss) {
-                return this.end();
-            }
-            await this.nextStep();
+            await this.giveRewards();
+
+            return true;
         }
 
-        async chooseNext() {
-            // TODO: replace this with a proper selection system, for now you can directly choose only fights
-            let chosenFight: number = -1;
-            if (this.progress === this.encountersUntilBoss) { chosenFight = 0 }
-            const fights = Provider.data.fights;
-            while (isNaN(chosenFight) || chosenFight < 0 || chosenFight >= fights.length) {
-                chosenFight = parseInt(prompt(`Next fight id (0 - ${fights.length - 1})`));
-            }
-            return fights[chosenFight];
-        }
+        //#region >  Prepare Fight
 
-        async runFight(_fight: FightData) {
-            // TODO: proper prepare fight positioning etc. This here is just a temp solution
-            let eumlingsGrid: Grid<Eumling> = new Grid<Eumling>();
-            for (let eumling of this.eumlings) {
-                let pos: Position = [-1, -1];
-                while (Grid.outOfBounds(pos)) {
-                    let input = prompt(`Where do you want to put your ${eumling.id}? Format: x,y, but x-mirrored!`, "1,1");
-                    let split = input.split(",");
-                    if (split.length !== 2) continue;
-                    let newPos: Position = [parseInt(split[0]), parseInt(split[1])];
-                    if (isNaN(newPos[0]) || isNaN(newPos[1])) continue;
-                    pos = newPos;
+        private async chooseNextEncounter() {
+            const shopChance = this.#shopChance[this.progress];
+            const levelChances = this.#levelDifficultyChances[this.progress];
+            const options: number[] = [];
+            if (Math.random() < shopChance) {
+                options.push(-1);
+            }
+            while (options.length < 2) {
+                let random = Math.random();
+                for (let index = 0; index < levelChances.length; index++) {
+                    const element = levelChances[index];
+                    random -= element;
+                    if (random <= 0) {
+                        options.push(index);
+                        break;
+                    }
                 }
-                eumlingsGrid.set(pos, eumling);
-                eumling.position = pos;
             }
+            EventBus.dispatchEvent({ type: EVENT.CHOOSE_ENCOUNTER, detail: { options } });
+            let event = await EventBus.awaitSpecificEvent(EVENT.CHOSEN_ENCOUNTER);
+            return event.detail.encounter;
+        }
 
+        async nextEncounter(_difficulty: number) {
+            if (_difficulty === -1) { // shop
+                return undefined;
+            }
+            // TODO remember which fight(s) we had last and avoid that?
+            let nextFight = chooseRandomElementsFromArray(Provider.data.fights.filter((data) => data.difficulty === _difficulty), 1)[0];
+            return nextFight;
+        }
+
+        async prepareFight(_fight: FightData) {
+            let eumlingsGrid: Grid<Eumling> = new Grid<Eumling>();
+            this.#currentFight = new Fight(_fight, eumlingsGrid);
+            await EventBus.dispatchEvent({ type: EVENT.FIGHT_PREPARE, detail: { fight: this.#currentFight } });
+            await EventBus.awaitSpecificEvent(EVENT.FIGHT_PREPARE_COMPLETED);
+        }
+
+        //#endregion
+
+        //#region > Run Fight
+
+        private async runFight() {
             // actually run the fight
-            const fight = new Fight(_fight, eumlingsGrid);
-            const result = await fight.run();
+            const result = await this.#currentFight.run();
+            return result;
+        }
 
-            if (result === FIGHT_RESULT.DEFEAT) {
-                return result;
-            }
-
+        private async giveRewards() {
             // give rewards
             let gold: number = 1;
             let xp: number = 1;
-            let oldFightData = new Grid(_fight.entities);
-            let prevEnemyAmt = oldFightData.occupiedSpots;
-            let remainingEnemyAmt = fight.arena.away.occupiedSpots;
+            let prevEnemyAmt = this.#currentFight.enemyCountAtStart;
+            let remainingEnemyAmt = this.#currentFight.arena.away.occupiedSpots;
             let defeatedEnemyAmt = prevEnemyAmt - remainingEnemyAmt;
             gold += remainingEnemyAmt;
             xp += defeatedEnemyAmt;
 
+            await EventBus.dispatchEvent({ type: EVENT.REWARDS_OPEN, detail: { gold, xp } });
+            await EventBus.awaitSpecificEvent(EVENT.REWARDS_CLOSE);
+
             await this.changeGold(gold);
-
-            while (xp > 0) {
-                let index = NaN;
-                while (isNaN(index) || index < 0 || index >= this.eumlings.length) {
-                    index = parseInt(prompt(`You have ${xp} xp to distribute. Which Eumling do you want to give it to?\n${this.eumlings.reduce((prev, current, index) => prev + `${index}: ${current.type} (${current.xp} / ${current.requiredXPForLevelup} xp)\n`, "")}`));
-                }
-
-                let eumling = this.eumlings[index];
-                eumling.addXP(1);
-                xp--;
-            }
-
-            return result;
         }
+        //#endregion
+        //#endregion
 
         async end() {
             await EventBus.dispatchEvent({ type: EVENT.RUN_END });
+            this.removeEventListeners();
         }
 
         private handleGoldAbility = async (_ev: FightEvent) => {
@@ -132,8 +193,7 @@ namespace Script {
         }
 
         removeEventListeners() {
-            EventBus.removeEventListener(EVENT.ENTITY_SPELL, this.handleGoldAbility)
-
+            EventBus.removeEventListener(EVENT.ENTITY_SPELL, this.handleGoldAbility);
         }
     }
 }

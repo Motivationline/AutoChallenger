@@ -37,6 +37,7 @@ var Script;
 (function (Script) {
     let EVENT;
     (function (EVENT) {
+        EVENT["RUN_PREPARE"] = "runPrepare";
         EVENT["RUN_START"] = "runStart";
         EVENT["RUN_END"] = "runEnd";
         EVENT["FIGHT_PREPARE"] = "fightPrepare";
@@ -65,6 +66,16 @@ var Script;
         EVENT["TRIGGER_ABILITY"] = "triggerAbility";
         EVENT["TRIGGERED_ABILITY"] = "triggeredAbility";
         EVENT["GOLD_CHANGE"] = "goldChange";
+        EVENT["CHOOSE_EUMLING"] = "chooseEumling";
+        EVENT["CHOSEN_EUMLING"] = "chosenEumling";
+        EVENT["CHOOSE_STONE"] = "chooseStone";
+        EVENT["CHOSEN_STONE"] = "chosenStone";
+        EVENT["CHOOSE_ENCOUNTER"] = "chooseEncounter";
+        EVENT["CHOSEN_ENCOUNTER"] = "chosenEncounter";
+        EVENT["SHOP_OPEN"] = "shopOpen";
+        EVENT["SHOP_CLOSE"] = "shopClose";
+        EVENT["REWARDS_OPEN"] = "rewardsOpen";
+        EVENT["REWARDS_CLOSE"] = "rewardsClose";
     })(EVENT = Script.EVENT || (Script.EVENT = {}));
     class EventBus {
         static { this.listeners = new Map(); }
@@ -87,12 +98,22 @@ var Script;
             listeners.splice(index, 1);
         }
         static async dispatchEvent(_ev) {
+            // TODO think about whether it makes sense to allow only one event active at a time, e.g. through a queue
             if (!this.listeners.has(_ev.type))
                 return;
             const listeners = [...this.listeners.get(_ev.type)]; // copying this so removing listeners doesn't skip any
             for (let listener of listeners) {
                 await listener(_ev);
             }
+        }
+        static async awaitSpecificEvent(_type) {
+            return new Promise((resolve) => {
+                const resolver = (_ev) => {
+                    this.removeEventListener(_type, resolver);
+                    resolve(_ev);
+                };
+                this.addEventListener(_type, resolver);
+            });
         }
     }
     Script.EventBus = EventBus;
@@ -1228,6 +1249,7 @@ var Script;
         FIGHT_RESULT["DEFEAT"] = "defeat";
     })(FIGHT_RESULT = Script.FIGHT_RESULT || (Script.FIGHT_RESULT = {}));
     class Fight {
+        #enemyStartCount;
         constructor(_fight, _home) {
             this.handleDeadEntity = async (_ev) => {
                 let deadEntity = _ev.target;
@@ -1253,9 +1275,13 @@ var Script;
             this.arena.away.forEachElement((el) => {
                 el.setGrids(this.arena.away, this.arena.home);
             });
+            this.#enemyStartCount = this.arena.away.occupiedSpots;
             this.visualizer = Script.Provider.visualizer.getFight(this);
-            this.HUD = Script.Provider.visualizer.getHUD();
+            this.HUD = Script.Provider.visualizer.getGUI();
             this.addEventListeners();
+        }
+        get enemyCountAtStart() {
+            return this.#enemyStartCount;
         }
         getRounds() {
             return this.rounds;
@@ -1321,6 +1347,7 @@ var Script;
 (function (Script) {
     var ƒ = FudgeCore;
     class VisualizerNull {
+        #gui;
         constructor() {
             //first test switching through the differnet Menus
             this.fightStart = async (_ev) => {
@@ -1339,8 +1366,10 @@ var Script;
         getFight(_fight) {
             return new Script.VisualizeFightNull(_fight);
         }
-        getHUD() {
-            return new Script.VisualizeGUI();
+        getGUI() {
+            if (!this.#gui)
+                this.#gui = new Script.VisualizeGUI();
+            return this.#gui;
         }
         initializeScene(_viewport) {
             this.viewport = _viewport;
@@ -1384,7 +1413,7 @@ var Script;
 var Script;
 (function (Script) {
     class UILayer {
-        onAdd(_zindex) {
+        onAdd(_zindex, _ev) {
             this.element.hidden = false;
             this.element.style.zIndex = _zindex.toString();
             this.addEventListeners();
@@ -1428,9 +1457,77 @@ var Script;
     }
     Script.FightUI = FightUI;
 })(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class ChooseEumlingUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.element = document.getElementById("ChooseEumling");
+        }
+        onAdd(_zindex) {
+            super.onAdd(_zindex);
+            const optionElement = document.getElementById("ChooseEumlingOptions");
+            optionElement.replaceChildren();
+            const options = ["R", "S"];
+            for (let opt of options) {
+                const btn = document.createElement("button");
+                btn.dataset.eumling = opt;
+                btn.innerText = opt;
+                optionElement.appendChild(btn);
+                btn.addEventListener("click", () => {
+                    Script.Provider.GUI.removeTopmostUI();
+                    Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_EUMLING, detail: { eumling: opt } });
+                });
+            }
+        }
+        addEventListeners() {
+        }
+        removeEventListeners() {
+        }
+    }
+    Script.ChooseEumlingUI = ChooseEumlingUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class ChooseStoneUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.element = document.getElementById("ChooseStone");
+        }
+        onAdd(_zindex) {
+            super.onAdd(_zindex);
+            const optionElement = document.getElementById("ChooseStoneOptions");
+            optionElement.replaceChildren();
+            const options = Script.chooseRandomElementsFromArray(Script.Provider.data.stones, 3);
+            for (let opt of options) {
+                const btn = document.createElement("button");
+                btn.dataset.eumling = opt.id;
+                btn.innerText = opt.id;
+                optionElement.appendChild(btn);
+                btn.addEventListener("click", () => {
+                    Script.Provider.GUI.removeTopmostUI();
+                    Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_STONE, detail: { stone: opt } });
+                });
+            }
+        }
+        addEventListeners() {
+        }
+        removeEventListeners() {
+        }
+    }
+    Script.ChooseStoneUI = ChooseStoneUI;
+})(Script || (Script = {}));
 /// <reference path="FightUI.ts" />
+/// <reference path="ChooseEumlingUI.ts" />
+/// <reference path="ChooseStoneUI.ts" />
 var Script;
 /// <reference path="FightUI.ts" />
+/// <reference path="ChooseEumlingUI.ts" />
+/// <reference path="ChooseStoneUI.ts" />
 (function (Script) {
     // TODO: add Provider to pass UI elements without hardcoding???
     class VisualizeGUI {
@@ -1440,12 +1537,36 @@ var Script;
             this.switchUI = (_ev) => {
                 switch (_ev.type) {
                     case Script.EVENT.FIGHT_START: {
-                        this.addUI("fight");
+                        this.replaceUI("fight", _ev);
+                        break;
+                    }
+                    case Script.EVENT.CHOOSE_STONE: {
+                        this.replaceUI("chooseStone", _ev);
+                        break;
+                    }
+                    case Script.EVENT.CHOOSE_EUMLING: {
+                        this.replaceUI("chooseEumling", _ev);
+                        break;
+                    }
+                    case Script.EVENT.CHOOSE_ENCOUNTER: {
+                        this.replaceUI("chooseEncounter", _ev);
+                        break;
+                    }
+                    case Script.EVENT.FIGHT_PREPARE: {
+                        this.replaceUI("fightPrepare", _ev);
+                        break;
                     }
                 }
             };
             this.uis.clear();
+            this.uis.set("chooseEumling", new Script.ChooseEumlingUI());
+            this.uis.set("chooseStone", new Script.ChooseStoneUI());
+            this.uis.set("chooseEncounter", new Script.MapUI());
+            this.uis.set("map", new Script.MapUI());
+            this.uis.set("fightPrepare", new Script.FightPrepUI());
             this.uis.set("fight", new Script.FightUI());
+            this.uis.set("fightReward", new Script.FightRewardUI());
+            this.uis.set("shop", new Script.ShopUI());
             this.addFightListeners();
             for (let ui of this.uis.values()) {
                 ui.onRemove();
@@ -1456,7 +1577,7 @@ var Script;
                 return undefined;
             return this.activeLayers[this.activeLayers.length - 1];
         }
-        addUI(_id) {
+        addUI(_id, _ev) {
             let ui = this.uis.get(_id);
             if (!ui)
                 return;
@@ -1464,11 +1585,11 @@ var Script;
             if (prevTop)
                 prevTop.onHide();
             this.activeLayers.push(ui);
-            ui.onAdd(1000 + this.activeLayers.length);
+            ui.onAdd(1000 + this.activeLayers.length, _ev);
         }
-        replaceUI(_id) {
+        replaceUI(_id, _ev) {
             this.removeTopmostUI();
-            this.addUI(_id);
+            this.addUI(_id, _ev);
         }
         removeTopmostUI() {
             let last = this.activeLayers.pop();
@@ -1491,6 +1612,10 @@ var Script;
         addFightListeners() {
             Script.EventBus.addEventListener(Script.EVENT.GOLD_CHANGE, this.updateGoldCounter);
             Script.EventBus.addEventListener(Script.EVENT.FIGHT_START, this.switchUI);
+            Script.EventBus.addEventListener(Script.EVENT.CHOOSE_STONE, this.switchUI);
+            Script.EventBus.addEventListener(Script.EVENT.CHOOSE_EUMLING, this.switchUI);
+            Script.EventBus.addEventListener(Script.EVENT.CHOOSE_ENCOUNTER, this.switchUI);
+            Script.EventBus.addEventListener(Script.EVENT.FIGHT_PREPARE, this.switchUI);
         }
     }
     Script.VisualizeGUI = VisualizeGUI;
@@ -1503,8 +1628,7 @@ var Script;
 (function (Script) {
     class Provider {
         static #data = new Script.Data();
-        static #visualizer = new Script.VisualizerNull();
-        static #GUI = new Script.VisualizeGUI();
+        static #visualizer;
         static get data() {
             return this.#data;
         }
@@ -1512,7 +1636,7 @@ var Script;
             return this.#visualizer;
         }
         static get GUI() {
-            return this.#GUI;
+            return this.#visualizer.getGUI();
         }
         static setVisualizer(_vis) {
             if (!_vis) {
@@ -1538,27 +1662,27 @@ var Script;
     ƒ.Project.registerScriptNamespace(Script); // Register the namespace to FUDGE for serialization
     ƒ.Debug.info("Main Program Template running!");
     let visualizer;
-    let viewport;
     document.addEventListener("interactiveViewportStarted", start);
     async function initProvider() {
         if (ƒ.Project.mode === ƒ.MODE.EDITOR)
             return;
         await Script.Provider.data.load();
         //TODO load correct visualizer here
+        Script.Provider.setVisualizer();
+        visualizer = Script.Provider.visualizer;
+        visualizer.initializeScene(Script.viewport);
+        visualizer.drawScene();
         run();
     }
     function start(_event) {
-        viewport = _event.detail;
+        Script.viewport = _event.detail;
         initProvider();
-        visualizer = Script.Provider.visualizer;
-        visualizer.initializeScene(viewport);
-        visualizer.drawScene();
         ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
         ƒ.Loop.start(); // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
     }
     function update(_event) {
         // ƒ.Physics.simulate();  // if physics is included and used
-        viewport.draw();
+        Script.viewport.draw();
         ƒ.AudioManager.default.update();
     }
     async function run() {
@@ -1590,8 +1714,7 @@ var Script;
         // console.log("Rounds: " + fight.getRounds());
         // await fight.run();
         const run = new Script.Run();
-        await run.start();
-        console.log("run over");
+        run.start();
     }
 })(Script || (Script = {}));
 var Script;
@@ -2255,6 +2378,9 @@ var Script;
         set level(_lvl) {
             this.#level = Math.max(0, Math.min(this.#abilityLevels.length - 1, _lvl));
         }
+        get level() {
+            return this.#level;
+        }
         get id() {
             return this.#id;
         }
@@ -2409,17 +2535,163 @@ var Script;
         return result;
     }
     Script.chooseRandomElementsFromArray = chooseRandomElementsFromArray;
+    function createElementAdvanced(_type, _options = {}) {
+        let el = document.createElement(_type);
+        if (_options.id) {
+            el.id = _options.id;
+        }
+        if (_options.classes) {
+            el.classList.add(..._options.classes);
+        }
+        if (_options.innerHTML) {
+            el.innerHTML = _options.innerHTML;
+        }
+        if (_options.attributes) {
+            for (let attribute of _options.attributes) {
+                el.setAttribute(attribute[0], attribute[1]);
+            }
+        }
+        return el;
+    }
+    Script.createElementAdvanced = createElementAdvanced;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    let PickSphere = (() => {
+        var _a;
+        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _classSuper = ƒ.Component;
+        let _instanceExtraInitializers = [];
+        let _get_radius_decorators;
+        let _offset_decorators;
+        let _offset_initializers = [];
+        let _offset_extraInitializers = [];
+        var PickSphere = class extends _classSuper {
+            static { _classThis = this; }
+            static {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                _get_radius_decorators = [ƒ.serialize(Number)];
+                _offset_decorators = [ƒ.serialize(ƒ.Vector3)];
+                __esDecorate(this, null, _get_radius_decorators, { kind: "getter", name: "radius", static: false, private: false, access: { has: obj => "radius" in obj, get: obj => obj.radius }, metadata: _metadata }, null, _instanceExtraInitializers);
+                __esDecorate(null, null, _offset_decorators, { kind: "field", name: "offset", static: false, private: false, access: { has: obj => "offset" in obj, get: obj => obj.offset, set: (obj, value) => { obj.offset = value; } }, metadata: _metadata }, _offset_initializers, _offset_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                PickSphere = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            }
+            static { this.iSubclass = ƒ.Component.registerSubclass(PickSphere); }
+            constructor() {
+                super();
+                this.#radius = (__runInitializers(this, _instanceExtraInitializers), 1);
+                this.#radiusSquared = 1;
+                this.offset = __runInitializers(this, _offset_initializers, new ƒ.Vector3());
+                __runInitializers(this, _offset_extraInitializers);
+                if (ƒ.Project.mode == ƒ.MODE.EDITOR)
+                    return;
+            }
+            #radius;
+            #radiusSquared;
+            get radius() {
+                return this.#radius;
+            }
+            set radius(_r) {
+                this.#radius = _r;
+                this.#radiusSquared = _r * _r;
+            }
+            get radiusSquared() {
+                return this.#radiusSquared;
+            }
+            get mtxPick() {
+                return this.node.mtxWorld.clone.translate(this.offset, true).scale(ƒ.Vector3.ONE(Math.max(this.radius * 2, 0.000001)));
+            }
+            drawGizmos(_cmpCamera) {
+                ƒ.Gizmos.drawWireSphere(this.mtxPick, ƒ.Color.CSS("red"));
+            }
+            /**
+             * finds all pickSpheres within the given ray
+             * @param ray the ray to check against
+             * @param options options
+             */
+            static pick(ray, options = {}) {
+                const picks = [];
+                options = { ...this.defaultOptions, ...options };
+                for (let node of options.branch) {
+                    let pckSph = node.getComponent(PickSphere);
+                    if (!pckSph)
+                        continue;
+                    let distance = ray.getDistance(pckSph.mtxPick.translation);
+                    if (distance.magnitudeSquared < pckSph.radiusSquared) {
+                        picks.push(pckSph);
+                    }
+                }
+                if (options.sortBy) {
+                    let distances = new Map();
+                    if (options.sortBy === "distanceToRayOrigin") {
+                        picks.forEach(p => distances.set(p, ray.origin.getDistance(p.node.mtxWorld.translation)));
+                    }
+                    else if (options.sortBy === "distanceToRay") {
+                        picks.forEach(p => distances.set(p, ray.getDistance(p.node.mtxWorld.translation).magnitudeSquared));
+                    }
+                    picks.sort((a, b) => distances.get(a) - distances.get(b));
+                }
+                return picks;
+            }
+            static get defaultOptions() {
+                return {
+                    branch: Script.viewport.getBranch(),
+                };
+            }
+            static {
+                __runInitializers(_classThis, _classExtraInitializers);
+            }
+        };
+        return PickSphere = _classThis;
+    })();
+    Script.PickSphere = PickSphere;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
     /** Handles an entire run */
     class Run {
+        #gold;
+        #currentFight;
+        /* TODO: This is a crutch for now, later we might come up with a better solution than hardcoding all encounter chances for each level */
+        #levelDifficultyChances;
+        #shopChance;
         constructor() {
             this.eumlings = [];
             this.stones = [];
             this.progress = 0;
             this.encountersUntilBoss = 10;
             this.#gold = 0;
+            /* TODO: This is a crutch for now, later we might come up with a better solution than hardcoding all encounter chances for each level */
+            this.#levelDifficultyChances = [
+                [1, 0, 0],
+                [0.9, 0.1, 0],
+                [0.8, 0.2, 0],
+                [0.7, 0.3, 0],
+                [0.6, 0.3, 0.1],
+                [0.5, 0.3, 0.2],
+                [0.4, 0.3, 0.3],
+                [0.2, 0.4, 0.4],
+                [0, 0.5, 0.5],
+                [0, 0, 1],
+            ];
+            this.#shopChance = [
+                0,
+                0,
+                1,
+                0,
+                0.25,
+                0.25,
+                0.25,
+                0,
+                1,
+                0,
+            ];
             this.handleGoldAbility = async (_ev) => {
                 if (!_ev.trigger)
                     return;
@@ -2428,8 +2700,8 @@ var Script;
                 let amount = _ev.trigger.level ?? 1;
                 await this.changeGold(amount);
             };
+            this.addEventListeners();
         }
-        #gold;
         get gold() {
             return this.#gold;
         }
@@ -2438,94 +2710,113 @@ var Script;
             this.#gold = Math.max(0, this.#gold + _amt);
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.GOLD_CHANGE, detail: { amount: this.#gold } });
         }
+        //#region Prepare Run
         async start() {
             Run.currentRun = this;
-            // TODO: Proper UI
-            let eumling;
-            while (eumling !== "R" && eumling !== "S") {
-                eumling = prompt("Which eumling you want to start with? (R or S)", "R").trim().toUpperCase();
-            }
-            this.eumlings.push(new Script.Eumling(eumling));
-            let stonesToChooseFrom = Script.chooseRandomElementsFromArray(Script.Provider.data.stones, 3);
-            let chosenStone = -1;
-            while (isNaN(chosenStone) || chosenStone < 0 || chosenStone >= stonesToChooseFrom.length) {
-                chosenStone = parseInt(prompt(`Choose a stone to start with.\n${stonesToChooseFrom.reduce((prev, current, index) => prev + `${index}: ${current.id}\n`, "")}`));
-            }
-            this.stones.push(new Script.Stone(stonesToChooseFrom[chosenStone]));
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.RUN_PREPARE });
+            await this.chooseEumling();
+            await this.chooseStone();
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.RUN_START });
-            await this.nextStep();
-        }
-        async nextStep() {
-            this.progress++;
-            let nextEncounter = await this.chooseNext();
-            const result = await this.runFight(nextEncounter);
-            if (result === Script.FIGHT_RESULT.DEFEAT) {
-                return this.end();
+            for (this.progress = 0; this.progress < this.encountersUntilBoss; this.progress++) {
+                let shouldContinue = await this.runStep();
+                if (!shouldContinue)
+                    break;
             }
-            if (this.progress > this.encountersUntilBoss) {
-                return this.end();
-            }
-            await this.nextStep();
-        }
-        async chooseNext() {
-            // TODO: replace this with a proper selection system, for now you can directly choose only fights
-            let chosenFight = -1;
             if (this.progress === this.encountersUntilBoss) {
-                chosenFight = 0;
+                // bossfight here
             }
-            const fights = Script.Provider.data.fights;
-            while (isNaN(chosenFight) || chosenFight < 0 || chosenFight >= fights.length) {
-                chosenFight = parseInt(prompt(`Next fight id (0 - ${fights.length - 1})`));
-            }
-            return fights[chosenFight];
+            await this.end();
         }
-        async runFight(_fight) {
-            // TODO: proper prepare fight positioning etc. This here is just a temp solution
-            let eumlingsGrid = new Script.Grid();
-            for (let eumling of this.eumlings) {
-                let pos = [-1, -1];
-                while (Script.Grid.outOfBounds(pos)) {
-                    let input = prompt(`Where do you want to put your ${eumling.id}? Format: x,y, but x-mirrored!`, "1,1");
-                    let split = input.split(",");
-                    if (split.length !== 2)
-                        continue;
-                    let newPos = [parseInt(split[0]), parseInt(split[1])];
-                    if (isNaN(newPos[0]) || isNaN(newPos[1]))
-                        continue;
-                    pos = newPos;
-                }
-                eumlingsGrid.set(pos, eumling);
-                eumling.position = pos;
+        async chooseEumling() {
+            Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOOSE_EUMLING });
+            let event = await Script.EventBus.awaitSpecificEvent(Script.EVENT.CHOSEN_EUMLING);
+            this.eumlings.push(new Script.Eumling(event.detail.eumling));
+        }
+        async chooseStone() {
+            Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOOSE_STONE });
+            let event = await Script.EventBus.awaitSpecificEvent(Script.EVENT.CHOSEN_STONE);
+            this.stones.push(new Script.Stone(event.detail.stone));
+        }
+        //#endregion
+        //#region Run
+        async runStep() {
+            let encounter = await this.chooseNextEncounter();
+            if (encounter < 0) { //shop
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.SHOP_OPEN });
+                await Script.EventBus.awaitSpecificEvent(Script.EVENT.SHOP_CLOSE);
+                return true;
             }
-            // actually run the fight
-            const fight = new Script.Fight(_fight, eumlingsGrid);
-            const result = await fight.run();
+            let nextFight = await this.nextEncounter(encounter);
+            await this.prepareFight(nextFight);
+            let result = await this.runFight();
             if (result === Script.FIGHT_RESULT.DEFEAT) {
-                return result;
+                return false;
             }
+            await this.giveRewards();
+            return true;
+        }
+        //#region >  Prepare Fight
+        async chooseNextEncounter() {
+            const shopChance = this.#shopChance[this.progress];
+            const levelChances = this.#levelDifficultyChances[this.progress];
+            const options = [];
+            if (Math.random() < shopChance) {
+                options.push(-1);
+            }
+            while (options.length < 2) {
+                let random = Math.random();
+                for (let index = 0; index < levelChances.length; index++) {
+                    const element = levelChances[index];
+                    random -= element;
+                    if (random <= 0) {
+                        options.push(index);
+                        break;
+                    }
+                }
+            }
+            Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOOSE_ENCOUNTER, detail: { options } });
+            let event = await Script.EventBus.awaitSpecificEvent(Script.EVENT.CHOSEN_ENCOUNTER);
+            return event.detail.encounter;
+        }
+        async nextEncounter(_difficulty) {
+            if (_difficulty === -1) { // shop
+                return undefined;
+            }
+            // TODO remember which fight(s) we had last and avoid that?
+            let nextFight = Script.chooseRandomElementsFromArray(Script.Provider.data.fights.filter((data) => data.difficulty === _difficulty), 1)[0];
+            return nextFight;
+        }
+        async prepareFight(_fight) {
+            let eumlingsGrid = new Script.Grid();
+            this.#currentFight = new Script.Fight(_fight, eumlingsGrid);
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_PREPARE, detail: { fight: this.#currentFight } });
+            await Script.EventBus.awaitSpecificEvent(Script.EVENT.FIGHT_PREPARE_COMPLETED);
+        }
+        //#endregion
+        //#region > Run Fight
+        async runFight() {
+            // actually run the fight
+            const result = await this.#currentFight.run();
+            return result;
+        }
+        async giveRewards() {
             // give rewards
             let gold = 1;
             let xp = 1;
-            let oldFightData = new Script.Grid(_fight.entities);
-            let prevEnemyAmt = oldFightData.occupiedSpots;
-            let remainingEnemyAmt = fight.arena.away.occupiedSpots;
+            let prevEnemyAmt = this.#currentFight.enemyCountAtStart;
+            let remainingEnemyAmt = this.#currentFight.arena.away.occupiedSpots;
             let defeatedEnemyAmt = prevEnemyAmt - remainingEnemyAmt;
             gold += remainingEnemyAmt;
             xp += defeatedEnemyAmt;
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.REWARDS_OPEN, detail: { gold, xp } });
+            await Script.EventBus.awaitSpecificEvent(Script.EVENT.REWARDS_CLOSE);
             await this.changeGold(gold);
-            while (xp > 0) {
-                let index = NaN;
-                while (isNaN(index) || index < 0 || index >= this.eumlings.length) {
-                    index = parseInt(prompt(`You have ${xp} xp to distribute. Which Eumling do you want to give it to?\n${this.eumlings.reduce((prev, current, index) => prev + `${index}: ${current.type} (${current.xp} / ${current.requiredXPForLevelup} xp)\n`, "")}`));
-                }
-                let eumling = this.eumlings[index];
-                eumling.addXP(1);
-                xp--;
-            }
-            return result;
         }
+        //#endregion
+        //#endregion
         async end() {
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.RUN_END });
+            this.removeEventListeners();
         }
         addEventListeners() {
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL, this.handleGoldAbility);
@@ -2915,5 +3206,213 @@ var Script;
         }
     }
     Script.IVisualizeGrid = IVisualizeGrid;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class EumlingLevelupUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.element = document.getElementById("MainMenu");
+        }
+        addEventListeners() {
+        }
+        removeEventListeners() {
+        }
+    }
+    Script.EumlingLevelupUI = EumlingLevelupUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    var ƒ = FudgeCore;
+    class FightPrepUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.element = document.getElementById("FightPrep");
+            this.stoneWrapper = document.getElementById("FightPrepStones");
+            this.eumlingWrapper = document.getElementById("FightPrepEumlings");
+        }
+        onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            this.initStones();
+            this.initEumlings();
+        }
+        initStones() {
+            const stones = [];
+            for (let stone of Script.Run.currentRun.stones) {
+                stones.push(Script.createElementAdvanced("div", {
+                    classes: ["Stone"],
+                    innerHTML: `${stone.id}\nLvl ${stone.level + 1}`,
+                }));
+            }
+            this.stoneWrapper.replaceChildren(...stones);
+        }
+        initEumlings() {
+            const eumlingElements = [];
+            for (let eumling of Script.Run.currentRun.eumlings) {
+                const element = Script.createElementAdvanced("div", {
+                    classes: ["EumlingSelector"],
+                    innerHTML: `${eumling.type} (${eumling.xp} / ${eumling.requiredXPForLevelup}XP)`,
+                });
+                eumlingElements.push(element);
+                element.addEventListener("click", () => {
+                    eumlingElements.forEach(element => { element.classList.remove("selected"); });
+                    element.classList.add("selected");
+                    this.selectedEumling = eumling;
+                });
+            }
+            this.eumlingWrapper.replaceChildren(...eumlingElements);
+        }
+        clickCanvas(_ev) {
+            const ray = Script.viewport.getRayFromClient(new ƒ.Vector2(_ev.clientX, _ev.clientY));
+            const picks = Script.PickSphere.pick(ray, { sortBy: "distanceToRay" });
+            if (!picks || picks.length === 0)
+                return;
+            const pick = picks[0];
+            console.log("clicked on", pick.node.name);
+        }
+        addEventListeners() {
+            document.getElementById("GameCanvas").addEventListener("click", this.clickCanvas);
+        }
+        removeEventListeners() {
+        }
+    }
+    Script.FightPrepUI = FightPrepUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class FightRewardUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.element = document.getElementById("MainMenu");
+        }
+        addEventListeners() {
+        }
+        removeEventListeners() {
+        }
+    }
+    Script.FightRewardUI = FightRewardUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class MainMenuUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.element = document.getElementById("MainMenu");
+        }
+        addEventListeners() {
+        }
+        removeEventListeners() {
+        }
+    }
+    Script.MainMenuUI = MainMenuUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class MapUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.selectionDone = async () => {
+                this.submitBtn.disabled = true;
+                for (let opt of this.optionElements) {
+                    if (opt.classList.contains("selected")) {
+                        opt.classList.add("center");
+                    }
+                    else {
+                        opt.classList.add("remove");
+                    }
+                }
+                this.optionElements.find((el) => el.classList.contains("selected"));
+                this.element.classList.add("no-interact");
+                await Script.waitMS(1000);
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_ENCOUNTER, detail: { encounter: this.selectedEncounter } });
+            };
+            this.element = document.getElementById("Map");
+            this.submitBtn = document.getElementById("MapActionButton");
+        }
+        onAdd(_zindex, _ev) {
+            super.onAdd(_zindex);
+            this.updateProgress();
+            this.displayEncounters(_ev);
+            this.element.classList.remove("no-interact");
+        }
+        updateProgress() {
+            const inner = document.getElementById("MapProgressBarCurrent");
+            const progress = Script.Run.currentRun.progress / Script.Run.currentRun.encountersUntilBoss;
+            inner.style.height = progress * 100 + "";
+        }
+        displayEncounters(_ev) {
+            let options = _ev.detail.options;
+            this.optionElements = [];
+            for (let option of options) {
+                const elem = Script.createElementAdvanced("div", { classes: ["MapOption"] });
+                if (option < 0) {
+                    // shop
+                    elem.innerText = "Shop";
+                }
+                else {
+                    elem.innerText = `Fight lvl ${option + 1}`;
+                }
+                elem.addEventListener("click", () => {
+                    for (let opt of this.optionElements) {
+                        opt.classList.remove("selected");
+                    }
+                    elem.classList.add("selected");
+                    this.selectedEncounter = option;
+                    this.submitBtn.disabled = false;
+                });
+                this.optionElements.push(elem);
+            }
+            document.getElementById("MapOptions").replaceChildren(...this.optionElements);
+            this.submitBtn.disabled = true;
+        }
+        addEventListeners() {
+            this.submitBtn.addEventListener("click", this.selectionDone);
+        }
+        removeEventListeners() {
+        }
+    }
+    Script.MapUI = MapUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class OptionsUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.element = document.getElementById("MainMenu");
+        }
+        addEventListeners() {
+        }
+        removeEventListeners() {
+        }
+    }
+    Script.OptionsUI = OptionsUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class ShopUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.element = document.getElementById("MainMenu");
+        }
+        addEventListeners() {
+        }
+        removeEventListeners() {
+        }
+    }
+    Script.ShopUI = ShopUI;
 })(Script || (Script = {}));
 //# sourceMappingURL=Script.js.map
