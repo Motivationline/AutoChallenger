@@ -5,7 +5,7 @@ namespace Script {
         LEFT = "left",
         RIGHT = "right",
     }
-    
+
     export interface MoveData {
         /** rotates the unit _clockwise_ by 45° per increment of this value.  
          * **rotation occurs before movement** and is entirely mechanical, not visual.
@@ -22,7 +22,21 @@ namespace Script {
         }
     }
 
-    /**Move the Entity based of the Grid Data then map the position to the empty nodes in the Graph with a mapping function
-     * this could also be done in the Visualizer with a function like mapPositionToNode(_pos: Position)
-    */
+    function move() {
+        //get the Fight
+        let _fight: Fight;
+        //create a new Grid, calls entity[].move(), add them to the grid
+        let newGrid = new Grid<Entity>();
+
+        //move the entities in the grid
+        _fight.arena.away.forEachElement((entity, pos) => {
+
+            entity.move()
+            newGrid.set(pos, new Entity(entity));
+            
+        });
+
+        //TODO: replace old Grid
+
+    }
 }

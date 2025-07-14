@@ -26,7 +26,8 @@ namespace Script {
         currentHealth: number,
         position: Position,
         untargetable: boolean,
-        move(_friendly: Grid<IEntity>): Promise<void>,
+        move(): Promise<void>,
+        //move(_friendly: Grid<IEntity>): Promise<void>, //TODO: warum friendly?
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>,
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>,
         damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
@@ -207,7 +208,7 @@ namespace Script {
             }
         }
 
-        async move(): Promise<void> {
+        async move(/*newGrid: Grid<Entity>*/): Promise<void> { //TODO: Warum error?
             let move: MoveData = {
                 rotateBy: Math.floor(Math.random() * 8),
                 //direction: DIRECTION_RELATIVE,
@@ -221,30 +222,24 @@ namespace Script {
                 }
             };
 
-            //TODO: calculate new position from data here
-            this.position = [this.position[0], this.position[1]]
-            //TODO: get the entities grid side
-            let side = "home";
-            let OldGrid = new Grid<Entity>;//TODO: get the correct Grid 
-            //create new grid and place entities in it
-            let NewGrid = new Grid<Entity>//TODO: replace old Grid
-            //get the occupied Spots position data
-            let pos: Position;
-            let occupiedSpots: Position[];
-            OldGrid.forEachElement((el) => (occupiedSpots.push(el.position)));//get the positions from entities in the Grid
+            let newGrid: Grid<Entity>;
 
-            let offset: Position = this.getOffsetPositionByMoveData(move, this.position, side, occupiedSpots);
+            let occupiedSpots: Position[];
+            newGrid.forEachElement((el) => (occupiedSpots.push(el.position)));//get the positions from entities in the Grid
+
+            let newPos: Position = this.getOffsetPositionByMoveData(move.rotateBy, this.position, occupiedSpots);
+            this.position = newPos;
 
         }
 
-        getOffsetPositionByMoveData(_move: MoveData, position: Position, _side: string, _occupiedSpots: Position[]): Position {
+        getOffsetPositionByMoveData(_rotateBy: number, position: Position, _occupiedSpots: Position[]): Position {
             let posX: number = position[0];
             let posY: number = position[1];
             let outOfBounds: boolean = false;
             //repeat until not out of bounds
             while (!outOfBounds) {
-                //move in random dir given by _move.rotateBy
-                switch (_move.rotateBy) {
+                //move in a passed rotation
+                switch (_rotateBy) {
                     case 0:
                         //E
                         //x + 1
@@ -259,6 +254,8 @@ namespace Script {
                             if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
                                 //position is valid
                                 outOfBounds = false;
+                                //write to the occupied spots
+                                _occupiedSpots.push(pos);
                                 return pos
                             } else {
                                 //spot is occupied -> try again
@@ -279,6 +276,8 @@ namespace Script {
                             if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
                                 //position is valid
                                 outOfBounds = false;
+                                //write to the occupied spots
+                                _occupiedSpots.push(pos);
                                 return pos
                             } else {
                                 //spot is occupied -> try again
@@ -299,6 +298,8 @@ namespace Script {
                             if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
                                 //position is valid
                                 outOfBounds = false;
+                                //write to the occupied spots
+                                _occupiedSpots.push(pos);
                                 return pos
                             } else {
                                 //spot is occupied -> try again
@@ -319,6 +320,8 @@ namespace Script {
                             if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
                                 //position is valid
                                 outOfBounds = false;
+                                //write to the occupied spots
+                                _occupiedSpots.push(pos);
                                 return pos
                             } else {
                                 //spot is occupied -> try again
@@ -339,6 +342,8 @@ namespace Script {
                             if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
                                 //position is valid
                                 outOfBounds = false;
+                                //write to the occupied spots
+                                _occupiedSpots.push(pos);
                                 return pos
                             } else {
                                 //spot is occupied -> try again
@@ -359,6 +364,8 @@ namespace Script {
                             if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
                                 //position is valid
                                 outOfBounds = false;
+                                //write to the occupied spots
+                                _occupiedSpots.push(pos);
                                 return pos
                             } else {
                                 //spot is occupied -> try again
@@ -379,6 +386,8 @@ namespace Script {
                             if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
                                 //position is valid
                                 outOfBounds = false;
+                                //write to the occupied spots
+                                _occupiedSpots.push(pos);
                                 return pos
                             } else {
                                 //spot is occupied -> try again
@@ -399,6 +408,8 @@ namespace Script {
                             if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
                                 //position is valid
                                 outOfBounds = false;
+                                //write to the occupied spots
+                                _occupiedSpots.push(pos);
                                 return pos
                             } else {
                                 //spot is occupied -> try again
@@ -423,6 +434,14 @@ namespace Script {
             }
         }
 
+        //iterates through moves until one is valid
+        tryAllMoves(_move: MoveData, _occupiedSpots: Position[]) {
+            //try all moves
+            for(let _try: number; _try = _move.blocked.attempts; _try++){
+                let newPos: Position = this.getOffsetPositionByMoveData(_move.blocked.rotateBy, this.position, _occupiedSpots);
+                this.position = newPos;
+            }
+        }
 
         async useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells: SpellData[] = this.select(this.spells, true), _targetsOverride?: IEntity[]): Promise<void> {
             if (!_spells) return;
