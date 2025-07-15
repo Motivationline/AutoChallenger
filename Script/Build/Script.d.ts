@@ -22,6 +22,8 @@ declare namespace Script {
         ENTITY_HURT = "entityHurt",
         ENTITY_DIES = "entityDies",
         ENTITY_DIED = "entityDied",
+        ENTITY_CREATE = "entityCreate",
+        ENTITY_CREATED = "entityCreated",
         ENTITY_MOVE = "entityMove",// unused for now
         ENTITY_MOVED = "entityMoved",// unused for now
         TRIGGER_ABILITY = "triggerAbility",
@@ -360,8 +362,6 @@ declare namespace Script {
         static activeFight: Fight;
         rounds: number;
         arena: Arena;
-        protected visualizer: IVisualizeFight;
-        protected HUD: VisualizeGUI;
         constructor(_fight: FightData, _home: Grid<IEntity>);
         get enemyCountAtStart(): number;
         getRounds(): number;
@@ -374,23 +374,14 @@ declare namespace Script {
     }
 }
 declare namespace Script {
-    interface IVisualizer {
-        getEntity(_entity: IEntity): VisualizeEntity;
-        getFight(_fight: Fight): IVisualizeFight;
-        getGUI(): VisualizeGUI;
-        addToScene(_el: ƒ.Node): void;
-        getCamera(): ƒ.ComponentCamera;
-        getRoot(): ƒ.Node;
-        initializeScene(_viewport: ƒ.Viewport): void;
-        drawScene(): void;
-        getGraph(): ƒ.Graph;
-    }
     import ƒ = FudgeCore;
-    class VisualizerNull implements IVisualizer {
+    class Visualizer {
         #private;
         root: ƒ.Node;
         camera: ƒ.ComponentCamera;
         viewport: ƒ.Viewport;
+        private entities;
+        private fights;
         constructor();
         getEntity(_entity: IEntity): VisualizeEntity;
         getFight(_fight: Fight): IVisualizeFight;
@@ -401,9 +392,11 @@ declare namespace Script {
         getRoot(): ƒ.Node;
         getGraph(): ƒ.Graph;
         drawScene(): void;
-        hideUI(): void;
-        private fightStart;
-        addFightListeners(): void;
+        private createEntity;
+        private createEntityHandler;
+        private fightPrepHandler;
+        addEventListeners(): void;
+        removeEventListeners(): void;
     }
 }
 declare namespace Script {
@@ -460,9 +453,9 @@ declare namespace Script {
     class Provider {
         #private;
         static get data(): Readonly<Data>;
-        static get visualizer(): Readonly<IVisualizer>;
+        static get visualizer(): Readonly<Visualizer>;
         static get GUI(): Readonly<VisualizeGUI>;
-        static setVisualizer(_vis?: IVisualizer): void;
+        static setVisualizer(_vis?: Visualizer): void;
     }
 }
 declare namespace Script {
@@ -761,8 +754,10 @@ declare namespace Script {
         roundEnd(): Promise<void>;
         fightEnd(): Promise<void>;
     }
-    class VisualizeFightNull implements IVisualizeFight {
+    class VisualizeFight implements IVisualizeFight {
         #private;
+        home: VisualizeGrid;
+        away: VisualizeGrid;
         constructor(_fight: Fight);
         showGrid(): Promise<void>;
         nukeGrid(): Promise<void>;
@@ -770,6 +765,9 @@ declare namespace Script {
         roundStart(): Promise<void>;
         roundEnd(): Promise<void>;
         fightEnd(): Promise<void>;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+        eventListener: (_ev: FightEvent) => void;
     }
 }
 declare namespace Script {
@@ -787,7 +785,6 @@ declare namespace Script {
     }
     class VisualizeEntity extends ƒ.Node {
         private entity;
-        private model;
         private cmpAnimation;
         private defaultAnimation;
         constructor(_entity: IEntity);
@@ -806,10 +803,12 @@ declare namespace Script {
 }
 declare namespace Script {
     import ƒ = FudgeCore;
-    class IVisualizeGrid extends ƒ.Node {
+    class VisualizeGrid extends ƒ.Node {
         grid: Grid<VisualizeEntity>;
         side: string;
         constructor(_grid: Grid<VisualizeEntity>, _side: string);
+        addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting?: boolean): void;
+        removeEntityFromGrid(_pos: Position): void;
         getAnchor(_side: ƒ.Node, _x: number, _z: number): ƒ.Node;
     }
 }

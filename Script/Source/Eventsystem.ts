@@ -23,8 +23,8 @@ namespace Script {
         ENTITY_HURT = "entityHurt",
         ENTITY_DIES = "entityDies",
         ENTITY_DIED = "entityDied",
-        // ENTITY_CREATE = "entityCreate", // unused
-        // ENTITY_CREATED = "entityCreated", // unused
+        ENTITY_CREATE = "entityCreate",
+        ENTITY_CREATED = "entityCreated",
         ENTITY_MOVE = "entityMove", // unused for now
         ENTITY_MOVED = "entityMoved", // unused for now
         TRIGGER_ABILITY = "triggerAbility",

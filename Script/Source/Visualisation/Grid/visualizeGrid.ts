@@ -5,7 +5,7 @@ namespace Script {
 
     import ƒ = FudgeCore;
 
-    export class IVisualizeGrid extends ƒ.Node {
+    export class VisualizeGrid extends ƒ.Node {
 
         grid: Grid<VisualizeEntity>;
 
@@ -24,29 +24,47 @@ namespace Script {
             this.addComponent(new ƒ.ComponentTransform());
             //set the positions of the entities in the grid
             this.grid.forEachElement((element, pos) => {
-                let visSide: ƒ.Node;
-
-                //get Anchors from scene
-                if (this.side === "away") {
-                    visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
-                } else if (this.side === "home") {
-                    visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
-                }
-
-                //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
-
-                /**Anchors are named from 0-8 */
-                let anchor: ƒ.Node = this.getAnchor(visSide, pos[0], pos[1]);
-                //get the Positions from the placeholders and translate the entities to it
-                let position: ƒ.Vector3 = anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
-                console.log("position: " + position);
-                
-                element.mtxLocal.translation = new ƒ.Vector3(position.x, position.y, position.z);
-                console.log("element position: " + element.mtxLocal.translation);
-                this.addChild(element);
+                this.addEntityToGrid(element, pos, false);
             });
 
         }
+
+        addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting: boolean = true) {
+            if (Grid.outOfBounds(_pos)) return;
+            if (_removeExisting) {
+                this.removeEntityFromGrid(_pos);
+            }
+            let visSide: ƒ.Node;
+
+            //get Anchors from scene
+            if (this.side === "away") {
+                visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
+            } else if (this.side === "home") {
+                visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
+            }
+
+            //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
+
+            /**Anchors are named from 0-8 */
+            let anchor: ƒ.Node = this.getAnchor(visSide, _pos[0], _pos[1]);
+            //get the Positions from the placeholders and translate the entities to it
+            let position: ƒ.Vector3 = anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
+            console.log("position: ", position);
+
+            _entity.mtxLocal.translation = new ƒ.Vector3(position.x, position.y, position.z);
+            console.log("element position: ", _entity.mtxLocal.translation);
+            this.addChild(_entity);
+        }
+
+        removeEntityFromGrid(_pos: Position) {
+            if (Grid.outOfBounds(_pos)) return;
+            let elementToRemove = this.grid.get(_pos);
+            if (!elementToRemove) return;
+            this.removeChild(elementToRemove);
+            elementToRemove.removeEventListeners();
+        }
+
+
         getAnchor(_side: ƒ.Node, _x: number, _z: number): ƒ.Node {
             let anchor: ƒ.Node;
             let pointer: number = _z * 3 + _x;

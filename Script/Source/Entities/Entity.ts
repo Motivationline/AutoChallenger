@@ -61,6 +61,11 @@ namespace Script {
             this.position = _pos;
 
             this.updateEntityData(_entity);
+
+            EventBus.dispatchEvent({ type: EVENT.ENTITY_CREATE, target: this });
+            EventBus.dispatchEvent({ type: EVENT.ENTITY_CREATED, target: this });
+
+            this.registerEventListeners();
         }
 
         public get untargetable() {

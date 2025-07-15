@@ -16,7 +16,6 @@ namespace Script {
     export class VisualizeEntity extends ƒ.Node /*implements VisualizeEntity*/ {
 
         private entity: IEntity;
-        private model: ƒ.Node;
         private cmpAnimation: ƒ.ComponentAnimation;
         private defaultAnimation: ƒ.Animation;
         //private grid: VisualizeGridNull;
@@ -37,7 +36,6 @@ namespace Script {
 
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
-            Provider.visualizer.addToScene(this);
             this.addEventListeners();
         }
 
