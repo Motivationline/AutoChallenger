@@ -1283,8 +1283,8 @@ var Script;
                     if (!entity || !side || !pos)
                         return;
                     let sideGrid = side === "home" ? this.arena.home : this.arena.away;
-                    console.log(sideGrid);
                     sideGrid.set(pos, entity);
+                    entity.position = pos;
                 }
                 else if (_ev.type === Script.EVENT.ENTITY_REMOVED) {
                     const entity = _ev.target;
