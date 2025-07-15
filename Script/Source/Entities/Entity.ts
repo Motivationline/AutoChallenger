@@ -222,7 +222,7 @@ namespace Script {
                 }
             };
 
-            let newGrid: Grid<Entity>;
+            //let newGrid: Grid<Entity>;
 
             let occupiedSpots: Position[];
             //newGrid.forEachElement((el) => (occupiedSpots.push(el.position)));//get the positions from entities in the Grid
