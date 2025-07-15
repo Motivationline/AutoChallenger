@@ -19,6 +19,7 @@ namespace Script {
             this.uis.set("fight", new FightUI());
             this.uis.set("fightReward", new FightRewardUI());
             this.uis.set("shop", new ShopUI());
+            this.uis.set("runEnd", new RunEndUI());
             this.addFightListeners();
             for(let ui of this.uis.values()){
                 ui.onRemove();
@@ -69,6 +70,8 @@ namespace Script {
             EventBus.addEventListener(EVENT.CHOOSE_ENCOUNTER, this.switchUI);
             EventBus.addEventListener(EVENT.FIGHT_PREPARE, this.switchUI);
             EventBus.addEventListener(EVENT.REWARDS_OPEN, this.switchUI);
+            EventBus.addEventListener(EVENT.SHOP_OPEN, this.switchUI);
+            EventBus.addEventListener(EVENT.RUN_END, this.switchUI);
         }
 
         switchUI = (_ev: FightEvent) => {
@@ -95,6 +98,14 @@ namespace Script {
                 }
                 case EVENT.REWARDS_OPEN: {
                     this.replaceUI("fightReward", _ev);
+                    break;
+                }
+                case EVENT.SHOP_OPEN: {
+                    this.replaceUI("shop", _ev);
+                    break;
+                }
+                case EVENT.RUN_END: {
+                    this.replaceUI("runEnd", _ev);
                     break;
                 }
             }

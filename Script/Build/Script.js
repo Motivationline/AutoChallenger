@@ -1607,6 +1607,14 @@ var Script;
                         this.replaceUI("fightReward", _ev);
                         break;
                     }
+                    case Script.EVENT.SHOP_OPEN: {
+                        this.replaceUI("shop", _ev);
+                        break;
+                    }
+                    case Script.EVENT.RUN_END: {
+                        this.replaceUI("runEnd", _ev);
+                        break;
+                    }
                 }
             };
             this.uis.clear();
@@ -1618,6 +1626,7 @@ var Script;
             this.uis.set("fight", new Script.FightUI());
             this.uis.set("fightReward", new Script.FightRewardUI());
             this.uis.set("shop", new Script.ShopUI());
+            this.uis.set("runEnd", new Script.RunEndUI());
             this.addFightListeners();
             for (let ui of this.uis.values()) {
                 ui.onRemove();
@@ -1668,6 +1677,8 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.CHOOSE_ENCOUNTER, this.switchUI);
             Script.EventBus.addEventListener(Script.EVENT.FIGHT_PREPARE, this.switchUI);
             Script.EventBus.addEventListener(Script.EVENT.REWARDS_OPEN, this.switchUI);
+            Script.EventBus.addEventListener(Script.EVENT.SHOP_OPEN, this.switchUI);
+            Script.EventBus.addEventListener(Script.EVENT.RUN_END, this.switchUI);
         }
     }
     Script.VisualizeGUI = VisualizeGUI;
@@ -2799,7 +2810,7 @@ var Script;
             for (this.progress = 0; this.progress < this.encountersUntilBoss; this.progress++) {
                 let shouldContinue = await this.runStep();
                 if (!shouldContinue)
-                    break;
+                    return await this.end(false);
             }
             if (this.progress === this.encountersUntilBoss) {
                 // bossfight here
@@ -2893,8 +2904,8 @@ var Script;
         }
         //#endregion
         //#endregion
-        async end() {
-            await Script.EventBus.dispatchEvent({ type: Script.EVENT.RUN_END });
+        async end(_success = true) {
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.RUN_END, detail: { success: _success } });
             this.removeEventListeners();
         }
         addEventListeners() {
@@ -3654,14 +3665,53 @@ var Script;
 var Script;
 /// <reference path="UILayer.ts" />
 (function (Script) {
+    class RunEndUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.close = () => {
+                location.reload();
+            };
+            this.element = document.getElementById("RunEnd");
+            this.continueButton = document.getElementById("Restart");
+        }
+        onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            document.getElementById("RunEndInner").innerHTML =
+                _ev.detail.success ?
+                    `<h2>Success!</h2>
+            <p>You won! :&gt;</p>
+            <p>Try again?</p>` :
+                    `<h2>Defeat!</h2>
+            <p>You lost. :(;</p>
+            <p>Try again?</p>`;
+        }
+        addEventListeners() {
+            this.continueButton.addEventListener("click", this.close);
+        }
+        removeEventListeners() {
+            this.continueButton.removeEventListener("click", this.close);
+        }
+    }
+    Script.RunEndUI = RunEndUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
     class ShopUI extends Script.UILayer {
         constructor() {
             super();
-            this.element = document.getElementById("MainMenu");
+            this.close = () => {
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.SHOP_CLOSE });
+            };
+            this.element = document.getElementById("Shop");
+            this.closeButton = document.getElementById("ShopClose");
         }
         addEventListeners() {
+            this.closeButton.addEventListener("click", this.close);
         }
         removeEventListeners() {
+            this.closeButton.removeEventListener("click", this.close);
         }
     }
     Script.ShopUI = ShopUI;

@@ -58,7 +58,8 @@
         </div>
     </div>
 
-    <div id="Map" class="UI hidden">
+    <div id="Map" class="UI blur hidden">
+        <h2>Map</h2>
         <!--Map UI-->
         <div id="MapOptions">
         </div>
@@ -74,8 +75,9 @@
             </div>
         </div>
     </div>
-
+    
     <div id="FightPrep" class="UI hidden no-interact">
+        <h2>Fight Preparation</h2>
         <div id="FightPrepStones" class="interact">
         </div>
         <div id="FightStartWrapper" class="interact">
@@ -85,6 +87,7 @@
         </div>
     </div>
     <div id="Fight" class="UI hidden">
+        <h2>Fight</h2>
         <!--Fight UI-->
         <div id="FightStones">
         </div>
@@ -94,11 +97,11 @@
         </div>
         <div class="GoldCounter">Gold: 0</div>
         <div class="RoundCounter"></div>
-        <div id="FightPhaseOverlay" class="UI Blur no-interact">
+        <div id="FightPhaseOverlay" class="UI blur no-interact">
             <div id="FightPhaseOverlayText" class="RoundCounter"></div>
         </div>
     </div>
-    <div id="FightReward" class="UI hidden Blur">
+    <div id="FightReward" class="UI hidden blur">
         <h2>Rewards</h2>
         <div id="FightRewardRewards">
         </div>
@@ -111,7 +114,8 @@
         </div>
     </div>
 
-    <div id="EumlingLevelup" class="UI hidden">
+    <div id="EumlingLevelup" class="UI blur hidden">
+        <h2>Eumling Levelup</h2>
         <div id="EumlingLevelupEumling">
         </div>
         <div id="EumlingLevelupOptions">
@@ -120,16 +124,14 @@
         </div>
     </div>
 
-    <div id="Defeated" class="UI hidden">
-        <div>
-            <h2>Defeat</h2>
-            <p>You lost. :(</p>
-            <p>Better luck next time!</p>
-            <button id="Restart">Restart</button>
+    <div id="RunEnd" class="UI blur hidden">
+        <div id="RunEndInner">
         </div>
+        <button id="Restart">Restart</button>
     </div>
 
-    <div id="Shop" class="UI hidden">
+    <div id="Shop" class="UI blur hidden">
+        <h2>Shop</h2>
         <!--Shop UI-->
         <div id="ShopStones">
         </div>
@@ -137,8 +139,11 @@
         </div>
         <div id="ShopEumlingHeal">
         </div>
+        <div id="ShopCloseWrapper">
+            <button id="ShopClose">Continue</button>
+        </div>
     </div>
-    <div id="Options" class="UI hidden">
+    <div id="Options" class="UI blur hidden">
     </div>
     <!--Canvas for FUDGE to render to-->
     <canvas class="fullscreen" id="GameCanvas">

@@ -21,10 +21,6 @@ canvas.fullscreen {
   inset: 0px;
 }
 
-.Blur {
-  backdrop-filter: blur(40px);
-}
-
 /* Map */
 #MapOptions {}
 
@@ -167,4 +163,8 @@ canvas.fullscreen {
 
 .hidden {
   display: none !important;
+}
+
+.blur {
+  backdrop-filter: blur(40px);
 }

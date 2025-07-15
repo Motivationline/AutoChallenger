@@ -63,7 +63,7 @@ namespace Script {
             
             for (this.progress = 0; this.progress < this.encountersUntilBoss; this.progress++) {
                 let shouldContinue = await this.runStep();
-                if (!shouldContinue) break;
+                if (!shouldContinue) return await this.end(false);
             }
             if (this.progress === this.encountersUntilBoss) {
                 // bossfight here
@@ -176,8 +176,8 @@ namespace Script {
         //#endregion
         //#endregion
 
-        async end() {
-            await EventBus.dispatchEvent({ type: EVENT.RUN_END });
+        async end(_success: boolean = true) {
+            await EventBus.dispatchEvent({ type: EVENT.RUN_END, detail: {success: _success}});
             this.removeEventListeners();
         }
 

@@ -749,7 +749,7 @@ declare namespace Script {
         prepareFight(_fight: FightData): Promise<void>;
         private runFight;
         private giveRewards;
-        end(): Promise<void>;
+        end(_success?: boolean): Promise<void>;
         private handleGoldAbility;
         addEventListeners(): void;
         removeEventListeners(): void;
@@ -896,8 +896,20 @@ declare namespace Script {
     }
 }
 declare namespace Script {
-    class ShopUI extends UILayer {
+    class RunEndUI extends UILayer {
+        continueButton: HTMLButtonElement;
         constructor();
+        onAdd(_zindex: number, _ev?: FightEvent): void;
+        close: () => void;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+    }
+}
+declare namespace Script {
+    class ShopUI extends UILayer {
+        closeButton: HTMLButtonElement;
+        constructor();
+        close: () => void;
         addEventListeners(): void;
         removeEventListeners(): void;
     }
