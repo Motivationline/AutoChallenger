@@ -8,7 +8,7 @@ namespace Script {
   ƒ.Project.registerScriptNamespace(Script);  // Register the namespace to FUDGE for serialization
 
   ƒ.Debug.info("Main Program Template running!");
-  let visualizer: IVisualizer;
+  let visualizer: Readonly<Visualizer>;
   export let viewport: ƒ.Viewport;
   document.addEventListener("interactiveViewportStarted", <EventListener>start);
 

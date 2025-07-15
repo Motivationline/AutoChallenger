@@ -24,8 +24,6 @@ namespace Script {
         static activeFight: Fight;
         rounds: number;
         arena: Arena;
-        protected visualizer: IVisualizeFight;
-        protected HUD: VisualizeGUI;
         #enemyStartCount: number;
 
         constructor(_fight: FightData, _home: Grid<IEntity>) {
@@ -43,9 +41,6 @@ namespace Script {
 
             this.#enemyStartCount = this.arena.away.occupiedSpots;
 
-            this.visualizer = Provider.visualizer.getFight(this);
-            this.HUD = Provider.visualizer.getGUI();
-
             this.addEventListeners();
         }
 
@@ -61,22 +56,17 @@ namespace Script {
             Fight.activeFight = this;
             // Eventlisteners
             // EventBus.removeAllEventListeners();
-            this.HUD.addFightListeners();//replace main.ts instance with Provider.visualizer.getHUD() instance
-            this.arena.home.forEachElement((el) => { el.registerEventListeners() });
-            this.arena.away.forEachElement((el) => { el.registerEventListeners() });
+
             //TODO: Add stones
-            await this.visualizer.fightStart();
             await EventBus.dispatchEvent({ type: EVENT.FIGHT_START });
 
             // run actual round
             for (let r: number = 0; r < this.rounds; r++) {
-                await this.visualizer.roundStart();
                 await waitMS(2000);
                 await EventBus.dispatchEvent({ type: EVENT.ROUND_START, detail: { round: r } });
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
                 await EventBus.dispatchEvent({ type: EVENT.ROUND_END, detail: { round: r } });
-                await this.visualizer.roundEnd();
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {
                     return await this.fightEnd(FIGHT_RESULT.DEFEAT);
@@ -90,7 +80,6 @@ namespace Script {
         }
 
         private async fightEnd(_result: FIGHT_RESULT): Promise<FIGHT_RESULT> {
-            await this.visualizer.fightEnd();
             await EventBus.dispatchEvent({ type: EVENT.FIGHT_END, detail: { result: _result } });
             Fight.activeFight = undefined;
 

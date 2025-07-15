@@ -1,34 +1,29 @@
 namespace Script {
-    export interface IVisualizer {
-        getEntity(_entity: IEntity): VisualizeEntity;
-        getFight(_fight: Fight): IVisualizeFight;
-        getGUI(): VisualizeGUI;
-        addToScene(_el: ƒ.Node): void;
-        getCamera(): ƒ.ComponentCamera;
-        getRoot(): ƒ.Node;
-        initializeScene(_viewport: ƒ.Viewport): void;
-        drawScene(): void;
-        getGraph(): ƒ.Graph;
-    }
-
     import ƒ = FudgeCore;
 
-    export class VisualizerNull implements IVisualizer {
+    export class Visualizer {
         root: ƒ.Node;
         camera: ƒ.ComponentCamera;
         viewport: ƒ.Viewport;
         #gui: VisualizeGUI;
+        private entities: Map<IEntity, VisualizeEntity> = new Map();
+        private fights: Map<Fight, VisualizeFight> = new Map();
 
         constructor() {
             this.root = new ƒ.Node("Root");
-            //TODO: trigger this after the HTML is loaded
-            //this.hideUI();
+            this.addEventListeners();
         }
         getEntity(_entity: IEntity): VisualizeEntity {
-            return new VisualizeEntity(_entity);
+            if (!this.entities.has(_entity)) {
+                this.createEntity(_entity);
+            }
+            return this.entities.get(_entity);
         }
         getFight(_fight: Fight): IVisualizeFight {
-            return new VisualizeFightNull(_fight);
+            if (!this.fights.has(_fight)) {
+                this.fights.set(_fight, new VisualizeFight(_fight));
+            }
+            return this.fights.get(_fight);
         }
         getGUI(): VisualizeGUI {
             if (!this.#gui) this.#gui = new VisualizeGUI();
@@ -36,16 +31,16 @@ namespace Script {
         }
         initializeScene(_viewport: ƒ.Viewport): void {
             this.viewport = _viewport;
-            let HUD: VisualizeGUI = new VisualizeGUI();
+            this.getGUI();
 
             console.log(this.root);
 
-            let FigthScene: ƒ.Graph = ƒ.Project.getResourcesByName("FightScene")[0] as ƒ.Graph;
+            let fightScene: ƒ.Graph = ƒ.Project.getResourcesByName("FightScene")[0] as ƒ.Graph;
             //attach the root node to the FightScene
-            this.camera = FigthScene.getChildByName("CameraRotator").getChildByName("Camera_Wrapper").getChildByName("Cam").getComponent(ƒ.ComponentCamera);
-            FigthScene.addChild(this.root);
+            this.camera = fightScene.getChildByName("CameraRotator").getChildByName("Camera_Wrapper").getChildByName("Cam").getComponent(ƒ.ComponentCamera);
+            fightScene.addChild(this.root);
 
-            _viewport.initialize("Viewport", FigthScene, this.camera, document.querySelector("canvas"));
+            _viewport.initialize("Viewport", fightScene, this.camera, document.querySelector("canvas"));
             _viewport.draw();
         }
         addToScene(_el: ƒ.Node): void {
@@ -64,23 +59,31 @@ namespace Script {
         drawScene(): void {
             this.viewport.draw();
         }
-        hideUI(): void {
-            document.getElementById("#Fight").hidden = true;
-            document.getElementById("#Menu").hidden = true;
-            document.getElementById("#Map").hidden = true;
-            document.getElementById("#Shop").hidden = true;
+
+        private createEntity(_entity: IEntity) {
+            const entityVis = new VisualizeEntity(_entity);
+            this.entities.set(_entity, entityVis);
         }
 
-        //first test switching through the differnet Menus
-        private fightStart = async (_ev: FightEvent) => {
-            document.getElementById("#Fight").hidden = false;
-            document.getElementById("#Menu").hidden = true;
-            document.getElementById("#Map").hidden = true;
-            document.getElementById("#Shop").hidden = true;
+        private createEntityHandler = (_ev: FightEvent) => {
+            const entity = _ev.target;
+            if (!entity) return;
+            this.createEntity(entity);
+        }
+        
+        private fightPrepHandler = (_ev: FightEvent) => {
+            const fight = _ev.detail.fight;
+            if (!fight) return;
+            this.getFight(fight);
         }
 
-        addFightListeners() {
-            EventBus.addEventListener(EVENT.FIGHT_START, this.fightStart);
+        addEventListeners() {
+            EventBus.addEventListener(EVENT.ENTITY_CREATE, this.createEntityHandler);
+            EventBus.addEventListener(EVENT.FIGHT_PREPARE, this.fightPrepHandler);
+        }
+
+        removeEventListeners() {
+            EventBus.removeEventListener(EVENT.ENTITY_CREATE, this.createEntityHandler);
         }
     }
 }

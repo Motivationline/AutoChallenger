@@ -7,24 +7,25 @@ namespace Script {
         fightEnd(): Promise<void>;
     }
 
-    export class VisualizeFightNull implements IVisualizeFight {
-        #home: IVisualizeGrid;
-        #away: IVisualizeGrid;
+    export class VisualizeFight implements IVisualizeFight {
+        home: VisualizeGrid;
+        away: VisualizeGrid;
         constructor(_fight: Fight) {
             let awayGrid = new Grid<VisualizeEntity>();
             _fight.arena.away.forEachElement((entity, pos) => {
-                awayGrid.set(pos, new VisualizeEntity(entity))
+                awayGrid.set(pos, Provider.visualizer.getEntity(entity));
             });
-            this.#away = new IVisualizeGrid(awayGrid, "away");
+            this.away = new VisualizeGrid(awayGrid, "away");
             let homeGrid = new Grid<VisualizeEntity>();
             _fight.arena.home.forEachElement((entity, pos) => {
-                homeGrid.set(pos, new VisualizeEntity(entity))
+                homeGrid.set(pos, Provider.visualizer.getEntity(entity));
             });
-            this.#home = new IVisualizeGrid(homeGrid, "home");
+            this.home = new VisualizeGrid(homeGrid, "home");
 
-            Provider.visualizer.addToScene(this.#away);
-            Provider.visualizer.addToScene(this.#home);
+            Provider.visualizer.addToScene(this.away);
+            Provider.visualizer.addToScene(this.home);
             Provider.visualizer.drawScene();
+            this.addEventListeners();
         }
 
         async showGrid(): Promise<void> {
@@ -50,11 +51,11 @@ namespace Script {
             visualizer.drawScene();
         }
         async nukeGrid(): Promise<void> {
-            this.#home.grid.forEachElement((el) =>{
+            this.home.grid.forEachElement((el) => {
                 if (!el) return;
                 el.updateVisuals();
             });
-            this.#away.grid.forEachElement((el) =>{
+            this.away.grid.forEachElement((el) => {
                 if (!el) return;
                 el.updateVisuals();
             });
@@ -78,6 +79,28 @@ namespace Script {
             // TODO @Björn clean up visible entities
             await this.nukeGrid();
             console.log("Fight End!");
+        }
+
+        addEventListeners() {
+            this.#listeners.set(EVENT.FIGHT_START, this.fightStart);
+            this.#listeners.set(EVENT.FIGHT_END, this.fightEnd);
+            this.#listeners.set(EVENT.ROUND_START, this.roundStart);
+            this.#listeners.set(EVENT.ROUND_END, this.roundEnd);
+
+            for (let [event] of this.#listeners) {
+                EventBus.addEventListener(event, this.eventListener);
+            }
+        }
+
+        removeEventListeners() {
+            for (let [event] of this.#listeners) {
+                EventBus.removeEventListener(event, this.eventListener);
+            }
+        }
+
+        #listeners: Map<EVENT, FightEventListener> = new Map();
+        eventListener = (_ev: FightEvent) => {
+            this.#listeners.get(_ev.type)?.(_ev);
         }
 
     }
