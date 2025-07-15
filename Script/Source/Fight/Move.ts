@@ -22,21 +22,17 @@ namespace Script {
         }
     }
 
-    function move() {
-        //get the Fight
-        let _fight: Fight;
+    function move(_fight: Fight) {
         //create a new Grid, calls entity[].move(), add them to the grid
         let newGrid = new Grid<Entity>();
 
         //move the entities in the grid
         _fight.arena.away.forEachElement((entity, pos) => {
-
             entity.move()
             newGrid.set(pos, new Entity(entity));
-            
         });
 
-        //TODO: replace old Grid
-
+        //replace old Grid
+        _fight.arena.away = newGrid;
     }
 }
