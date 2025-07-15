@@ -1322,7 +1322,6 @@ var Script;
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_START });
             // run actual round
             for (let r = 0; r < this.rounds; r++) {
-                await Script.waitMS(2000);
                 await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_START, detail: { round: r } });
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
@@ -1479,11 +1478,16 @@ var Script;
             super();
             this.updateRoundCounter = async (_ev) => {
                 let round = _ev.detail.round;
-                const roundCounter = document.querySelector(".RoundCounter");
-                roundCounter.innerText = `Round: ${round + 1}`;
-                roundCounter.classList.add("animate");
+                const roundCounters = document.querySelectorAll(".RoundCounter");
+                await Script.waitMS(500);
+                for (let roundCounter of roundCounters) {
+                    roundCounter.innerText = `Round: ${round + 1}`;
+                }
+                const overlay = document.getElementById("FightPhaseOverlay");
+                overlay.classList.add("active");
                 await Script.waitMS(1000);
-                roundCounter.classList.remove("animate");
+                overlay.classList.remove("active");
+                await Script.waitMS(500);
             };
             this.element = document.getElementById("Fight");
         }
@@ -3296,7 +3300,7 @@ var Script;
                 return;
             this.grid.remove(_pos);
             this.removeChild(elementToRemove);
-            elementToRemove.removeEventListeners();
+            // elementToRemove.removeEventListeners();
         }
         getAnchor(_side, _x, _z) {
             let anchor;

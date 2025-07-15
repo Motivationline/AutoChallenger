@@ -9,11 +9,19 @@ namespace Script {
 
         private updateRoundCounter = async (_ev: FightEvent) => {
             let round = _ev.detail.round;
-            const roundCounter: HTMLDivElement = document.querySelector(".RoundCounter");
-            roundCounter.innerText = `Round: ${round + 1}`;
-            roundCounter.classList.add("animate");
+            const roundCounters = document.querySelectorAll(".RoundCounter") as NodeListOf<HTMLElement>;
+            await waitMS(500);
+            
+            for(let roundCounter of roundCounters) {
+                roundCounter.innerText = `Round: ${round + 1}`;
+            }
+
+            const overlay = document.getElementById("FightPhaseOverlay");
+            
+            overlay.classList.add("active");
             await waitMS(1000);
-            roundCounter.classList.remove("animate");
+            overlay.classList.remove("active");
+            await waitMS(500);
         }
 
         addEventListeners(): void {

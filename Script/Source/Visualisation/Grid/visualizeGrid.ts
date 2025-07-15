@@ -68,7 +68,7 @@ namespace Script {
             if (!elementToRemove) return;
             this.grid.remove(_pos);
             this.removeChild(elementToRemove);
-            elementToRemove.removeEventListeners();
+            // elementToRemove.removeEventListeners();
         }
 
 

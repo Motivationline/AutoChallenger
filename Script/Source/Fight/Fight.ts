@@ -62,7 +62,6 @@ namespace Script {
 
             // run actual round
             for (let r: number = 0; r < this.rounds; r++) {
-                await waitMS(2000);
                 await EventBus.dispatchEvent({ type: EVENT.ROUND_START, detail: { round: r } });
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);

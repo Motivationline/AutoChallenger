@@ -25,10 +25,9 @@ canvas.fullscreen {
   backdrop-filter: blur(40px);
 }
 
-/* region Map */
-#MapOptions {
+/* Map */
+#MapOptions {}
 
-}
 .MapOption {
   padding: 10px;
   margin: 10px;
@@ -36,16 +35,20 @@ canvas.fullscreen {
   border: 1px solid black;
   text-align: center;
 }
+
 .MapOption:hover:not(.selected) {
   scale: 1.1;
 }
+
 .MapOption.selected {
   scale: 1.2;
 }
+
 .MapOption.remove {
   scale: 0;
   transition: scale 1s;
 }
+
 .MapOption.center {
   scale: 1.5;
   transition: scale 1s;
@@ -78,25 +81,70 @@ canvas.fullscreen {
   background-repeat: no-repeat, repeat-x;
 }
 
-/* #endregion */
-
 /* Fight Prep */
 #FightPrepEumlings {
   padding: 10px;
   background-color: brown;
   cursor: pointer;
 }
+
 .EumlingSelector {
   cursor: pointer;
 }
+
 .EumlingSelector.selected {
   background-color: lightblue;
 }
 
 
+/* FIGHT */
+#FightPhaseOverlay {
+  display: none;
+}
+
+#FightPhaseOverlay.active {
+  display: grid;
+  place-items: center;
+}
+
+#FightPhaseOverlayText {
+  color: white;
+  font-size: 3rem;
+}
+
+#FightPhaseOverlay.active>#FightPhaseOverlayText {
+  animation: fight-phase-overlay 1s linear forwards;
+}
+
+@keyframes fight-phase-overlay {
+  0% {
+    transform: translateX(-100vw);
+  }
+
+  20% {
+    transform: translateX(-10vw);
+  }
+
+  50% {
+    transform: translateX(0vw);
+  }
+
+  80% {
+    transform: translateX(10vw);
+  }
+
+  100% {
+    transform: translateX(100vw);
+  }
+}
+
+
+/* MISC */
+
 .no-interact {
   pointer-events: none;
 }
+
 .interact {
   pointer-events: all;
 }
