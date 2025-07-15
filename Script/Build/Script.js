@@ -78,6 +78,10 @@ var Script;
         EVENT["SHOP_CLOSE"] = "shopClose";
         EVENT["REWARDS_OPEN"] = "rewardsOpen";
         EVENT["REWARDS_CLOSE"] = "rewardsClose";
+        EVENT["EUMLING_XP_GAIN"] = "eumlingXPGain";
+        EVENT["EUMLING_LEVELUP_CHOOSE"] = "eumlingLevelupChoose";
+        EVENT["EUMLING_LEVELUP_CHOSEN"] = "eumlingLevelupChosen";
+        EVENT["EUMLING_LEVELUP"] = "eumlingLevelup";
     })(EVENT = Script.EVENT || (Script.EVENT = {}));
     class EventBus {
         static { this.listeners = new Map(); }
@@ -1452,18 +1456,18 @@ var Script;
 (function (Script) {
     class UILayer {
         onAdd(_zindex, _ev) {
-            this.element.hidden = false;
+            this.element.classList.remove("hidden");
             this.element.style.zIndex = _zindex.toString();
             this.addEventListeners();
         }
         onShow() {
-            this.element.hidden = false;
+            this.element.classList.remove("hidden");
         }
         onHide() {
-            this.element.hidden = true; // TODO should it really get hidden? or just disabled?
+            this.element.classList.add("hidden"); // TODO should it really get hidden? or just disabled?
         }
         onRemove() {
-            this.element.hidden = true;
+            this.element.classList.add("hidden");
             this.removeEventListeners();
         }
     }
@@ -1599,6 +1603,10 @@ var Script;
                         this.replaceUI("fightPrepare", _ev);
                         break;
                     }
+                    case Script.EVENT.REWARDS_OPEN: {
+                        this.replaceUI("fightReward", _ev);
+                        break;
+                    }
                 }
             };
             this.uis.clear();
@@ -1659,6 +1667,7 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.CHOOSE_EUMLING, this.switchUI);
             Script.EventBus.addEventListener(Script.EVENT.CHOOSE_ENCOUNTER, this.switchUI);
             Script.EventBus.addEventListener(Script.EVENT.FIGHT_PREPARE, this.switchUI);
+            Script.EventBus.addEventListener(Script.EVENT.REWARDS_OPEN, this.switchUI);
         }
     }
     Script.VisualizeGUI = VisualizeGUI;
@@ -2266,6 +2275,7 @@ var Script;
                 if (_amount > 0) {
                     this.#xp += 1;
                     _amount--;
+                    Script.EventBus.dispatchEvent({ type: Script.EVENT.EUMLING_XP_GAIN, target: this });
                     if (requiredUntilLevelup <= this.#xp) {
                         await this.levelup();
                     }
@@ -2273,13 +2283,17 @@ var Script;
             }
         }
         async levelup() {
-            let specialisationOptions = this.#types.length === 1 ? ["A", "I"] : ["C", "E"];
-            let chosenSpecial;
-            while (!specialisationOptions.includes(chosenSpecial)) {
-                chosenSpecial = prompt(`Your ${this.type} leveld up. Which Specialisation do you want to add? ${specialisationOptions.join(" or ")}`).trim().toUpperCase();
-            }
+            Script.EventBus.dispatchEvent({ type: Script.EVENT.EUMLING_LEVELUP_CHOOSE, target: this });
+            let event = await Script.EventBus.awaitSpecificEvent(Script.EVENT.EUMLING_LEVELUP_CHOSEN);
+            const chosenSpecial = event.detail.chosen;
+            // let specialisationOptions: string[] = this.#types.length === 1 ? ["A", "I"] : ["C", "E"];
+            // let chosenSpecial: string;
+            // while (!specialisationOptions.includes(chosenSpecial)) {
+            //     chosenSpecial = prompt(`Your ${this.type} leveld up. Which Specialisation do you want to add? ${specialisationOptions.join(" or ")}`).trim().toUpperCase();
+            // }
             this.addType(chosenSpecial);
             this.#xp = 0;
+            Script.EventBus.dispatchEvent({ type: Script.EVENT.EUMLING_LEVELUP, target: this });
         }
     }
     Script.Eumling = Eumling;
@@ -2935,16 +2949,8 @@ var Script;
             visualizer.drawScene();
         }
         async nukeGrid() {
-            this.home.grid.forEachElement((el) => {
-                if (!el)
-                    return;
-                el.updateVisuals();
-            });
-            this.away.grid.forEachElement((el) => {
-                if (!el)
-                    return;
-                el.updateVisuals();
-            });
+            this.home.nuke();
+            this.away.nuke();
         }
         async fightStart() {
             console.log("Fight Start!");
@@ -2990,6 +2996,7 @@ var Script;
             this.#listeners.set(Script.EVENT.ROUND_END, this.roundEnd);
             this.#listeners.set(Script.EVENT.ENTITY_ADDED, this.entityAdded);
             this.#listeners.set(Script.EVENT.ENTITY_REMOVED, this.entityRemoved);
+            this.#listeners.set(Script.EVENT.ENTITY_DIED, this.entityRemoved);
             for (let [event] of this.#listeners) {
                 Script.EventBus.addEventListener(event, this.eventListener);
             }
@@ -3056,7 +3063,7 @@ var Script;
         async die(_ev) {
             await this.playAnimationIfPossible(Script.ANIMATION.DIE);
             // TODO: this is a temp, should probably better be done in the visualizer above this, not this one.
-            this.removeAllChildren();
+            // this.removeAllChildren();
             // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("hotpink");
             await Script.waitMS(1000);
             // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
@@ -3077,7 +3084,7 @@ var Script;
         }
         async updateVisuals() {
             //TODO: remove the Entity from Scene Graph if this is an enemy, Player should not be removed just repositioned in the next run
-            this.removeAllChildren();
+            // this.removeAllChildren();
             // console.log("entity visualizer null: updateVisuals", this.entity);
             // await waitMS(200);
         }
@@ -3309,6 +3316,11 @@ var Script;
             anchor = _side.getChildByName(pointer.toString());
             return anchor;
         }
+        nuke() {
+            this.grid.forEachElement((_el, pos) => {
+                this.removeEntityFromGrid(pos);
+            });
+        }
     }
     Script.VisualizeGrid = VisualizeGrid;
 })(Script || (Script = {}));
@@ -3361,6 +3373,21 @@ var Script;
         constructor() {
             super();
             this.eumlingElements = new Map();
+            this.pickEumling = (_ev) => {
+                const element = _ev.currentTarget;
+                let eumling;
+                this.eumlingElements.forEach((_element, _eumling) => {
+                    _element.classList.remove("selected");
+                    if (_element === element) {
+                        eumling = _eumling;
+                    }
+                });
+                if (!eumling)
+                    return;
+                element.classList.add("selected");
+                this.selectedEumling = eumling;
+                this.selectedSpace = undefined;
+            };
             this.clickCanvas = (_ev) => {
                 const ray = Script.viewport.getRayFromClient(new ƒ.Vector2(_ev.clientX, _ev.clientY));
                 const picks = Script.PickSphere.pick(ray, { sortBy: "distanceToRay" });
@@ -3375,24 +3402,24 @@ var Script;
                         // hide from UI
                         let uiElement = this.eumlingElements.get(this.selectedEumling);
                         uiElement.classList.remove("selected");
-                        uiElement.hidden = true;
+                        uiElement.classList.add("hidden");
                     }
                     this.selectedSpace = pick.node;
                     this.startButton.disabled = false;
                 }
             };
             this.returnEumling = (_ev) => {
-                if (_ev.target.classList.contains("EumlingSelector"))
+                if (_ev.target.id !== "FightPrepEumlings")
                     return;
                 if (!this.selectedEumling)
                     return;
                 // remove from field
                 Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_REMOVED, target: this.selectedEumling });
                 // add to UI
-                this.eumlingElements.get(this.selectedEumling).hidden = false;
+                this.eumlingElements.get(this.selectedEumling).classList.remove("hidden");
                 this.selectedEumling = undefined;
                 this.selectedSpace = undefined;
-                if (this.eumlingElements.values().reduce((prev, curr) => prev + (curr.hidden ? 1 : 0), 0) === 0) {
+                if (this.eumlingElements.values().reduce((prev, curr) => prev + (curr.classList.contains("hidden") ? 1 : 0), 0) === 0) {
                     this.startButton.disabled = true;
                 }
             };
@@ -3422,17 +3449,9 @@ var Script;
         }
         initEumlings() {
             for (let eumling of Script.Run.currentRun.eumlings) {
-                const element = Script.createElementAdvanced("div", {
-                    classes: ["EumlingSelector"],
-                    innerHTML: `${eumling.type} (${eumling.xp} / ${eumling.requiredXPForLevelup}XP)`,
-                });
+                const element = Script.EumlingUIElement.getUIElement(eumling).element;
                 this.eumlingElements.set(eumling, element);
-                element.addEventListener("click", () => {
-                    this.eumlingElements.forEach(element => { element.classList.remove("selected"); });
-                    element.classList.add("selected");
-                    this.selectedEumling = eumling;
-                    this.selectedSpace = undefined;
-                });
+                element.addEventListener("click", this.pickEumling);
             }
             this.eumlingWrapper.replaceChildren(...this.eumlingElements.values());
         }
@@ -3445,6 +3464,7 @@ var Script;
             document.getElementById("GameCanvas").removeEventListener("click", this.clickCanvas);
             this.startButton.removeEventListener("click", this.startFight);
             document.getElementById("FightPrepEumlings").removeEventListener("click", this.returnEumling);
+            this.eumlingElements.forEach(element => element.removeEventListener("click", this.pickEumling));
         }
     }
     Script.FightPrepUI = FightPrepUI;
@@ -3456,11 +3476,75 @@ var Script;
     class FightRewardUI extends Script.UILayer {
         constructor() {
             super();
-            this.element = document.getElementById("MainMenu");
+            this.eumlings = new Map();
+            this.clickOnEumling = (_ev) => {
+                if (this.xp <= 0)
+                    return;
+                let target = _ev.target;
+                let eumling = this.eumlings.get(target);
+                eumling.addXP(1);
+                this.xp--;
+                this.updateXPText();
+                if (this.xp <= 0) {
+                    this.continueButton.disabled = false;
+                }
+            };
+            this.finishRewards = () => {
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.REWARDS_CLOSE });
+            };
+            this.element = document.getElementById("FightReward");
+            this.rewardsOverivew = document.getElementById("FightRewardRewards");
+            this.continueButton = document.getElementById("FightRewardContinue");
+        }
+        onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            let { gold, xp, stones } = _ev.detail;
+            const rewardIcons = [];
+            if (gold) {
+                rewardIcons.push(Script.createElementAdvanced("div", {
+                    innerHTML: `+${gold} Gold`,
+                    classes: ["FightRewardIcon"]
+                }));
+            }
+            if (xp) {
+                rewardIcons.push(Script.createElementAdvanced("div", {
+                    innerHTML: `+${xp} XP`,
+                    classes: ["FightRewardIcon"]
+                }));
+                this.xp = xp;
+            }
+            if (stones) {
+                for (let stone of stones) {
+                    rewardIcons.push(Script.createElementAdvanced("div", {
+                        innerHTML: `${stone.id}`,
+                        classes: ["FightRewardIcon"]
+                    }));
+                }
+            }
+            this.rewardsOverivew.replaceChildren(...rewardIcons);
+            for (let eumling of Script.Run.currentRun.eumlings) {
+                let uiElement = Script.EumlingUIElement.getUIElement(eumling);
+                this.eumlings.set(uiElement.element, uiElement.eumling);
+                uiElement.element.classList.remove("hidden");
+                uiElement.element.addEventListener("click", this.clickOnEumling);
+            }
+            document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
+            this.updateXPText();
+            this.continueButton.disabled = true;
+        }
+        updateXPText() {
+            document.getElementById("FightRewardXPAmount").innerText = this.xp === 0 ?
+                `No more XP to distribute` :
+                `Distribute ${this.xp}XP`;
         }
         addEventListeners() {
+            this.continueButton.addEventListener("click", this.finishRewards);
         }
         removeEventListeners() {
+            for (let element of this.eumlings.keys()) {
+                element.removeEventListener("click", this.clickOnEumling);
+            }
+            this.continueButton.removeEventListener("click", this.finishRewards);
         }
     }
     Script.FightRewardUI = FightRewardUI;
@@ -3581,5 +3665,57 @@ var Script;
         }
     }
     Script.ShopUI = ShopUI;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    class UIElement {
+    }
+    Script.UIElement = UIElement;
+})(Script || (Script = {}));
+/// <reference path="UIElement.ts" />
+var Script;
+/// <reference path="UIElement.ts" />
+(function (Script) {
+    class EumlingUIElement extends Script.UIElement {
+        #element;
+        #eumling;
+        constructor(_eumling) {
+            super();
+            this.update = () => {
+                this.#element.innerHTML = `
+            <span class="">${this.#eumling.type}</span>
+            <span class="">${this.#eumling.currentHealth} / ${this.#eumling.health}♥️</span>
+            <span class="">(${this.#eumling.xp} / ${this.#eumling.requiredXPForLevelup}XP)</span>
+            `;
+            };
+            this.#eumling = _eumling;
+            this.#element = Script.createElementAdvanced("div", {
+                classes: ["EumlingUIElement"],
+            });
+            this.update();
+            this.addEventListeners();
+        }
+        static #elements = new Map();
+        static getUIElement(_obj) {
+            if (!this.#elements.has(_obj)) {
+                this.#elements.set(_obj, new EumlingUIElement(_obj));
+            }
+            return this.#elements.get(_obj);
+        }
+        get element() {
+            return this.#element;
+        }
+        get eumling() {
+            return this.#eumling;
+        }
+        addEventListeners() {
+            // TODO: when to remove these listeners?
+            Script.EventBus.addEventListener(Script.EVENT.EUMLING_XP_GAIN, this.update);
+            Script.EventBus.addEventListener(Script.EVENT.EUMLING_LEVELUP, this.update);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_HURT, this.update);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_HEALED, this.update);
+        }
+    }
+    Script.EumlingUIElement = EumlingUIElement;
 })(Script || (Script = {}));
 //# sourceMappingURL=Script.js.map

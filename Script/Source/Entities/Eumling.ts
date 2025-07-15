@@ -44,7 +44,7 @@ namespace Script {
         }
 
         async addXP(_amount: number) {
-            
+
             while (this.#types.length < 3 && _amount > 0) { // can only upgrade until lvl 3
                 let requiredUntilLevelup = this.requiredXPForLevelup;
                 if (requiredUntilLevelup === undefined) return;
@@ -52,6 +52,7 @@ namespace Script {
                 if (_amount > 0) {
                     this.#xp += 1;
                     _amount--;
+                    EventBus.dispatchEvent({ type: EVENT.EUMLING_XP_GAIN, target: this });
                     if (requiredUntilLevelup <= this.#xp) {
                         await this.levelup();
                     }
@@ -60,15 +61,19 @@ namespace Script {
         }
 
         async levelup() {
-            let specialisationOptions: string[] = this.#types.length === 1 ? ["A", "I"] : ["C", "E"];
+            EventBus.dispatchEvent({ type: EVENT.EUMLING_LEVELUP_CHOOSE, target: this });
+            let event = await EventBus.awaitSpecificEvent(EVENT.EUMLING_LEVELUP_CHOSEN);
+            const chosenSpecial = event.detail.chosen;
+            // let specialisationOptions: string[] = this.#types.length === 1 ? ["A", "I"] : ["C", "E"];
 
-            let chosenSpecial: string;
-            while (!specialisationOptions.includes(chosenSpecial)) {
-                chosenSpecial = prompt(`Your ${this.type} leveld up. Which Specialisation do you want to add? ${specialisationOptions.join(" or ")}`).trim().toUpperCase();
-            }
+            // let chosenSpecial: string;
+            // while (!specialisationOptions.includes(chosenSpecial)) {
+            //     chosenSpecial = prompt(`Your ${this.type} leveld up. Which Specialisation do you want to add? ${specialisationOptions.join(" or ")}`).trim().toUpperCase();
+            // }
 
             this.addType(chosenSpecial);
             this.#xp = 0;
+            EventBus.dispatchEvent({ type: EVENT.EUMLING_LEVELUP, target: this });
         }
     }
 }

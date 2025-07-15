@@ -48,9 +48,9 @@ namespace Script {
                 } else if (this.side === "home") {
                     visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
                 }
-                
+
                 //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
-                
+
                 /**Anchors are named from 0-8 */
                 _anchor = this.getAnchor(visSide, _pos[0], _pos[1]);
             }
@@ -79,6 +79,13 @@ namespace Script {
             anchor = _side.getChildByName(pointer.toString());
             return anchor;
         }
+
+        nuke() {
+            this.grid.forEachElement((_el, pos) => {
+                this.removeEntityFromGrid(pos);
+            })
+        }
+
     }
 
 }

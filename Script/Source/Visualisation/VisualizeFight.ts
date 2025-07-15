@@ -51,14 +51,8 @@ namespace Script {
             visualizer.drawScene();
         }
         async nukeGrid(): Promise<void> {
-            this.home.grid.forEachElement((el) => {
-                if (!el) return;
-                el.updateVisuals();
-            });
-            this.away.grid.forEachElement((el) => {
-                if (!el) return;
-                el.updateVisuals();
-            });
+            this.home.nuke();
+            this.away.nuke();
         }
 
         async fightStart(): Promise<void> {
@@ -107,6 +101,7 @@ namespace Script {
             this.#listeners.set(EVENT.ROUND_END, this.roundEnd);
             this.#listeners.set(EVENT.ENTITY_ADDED, this.entityAdded);
             this.#listeners.set(EVENT.ENTITY_REMOVED, this.entityRemoved);
+            this.#listeners.set(EVENT.ENTITY_DIED, this.entityRemoved);
 
             for (let [event] of this.#listeners) {
                 EventBus.addEventListener(event, this.eventListener);

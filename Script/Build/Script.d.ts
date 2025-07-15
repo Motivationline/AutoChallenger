@@ -40,7 +40,11 @@ declare namespace Script {
         SHOP_OPEN = "shopOpen",
         SHOP_CLOSE = "shopClose",
         REWARDS_OPEN = "rewardsOpen",
-        REWARDS_CLOSE = "rewardsClose"
+        REWARDS_CLOSE = "rewardsClose",
+        EUMLING_XP_GAIN = "eumlingXPGain",
+        EUMLING_LEVELUP_CHOOSE = "eumlingLevelupChoose",
+        EUMLING_LEVELUP_CHOSEN = "eumlingLevelupChosen",
+        EUMLING_LEVELUP = "eumlingLevelup"
     }
     /**
      * There are a lot of callbacks / events that things inside the game can hook into to do something at a specific point in time.
@@ -817,6 +821,7 @@ declare namespace Script {
         addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting?: boolean, _anchor?: ƒ.Node): void;
         removeEntityFromGrid(_pos: Position): void;
         getAnchor(_side: ƒ.Node, _x: number, _z: number): ƒ.Node;
+        nuke(): void;
     }
 }
 declare namespace Script {
@@ -839,6 +844,7 @@ declare namespace Script {
         onAdd(_zindex: number, _ev?: FightEvent): void;
         private initStones;
         private initEumlings;
+        private pickEumling;
         private clickCanvas;
         private returnEumling;
         private startFight;
@@ -848,7 +854,15 @@ declare namespace Script {
 }
 declare namespace Script {
     class FightRewardUI extends UILayer {
+        rewardsOverivew: HTMLElement;
+        continueButton: HTMLButtonElement;
         constructor();
+        eumlings: Map<HTMLElement, Eumling>;
+        xp: number;
+        onAdd(_zindex: number, _ev?: FightEvent): void;
+        clickOnEumling: (_ev: MouseEvent) => void;
+        private updateXPText;
+        private finishRewards;
         addEventListeners(): void;
         removeEventListeners(): void;
     }
@@ -886,5 +900,20 @@ declare namespace Script {
         constructor();
         addEventListeners(): void;
         removeEventListeners(): void;
+    }
+}
+declare namespace Script {
+    abstract class UIElement {
+    }
+}
+declare namespace Script {
+    class EumlingUIElement extends UIElement {
+        #private;
+        private constructor();
+        static getUIElement(_obj: Eumling): EumlingUIElement;
+        get element(): HTMLElement;
+        get eumling(): Eumling;
+        private update;
+        addEventListeners(): void;
     }
 }

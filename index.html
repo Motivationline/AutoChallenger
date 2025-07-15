@@ -39,18 +39,18 @@
         <p>click to start</p>
     </dialog>
 
-    <div id="MainMenu" class="UI" hidden="">
+    <div id="MainMenu" class="UI hidden">
         <!--Menu UI-->
     </div>
 
-    <div id="ChooseEumling" class="UI" hidden="">
+    <div id="ChooseEumling" class="UI hidden">
         <div id="ChooseEumlingInner">
             <span>Choose an Eumling</span>
             <div id="ChooseEumlingOptions">
             </div>
         </div>
     </div>
-    <div id="ChooseStone" class="UI" hidden="">
+    <div id="ChooseStone" class="UI hidden">
         <div id="ChooseStoneInner">
             <span>Choose a Stone</span>
             <div id="ChooseStoneOptions">
@@ -58,7 +58,7 @@
         </div>
     </div>
 
-    <div id="Map" class="UI" hidden="">
+    <div id="Map" class="UI hidden">
         <!--Map UI-->
         <div id="MapOptions">
         </div>
@@ -75,7 +75,7 @@
         </div>
     </div>
 
-    <div id="FightPrep" class="UI no-interact" hidden="">
+    <div id="FightPrep" class="UI hidden no-interact">
         <div id="FightPrepStones" class="interact">
         </div>
         <div id="FightStartWrapper" class="interact">
@@ -84,7 +84,7 @@
         <div id="FightPrepEumlings" class="interact">
         </div>
     </div>
-    <div id="Fight" class="UI" hidden="">
+    <div id="Fight" class="UI hidden">
         <!--Fight UI-->
         <div id="FightStones">
         </div>
@@ -98,17 +98,20 @@
             <div id="FightPhaseOverlayText" class="RoundCounter"></div>
         </div>
     </div>
-    <div id="FightReward" class="UI" hidden="">
+    <div id="FightReward" class="UI hidden Blur">
+        <h2>Rewards</h2>
         <div id="FightRewardRewards">
         </div>
         <div id="FightRewardXP">
+            <div id="FightRewardXPAmount"></div>
+            <div id="FightRewardXPEumlings"></div>
         </div>
         <div id="FightRewardContinueWrapper">
             <button id="FightRewardContinue">Continue</button>
         </div>
     </div>
 
-    <div id="EumlingLevelup" class="UI" hidden="">
+    <div id="EumlingLevelup" class="UI hidden">
         <div id="EumlingLevelupEumling">
         </div>
         <div id="EumlingLevelupOptions">
@@ -117,7 +120,7 @@
         </div>
     </div>
 
-    <div id="Defeated" class="UI" hidden="">
+    <div id="Defeated" class="UI hidden">
         <div>
             <h2>Defeat</h2>
             <p>You lost. :(</p>
@@ -126,7 +129,7 @@
         </div>
     </div>
 
-    <div id="Shop" class="UI" hidden="">
+    <div id="Shop" class="UI hidden">
         <!--Shop UI-->
         <div id="ShopStones">
         </div>
@@ -135,7 +138,7 @@
         <div id="ShopEumlingHeal">
         </div>
     </div>
-    <div id="Options" class="UI" hidden="">
+    <div id="Options" class="UI hidden">
     </div>
     <!--Canvas for FUDGE to render to-->
     <canvas class="fullscreen" id="GameCanvas">

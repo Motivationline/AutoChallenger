@@ -38,19 +38,25 @@ namespace Script {
 
         private initEumlings() {
             for (let eumling of Run.currentRun.eumlings) {
-                const element = createElementAdvanced("div", {
-                    classes: ["EumlingSelector"],
-                    innerHTML: `${eumling.type} (${eumling.xp} / ${eumling.requiredXPForLevelup}XP)`,
-                });
+                const element = EumlingUIElement.getUIElement(eumling).element;
                 this.eumlingElements.set(eumling, element);
-                element.addEventListener("click", () => {
-                    this.eumlingElements.forEach(element => { element.classList.remove("selected") });
-                    element.classList.add("selected");
-                    this.selectedEumling = eumling;
-                    this.selectedSpace = undefined;
-                });
+                element.addEventListener("click", this.pickEumling);
             }
             this.eumlingWrapper.replaceChildren(...this.eumlingElements.values());
+        }
+        private pickEumling = (_ev: MouseEvent) => {
+            const element = _ev.currentTarget as HTMLElement;
+            let eumling: Eumling;
+            this.eumlingElements.forEach((_element, _eumling) => {
+                _element.classList.remove("selected")
+                if(_element === element) {
+                    eumling = _eumling;
+                }
+            });
+            if(!eumling) return;
+            element.classList.add("selected");
+            this.selectedEumling = eumling;
+            this.selectedSpace = undefined;
         }
 
         private clickCanvas = (_ev: MouseEvent) => {
@@ -68,7 +74,7 @@ namespace Script {
                     // hide from UI
                     let uiElement = this.eumlingElements.get(this.selectedEumling);
                     uiElement.classList.remove("selected");
-                    uiElement.hidden = true;
+                    uiElement.classList.add("hidden");
                 }
                 this.selectedSpace = pick.node;
                 this.startButton.disabled = false;
@@ -76,16 +82,16 @@ namespace Script {
         }
 
         private returnEumling = (_ev: MouseEvent) => {
-            if ((<HTMLElement>_ev.target).classList.contains("EumlingSelector")) return;
+            if ((<HTMLElement>_ev.target).id !== "FightPrepEumlings") return;
             if (!this.selectedEumling) return;
             // remove from field
             EventBus.dispatchEvent({ type: EVENT.ENTITY_REMOVED, target: this.selectedEumling })
             // add to UI
-            this.eumlingElements.get(this.selectedEumling).hidden = false;
+            this.eumlingElements.get(this.selectedEumling).classList.remove("hidden");
             this.selectedEumling = undefined;
             this.selectedSpace = undefined;
 
-            if (this.eumlingElements.values().reduce((prev, curr) => prev + (curr.hidden ? 1 : 0), 0) === 0) {
+            if (this.eumlingElements.values().reduce((prev, curr) => prev + (curr.classList.contains("hidden") ? 1 : 0), 0) === 0) {
                 this.startButton.disabled = true;
             }
         }
@@ -104,6 +110,7 @@ namespace Script {
             document.getElementById("GameCanvas").removeEventListener("click", this.clickCanvas);
             this.startButton.removeEventListener("click", this.startFight);
             document.getElementById("FightPrepEumlings").removeEventListener("click", this.returnEumling);
+            this.eumlingElements.forEach(element => element.removeEventListener("click", this.pickEumling));
         }
 
     }

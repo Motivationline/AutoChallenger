@@ -68,6 +68,7 @@ namespace Script {
             EventBus.addEventListener(EVENT.CHOOSE_EUMLING, this.switchUI);
             EventBus.addEventListener(EVENT.CHOOSE_ENCOUNTER, this.switchUI);
             EventBus.addEventListener(EVENT.FIGHT_PREPARE, this.switchUI);
+            EventBus.addEventListener(EVENT.REWARDS_OPEN, this.switchUI);
         }
 
         switchUI = (_ev: FightEvent) => {
@@ -90,6 +91,10 @@ namespace Script {
                 }
                 case EVENT.FIGHT_PREPARE: {
                     this.replaceUI("fightPrepare", _ev);
+                    break;
+                }
+                case EVENT.REWARDS_OPEN: {
+                    this.replaceUI("fightReward", _ev);
                     break;
                 }
             }

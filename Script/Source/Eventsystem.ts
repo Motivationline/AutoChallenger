@@ -42,6 +42,10 @@ namespace Script {
         SHOP_CLOSE = "shopClose",
         REWARDS_OPEN = "rewardsOpen",
         REWARDS_CLOSE = "rewardsClose",
+        EUMLING_XP_GAIN = "eumlingXPGain",
+        EUMLING_LEVELUP_CHOOSE = "eumlingLevelupChoose",
+        EUMLING_LEVELUP_CHOSEN = "eumlingLevelupChosen",
+        EUMLING_LEVELUP = "eumlingLevelup",
     }
 
     /**

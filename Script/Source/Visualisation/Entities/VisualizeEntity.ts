@@ -72,7 +72,7 @@ namespace Script {
         async die(_ev: FightEvent): Promise<void> {
             await this.playAnimationIfPossible(ANIMATION.DIE);
             // TODO: this is a temp, should probably better be done in the visualizer above this, not this one.
-            this.removeAllChildren();
+            // this.removeAllChildren();
             // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("hotpink");
             await waitMS(1000);
             // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
@@ -95,7 +95,7 @@ namespace Script {
 
         async updateVisuals(): Promise<void> {
             //TODO: remove the Entity from Scene Graph if this is an enemy, Player should not be removed just repositioned in the next run
-            this.removeAllChildren();
+            // this.removeAllChildren();
             // console.log("entity visualizer null: updateVisuals", this.entity);
             // await waitMS(200);
         }
