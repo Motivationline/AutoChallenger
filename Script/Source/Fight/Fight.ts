@@ -42,6 +42,7 @@ namespace Script {
             this.#enemyStartCount = this.arena.away.occupiedSpots;
 
             this.addEventListeners();
+            Fight.activeFight = this;
         }
 
         get enemyCountAtStart() {
@@ -53,7 +54,6 @@ namespace Script {
         }
 
         async run(): Promise<FIGHT_RESULT> {
-            Fight.activeFight = this;
             // Eventlisteners
             // EventBus.removeAllEventListeners();
 
@@ -106,19 +106,44 @@ namespace Script {
             let deadEntity = _ev.target;
             this.arena.home.forEachElement((el, pos) => {
                 if (el !== deadEntity) return;
-                this.arena.home.set(pos, undefined);
+                this.arena.home.remove(pos);
             })
             this.arena.away.forEachElement((el, pos) => {
                 if (el !== deadEntity) return;
-                this.arena.away.set(pos, undefined);
+                this.arena.away.remove(pos);
             })
+        }
+
+
+        private handleEntityChange = (_ev: FightEvent) => {
+            if (_ev.type === EVENT.ENTITY_ADDED) {
+                const entity = _ev.target;
+                const side = _ev.detail.side;
+                const pos = _ev.detail.pos;
+                if (!entity || !side || !pos) return;
+                let sideGrid = side === "home" ? this.arena.home : this.arena.away;
+                console.log(sideGrid)
+                sideGrid.set(pos, entity);
+            } else if (_ev.type === EVENT.ENTITY_REMOVED) {
+                const entity = _ev.target;
+                if (!entity) return;
+                let pos = this.arena.home.findElementPosition(entity);
+                if (pos) this.arena.home.remove(pos);
+                pos = this.arena.away.findElementPosition(entity);
+                if (pos) this.arena.away.remove(pos);
+            }
+
         }
 
         private addEventListeners() {
             EventBus.addEventListener(EVENT.ENTITY_DIED, this.handleDeadEntity);
+            EventBus.addEventListener(EVENT.ENTITY_ADDED, this.handleEntityChange);
+            EventBus.addEventListener(EVENT.ENTITY_REMOVED, this.handleEntityChange);
         }
         private removeEventListeners() {
             EventBus.removeEventListener(EVENT.ENTITY_DIED, this.handleDeadEntity);
+            EventBus.removeEventListener(EVENT.ENTITY_ADDED, this.handleEntityChange);
+            EventBus.removeEventListener(EVENT.ENTITY_REMOVED, this.handleEntityChange);
         }
     }
 }

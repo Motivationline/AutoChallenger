@@ -19,7 +19,7 @@ namespace Script {
             }
             return this.entities.get(_entity);
         }
-        getFight(_fight: Fight): IVisualizeFight {
+        getFight(_fight: Fight): VisualizeFight {
             if (!this.fights.has(_fight)) {
                 this.fights.set(_fight, new VisualizeFight(_fight));
             }
@@ -70,7 +70,7 @@ namespace Script {
             if (!entity) return;
             this.createEntity(entity);
         }
-        
+
         private fightPrepHandler = (_ev: FightEvent) => {
             const fight = _ev.detail.fight;
             if (!fight) return;

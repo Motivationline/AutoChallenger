@@ -81,11 +81,32 @@ namespace Script {
             console.log("Fight End!");
         }
 
+        entityAdded(_ev: FightEvent) {
+            const entity = _ev.target;
+            const side = _ev.detail.side;
+            const pos = _ev.detail.pos;
+            if (!entity || !side || !pos) return;
+
+            let sideGrid = side === "home" ? this.home : this.away;
+            sideGrid.addEntityToGrid(Provider.visualizer.getEntity(entity), pos);
+        }
+        entityRemoved(_ev: FightEvent) {
+            const entity = _ev.target;
+            if (!entity) return;
+            let entityVis = Provider.visualizer.getEntity(entity);
+            let pos = this.home.grid.findElementPosition(entityVis);
+            if (pos) this.home.removeEntityFromGrid(pos);
+            pos = this.away.grid.findElementPosition(entityVis);
+            if (pos) this.away.removeEntityFromGrid(pos);
+        }
+
         addEventListeners() {
             this.#listeners.set(EVENT.FIGHT_START, this.fightStart);
             this.#listeners.set(EVENT.FIGHT_END, this.fightEnd);
             this.#listeners.set(EVENT.ROUND_START, this.roundStart);
             this.#listeners.set(EVENT.ROUND_END, this.roundEnd);
+            this.#listeners.set(EVENT.ENTITY_ADDED, this.entityAdded);
+            this.#listeners.set(EVENT.ENTITY_REMOVED, this.entityRemoved);
 
             for (let [event] of this.#listeners) {
                 EventBus.addEventListener(event, this.eventListener);
@@ -100,7 +121,7 @@ namespace Script {
 
         #listeners: Map<EVENT, FightEventListener> = new Map();
         eventListener = (_ev: FightEvent) => {
-            this.#listeners.get(_ev.type)?.(_ev);
+            this.#listeners.get(_ev.type)?.call(this, _ev);
         }
 
     }

@@ -47,9 +47,19 @@ namespace Script {
             if (Grid.outOfBounds(_pos)) return undefined;
             return this.grid[_pos[0]][_pos[1]];
         }
-        public set(_pos: Position, _el: T) {
+        public set(_pos: Position, _el: T, _removeDuplicates: boolean = true) {
             if (Grid.outOfBounds(_pos)) return undefined;
+            if (_removeDuplicates && _el) {
+                this.forEachElement((el, pos) => {
+                    if (el === _el) this.set(pos, undefined, false);
+                });
+            }
             return this.grid[_pos[0]][_pos[1]] = _el;
+        }
+        public remove(_pos: Position) {
+            let currentElement = this.get(_pos);
+            this.set(_pos, undefined, false);
+            return currentElement;
         }
         /** Runs through each **POSITION** of the grid, regardless of whether it is set */
         public forEachPosition(callback: (element?: T, pos?: Position) => void): void {
@@ -66,7 +76,7 @@ namespace Script {
                     await callback(this.grid[x][y], [x, y]);
                 }
         }
-        
+
         /** Runs through each **ELEMENT** present in the grid, skips empty spots */
         public forEachElement(callback: (element?: T, pos?: Position) => void): void {
             for (let y: number = 0; y < Grid.GRIDSIZE; y++)
@@ -81,6 +91,15 @@ namespace Script {
                 for (let x: number = 0; x < Grid.GRIDSIZE; x++) {
                     if (this.grid[x][y]) await callback(this.grid[x][y], [x, y]);
                 }
+        }
+
+        public findElementPosition(_element: T): Position {
+            let found: Position;
+            this.forEachElement((el, pos) => {
+                if (el === _element)
+                    found = pos;
+            })
+            return found;
         }
 
         public get occupiedSpots(): number {

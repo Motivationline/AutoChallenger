@@ -61,6 +61,8 @@ var Script;
         EVENT["ENTITY_DIED"] = "entityDied";
         EVENT["ENTITY_CREATE"] = "entityCreate";
         EVENT["ENTITY_CREATED"] = "entityCreated";
+        EVENT["ENTITY_ADDED"] = "entityAdded";
+        EVENT["ENTITY_REMOVED"] = "entityRemoved";
         EVENT["ENTITY_MOVE"] = "entityMove";
         EVENT["ENTITY_MOVED"] = "entityMoved";
         EVENT["TRIGGER_ABILITY"] = "triggerAbility";
@@ -103,7 +105,12 @@ var Script;
                 return;
             const listeners = [...this.listeners.get(_ev.type)]; // copying this so removing listeners doesn't skip any
             for (let listener of listeners) {
-                await listener(_ev);
+                try {
+                    await listener(_ev);
+                }
+                catch (error) {
+                    console.error(error);
+                }
             }
         }
         static async awaitSpecificEvent(_type) {
@@ -1256,13 +1263,36 @@ var Script;
                 this.arena.home.forEachElement((el, pos) => {
                     if (el !== deadEntity)
                         return;
-                    this.arena.home.set(pos, undefined);
+                    this.arena.home.remove(pos);
                 });
                 this.arena.away.forEachElement((el, pos) => {
                     if (el !== deadEntity)
                         return;
-                    this.arena.away.set(pos, undefined);
+                    this.arena.away.remove(pos);
                 });
+            };
+            this.handleEntityChange = (_ev) => {
+                if (_ev.type === Script.EVENT.ENTITY_ADDED) {
+                    const entity = _ev.target;
+                    const side = _ev.detail.side;
+                    const pos = _ev.detail.pos;
+                    if (!entity || !side || !pos)
+                        return;
+                    let sideGrid = side === "home" ? this.arena.home : this.arena.away;
+                    console.log(sideGrid);
+                    sideGrid.set(pos, entity);
+                }
+                else if (_ev.type === Script.EVENT.ENTITY_REMOVED) {
+                    const entity = _ev.target;
+                    if (!entity)
+                        return;
+                    let pos = this.arena.home.findElementPosition(entity);
+                    if (pos)
+                        this.arena.home.remove(pos);
+                    pos = this.arena.away.findElementPosition(entity);
+                    if (pos)
+                        this.arena.away.remove(pos);
+                }
             };
             this.rounds = _fight.rounds;
             this.arena = {
@@ -1277,6 +1307,7 @@ var Script;
             });
             this.#enemyStartCount = this.arena.away.occupiedSpots;
             this.addEventListeners();
+            Fight.activeFight = this;
         }
         get enemyCountAtStart() {
             return this.#enemyStartCount;
@@ -1285,7 +1316,6 @@ var Script;
             return this.rounds;
         }
         async run() {
-            Fight.activeFight = this;
             // Eventlisteners
             // EventBus.removeAllEventListeners();
             //TODO: Add stones
@@ -1327,9 +1357,13 @@ var Script;
         }
         addEventListeners() {
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_DIED, this.handleDeadEntity);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_ADDED, this.handleEntityChange);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_REMOVED, this.handleEntityChange);
         }
         removeEventListeners() {
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_DIED, this.handleDeadEntity);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_ADDED, this.handleEntityChange);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_REMOVED, this.handleEntityChange);
         }
     }
     Script.Fight = Fight;
@@ -2442,10 +2476,21 @@ var Script;
                 return undefined;
             return this.grid[_pos[0]][_pos[1]];
         }
-        set(_pos, _el) {
+        set(_pos, _el, _removeDuplicates = true) {
             if (Grid.outOfBounds(_pos))
                 return undefined;
+            if (_removeDuplicates && _el) {
+                this.forEachElement((el, pos) => {
+                    if (el === _el)
+                        this.set(pos, undefined, false);
+                });
+            }
             return this.grid[_pos[0]][_pos[1]] = _el;
+        }
+        remove(_pos) {
+            let currentElement = this.get(_pos);
+            this.set(_pos, undefined, false);
+            return currentElement;
         }
         /** Runs through each **POSITION** of the grid, regardless of whether it is set */
         forEachPosition(callback) {
@@ -2476,6 +2521,14 @@ var Script;
                     if (this.grid[x][y])
                         await callback(this.grid[x][y], [x, y]);
                 }
+        }
+        findElementPosition(_element) {
+            let found;
+            this.forEachElement((el, pos) => {
+                if (el === _element)
+                    found = pos;
+            });
+            return found;
         }
         get occupiedSpots() {
             let total = 0;
@@ -2841,7 +2894,7 @@ var Script;
         constructor(_fight) {
             this.#listeners = new Map();
             this.eventListener = (_ev) => {
-                this.#listeners.get(_ev.type)?.(_ev);
+                this.#listeners.get(_ev.type)?.call(this, _ev);
             };
             let awayGrid = new Script.Grid();
             _fight.arena.away.forEachElement((entity, pos) => {
@@ -2905,11 +2958,34 @@ var Script;
             await this.nukeGrid();
             console.log("Fight End!");
         }
+        entityAdded(_ev) {
+            const entity = _ev.target;
+            const side = _ev.detail.side;
+            const pos = _ev.detail.pos;
+            if (!entity || !side || !pos)
+                return;
+            let sideGrid = side === "home" ? this.home : this.away;
+            sideGrid.addEntityToGrid(Script.Provider.visualizer.getEntity(entity), pos);
+        }
+        entityRemoved(_ev) {
+            const entity = _ev.target;
+            if (!entity)
+                return;
+            let entityVis = Script.Provider.visualizer.getEntity(entity);
+            let pos = this.home.grid.findElementPosition(entityVis);
+            if (pos)
+                this.home.removeEntityFromGrid(pos);
+            pos = this.away.grid.findElementPosition(entityVis);
+            if (pos)
+                this.away.removeEntityFromGrid(pos);
+        }
         addEventListeners() {
             this.#listeners.set(Script.EVENT.FIGHT_START, this.fightStart);
             this.#listeners.set(Script.EVENT.FIGHT_END, this.fightEnd);
             this.#listeners.set(Script.EVENT.ROUND_START, this.roundStart);
             this.#listeners.set(Script.EVENT.ROUND_END, this.roundEnd);
+            this.#listeners.set(Script.EVENT.ENTITY_ADDED, this.entityAdded);
+            this.#listeners.set(Script.EVENT.ENTITY_REMOVED, this.entityRemoved);
             for (let [event] of this.#listeners) {
                 Script.EventBus.addEventListener(event, this.eventListener);
             }
@@ -3161,6 +3237,77 @@ var Script;
 //         }
 //     }
 // }
+var Script;
+(function (Script) {
+    //Visualize the Entities in the Grid
+    //Instances the Entities in the correct grid Position
+    var ƒ = FudgeCore;
+    class VisualizeGrid extends ƒ.Node {
+        constructor(_grid, _side) {
+            super("VisualizeGrid");
+            this.grid = _grid;
+            if (_side === "home" || "away") {
+                this.side = _side;
+            }
+            else {
+                throw new Error("Use home or away for the side parameter");
+            }
+            this.addComponent(new ƒ.ComponentTransform());
+            //set the positions of the entities in the grid
+            this.grid.forEachElement((element, pos) => {
+                this.addEntityToGrid(element, pos, false);
+            });
+        }
+        addEntityToGrid(_entity, _pos, _removeExisting = true, _anchor) {
+            if (Script.Grid.outOfBounds(_pos))
+                return;
+            if (_removeExisting) {
+                this.removeEntityFromGrid(_pos);
+            }
+            // remove this entity if it's already somewhere in the grid
+            this.grid.forEachElement((entity, pos) => {
+                if (entity === _entity)
+                    this.removeEntityFromGrid(pos);
+            });
+            if (!_anchor) {
+                let visSide;
+                //get Anchors from scene
+                if (this.side === "away") {
+                    visSide = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
+                }
+                else if (this.side === "home") {
+                    visSide = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
+                }
+                //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
+                /**Anchors are named from 0-8 */
+                _anchor = this.getAnchor(visSide, _pos[0], _pos[1]);
+            }
+            //get the Positions from the placeholders and translate the entities to it
+            let position = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
+            _entity.mtxLocal.translation = position.clone;
+            this.addChild(_entity);
+            this.grid.set(_pos, _entity);
+        }
+        removeEntityFromGrid(_pos) {
+            if (Script.Grid.outOfBounds(_pos))
+                return;
+            let elementToRemove = this.grid.get(_pos);
+            if (!elementToRemove)
+                return;
+            this.grid.remove(_pos);
+            this.removeChild(elementToRemove);
+            elementToRemove.removeEventListeners();
+        }
+        getAnchor(_side, _x, _z) {
+            let anchor;
+            let pointer = _z * 3 + _x;
+            console.log("pointer: " + pointer);
+            anchor = _side.getChildByName(pointer.toString());
+            return anchor;
+        }
+    }
+    Script.VisualizeGrid = VisualizeGrid;
+})(Script || (Script = {}));
 // namespace Script {
 //     import ƒ = FudgeCore;
 //     export interface IVisualizeGrid {
@@ -3185,70 +3332,6 @@ var Script;
 //         }
 //     }
 // }
-var Script;
-(function (Script) {
-    //Visualize the Entities in the Grid
-    //Instances the Entities in the correct grid Position
-    var ƒ = FudgeCore;
-    class VisualizeGrid extends ƒ.Node {
-        constructor(_grid, _side) {
-            super("VisualizeGrid");
-            this.grid = _grid;
-            if (_side === "home" || "away") {
-                this.side = _side;
-            }
-            else {
-                throw new Error("Use home or away for the side parameter");
-            }
-            this.addComponent(new ƒ.ComponentTransform());
-            //set the positions of the entities in the grid
-            this.grid.forEachElement((element, pos) => {
-                this.addEntityToGrid(element, pos, false);
-            });
-        }
-        addEntityToGrid(_entity, _pos, _removeExisting = true) {
-            if (Script.Grid.outOfBounds(_pos))
-                return;
-            if (_removeExisting) {
-                this.removeEntityFromGrid(_pos);
-            }
-            let visSide;
-            //get Anchors from scene
-            if (this.side === "away") {
-                visSide = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
-            }
-            else if (this.side === "home") {
-                visSide = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
-            }
-            //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
-            /**Anchors are named from 0-8 */
-            let anchor = this.getAnchor(visSide, _pos[0], _pos[1]);
-            //get the Positions from the placeholders and translate the entities to it
-            let position = anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
-            console.log("position: ", position);
-            _entity.mtxLocal.translation = new ƒ.Vector3(position.x, position.y, position.z);
-            console.log("element position: ", _entity.mtxLocal.translation);
-            this.addChild(_entity);
-        }
-        removeEntityFromGrid(_pos) {
-            if (Script.Grid.outOfBounds(_pos))
-                return;
-            let elementToRemove = this.grid.get(_pos);
-            if (!elementToRemove)
-                return;
-            this.removeChild(elementToRemove);
-            elementToRemove.removeEventListeners();
-        }
-        getAnchor(_side, _x, _z) {
-            let anchor;
-            let pointer = _z * 3 + _x;
-            console.log("pointer: " + pointer);
-            anchor = _side.getChildByName(pointer.toString());
-            return anchor;
-        }
-    }
-    Script.VisualizeGrid = VisualizeGrid;
-})(Script || (Script = {}));
 /// <reference path="UILayer.ts" />
 var Script;
 /// <reference path="UILayer.ts" />
@@ -3273,12 +3356,53 @@ var Script;
     class FightPrepUI extends Script.UILayer {
         constructor() {
             super();
+            this.eumlingElements = new Map();
+            this.clickCanvas = (_ev) => {
+                const ray = Script.viewport.getRayFromClient(new ƒ.Vector2(_ev.clientX, _ev.clientY));
+                const picks = Script.PickSphere.pick(ray, { sortBy: "distanceToRay" });
+                if (!picks || picks.length === 0)
+                    return;
+                const pick = picks[0];
+                if (this.selectedEumling) {
+                    // place eumling in map
+                    const posId = parseInt(pick.node.name);
+                    Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ADDED, target: this.selectedEumling, detail: { side: "home", pos: [posId % 3, Math.floor(posId / 3)] } });
+                    if (!this.selectedSpace) {
+                        // hide from UI
+                        let uiElement = this.eumlingElements.get(this.selectedEumling);
+                        uiElement.classList.remove("selected");
+                        uiElement.hidden = true;
+                    }
+                    this.selectedSpace = pick.node;
+                    this.startButton.disabled = false;
+                }
+            };
+            this.returnEumling = (_ev) => {
+                if (_ev.target.classList.contains("EumlingSelector"))
+                    return;
+                if (!this.selectedEumling)
+                    return;
+                // remove from field
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_REMOVED, target: this.selectedEumling });
+                // add to UI
+                this.eumlingElements.get(this.selectedEumling).hidden = false;
+                this.selectedEumling = undefined;
+                this.selectedSpace = undefined;
+                if (this.eumlingElements.values().reduce((prev, curr) => prev + (curr.hidden ? 1 : 0), 0) === 0) {
+                    this.startButton.disabled = true;
+                }
+            };
+            this.startFight = (_ev) => {
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_PREPARE_COMPLETED });
+            };
             this.element = document.getElementById("FightPrep");
             this.stoneWrapper = document.getElementById("FightPrepStones");
             this.eumlingWrapper = document.getElementById("FightPrepEumlings");
+            this.startButton = document.getElementById("FightStart");
         }
         onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
+            this.startButton.disabled = true;
             this.initStones();
             this.initEumlings();
         }
@@ -3293,33 +3417,30 @@ var Script;
             this.stoneWrapper.replaceChildren(...stones);
         }
         initEumlings() {
-            const eumlingElements = [];
             for (let eumling of Script.Run.currentRun.eumlings) {
                 const element = Script.createElementAdvanced("div", {
                     classes: ["EumlingSelector"],
                     innerHTML: `${eumling.type} (${eumling.xp} / ${eumling.requiredXPForLevelup}XP)`,
                 });
-                eumlingElements.push(element);
+                this.eumlingElements.set(eumling, element);
                 element.addEventListener("click", () => {
-                    eumlingElements.forEach(element => { element.classList.remove("selected"); });
+                    this.eumlingElements.forEach(element => { element.classList.remove("selected"); });
                     element.classList.add("selected");
                     this.selectedEumling = eumling;
+                    this.selectedSpace = undefined;
                 });
             }
-            this.eumlingWrapper.replaceChildren(...eumlingElements);
-        }
-        clickCanvas(_ev) {
-            const ray = Script.viewport.getRayFromClient(new ƒ.Vector2(_ev.clientX, _ev.clientY));
-            const picks = Script.PickSphere.pick(ray, { sortBy: "distanceToRay" });
-            if (!picks || picks.length === 0)
-                return;
-            const pick = picks[0];
-            console.log("clicked on", pick.node.name);
+            this.eumlingWrapper.replaceChildren(...this.eumlingElements.values());
         }
         addEventListeners() {
             document.getElementById("GameCanvas").addEventListener("click", this.clickCanvas);
+            this.startButton.addEventListener("click", this.startFight);
+            document.getElementById("FightPrepEumlings").addEventListener("click", this.returnEumling);
         }
         removeEventListeners() {
+            document.getElementById("GameCanvas").removeEventListener("click", this.clickCanvas);
+            this.startButton.removeEventListener("click", this.startFight);
+            document.getElementById("FightPrepEumlings").removeEventListener("click", this.returnEumling);
         }
     }
     Script.FightPrepUI = FightPrepUI;

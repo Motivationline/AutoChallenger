@@ -24,6 +24,8 @@ declare namespace Script {
         ENTITY_DIED = "entityDied",
         ENTITY_CREATE = "entityCreate",
         ENTITY_CREATED = "entityCreated",
+        ENTITY_ADDED = "entityAdded",
+        ENTITY_REMOVED = "entityRemoved",
         ENTITY_MOVE = "entityMove",// unused for now
         ENTITY_MOVED = "entityMoved",// unused for now
         TRIGGER_ABILITY = "triggerAbility",
@@ -369,6 +371,7 @@ declare namespace Script {
         private fightEnd;
         private runOneSide;
         private handleDeadEntity;
+        private handleEntityChange;
         private addEventListeners;
         private removeEventListeners;
     }
@@ -384,7 +387,7 @@ declare namespace Script {
         private fights;
         constructor();
         getEntity(_entity: IEntity): VisualizeEntity;
-        getFight(_fight: Fight): IVisualizeFight;
+        getFight(_fight: Fight): VisualizeFight;
         getGUI(): VisualizeGUI;
         initializeScene(_viewport: ƒ.Viewport): void;
         addToScene(_el: ƒ.Node): void;
@@ -663,7 +666,8 @@ declare namespace Script {
         constructor(_content?: GridData<T>);
         static EMPTY<T>(): GridData<T | undefined>;
         get(_pos: Position): T;
-        set(_pos: Position, _el: T): T;
+        set(_pos: Position, _el: T, _removeDuplicates?: boolean): T;
+        remove(_pos: Position): T;
         /** Runs through each **POSITION** of the grid, regardless of whether it is set */
         forEachPosition(callback: (element?: T, pos?: Position) => void): void;
         /** Runs through each **POSITION** of the grid, regardless of whether it is set, **await**ing each callback */
@@ -672,6 +676,7 @@ declare namespace Script {
         forEachElement(callback: (element?: T, pos?: Position) => void): void;
         /** Runs through each **ELEMENT** present in the grid, skips empty spots, **await**ing each callback */
         forEachElementAsync(callback: (element?: T, pos?: Position) => Promise<void>): Promise<void>;
+        findElementPosition(_element: T): Position;
         get occupiedSpots(): number;
         static outOfBounds(_pos: Position): boolean;
     }
@@ -765,6 +770,8 @@ declare namespace Script {
         roundStart(): Promise<void>;
         roundEnd(): Promise<void>;
         fightEnd(): Promise<void>;
+        entityAdded(_ev: FightEvent): void;
+        entityRemoved(_ev: FightEvent): void;
         addEventListeners(): void;
         removeEventListeners(): void;
         eventListener: (_ev: FightEvent) => void;
@@ -807,7 +814,7 @@ declare namespace Script {
         grid: Grid<VisualizeEntity>;
         side: string;
         constructor(_grid: Grid<VisualizeEntity>, _side: string);
-        addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting?: boolean): void;
+        addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting?: boolean, _anchor?: ƒ.Node): void;
         removeEntityFromGrid(_pos: Position): void;
         getAnchor(_side: ƒ.Node, _x: number, _z: number): ƒ.Node;
     }
@@ -820,15 +827,21 @@ declare namespace Script {
     }
 }
 declare namespace Script {
+    import ƒ = FudgeCore;
     class FightPrepUI extends UILayer {
         stoneWrapper: HTMLElement;
         eumlingWrapper: HTMLElement;
         selectedEumling: Eumling;
+        startButton: HTMLButtonElement;
+        selectedSpace: ƒ.Node;
+        eumlingElements: Map<Eumling, HTMLElement>;
         constructor();
         onAdd(_zindex: number, _ev?: FightEvent): void;
         private initStones;
         private initEumlings;
         private clickCanvas;
+        private returnEumling;
+        private startFight;
         addEventListeners(): void;
         removeEventListeners(): void;
     }

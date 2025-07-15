@@ -25,6 +25,8 @@ namespace Script {
         ENTITY_DIED = "entityDied",
         ENTITY_CREATE = "entityCreate",
         ENTITY_CREATED = "entityCreated",
+        ENTITY_ADDED = "entityAdded",
+        ENTITY_REMOVED = "entityRemoved",
         ENTITY_MOVE = "entityMove", // unused for now
         ENTITY_MOVED = "entityMoved", // unused for now
         TRIGGER_ABILITY = "triggerAbility",
@@ -91,7 +93,11 @@ namespace Script {
             if (!this.listeners.has(_ev.type)) return;
             const listeners = [...this.listeners.get(_ev.type)]; // copying this so removing listeners doesn't skip any
             for (let listener of listeners) {
-                await listener(_ev);
+                try {
+                    await listener(_ev);
+                } catch (error) {
+                    console.error(error);
+                }
             }
         }
 

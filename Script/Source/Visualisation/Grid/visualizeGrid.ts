@@ -29,37 +29,44 @@ namespace Script {
 
         }
 
-        addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting: boolean = true) {
+        addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting: boolean = true, _anchor?: ƒ.Node) {
             if (Grid.outOfBounds(_pos)) return;
             if (_removeExisting) {
                 this.removeEntityFromGrid(_pos);
             }
-            let visSide: ƒ.Node;
+            // remove this entity if it's already somewhere in the grid
+            this.grid.forEachElement((entity, pos) => {
+                if (entity === _entity) this.removeEntityFromGrid(pos);
+            });
 
-            //get Anchors from scene
-            if (this.side === "away") {
-                visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
-            } else if (this.side === "home") {
-                visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
+            if (!_anchor) {
+
+                let visSide: ƒ.Node;
+                //get Anchors from scene
+                if (this.side === "away") {
+                    visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
+                } else if (this.side === "home") {
+                    visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
+                }
+                
+                //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
+                
+                /**Anchors are named from 0-8 */
+                _anchor = this.getAnchor(visSide, _pos[0], _pos[1]);
             }
-
-            //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
-
-            /**Anchors are named from 0-8 */
-            let anchor: ƒ.Node = this.getAnchor(visSide, _pos[0], _pos[1]);
             //get the Positions from the placeholders and translate the entities to it
-            let position: ƒ.Vector3 = anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
-            console.log("position: ", position);
+            let position: ƒ.Vector3 = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
 
-            _entity.mtxLocal.translation = new ƒ.Vector3(position.x, position.y, position.z);
-            console.log("element position: ", _entity.mtxLocal.translation);
+            _entity.mtxLocal.translation = position.clone;
             this.addChild(_entity);
+            this.grid.set(_pos, _entity);
         }
 
         removeEntityFromGrid(_pos: Position) {
             if (Grid.outOfBounds(_pos)) return;
             let elementToRemove = this.grid.get(_pos);
             if (!elementToRemove) return;
+            this.grid.remove(_pos);
             this.removeChild(elementToRemove);
             elementToRemove.removeEventListeners();
         }
