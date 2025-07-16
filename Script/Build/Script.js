@@ -1511,27 +1511,53 @@ var Script;
     class ChooseEumlingUI extends Script.UILayer {
         constructor() {
             super();
+            this.optionElements = new Map();
+            this.clickedEumling = (_ev) => {
+                let element = _ev.target;
+                let eumling = this.optionElements.get(element);
+                for (let elem of this.optionElements.keys()) {
+                    elem.classList.remove("selected");
+                }
+                element.classList.add("selected");
+                this.selectedEumling = eumling;
+                this.confirmButton.disabled = false;
+            };
+            this.confirm = () => {
+                if (!this.selectedEumling)
+                    return;
+                for (let elem of this.optionElements.keys()) {
+                    elem.classList.remove("selected");
+                }
+                Script.Provider.GUI.removeTopmostUI();
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_EUMLING, detail: { eumling: this.selectedEumling } });
+            };
             this.element = document.getElementById("ChooseEumling");
+            this.confirmButton = document.getElementById("ChooseEumlingConfirm");
         }
         onAdd(_zindex) {
+            this.removeEventListeners();
             super.onAdd(_zindex);
+            this.confirmButton.disabled = true;
             const optionElement = document.getElementById("ChooseEumlingOptions");
-            optionElement.replaceChildren();
             const options = ["R", "S"];
+            this.optionElements.clear();
             for (let opt of options) {
-                const btn = document.createElement("button");
-                btn.dataset.eumling = opt;
-                btn.innerText = opt;
-                optionElement.appendChild(btn);
-                btn.addEventListener("click", () => {
-                    Script.Provider.GUI.removeTopmostUI();
-                    Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_EUMLING, detail: { eumling: opt } });
-                });
+                let eumling = new Script.Eumling(opt);
+                let uiElement = Script.EumlingUIElement.getUIElement(eumling);
+                uiElement.element.addEventListener("click", this.clickedEumling);
+                this.optionElements.set(uiElement.element, eumling);
+                optionElement.appendChild(uiElement.element);
             }
+            optionElement.replaceChildren(...this.optionElements.keys());
         }
         addEventListeners() {
+            this.confirmButton.addEventListener("click", this.confirm);
         }
         removeEventListeners() {
+            for (let el of this.optionElements.keys()) {
+                el.removeEventListener("click", this.clickedEumling);
+            }
+            this.confirmButton.removeEventListener("click", this.confirm);
         }
     }
     Script.ChooseEumlingUI = ChooseEumlingUI;
@@ -2820,7 +2846,7 @@ var Script;
         async chooseEumling() {
             Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOOSE_EUMLING });
             let event = await Script.EventBus.awaitSpecificEvent(Script.EVENT.CHOSEN_EUMLING);
-            this.eumlings.push(new Script.Eumling(event.detail.eumling));
+            this.eumlings.push(event.detail.eumling);
         }
         async chooseStone() {
             Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOOSE_STONE });

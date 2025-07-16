@@ -75,7 +75,7 @@ namespace Script {
         private async chooseEumling() {
             EventBus.dispatchEvent({ type: EVENT.CHOOSE_EUMLING });
             let event = await EventBus.awaitSpecificEvent(EVENT.CHOSEN_EUMLING);
-            this.eumlings.push(new Eumling(event.detail.eumling));
+            this.eumlings.push(event.detail.eumling);
         }
         private async chooseStone() {
             EventBus.dispatchEvent({ type: EVENT.CHOOSE_STONE });

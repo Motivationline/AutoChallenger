@@ -427,8 +427,13 @@ declare namespace Script {
 }
 declare namespace Script {
     class ChooseEumlingUI extends UILayer {
+        optionElements: Map<HTMLElement, Eumling>;
+        confirmButton: HTMLButtonElement;
+        selectedEumling: Eumling;
         constructor();
         onAdd(_zindex: number): void;
+        private clickedEumling;
+        private confirm;
         addEventListeners(): void;
         removeEventListeners(): void;
     }
