@@ -31,7 +31,7 @@ namespace Script {
         }
 
         private clickedEumling = (_ev: MouseEvent) => {
-            let element = _ev.target as HTMLElement;
+            let element = _ev.currentTarget as HTMLElement;
             let eumling = this.optionElements.get(element);
             for (let elem of this.optionElements.keys()) {
                 elem.classList.remove("selected");

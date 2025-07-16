@@ -1283,7 +1283,7 @@ var Script;
                     if (!entity || !side || !pos)
                         return;
                     let sideGrid = side === "home" ? this.arena.home : this.arena.away;
-                    sideGrid.set(pos, entity);
+                    sideGrid.set(pos, entity, true);
                     entity.position = pos;
                 }
                 else if (_ev.type === Script.EVENT.ENTITY_REMOVED) {
@@ -1494,6 +1494,18 @@ var Script;
                 await Script.waitMS(500);
             };
             this.element = document.getElementById("Fight");
+            this.stoneWrapper = document.getElementById("FightStones");
+        }
+        onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            this.initStones();
+        }
+        initStones() {
+            const stones = [];
+            for (let stone of Script.Run.currentRun.stones) {
+                stones.push(Script.StoneUIElement.getUIElement(stone).element);
+            }
+            this.stoneWrapper.replaceChildren(...stones);
         }
         addEventListeners() {
             Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateRoundCounter);
@@ -1513,7 +1525,7 @@ var Script;
             super();
             this.optionElements = new Map();
             this.clickedEumling = (_ev) => {
-                let element = _ev.target;
+                let element = _ev.currentTarget;
                 let eumling = this.optionElements.get(element);
                 for (let elem of this.optionElements.keys()) {
                     elem.classList.remove("selected");
@@ -1569,27 +1581,53 @@ var Script;
     class ChooseStoneUI extends Script.UILayer {
         constructor() {
             super();
+            this.optionElements = new Map();
+            this.clickedStone = (_ev) => {
+                let element = _ev.currentTarget;
+                let stone = this.optionElements.get(element);
+                for (let elem of this.optionElements.keys()) {
+                    elem.classList.remove("selected");
+                }
+                element.classList.add("selected");
+                this.selectedStone = stone;
+                this.confirmButton.disabled = false;
+            };
+            this.confirm = () => {
+                if (!this.selectedStone)
+                    return;
+                for (let elem of this.optionElements.keys()) {
+                    elem.classList.remove("selected");
+                }
+                Script.Provider.GUI.removeTopmostUI();
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_STONE, detail: { stone: this.selectedStone } });
+            };
             this.element = document.getElementById("ChooseStone");
+            this.confirmButton = document.getElementById("ChooseStoneConfirm");
         }
         onAdd(_zindex) {
+            this.removeEventListeners();
             super.onAdd(_zindex);
+            this.confirmButton.disabled = true;
             const optionElement = document.getElementById("ChooseStoneOptions");
-            optionElement.replaceChildren();
+            this.optionElements.clear();
             const options = Script.chooseRandomElementsFromArray(Script.Provider.data.stones, 3);
             for (let opt of options) {
-                const btn = document.createElement("button");
-                btn.dataset.eumling = opt.id;
-                btn.innerText = opt.id;
-                optionElement.appendChild(btn);
-                btn.addEventListener("click", () => {
-                    Script.Provider.GUI.removeTopmostUI();
-                    Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_STONE, detail: { stone: opt } });
-                });
+                let stone = new Script.Stone(opt);
+                let uiElement = Script.StoneUIElement.getUIElement(stone);
+                uiElement.element.addEventListener("click", this.clickedStone);
+                this.optionElements.set(uiElement.element, stone);
+                optionElement.appendChild(uiElement.element);
             }
+            optionElement.replaceChildren(...this.optionElements.keys());
         }
         addEventListeners() {
+            this.confirmButton.addEventListener("click", this.confirm);
         }
         removeEventListeners() {
+            for (let el of this.optionElements.keys()) {
+                el.removeEventListener("click", this.clickedStone);
+            }
+            this.confirmButton.removeEventListener("click", this.confirm);
         }
     }
     Script.ChooseStoneUI = ChooseStoneUI;
@@ -2349,7 +2387,7 @@ var Script;
             }
             if (condition.cause && _arena && _ev.cause) {
                 let validTargets = Script.getTargets(condition.cause, _arena.home, _arena.away, this);
-                if (!validTargets.includes(_ev.cause))
+                if (_ev.cause instanceof Script.Entity && !validTargets.includes(_ev.cause))
                     return false;
             }
             let level = _ev.detail.level;
@@ -2386,7 +2424,7 @@ var Script;
         // if we get here, we're ready to do the ability
         let targets = undefined;
         if (_ability.target === "cause") {
-            if (_ev.cause)
+            if (_ev.cause && _ev.cause instanceof Script.Entity)
                 targets = [_ev.cause];
         }
         else if (_ability.target === "target") {
@@ -2470,7 +2508,6 @@ var Script;
                     this.#triggers.add(ability.on);
                 }
             }
-            this.addEventListeners();
         }
         set level(_lvl) {
             this.#level = Math.max(0, Math.min(this.#abilityLevels.length - 1, _lvl));
@@ -2531,20 +2568,20 @@ var Script;
                 return undefined;
             return this.grid[_pos[0]][_pos[1]];
         }
-        set(_pos, _el, _removeDuplicates = true) {
+        set(_pos, _el, _removeDuplicates = false) {
             if (Grid.outOfBounds(_pos))
                 return undefined;
             if (_removeDuplicates && _el) {
                 this.forEachElement((el, pos) => {
                     if (el === _el)
-                        this.set(pos, undefined, false);
+                        this.set(pos, undefined);
                 });
             }
             return this.grid[_pos[0]][_pos[1]] = _el;
         }
         remove(_pos) {
             let currentElement = this.get(_pos);
-            this.set(_pos, undefined, false);
+            this.set(_pos, undefined);
             return currentElement;
         }
         /** Runs through each **POSITION** of the grid, regardless of whether it is set */
@@ -2851,7 +2888,8 @@ var Script;
         async chooseStone() {
             Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOOSE_STONE });
             let event = await Script.EventBus.awaitSpecificEvent(Script.EVENT.CHOSEN_STONE);
-            this.stones.push(new Script.Stone(event.detail.stone));
+            this.stones.push(event.detail.stone);
+            event.detail.stone.addEventListeners();
         }
         //#endregion
         //#region Run
@@ -2953,12 +2991,12 @@ var Script;
             };
             let awayGrid = new Script.Grid();
             _fight.arena.away.forEachElement((entity, pos) => {
-                awayGrid.set(pos, Script.Provider.visualizer.getEntity(entity));
+                awayGrid.set(pos, Script.Provider.visualizer.getEntity(entity), true);
             });
             this.away = new Script.VisualizeGrid(awayGrid, "away");
             let homeGrid = new Script.Grid();
             _fight.arena.home.forEachElement((entity, pos) => {
-                homeGrid.set(pos, Script.Provider.visualizer.getEntity(entity));
+                homeGrid.set(pos, Script.Provider.visualizer.getEntity(entity), true);
             });
             this.home = new Script.VisualizeGrid(homeGrid, "home");
             Script.Provider.visualizer.addToScene(this.away);
@@ -3182,7 +3220,7 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_DIES, this.eventListener);
         }
         removeEventListeners() {
-            Script.EventBus.removeEventListener(Script.EVENT.FIGHT_ENDED, this.eventListener);
+            Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_ATTACK, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_HURT, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
@@ -3223,7 +3261,7 @@ var Script;
             else {
                 // independent events
                 switch (_ev.type) {
-                    case Script.EVENT.FIGHT_ENDED: {
+                    case Script.EVENT.RUN_END: {
                         this.removeEventListeners();
                         break;
                     }
@@ -3334,7 +3372,7 @@ var Script;
             let position = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
             _entity.mtxLocal.translation = position.clone;
             this.addChild(_entity);
-            this.grid.set(_pos, _entity);
+            this.grid.set(_pos, _entity, true);
         }
         removeEntityFromGrid(_pos) {
             if (Script.Grid.outOfBounds(_pos))
@@ -3477,10 +3515,7 @@ var Script;
         initStones() {
             const stones = [];
             for (let stone of Script.Run.currentRun.stones) {
-                stones.push(Script.createElementAdvanced("div", {
-                    classes: ["Stone"],
-                    innerHTML: `${stone.id}\nLvl ${stone.level + 1}`,
-                }));
+                stones.push(Script.StoneUIElement.getUIElement(stone).element);
             }
             this.stoneWrapper.replaceChildren(...stones);
         }
@@ -3793,5 +3828,54 @@ var Script;
         }
     }
     Script.EumlingUIElement = EumlingUIElement;
+})(Script || (Script = {}));
+/// <reference path="UIElement.ts" />
+var Script;
+/// <reference path="UIElement.ts" />
+(function (Script) {
+    class StoneUIElement extends Script.UIElement {
+        #element;
+        #stone;
+        constructor(_stone) {
+            super();
+            this.update = () => {
+                this.#element.innerHTML = `
+            <span class="">${this.#stone.id}</span>
+            <span class="">Level ${this.#stone.level + 1}</span>
+            `;
+            };
+            this.animate = async (_ev) => {
+                if (_ev.cause !== this.#stone)
+                    return;
+                this.#element.classList.add("animate");
+                await Script.waitMS(1000);
+                this.#element.classList.remove("animate");
+            };
+            this.#stone = _stone;
+            this.#element = Script.createElementAdvanced("div", {
+                classes: ["StoneUIElement"],
+            });
+            this.update();
+            this.addEventListeners();
+        }
+        static #elements = new Map();
+        static getUIElement(_obj) {
+            if (!this.#elements.has(_obj)) {
+                this.#elements.set(_obj, new StoneUIElement(_obj));
+            }
+            return this.#elements.get(_obj);
+        }
+        get element() {
+            return this.#element;
+        }
+        get stone() {
+            return this.#stone;
+        }
+        addEventListeners() {
+            // TODO: when to remove these listeners?
+            Script.EventBus.addEventListener(Script.EVENT.TRIGGER_ABILITY, this.animate);
+        }
+    }
+    Script.StoneUIElement = StoneUIElement;
 })(Script || (Script = {}));
 //# sourceMappingURL=Script.js.map

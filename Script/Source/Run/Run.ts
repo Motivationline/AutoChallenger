@@ -80,7 +80,8 @@ namespace Script {
         private async chooseStone() {
             EventBus.dispatchEvent({ type: EVENT.CHOOSE_STONE });
             let event = await EventBus.awaitSpecificEvent(EVENT.CHOSEN_STONE);
-            this.stones.push(new Stone(event.detail.stone));
+            this.stones.push(event.detail.stone);
+            event.detail.stone.addEventListeners();
         }
 
         //#endregion

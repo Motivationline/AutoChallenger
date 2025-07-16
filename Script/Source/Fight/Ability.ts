@@ -41,7 +41,7 @@ namespace Script {
             }
             if (condition.cause && _arena && _ev.cause) {
                 let validTargets = getTargets(condition.cause, _arena.home, _arena.away, this);
-                if (!validTargets.includes(_ev.cause)) return false;
+                if (_ev.cause instanceof Entity && !validTargets.includes(_ev.cause)) return false;
             }
             let level = _ev.detail.level;
             if (condition.value && level !== undefined) {
@@ -71,7 +71,7 @@ namespace Script {
         // if we get here, we're ready to do the ability
         let targets: IEntity[] = undefined;
         if (_ability.target === "cause") {
-            if (_ev.cause)
+            if (_ev.cause && _ev.cause instanceof Entity)
                 targets = [_ev.cause]
         }
         else if (_ability.target === "target") {

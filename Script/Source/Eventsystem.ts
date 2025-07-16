@@ -61,7 +61,7 @@ namespace Script {
         /** Who sent this event? undefined if system */
         target?: IEntity,
         /** Who or what caused the event? Might be empty. */
-        cause?: IEntity,
+        cause?: IEntity | Stone,
         /** Optional value for whatever triggered this event. */
         trigger?: AttackData | SpellData | MoveData | AbilityData,
         /** Optional data with more details about this specific event. */

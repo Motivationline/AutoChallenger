@@ -13,12 +13,12 @@ namespace Script {
         constructor(_fight: Fight) {
             let awayGrid = new Grid<VisualizeEntity>();
             _fight.arena.away.forEachElement((entity, pos) => {
-                awayGrid.set(pos, Provider.visualizer.getEntity(entity));
+                awayGrid.set(pos, Provider.visualizer.getEntity(entity), true);
             });
             this.away = new VisualizeGrid(awayGrid, "away");
             let homeGrid = new Grid<VisualizeEntity>();
             _fight.arena.home.forEachElement((entity, pos) => {
-                homeGrid.set(pos, Provider.visualizer.getEntity(entity));
+                homeGrid.set(pos, Provider.visualizer.getEntity(entity), true);
             });
             this.home = new VisualizeGrid(homeGrid, "home");
 

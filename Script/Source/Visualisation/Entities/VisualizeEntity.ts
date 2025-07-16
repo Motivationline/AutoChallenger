@@ -159,7 +159,7 @@ namespace Script {
         }
 
         removeEventListeners() {
-            EventBus.removeEventListener(EVENT.FIGHT_ENDED, this.eventListener);
+            EventBus.removeEventListener(EVENT.RUN_END, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_ATTACK, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_HURT, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
@@ -203,7 +203,7 @@ namespace Script {
             } else {
                 // independent events
                 switch (_ev.type) {
-                    case EVENT.FIGHT_ENDED: {
+                    case EVENT.RUN_END: {
                         this.removeEventListeners();
                         break;
                     }

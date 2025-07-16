@@ -59,7 +59,7 @@ namespace Script {
 
             _entity.mtxLocal.translation = position.clone;
             this.addChild(_entity);
-            this.grid.set(_pos, _entity);
+            this.grid.set(_pos, _entity, true);
         }
 
         removeEntityFromGrid(_pos: Position) {

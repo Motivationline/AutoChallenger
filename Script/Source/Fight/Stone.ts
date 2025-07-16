@@ -24,7 +24,6 @@ namespace Script {
                     this.#triggers.add(ability.on);
                 }
             }
-            this.addEventListeners();
         }
 
         set level(_lvl: number) {
@@ -39,14 +38,14 @@ namespace Script {
             return this.#id;
         }
 
-        private addEventListeners() {
+        addEventListeners() {
             for (let trigger of this.#triggers) {
                 EventBus.addEventListener(trigger, this.abilityEventListener);
             }
             EventBus.addEventListener(EVENT.RUN_END, this.removeEventListeners);
         }
         
-        private removeEventListeners = () => {
+        removeEventListeners = () => {
             for (let trigger of this.#triggers) {
                 EventBus.removeEventListener(trigger, this.abilityEventListener);
             }

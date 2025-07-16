@@ -47,18 +47,18 @@ namespace Script {
             if (Grid.outOfBounds(_pos)) return undefined;
             return this.grid[_pos[0]][_pos[1]];
         }
-        public set(_pos: Position, _el: T, _removeDuplicates: boolean = true) {
+        public set(_pos: Position, _el: T, _removeDuplicates: boolean = false) {
             if (Grid.outOfBounds(_pos)) return undefined;
             if (_removeDuplicates && _el) {
                 this.forEachElement((el, pos) => {
-                    if (el === _el) this.set(pos, undefined, false);
+                    if (el === _el) this.set(pos, undefined);
                 });
             }
             return this.grid[_pos[0]][_pos[1]] = _el;
         }
         public remove(_pos: Position) {
             let currentElement = this.get(_pos);
-            this.set(_pos, undefined, false);
+            this.set(_pos, undefined);
             return currentElement;
         }
         /** Runs through each **POSITION** of the grid, regardless of whether it is set */

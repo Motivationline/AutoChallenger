@@ -58,7 +58,7 @@ declare namespace Script {
         /** Who sent this event? undefined if system */
         target?: IEntity;
         /** Who or what caused the event? Might be empty. */
-        cause?: IEntity;
+        cause?: IEntity | Stone;
         /** Optional value for whatever triggered this event. */
         trigger?: AttackData | SpellData | MoveData | AbilityData;
         /** Optional data with more details about this specific event. */
@@ -419,7 +419,10 @@ declare namespace Script {
 }
 declare namespace Script {
     class FightUI extends UILayer {
+        stoneWrapper: HTMLElement;
         constructor();
+        onAdd(_zindex: number, _ev?: FightEvent): void;
+        private initStones;
         private updateRoundCounter;
         addEventListeners(): void;
         removeEventListeners(): void;
@@ -440,8 +443,13 @@ declare namespace Script {
 }
 declare namespace Script {
     class ChooseStoneUI extends UILayer {
+        optionElements: Map<HTMLElement, Stone>;
+        confirmButton: HTMLButtonElement;
+        selectedStone: Stone;
         constructor();
         onAdd(_zindex: number): void;
+        private clickedStone;
+        private confirm;
         addEventListeners(): void;
         removeEventListeners(): void;
     }
@@ -650,8 +658,8 @@ declare namespace Script {
         set level(_lvl: number);
         get level(): number;
         get id(): string;
-        private addEventListeners;
-        private removeEventListeners;
+        addEventListeners(): void;
+        removeEventListeners: () => void;
         private abilityEventListener;
         protected runAbility(_ev: FightEvent): Promise<void>;
     }
@@ -931,6 +939,18 @@ declare namespace Script {
         get element(): HTMLElement;
         get eumling(): Eumling;
         private update;
+        addEventListeners(): void;
+    }
+}
+declare namespace Script {
+    class StoneUIElement extends UIElement {
+        #private;
+        private constructor();
+        static getUIElement(_obj: Stone): StoneUIElement;
+        get element(): HTMLElement;
+        get stone(): Stone;
+        private update;
+        private animate;
         addEventListeners(): void;
     }
 }

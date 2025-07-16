@@ -28,10 +28,7 @@ namespace Script {
         private initStones() {
             const stones: HTMLElement[] = [];
             for (let stone of Run.currentRun.stones) {
-                stones.push(createElementAdvanced("div", {
-                    classes: ["Stone"],
-                    innerHTML: `${stone.id}\nLvl ${stone.level + 1}`,
-                }));
+                stones.push(StoneUIElement.getUIElement(stone).element);
             }
             this.stoneWrapper.replaceChildren(...stones);
         }
