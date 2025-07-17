@@ -329,6 +329,27 @@
                 ]
               }
             ]
+          },
+          {
+            "name": "Stones",
+            "entries": [
+              {
+                "name": "Healstone",
+                "entries": [
+                  {
+                    "idResource": "GraphGLTF|2025-07-17T13:55:42.038Z|46257"
+                  }
+                ]
+              },
+              {
+                "name": "Shieldstone",
+                "entries": [
+                  {
+                    "idResource": "GraphGLTF|2025-07-17T13:55:45.125Z|60187"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },

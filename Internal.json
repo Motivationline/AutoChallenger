@@ -3697,5 +3697,25 @@
       "idResource": "Graph|2025-07-17T13:12:11.670Z|82788",
       "type": "Graph"
     }
+  },
+  "GraphGLTF|2025-07-17T13:55:42.038Z|46257": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {},
+      "idResource": "GraphGLTF|2025-07-17T13:55:42.038Z|46257",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\Stones\\Healstone.glb"
+    }
+  },
+  "GraphGLTF|2025-07-17T13:55:45.125Z|60187": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {},
+      "idResource": "GraphGLTF|2025-07-17T13:55:45.125Z|60187",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\Stones\\Shieldstone.glb"
+    }
   }
 }
