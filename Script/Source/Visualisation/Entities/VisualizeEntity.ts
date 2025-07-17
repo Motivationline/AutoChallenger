@@ -74,7 +74,7 @@ namespace Script {
             // TODO: this is a temp, should probably better be done in the visualizer above this, not this one.
             // this.removeAllChildren();
             // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("hotpink");
-            await waitMS(1000);
+            // await waitMS(1000);
             // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
         }
         async resist(): Promise<void> {

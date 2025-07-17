@@ -2727,8 +2727,8 @@
           {
             "ƒ.ComponentTransform": {
               "local": {
-                "translation": "[0.6, 0.1, 0]",
-                "rotation": "[-90, 90, 0]",
+                "translation": "[0, 0.1, 0.6]",
+                "rotation": "[-90, 0, 0]",
                 "scaling": "[1, 1, 1]"
               },
               "Component": {
@@ -2807,8 +2807,8 @@
           {
             "ƒ.ComponentTransform": {
               "local": {
-                "translation": "[0.6, 0.1, 0]",
-                "rotation": "[-90, 90, 0]",
+                "translation": "[0, 0.1, 0.6]",
+                "rotation": "[-90, 0, 0]",
                 "scaling": "[1, 1, 1]"
               },
               "Component": {
@@ -2865,7 +2865,7 @@
           {
             "Script.DataLink": {
               "active": true,
-              "id": "spell"
+              "id": "die"
             }
           }
         ],
@@ -2876,7 +2876,7 @@
               "texture": {
                 "mipmap": 0,
                 "wrap": 0,
-                "text": "SPELL",
+                "text": "DEFEATED",
                 "font": "20px monospace"
               },
               "fixedSize": true
@@ -2887,8 +2887,8 @@
           {
             "ƒ.ComponentTransform": {
               "local": {
-                "translation": "[0.6, 0.1, 0]",
-                "rotation": "[-90, 90, 0]",
+                "translation": "[0, 0.1, 0.6]",
+                "rotation": "[-90, 0, 0]",
                 "scaling": "[1, 1, 1]"
               },
               "Component": {
@@ -2967,8 +2967,8 @@
           {
             "ƒ.ComponentTransform": {
               "local": {
-                "translation": "[0.6, 0.1, 0]",
-                "rotation": "[-90, 90, 0]",
+                "translation": "[0, 0.1, 0.6000000000000001]",
+                "rotation": "[-90, 0, 0]",
                 "scaling": "[1, 1, 1]"
               },
               "Component": {
@@ -3474,6 +3474,86 @@
         }
       ],
       "idResource": "Graph|2025-07-04T10:21:05.334Z|07945",
+      "type": "Graph"
+    }
+  },
+  "Graph|2025-07-17T07:04:26.501Z|75170": {
+    "ƒ.Graph": {
+      "name": "die",
+      "active": true,
+      "components": {
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "attack"
+            }
+          }
+        ],
+        "ComponentText": [
+          {
+            "ƒ.ComponentText": {
+              "active": true,
+              "texture": {
+                "mipmap": 0,
+                "wrap": 0,
+                "text": "ATTACK",
+                "font": "20px monospace"
+              },
+              "fixedSize": true
+            }
+          }
+        ],
+        "ComponentTransform": [
+          {
+            "ƒ.ComponentTransform": {
+              "local": {
+                "translation": "[0, 0.1, 0.6]",
+                "rotation": "[-90, 0, 0]",
+                "scaling": "[1, 1, 1]"
+              },
+              "Component": {
+                "active": true
+              }
+            }
+          }
+        ],
+        "ComponentMesh": [
+          {
+            "ƒ.ComponentMesh": {
+              "idMesh": "MeshQuad|2025-07-03T06:11:04.933Z|59310",
+              "pivot": {
+                "translation": "[0, 0, 0]",
+                "rotation": "[0, 0, 0]",
+                "scaling": "[1, 1, 1]"
+              },
+              "Component": {
+                "active": true
+              }
+            }
+          }
+        ],
+        "ComponentMaterial": [
+          {
+            "ƒ.ComponentMaterial": {
+              "sortForAlpha": false,
+              "clrPrimary": "[1, 1, 1, 1]",
+              "clrSecondary": "[1, 1, 1, 1]",
+              "pivot": {
+                "translation": "[0, 0]",
+                "rotation": 0,
+                "scaling": "[1, 1]"
+              },
+              "Component": {
+                "active": true
+              },
+              "idMaterial": "Material|2025-07-03T06:11:17.977Z|13805"
+            }
+          }
+        ]
+      },
+      "children": [],
+      "idResource": "Graph|2025-07-17T07:04:26.501Z|75170",
       "type": "Graph"
     }
   }
