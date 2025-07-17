@@ -572,6 +572,7 @@ declare namespace Script {
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells?: SpellData[], _targetsOverride?: IEntity[]): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks?: AttackData[], _targetsOverride?: IEntity[]): Promise<void>;
         getOwnDamage(): number;
+        selections: Map<any, any[]>;
         protected select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[];
         protected getDamageOfAttacks(_attacks: Readonly<AttackDataNoTarget[]>, _consumeEffects: boolean): number;
         setGrids(_home: Grid<Entity>, _away: Grid<Entity>): void;

@@ -239,6 +239,7 @@ namespace Script {
             return total;
         }
 
+        selections = new Map<SelectableWithData<any>, any[]>(); // not sure how to make this type-safe
         protected select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[] {
             if (!_options) return [];
             const selection: T[] = [];
@@ -254,8 +255,16 @@ namespace Script {
                             _options.counter = (_options.counter + 1) % _options.options.length;
                         }
                         break;
-                    case SELECTION_ORDER.RANDOM_EACH_FIGHT:
                     case SELECTION_ORDER.RANDOM_EACH_ROUND:
+                        this.selections.delete(_options);
+                    case SELECTION_ORDER.RANDOM_EACH_FIGHT:
+                        let existingSelection = this.selections.get(_options);
+                        if (!existingSelection) {
+                            existingSelection = chooseRandomElementsFromArray(_options.options, _options.selection.amount);
+                            this.selections.set(_options, existingSelection);
+                        }
+                        selection.push(...existingSelection);
+                        break;
                 }
                 return selection;
             }
@@ -371,6 +380,7 @@ namespace Script {
 
         protected async handleEndOfFight(_ev: FightEvent) {
             this.activeEffects.clear();
+            this.selections.clear();
             this.removeEventListeners();
         }
 
