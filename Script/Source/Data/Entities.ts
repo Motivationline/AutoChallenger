@@ -477,6 +477,537 @@ namespace Script {
                 },
             },
             {
+                id: "SA-Eumling",
+                health: 5,
+                spells: {
+                    options: [
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 0],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 0],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 0],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 1],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 1],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 1],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 2],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 2],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 2],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                    ],
+                    selection: {
+                        order: SELECTION_ORDER.RANDOM_EACH_FIGHT,
+                        amount: 3,
+                    }
+                },
+                abilities: [{
+                    on: EVENT.ENTITY_HEALED,
+                    conditions: [{
+                        target: { side: TARGET_SIDE.ALLY, entity: {}, excludeSelf: false }
+                    }],
+                    target: "target",
+                    spell: {
+                        type: SPELL_TYPE.SHIELD,
+                        level: 1,
+                    }
+                }]
+            },
+            {
+                id: "SI-Eumling",
+                health: 5,
+                spells: {
+                    target: TARGET.RANDOM_ALLY,
+                    type: SPELL_TYPE.HEAL,
+                    level: 2,
+                },
+            },
+            {
+                id: "SAC-Eumling",
+                health: 6,
+                spells: {
+                    options: [
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 0],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 0],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 0],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 1],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 1],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 1],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 2],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 2],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 2],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                    ],
+                    selection: {
+                        order: SELECTION_ORDER.RANDOM_EACH_FIGHT,
+                        amount: 3,
+                    }
+                },
+                abilities: [{
+                    on: EVENT.ENTITY_HEALED,
+                    conditions: [{
+                        target: { side: TARGET_SIDE.ALLY, entity: {}, excludeSelf: false }
+                    }],
+                    target: "target",
+                    spell: {
+                        type: SPELL_TYPE.SHIELD,
+                        level: 2,
+                    }
+                }]
+            },
+            {
+                id: "SAE-Eumling",
+                health: 6,
+                spells: {
+                    options: [
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 0],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 0],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 0],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 1],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 1],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 1],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 2],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 2],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 2],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                    ],
+                    selection: {
+                        order: SELECTION_ORDER.RANDOM_EACH_FIGHT,
+                        amount: 3,
+                    }
+                },
+                abilities: [{ //TODO: +1 GOLD IF HE HEALS
+                    on: EVENT.ENTITY_HEALED,
+                    conditions: [{
+                        target: { side: TARGET_SIDE.ALLY, entity: {}, excludeSelf: false }
+                    }],
+                    target: "target",
+                    spell: {
+                        type: SPELL_TYPE.SHIELD,
+                        level: 1,
+                    }
+                }]
+            },
+            {
+                id: "SIC-Eumling",
+                health: 6,
+                spells: {
+                    options: [
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 0],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 0],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 0],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 1],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 1],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 1],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 2],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 2],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.ALLY,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 2],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            type: SPELL_TYPE.HEAL,
+                            level: 1,
+                        },
+                    ],
+                    selection: {
+                        order: SELECTION_ORDER.RANDOM_EACH_FIGHT,
+                        amount: 6,
+                    }
+                }
+            },
+            {
+                id: "SIE-Eumling", // TODO: +1 Gold per heart that is healed
+                health: 6,
+                spells: {
+                    target: TARGET.RANDOM_ALLY,
+                    type: SPELL_TYPE.HEAL,
+                    level: 2,
+                },
+            },
+            {
                 id: "cactusCrawler", // doesn't attack but gets thorns after moving
                 health: 1,
                 moves: { direction: DIRECTION_RELATIVE.FORWARD, distance: 1 },
