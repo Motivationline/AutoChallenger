@@ -4151,12 +4151,21 @@ var Script;
                     this.continueButton.disabled = false;
                 }
             };
+            this.convert = () => {
+                Script.Run.currentRun.changeGold(this.xp);
+                this.gold += this.xp;
+                document.getElementById("FightRewardRewards").querySelector(".Gold").innerHTML = `+${this.gold} Gold`;
+                this.xp = 0;
+                this.continueButton.disabled = false;
+                this.updateXPText();
+            };
             this.finishRewards = () => {
                 Script.EventBus.dispatchEvent({ type: Script.EVENT.REWARDS_CLOSE });
             };
             this.element = document.getElementById("FightReward");
             this.rewardsOverivew = document.getElementById("FightRewardRewards");
             this.continueButton = document.getElementById("FightRewardContinue");
+            this.convertButton = document.getElementById("FightRewardConvert");
         }
         onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
@@ -4165,13 +4174,14 @@ var Script;
             if (gold) {
                 rewardIcons.push(Script.createElementAdvanced("div", {
                     innerHTML: `+${gold} Gold`,
-                    classes: ["FightRewardIcon"]
+                    classes: ["FightRewardIcon", "Gold"]
                 }));
+                this.gold = gold;
             }
             if (xp) {
                 rewardIcons.push(Script.createElementAdvanced("div", {
                     innerHTML: `+${xp} XP`,
-                    classes: ["FightRewardIcon"]
+                    classes: ["FightRewardIcon", "XP"]
                 }));
                 this.xp = xp;
             }
@@ -4179,7 +4189,7 @@ var Script;
                 for (let stone of stones) {
                     rewardIcons.push(Script.createElementAdvanced("div", {
                         innerHTML: `${stone.id}`,
-                        classes: ["FightRewardIcon"]
+                        classes: ["FightRewardIcon", "Stone"]
                     }));
                 }
             }
@@ -4193,6 +4203,7 @@ var Script;
             document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
             this.updateXPText();
             this.continueButton.disabled = true;
+            this.convertButton.disabled = false;
         }
         onShow() {
             super.onShow();
@@ -4210,15 +4221,18 @@ var Script;
             document.getElementById("FightRewardXPAmount").innerText = this.xp === 0 ?
                 `No more XP to distribute` :
                 `Distribute ${this.xp}XP`;
+            this.convertButton.disabled = this.xp === 0;
         }
         addEventListeners() {
             this.continueButton.addEventListener("click", this.finishRewards);
+            this.convertButton.addEventListener("click", this.convert);
         }
         removeEventListeners() {
             for (let element of this.eumlings.keys()) {
                 element.removeEventListener("click", this.clickOnEumling);
             }
             this.continueButton.removeEventListener("click", this.finishRewards);
+            this.convertButton.removeEventListener("click", this.convert);
         }
     }
     Script.FightRewardUI = FightRewardUI;

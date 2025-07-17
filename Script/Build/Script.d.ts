@@ -879,15 +879,18 @@ declare namespace Script {
 declare namespace Script {
     class FightRewardUI extends UILayer {
         rewardsOverivew: HTMLElement;
+        convertButton: HTMLButtonElement;
         continueButton: HTMLButtonElement;
         constructor();
         eumlings: Map<HTMLElement, Eumling>;
         xp: number;
+        gold: number;
         onAdd(_zindex: number, _ev?: FightEvent): void;
         onShow(): void;
         onHide(): void;
         clickOnEumling: (_ev: MouseEvent) => void;
         private updateXPText;
+        convert: () => void;
         private finishRewards;
         addEventListeners(): void;
         removeEventListeners(): void;
