@@ -18,6 +18,7 @@ namespace Script {
             this.uis.set("fightPrepare", new FightPrepUI());
             this.uis.set("fight", new FightUI());
             this.uis.set("fightReward", new FightRewardUI());
+            this.uis.set("eumlingLevelup", new EumlingLevelupUI());
             this.uis.set("shop", new ShopUI());
             this.uis.set("runEnd", new RunEndUI());
             this.addFightListeners();
@@ -70,6 +71,7 @@ namespace Script {
             EventBus.addEventListener(EVENT.CHOOSE_ENCOUNTER, this.switchUI);
             EventBus.addEventListener(EVENT.FIGHT_PREPARE, this.switchUI);
             EventBus.addEventListener(EVENT.REWARDS_OPEN, this.switchUI);
+            EventBus.addEventListener(EVENT.EUMLING_LEVELUP_CHOOSE, this.switchUI);
             EventBus.addEventListener(EVENT.SHOP_OPEN, this.switchUI);
             EventBus.addEventListener(EVENT.RUN_END, this.switchUI);
         }
@@ -98,6 +100,10 @@ namespace Script {
                 }
                 case EVENT.REWARDS_OPEN: {
                     this.replaceUI("fightReward", _ev);
+                    break;
+                }
+                case EVENT.EUMLING_LEVELUP_CHOOSE: {
+                    this.addUI("eumlingLevelup", _ev);
                     break;
                 }
                 case EVENT.SHOP_OPEN: {

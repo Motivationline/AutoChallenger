@@ -1671,6 +1671,10 @@ var Script;
                         this.replaceUI("fightReward", _ev);
                         break;
                     }
+                    case Script.EVENT.EUMLING_LEVELUP_CHOOSE: {
+                        this.addUI("eumlingLevelup", _ev);
+                        break;
+                    }
                     case Script.EVENT.SHOP_OPEN: {
                         this.replaceUI("shop", _ev);
                         break;
@@ -1689,6 +1693,7 @@ var Script;
             this.uis.set("fightPrepare", new Script.FightPrepUI());
             this.uis.set("fight", new Script.FightUI());
             this.uis.set("fightReward", new Script.FightRewardUI());
+            this.uis.set("eumlingLevelup", new Script.EumlingLevelupUI());
             this.uis.set("shop", new Script.ShopUI());
             this.uis.set("runEnd", new Script.RunEndUI());
             this.addFightListeners();
@@ -1741,6 +1746,7 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.CHOOSE_ENCOUNTER, this.switchUI);
             Script.EventBus.addEventListener(Script.EVENT.FIGHT_PREPARE, this.switchUI);
             Script.EventBus.addEventListener(Script.EVENT.REWARDS_OPEN, this.switchUI);
+            Script.EventBus.addEventListener(Script.EVENT.EUMLING_LEVELUP_CHOOSE, this.switchUI);
             Script.EventBus.addEventListener(Script.EVENT.SHOP_OPEN, this.switchUI);
             Script.EventBus.addEventListener(Script.EVENT.RUN_END, this.switchUI);
         }
@@ -2360,12 +2366,7 @@ var Script;
         async levelup() {
             Script.EventBus.dispatchEvent({ type: Script.EVENT.EUMLING_LEVELUP_CHOOSE, target: this });
             let event = await Script.EventBus.awaitSpecificEvent(Script.EVENT.EUMLING_LEVELUP_CHOSEN);
-            const chosenSpecial = event.detail.chosen;
-            // let specialisationOptions: string[] = this.#types.length === 1 ? ["A", "I"] : ["C", "E"];
-            // let chosenSpecial: string;
-            // while (!specialisationOptions.includes(chosenSpecial)) {
-            //     chosenSpecial = prompt(`Your ${this.type} leveld up. Which Specialisation do you want to add? ${specialisationOptions.join(" or ")}`).trim().toUpperCase();
-            // }
+            const chosenSpecial = event.detail.type;
             this.addType(chosenSpecial);
             this.#xp = 0;
             Script.EventBus.dispatchEvent({ type: Script.EVENT.EUMLING_LEVELUP, target: this });
@@ -3428,13 +3429,61 @@ var Script;
 /// <reference path="UILayer.ts" />
 (function (Script) {
     class EumlingLevelupUI extends Script.UILayer {
+        static { this.orientationInfo = new Map([
+            ["R", "Realistisch"],
+            ["I", "Investigativ / Forschend"],
+            ["A", "Artistisch / Künstlerisch"],
+            ["S", "Sozial"],
+            ["E", "Enterprising / Unternehmerisch"],
+            ["C", "Conventional / Traditionell"],
+        ]); }
         constructor() {
             super();
-            this.element = document.getElementById("MainMenu");
+            this.selectOption = (_ev) => {
+                const element = _ev.currentTarget;
+                this.selectedOption = element.dataset.option;
+                this.confirmButton.disabled = false;
+                for (let element of document.querySelectorAll(".LevelupOption")) {
+                    element.classList.remove("selected");
+                }
+                element.classList.add("selected");
+            };
+            this.confirm = () => {
+                if (!this.selectedOption)
+                    return;
+                Script.Provider.GUI.removeTopmostUI();
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.EUMLING_LEVELUP_CHOSEN, detail: { type: this.selectedOption } });
+            };
+            this.element = document.getElementById("EumlingLevelup");
+            this.eumlingElement = document.getElementById("EumlingLevelupEumling");
+            this.optionsElement = document.getElementById("EumlingLevelupOptions");
+            this.infoElement = document.getElementById("EumlingLevelupInfo");
+            this.confirmButton = document.getElementById("EumlingLevelupConfirm");
+        }
+        onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            this.confirmButton.disabled = true;
+            this.eumling = _ev.target;
+            let specialisationOptions = this.eumling.types.length === 1 ? ["A", "I"] : ["C", "E"];
+            this.eumlingElement.replaceChildren(Script.EumlingUIElement.getUIElement(this.eumling).element);
+            const optionElements = [];
+            for (let option of specialisationOptions) {
+                const elem = Script.createElementAdvanced("div", {
+                    classes: ["LevelupOption"],
+                    innerHTML: `<span>+ ${option}</span>
+                    <span>${EumlingLevelupUI.orientationInfo.get(option)}</span>`,
+                    attributes: [["data-option", option]],
+                });
+                optionElements.push(elem);
+                elem.addEventListener("click", this.selectOption);
+            }
+            this.optionsElement.replaceChildren(...optionElements);
         }
         addEventListeners() {
+            this.confirmButton.addEventListener("click", this.confirm);
         }
         removeEventListeners() {
+            this.confirmButton.removeEventListener("click", this.confirm);
         }
     }
     Script.EumlingLevelupUI = EumlingLevelupUI;
@@ -3603,6 +3652,18 @@ var Script;
             document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
             this.updateXPText();
             this.continueButton.disabled = true;
+        }
+        onShow() {
+            super.onShow();
+            this.addEventListeners();
+            for (let element of this.eumlings.keys()) {
+                element.addEventListener("click", this.clickOnEumling);
+            }
+            document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
+        }
+        onHide() {
+            super.onHide();
+            this.removeEventListeners();
         }
         updateXPText() {
             document.getElementById("FightRewardXPAmount").innerText = this.xp === 0 ?

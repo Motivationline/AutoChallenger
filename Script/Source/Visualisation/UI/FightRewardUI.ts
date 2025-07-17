@@ -50,6 +50,18 @@ namespace Script {
             this.updateXPText();
             this.continueButton.disabled = true;
         }
+        onShow(): void {
+            super.onShow();
+            this.addEventListeners();
+            for(let element of this.eumlings.keys()) {
+                element.addEventListener("click", this.clickOnEumling);
+            }
+            document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
+        }
+        onHide(): void {
+            super.onHide();
+            this.removeEventListeners();
+        }
 
         clickOnEumling = (_ev: MouseEvent) => {
             if (this.xp <= 0) return;

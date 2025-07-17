@@ -839,7 +839,17 @@ declare namespace Script {
 }
 declare namespace Script {
     class EumlingLevelupUI extends UILayer {
+        eumling: Eumling;
+        eumlingElement: HTMLElement;
+        optionsElement: HTMLElement;
+        infoElement: HTMLElement;
+        confirmButton: HTMLButtonElement;
+        selectedOption: string;
+        static orientationInfo: Map<string, string>;
         constructor();
+        onAdd(_zindex: number, _ev?: FightEvent): void;
+        private selectOption;
+        private confirm;
         addEventListeners(): void;
         removeEventListeners(): void;
     }
@@ -873,6 +883,8 @@ declare namespace Script {
         eumlings: Map<HTMLElement, Eumling>;
         xp: number;
         onAdd(_zindex: number, _ev?: FightEvent): void;
+        onShow(): void;
+        onHide(): void;
         clickOnEumling: (_ev: MouseEvent) => void;
         private updateXPText;
         private finishRewards;

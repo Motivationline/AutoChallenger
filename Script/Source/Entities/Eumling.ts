@@ -63,14 +63,7 @@ namespace Script {
         async levelup() {
             EventBus.dispatchEvent({ type: EVENT.EUMLING_LEVELUP_CHOOSE, target: this });
             let event = await EventBus.awaitSpecificEvent(EVENT.EUMLING_LEVELUP_CHOSEN);
-            const chosenSpecial = event.detail.chosen;
-            // let specialisationOptions: string[] = this.#types.length === 1 ? ["A", "I"] : ["C", "E"];
-
-            // let chosenSpecial: string;
-            // while (!specialisationOptions.includes(chosenSpecial)) {
-            //     chosenSpecial = prompt(`Your ${this.type} leveld up. Which Specialisation do you want to add? ${specialisationOptions.join(" or ")}`).trim().toUpperCase();
-            // }
-
+            const chosenSpecial = event.detail.type;
             this.addType(chosenSpecial);
             this.#xp = 0;
             EventBus.dispatchEvent({ type: EVENT.EUMLING_LEVELUP, target: this });
