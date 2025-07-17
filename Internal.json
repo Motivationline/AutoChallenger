@@ -3463,6 +3463,29 @@
               "id": "sandSitter"
             }
           }
+        ],
+        "AnimationLink": [
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-04T10:20:56.778Z|42884",
+              "animType": "idle"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-04T10:20:56.777Z|14422",
+              "animType": "die"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-04T10:20:56.775Z|95217",
+              "animType": "attack"
+            }
+          }
         ]
       },
       "children": [
@@ -3554,6 +3577,124 @@
       },
       "children": [],
       "idResource": "Graph|2025-07-17T07:04:26.501Z|75170",
+      "type": "Graph"
+    }
+  },
+  "GraphGLTF|2025-07-17T13:12:00.879Z|67633": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {
+        "ComponentAnimation": [
+          {
+            "ƒ.ComponentAnimation": {
+              "Component": {
+                "active": true
+              },
+              "idAnimation": "AnimationGLTF|2025-07-17T13:12:00.897Z|30862",
+              "playmode": "loop",
+              "quantization": "continous",
+              "scale": 1,
+              "scaleWithGameTime": true,
+              "animateInEditor": true
+            }
+          }
+        ]
+      },
+      "idResource": "GraphGLTF|2025-07-17T13:12:00.879Z|67633",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\IdioticIcicle\\idioticIcicle.glb"
+    }
+  },
+  "AnimationGLTF|2025-07-17T13:12:00.879Z|41842": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-17T13:12:00.879Z|41842",
+      "name": "IdioticIcicle_Attack",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\IdioticIcicle\\idioticIcicle.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-17T13:12:00.886Z|71680": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-17T13:12:00.886Z|71680",
+      "name": "IdioticIcicle_die",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\IdioticIcicle\\idioticIcicle.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-17T13:12:00.892Z|43880": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-17T13:12:00.892Z|43880",
+      "name": "IdioticIcicle_hit",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\IdioticIcicle\\idioticIcicle.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-17T13:12:00.897Z|30862": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-17T13:12:00.897Z|30862",
+      "name": "IdioticIcicle_idle",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\IdioticIcicle\\idioticIcicle.glb",
+      "events": {}
+    }
+  },
+  "Graph|2025-07-17T13:12:11.670Z|82788": {
+    "ƒ.Graph": {
+      "name": "IdioticIcicle",
+      "active": true,
+      "components": {
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "boxingBush"
+            }
+          }
+        ],
+        "AnimationLink": [
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-17T13:12:00.897Z|30862",
+              "animType": "idle"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-17T13:12:00.879Z|41842",
+              "animType": "attack"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-17T13:12:00.892Z|43880",
+              "animType": "hurt"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-17T13:12:00.886Z|71680",
+              "animType": "die"
+            }
+          }
+        ]
+      },
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "GraphGLTF|2025-07-17T13:12:00.879Z|67633"
+          }
+        }
+      ],
+      "idResource": "Graph|2025-07-17T13:12:11.670Z|82788",
       "type": "Graph"
     }
   }

@@ -237,6 +237,44 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "IdioticIcicle",
+                "entries": [
+                  {
+                    "name": "Prefab",
+                    "entries": [
+                      {
+                        "idResource": "Graph|2025-07-17T13:12:11.670Z|82788"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Model",
+                    "entries": [
+                      {
+                        "idResource": "GraphGLTF|2025-07-17T13:12:00.879Z|67633"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Animations",
+                    "entries": [
+                      {
+                        "idResource": "AnimationGLTF|2025-07-17T13:12:00.879Z|41842"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-07-17T13:12:00.886Z|71680"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-07-17T13:12:00.892Z|43880"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-07-17T13:12:00.897Z|30862"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           },
