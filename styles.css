@@ -172,6 +172,16 @@ canvas.fullscreen {
   100% {scale: 1}
 }
 
+/* SHOP */
+.ShopOption {
+  display: inline-flex;
+  flex-direction: column;
+  cursor: pointer;
+  padding: 10px;
+  margin: 10px;
+  background-color: bisque;
+}
+
 /* MISC */
 
 .no-interact {

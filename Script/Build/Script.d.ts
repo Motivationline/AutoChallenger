@@ -658,6 +658,7 @@ declare namespace Script {
         constructor(_data: StoneData, _level?: number);
         set level(_lvl: number);
         get level(): number;
+        get data(): StoneData;
         get id(): string;
         addEventListeners(): void;
         removeEventListeners: () => void;
@@ -765,6 +766,7 @@ declare namespace Script {
         private giveRewards;
         end(_success?: boolean): Promise<void>;
         private handleGoldAbility;
+        private handleStoneAddition;
         addEventListeners(): void;
         removeEventListeners(): void;
     }
@@ -937,8 +939,17 @@ declare namespace Script {
 declare namespace Script {
     class ShopUI extends UILayer {
         closeButton: HTMLButtonElement;
+        stonesWrapper: HTMLElement;
+        stonesRefreshButton: HTMLButtonElement;
+        stoneUpgradeWrapper: HTMLElement;
+        eumlingHealWrapper: HTMLElement;
         constructor();
+        onAdd(_zindex: number, _ev?: FightEvent): void;
+        private setupStonesToBuy;
+        private setupStonesToUpgrade;
+        private initEumlingHealing;
         close: () => void;
+        refresh: () => void;
         addEventListeners(): void;
         removeEventListeners(): void;
     }

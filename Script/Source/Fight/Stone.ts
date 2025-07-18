@@ -9,8 +9,10 @@ namespace Script {
         #abilityLevels: AbilityData[];
         #id: string;
         #triggers: Set<EVENT> = new Set();
+        #data: StoneData;
 
         constructor(_data: StoneData, _level: number = 0) {
+            this.#data = _data;
             this.#abilityLevels = _data.abilityLevels;
             this.level = _level;
             this.#id = _data.id;
@@ -32,6 +34,10 @@ namespace Script {
 
         get level() {
             return this.#level;
+        }
+
+        get data() {
+            return this.#data;
         }
 
         get id() {

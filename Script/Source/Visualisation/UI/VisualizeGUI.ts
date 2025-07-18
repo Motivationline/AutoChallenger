@@ -59,8 +59,8 @@ namespace Script {
 
         private updateGoldCounter(_ev: FightEvent) {
             let amount = _ev.detail.amount;
-            const goldCounter: HTMLDivElement = document.querySelector(".GoldCounter");
-            goldCounter.innerText = `Gold: ${amount}`;
+            const goldCounter = document.querySelectorAll(".GoldCounter") as NodeListOf<HTMLElement>;
+            goldCounter.forEach(el => el.innerText = `Gold: ${amount}`);
         }
 
         addFightListeners() {

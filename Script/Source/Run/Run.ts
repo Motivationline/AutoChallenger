@@ -24,8 +24,8 @@ namespace Script {
         ]
         #shopChance: number[] =
             [
-                0,
-                0,
+                1,
+                1,
                 1,
                 0,
                 0.25,
@@ -60,7 +60,7 @@ namespace Script {
             await this.chooseStone();
 
             await EventBus.dispatchEvent({ type: EVENT.RUN_START });
-            
+
             for (this.progress = 0; this.progress < this.encountersUntilBoss; this.progress++) {
                 let shouldContinue = await this.runStep();
                 if (!shouldContinue) return await this.end(false);
@@ -68,7 +68,7 @@ namespace Script {
             if (this.progress === this.encountersUntilBoss) {
                 // bossfight here
             }
-            
+
             await this.end();
         }
 
@@ -79,9 +79,7 @@ namespace Script {
         }
         private async chooseStone() {
             EventBus.dispatchEvent({ type: EVENT.CHOOSE_STONE });
-            let event = await EventBus.awaitSpecificEvent(EVENT.CHOSEN_STONE);
-            this.stones.push(event.detail.stone);
-            event.detail.stone.addEventListeners();
+            await EventBus.awaitSpecificEvent(EVENT.CHOSEN_STONE);
         }
 
         //#endregion
@@ -178,9 +176,11 @@ namespace Script {
         //#endregion
 
         async end(_success: boolean = true) {
-            await EventBus.dispatchEvent({ type: EVENT.RUN_END, detail: {success: _success}});
+            await EventBus.dispatchEvent({ type: EVENT.RUN_END, detail: { success: _success } });
             this.removeEventListeners();
         }
+
+        //#region Eventlisteners
 
         private handleGoldAbility = async (_ev: FightEvent) => {
             if (!_ev.trigger) return;
@@ -189,12 +189,22 @@ namespace Script {
             await this.changeGold(amount);
         }
 
+        private handleStoneAddition = (_ev: FightEvent<{ stone: Stone }>) => {
+            let stone = _ev.detail.stone;
+            if (!stone || !(stone instanceof Stone)) return;
+            this.stones.push(stone);
+            stone.addEventListeners();
+        }
+
         addEventListeners() {
             EventBus.addEventListener(EVENT.ENTITY_SPELL, this.handleGoldAbility)
+            EventBus.addEventListener(EVENT.CHOSEN_STONE, this.handleStoneAddition);
         }
 
         removeEventListeners() {
             EventBus.removeEventListener(EVENT.ENTITY_SPELL, this.handleGoldAbility);
         }
+
+        //#endregion
     }
 }

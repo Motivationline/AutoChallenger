@@ -2266,8 +2266,8 @@ var Script;
         }
         updateGoldCounter(_ev) {
             let amount = _ev.detail.amount;
-            const goldCounter = document.querySelector(".GoldCounter");
-            goldCounter.innerText = `Gold: ${amount}`;
+            const goldCounter = document.querySelectorAll(".GoldCounter");
+            goldCounter.forEach(el => el.innerText = `Gold: ${amount}`);
         }
         addFightListeners() {
             Script.EventBus.addEventListener(Script.EVENT.GOLD_CHANGE, this.updateGoldCounter);
@@ -2536,7 +2536,144 @@ var Script;
                         spell: { type: Script.SPELL_TYPE.SHIELD, level: 2 }
                     }
                 ]
-            }
+            },
+            {
+                id: "knowledgestone", //TODO - 1 / 2 additional exp points
+                abilityLevels: [
+                    {
+                        on: Script.EVENT.FIGHT_END,
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
+                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 }
+                    },
+                    {
+                        on: Script.EVENT.FIGHT_END,
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2 } },
+                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 }
+                    }
+                ]
+            },
+            {
+                id: "wonderstone", // should give 1 random eumling a random buff at fight start
+                abilityLevels: [
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
+                        spell: {
+                            type: Script.SPELL_TYPE.SHIELD, level: 1
+                        },
+                    },
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2 } },
+                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 }
+                    }
+                ]
+            },
+            {
+                id: "punchstone", // Should deal 1 damage to a random enemy on fight start.
+                abilityLevels: [
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1 } },
+                        attack: { baseDamage: 1 },
+                    },
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 2 } },
+                        attack: { baseDamage: 1 },
+                    }
+                ]
+            },
+            {
+                id: "warningstone", // Should give 1 random enemy weakness at fight start.
+                abilityLevels: [
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1 } },
+                        spell: { type: Script.SPELL_TYPE.WEAKNESS, level: 1 }
+                    },
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1, sortBy: Script.TARGET_SORT.STRONGEST } },
+                        spell: { type: Script.SPELL_TYPE.WEAKNESS, level: 1 }
+                    }
+                ]
+            },
+            {
+                id: "glitterstone", //TODO - should reward 1 / 2 gold at the end of combat
+                abilityLevels: [
+                    {
+                        on: Script.EVENT.FIGHT_END,
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
+                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 }
+                    },
+                    {
+                        on: Script.EVENT.FIGHT_END,
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
+                        spell: { type: Script.SPELL_TYPE.GOLD, level: 2 }
+                    }
+                ]
+            },
+            {
+                id: "pointystone", // Should give all Eumlinge in the last row thorns
+                abilityLevels: [
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
+                        spell: { type: Script.SPELL_TYPE.THORNS, level: 1 }
+                    },
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
+                        spell: { type: Script.SPELL_TYPE.THORNS, level: 2 }
+                    }
+                ]
+            },
+            {
+                id: "luckystone", // TODO - doubles the chance for rare stones
+                abilityLevels: [
+                    {
+                        on: Script.EVENT.CHOOSE_STONE,
+                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
+                        spell: { type: Script.SPELL_TYPE.THORNS, level: 1 }
+                    },
+                    {
+                        on: Script.EVENT.CHOOSE_STONE,
+                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
+                        spell: { type: Script.SPELL_TYPE.THORNS, level: 2 }
+                    }
+                ]
+            },
+            {
+                id: "luckystone", // TODO - doubles the chance for rare stones
+                abilityLevels: [
+                    {
+                        on: Script.EVENT.CHOOSE_STONE,
+                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
+                        spell: { type: Script.SPELL_TYPE.THORNS, level: 1 }
+                    },
+                    {
+                        on: Script.EVENT.CHOOSE_STONE,
+                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
+                        spell: { type: Script.SPELL_TYPE.THORNS, level: 2 }
+                    }
+                ]
+            },
+            {
+                id: "steppingstone", // Should deal 1 damage to enemies that move (currently to everyone hehe)
+                abilityLevels: [
+                    {
+                        on: Script.EVENT.ENTITY_MOVE,
+                        target: "target",
+                        attack: { baseDamage: 1 }
+                    },
+                    {
+                        on: Script.EVENT.ENTITY_MOVE,
+                        target: "target",
+                        attack: { baseDamage: 2 }
+                    }
+                ]
+            },
         ];
     })(DataContent = Script.DataContent || (Script.DataContent = {}));
 })(Script || (Script = {}));
@@ -3026,6 +3163,7 @@ var Script;
         #abilityLevels;
         #id;
         #triggers;
+        #data;
         constructor(_data, _level = 0) {
             this.#triggers = new Set();
             this.removeEventListeners = () => {
@@ -3037,6 +3175,7 @@ var Script;
             this.abilityEventListener = async (_ev) => {
                 await this.runAbility(_ev);
             };
+            this.#data = _data;
             this.#abilityLevels = _data.abilityLevels;
             this.level = _level;
             this.#id = _data.id;
@@ -3056,6 +3195,9 @@ var Script;
         }
         get level() {
             return this.#level;
+        }
+        get data() {
+            return this.#data;
         }
         get id() {
             return this.#id;
@@ -3376,8 +3518,8 @@ var Script;
                 [0, 0, 1],
             ];
             this.#shopChance = [
-                0,
-                0,
+                1,
+                1,
                 1,
                 0,
                 0.25,
@@ -3387,6 +3529,7 @@ var Script;
                 1,
                 0,
             ];
+            //#region Eventlisteners
             this.handleGoldAbility = async (_ev) => {
                 if (!_ev.trigger)
                     return;
@@ -3394,6 +3537,13 @@ var Script;
                     return;
                 let amount = _ev.trigger.level ?? 1;
                 await this.changeGold(amount);
+            };
+            this.handleStoneAddition = (_ev) => {
+                let stone = _ev.detail.stone;
+                if (!stone || !(stone instanceof Script.Stone))
+                    return;
+                this.stones.push(stone);
+                stone.addEventListeners();
             };
             this.addEventListeners();
         }
@@ -3429,9 +3579,7 @@ var Script;
         }
         async chooseStone() {
             Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOOSE_STONE });
-            let event = await Script.EventBus.awaitSpecificEvent(Script.EVENT.CHOSEN_STONE);
-            this.stones.push(event.detail.stone);
-            event.detail.stone.addEventListeners();
+            await Script.EventBus.awaitSpecificEvent(Script.EVENT.CHOSEN_STONE);
         }
         //#endregion
         //#region Run
@@ -3516,6 +3664,7 @@ var Script;
         }
         addEventListeners() {
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL, this.handleGoldAbility);
+            Script.EventBus.addEventListener(Script.EVENT.CHOSEN_STONE, this.handleStoneAddition);
         }
         removeEventListeners() {
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_SPELL, this.handleGoldAbility);
@@ -4375,20 +4524,123 @@ var Script;
 var Script;
 /// <reference path="UILayer.ts" />
 (function (Script) {
+    const COST = {
+        HEAL_EUMLING: 1,
+        BUY_LVL1: 2,
+        BUY_LVL2: 3,
+        UPGRADE_STONE: 2,
+        REFRESH: 1,
+    };
     class ShopUI extends Script.UILayer {
         constructor() {
             super();
             this.close = () => {
                 Script.EventBus.dispatchEvent({ type: Script.EVENT.SHOP_CLOSE });
             };
+            this.refresh = () => {
+                if (Script.Run.currentRun.gold < COST.REFRESH)
+                    return;
+                Script.Run.currentRun.changeGold(-COST.REFRESH);
+                this.setupStonesToBuy();
+            };
             this.element = document.getElementById("Shop");
             this.closeButton = document.getElementById("ShopClose");
+            this.stonesWrapper = document.getElementById("ShopStones");
+            this.stonesRefreshButton = document.getElementById("ShopStonesRefresh");
+            this.stoneUpgradeWrapper = document.getElementById("ShopStoneUpgrades");
+            this.eumlingHealWrapper = document.getElementById("ShopEumlingHeal");
+        }
+        onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            this.setupStonesToBuy();
+            this.setupStonesToUpgrade();
+            this.initEumlingHealing();
+        }
+        setupStonesToBuy() {
+            const existingStones = Script.Run.currentRun.stones.map((stone) => stone.data);
+            const newStones = Script.chooseRandomElementsFromArray(Script.Provider.data.stones, 2, existingStones);
+            if (newStones.length === 0) {
+                this.stonesWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No more stones available." }));
+                return;
+            }
+            const newStoneElements = [];
+            for (let stoneData of newStones) {
+                let level = (Math.random() < 0.2) ? 1 : 0;
+                let cost = level == 0 ? COST.BUY_LVL1 : COST.BUY_LVL2;
+                let stone = new Script.Stone(stoneData, level);
+                let uiStoneElement = Script.StoneUIElement.getUIElement(stone);
+                let wrapper = Script.createElementAdvanced("div", {
+                    classes: ["BuyStone", "ShopOption"],
+                    attributes: [["data-level", level.toString()]],
+                    innerHTML: `<span>${cost} Gold</span>`,
+                });
+                wrapper.prepend(uiStoneElement.element);
+                newStoneElements.push(wrapper);
+                wrapper.addEventListener("click", () => {
+                    if (Script.Run.currentRun.gold < cost)
+                        return;
+                    Script.Run.currentRun.changeGold(-cost);
+                    Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_STONE, detail: { stone } });
+                    wrapper.remove();
+                });
+            }
+            this.stonesWrapper.replaceChildren(...newStoneElements);
+        }
+        setupStonesToUpgrade() {
+            const upgradeableStones = Script.chooseRandomElementsFromArray(Script.Run.currentRun.stones, Infinity, Script.Run.currentRun.stones.filter(stone => stone.level === 1));
+            if (upgradeableStones.length === 0) {
+                this.stoneUpgradeWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No more stones upgradeable." }));
+                return;
+            }
+            const upgradeStoneElements = [];
+            for (let stone of upgradeableStones) {
+                const element = Script.createElementAdvanced("div", {
+                    innerHTML: `<span>Levelup: ${COST.UPGRADE_STONE} Gold</span>`,
+                    classes: ["ShopOption"],
+                });
+                element.prepend(Script.StoneUIElement.getUIElement(stone).element);
+                upgradeStoneElements.push(element);
+                element.addEventListener("click", () => {
+                    if (Script.Run.currentRun.gold < COST.UPGRADE_STONE)
+                        return;
+                    stone.level++;
+                    Script.Run.currentRun.changeGold(-COST.UPGRADE_STONE);
+                    element.remove();
+                });
+            }
+            this.stoneUpgradeWrapper.replaceChildren(...upgradeStoneElements);
+        }
+        initEumlingHealing() {
+            const healableEumlings = Script.Run.currentRun.eumlings.filter(eumling => eumling.currentHealth < eumling.health);
+            if (healableEumlings.length === 0) {
+                this.eumlingHealWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No Eumlings need healing." }));
+                return;
+            }
+            const elements = [];
+            for (let eumling of healableEumlings) {
+                const wrapper = Script.createElementAdvanced("div", {
+                    classes: ["ShopOption"],
+                    innerHTML: `<span>+♥️: ${COST.HEAL_EUMLING} Gold</span>`,
+                });
+                wrapper.prepend(Script.EumlingUIElement.getUIElement(eumling).element);
+                wrapper.addEventListener("click", () => {
+                    if (Script.Run.currentRun.gold < COST.HEAL_EUMLING)
+                        return;
+                    Script.Run.currentRun.changeGold(-COST.HEAL_EUMLING);
+                    eumling.affect({ type: Script.SPELL_TYPE.HEAL, level: 1, target: undefined });
+                    if (eumling.currentHealth >= eumling.health)
+                        wrapper.remove();
+                });
+            }
+            this.eumlingHealWrapper.replaceChildren(...elements);
         }
         addEventListeners() {
             this.closeButton.addEventListener("click", this.close);
+            this.stonesRefreshButton.addEventListener("click", this.refresh);
         }
         removeEventListeners() {
             this.closeButton.removeEventListener("click", this.close);
+            this.stonesRefreshButton.removeEventListener("click", this.refresh);
         }
     }
     Script.ShopUI = ShopUI;

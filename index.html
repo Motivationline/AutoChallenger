@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
+
 <head>
     <title>AutoChallenger</title>
     <meta charset="utf-8" />
@@ -7,7 +8,8 @@
     <link rel="stylesheet" href="styles.css" />
 
     <!--Editor settings of this project-->
-    <meta type="settings" autoview="Graph|2025-05-23T08:52:13.386Z|08098" project="{'name':'AutoChallenger','graphAutoView':'Graph|2025-05-23T08:52:13.386Z|08098'}" />
+    <meta type="settings" autoview="Graph|2025-05-23T08:52:13.386Z|08098"
+        project="{'name':'AutoChallenger','graphAutoView':'Graph|2025-05-23T08:52:13.386Z|08098'}" />
 
     <!--Activate the following line to include the FUDGE-version of Oimo-Physics. You may want to download a local copy to work offline and be independent from future changes!-->
     <!--<script type="text/javascript" src="https://hs-furtwangen.github.io/FUDGE/Distribution/OimoPhysics.js"></script>-->
@@ -75,7 +77,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="FightPrep" class="UI hidden no-interact">
         <h2>Fight Preparation</h2>
         <div id="FightPrepStones" class="interact">
@@ -97,10 +99,10 @@
         </div>
         <div class="GoldCounter">Gold: 0</div>
         <div class="RoundCounter">
-</div>
+        </div>
         <div id="FightPhaseOverlay" class="UI blur no-interact">
             <div id="FightPhaseOverlayText" class="RoundCounter">
-</div>
+            </div>
         </div>
     </div>
     <div id="FightReward" class="UI hidden blur">
@@ -109,9 +111,9 @@
         </div>
         <div id="FightRewardXP">
             <div id="FightRewardXPAmount">
-</div>
+            </div>
             <div id="FightRewardXPEumlings">
-</div>
+            </div>
         </div>
         <div id="FightRewardContinueWrapper">
             <button id="FightRewardConvert">Convert remaining XP to Gold</button>
@@ -139,11 +141,16 @@
 
     <div id="Shop" class="UI blur hidden">
         <h2>Shop</h2>
+        <div class="GoldCounter">Gold: 0</div>
         <!--Shop UI-->
+        <h3>Buy Stones</h3>
         <div id="ShopStones">
         </div>
+        <button id="ShopStonesRefresh">Refresh (1 Gold)</button>
+        <h3>Upgrade Stones</h3>
         <div id="ShopStoneUpgrades">
         </div>
+        <h3>Heal Eumlings</h3>
         <div id="ShopEumlingHeal">
         </div>
         <div id="ShopCloseWrapper">
@@ -156,4 +163,5 @@
     <canvas class="fullscreen" id="GameCanvas">
     </canvas>
 </body>
+
 </html>
