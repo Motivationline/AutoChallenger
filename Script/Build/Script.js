@@ -3518,8 +3518,8 @@ var Script;
                 [0, 0, 1],
             ];
             this.#shopChance = [
-                1,
-                1,
+                0,
+                0,
                 1,
                 0,
                 0.25,
@@ -3780,9 +3780,19 @@ var Script;
 (function (Script) {
     var ƒ = FudgeCore;
     class VisualizeEntity extends ƒ.Node /*implements VisualizeEntity*/ {
-        //private grid: VisualizeGridNull;
         constructor(_entity) {
             super("entity");
+            this.updateTmpText = () => {
+                if (!this.tmpText)
+                    return;
+                console.log("updateTmpText", this.entity);
+                let effectText = "";
+                this.entity.activeEffects.forEach((value, type) => { if (value > 0)
+                    effectText += `${type}: ${value}\n`; });
+                effectText += `${this.entity.currentHealth} / ${this.entity.health} ♥️`;
+                console.log(effectText);
+                this.tmpText.texture.text = effectText;
+            };
             this.eventListener = async (_ev) => {
                 await this.handleEvent(_ev);
             };
@@ -3868,6 +3878,13 @@ var Script;
                 console.warn(`Model with ID: ${_id} not found, using placeholder instead 👉👈`);
             }
             this.addChild(model);
+            // TODO: this is a temp vis for all the info, we need to remove this
+            let entityInfoGraph = Script.DataLink.linkedNodes.get("entityInfo");
+            let textNode = new ƒ.Node("text");
+            await textNode.deserialize(entityInfoGraph.serialize());
+            this.addChild(textNode);
+            this.tmpText = textNode.getComponent(ƒ.ComponentText);
+            this.updateTmpText();
         }
         //retuns a placeholder if needed
         givePlaceholderPls() {
@@ -3909,6 +3926,10 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_AFFECTED, this.eventListener);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_DIES, this.eventListener);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_HURT, this.updateTmpText);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_AFFECTED, this.updateTmpText);
+            Script.EventBus.addEventListener(Script.EVENT.ROUND_END, this.updateTmpText);
+            Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateTmpText);
         }
         removeEventListeners() {
             Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.eventListener);

@@ -3753,5 +3753,85 @@
       "idResource": "Graph|2025-07-18T09:09:19.357Z|40707",
       "type": "Graph"
     }
+  },
+  "Graph|2025-07-18T12:35:08.468Z|05509": {
+    "ƒ.Graph": {
+      "name": "entityInfo",
+      "active": true,
+      "components": {
+        "ComponentMesh": [
+          {
+            "ƒ.ComponentMesh": {
+              "idMesh": "MeshQuad|2025-07-03T06:11:04.933Z|59310",
+              "pivot": {
+                "translation": "[0, 0, 0]",
+                "rotation": "[0, 0, 0]",
+                "scaling": "[1, 1, 1]"
+              },
+              "Component": {
+                "active": true
+              }
+            }
+          }
+        ],
+        "ComponentMaterial": [
+          {
+            "ƒ.ComponentMaterial": {
+              "sortForAlpha": false,
+              "clrPrimary": "[1, 1, 1, 1]",
+              "clrSecondary": "[1, 1, 1, 1]",
+              "pivot": {
+                "translation": "[0, 0]",
+                "rotation": 0,
+                "scaling": "[1, 1]"
+              },
+              "Component": {
+                "active": true
+              },
+              "idMaterial": "Material|2025-07-03T06:11:17.977Z|13805"
+            }
+          }
+        ],
+        "ComponentText": [
+          {
+            "ƒ.ComponentText": {
+              "active": true,
+              "texture": {
+                "mipmap": 0,
+                "wrap": 0,
+                "text": "Text",
+                "font": "16px monospace"
+              },
+              "fixedSize": true
+            }
+          }
+        ],
+        "ComponentTransform": [
+          {
+            "ƒ.ComponentTransform": {
+              "local": {
+                "translation": "[0, 1.2, 0]",
+                "rotation": "[-90, 0, 0]",
+                "scaling": "[1, 1, 1]"
+              },
+              "Component": {
+                "active": true
+              }
+            }
+          }
+        ],
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "entityInfo"
+            }
+          }
+        ]
+      },
+      "children": [],
+      "idResource": "Graph|2025-07-18T12:35:08.468Z|05509",
+      "type": "Graph"
+    }
   }
 }

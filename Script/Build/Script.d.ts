@@ -814,6 +814,7 @@ declare namespace Script {
         private entity;
         private cmpAnimation;
         private defaultAnimation;
+        private tmpText;
         constructor(_entity: IEntity);
         getAffected(_ev: FightEvent): Promise<void>;
         die(_ev: FightEvent): Promise<void>;
@@ -821,6 +822,7 @@ declare namespace Script {
         givePlaceholderPls(): ƒ.Node;
         private playAnimationIfPossible;
         private showFallbackText;
+        private updateTmpText;
         getEntity(): Readonly<IEntity>;
         addEventListeners(): void;
         removeEventListeners(): void;

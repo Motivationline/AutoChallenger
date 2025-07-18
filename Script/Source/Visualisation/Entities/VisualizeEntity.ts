@@ -19,6 +19,8 @@ namespace Script {
         private cmpAnimation: ƒ.ComponentAnimation;
         private defaultAnimation: ƒ.Animation;
         //private grid: VisualizeGridNull;
+        // TODO: remove this again when it's not needed anymore.
+        private tmpText: ƒ.ComponentText;
 
         constructor(_entity: IEntity) {
             super("entity");
@@ -114,6 +116,14 @@ namespace Script {
                 console.warn(`Model with ID: ${_id} not found, using placeholder instead 👉👈`);
             }
             this.addChild(model);
+
+            // TODO: this is a temp vis for all the info, we need to remove this
+            let entityInfoGraph = DataLink.linkedNodes.get("entityInfo");
+            let textNode: ƒ.Node = new ƒ.Node("text");
+            await textNode.deserialize(entityInfoGraph.serialize());
+            this.addChild(textNode);
+            this.tmpText = textNode.getComponent(ƒ.ComponentText);
+            this.updateTmpText();
         }
 
         //retuns a placeholder if needed
@@ -145,6 +155,16 @@ namespace Script {
             if (node) this.removeChild(node);
         }
 
+        private updateTmpText = () => {
+            if (!this.tmpText) return;
+            console.log("updateTmpText", this.entity);
+            let effectText = "";
+            (<Entity>this.entity).activeEffects.forEach((value, type) => { if(value > 0) effectText += `${type}: ${value}\n`});
+            effectText += `${this.entity.currentHealth} / ${this.entity.health} ♥️`;
+            console.log(effectText);
+            this.tmpText.texture.text = effectText;
+        }
+
         getEntity(): Readonly<IEntity> {
             return this.entity;
         }
@@ -156,6 +176,11 @@ namespace Script {
             EventBus.addEventListener(EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
             EventBus.addEventListener(EVENT.ENTITY_AFFECTED, this.eventListener);
             EventBus.addEventListener(EVENT.ENTITY_DIES, this.eventListener);
+
+            EventBus.addEventListener(EVENT.ENTITY_HURT, this.updateTmpText);
+            EventBus.addEventListener(EVENT.ENTITY_AFFECTED, this.updateTmpText);
+            EventBus.addEventListener(EVENT.ROUND_END, this.updateTmpText);
+            EventBus.addEventListener(EVENT.ROUND_START, this.updateTmpText);
         }
 
         removeEventListeners() {
