@@ -275,6 +275,31 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "WorriedWall",
+                "entries": [
+                  {
+                    "name": "Prefab",
+                    "entries": [
+                      {
+                        "idResource": "Graph|2025-07-18T09:09:19.357Z|40707"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Model",
+                    "entries": [
+                      {
+                        "idResource": "GraphGLTF|2025-07-18T09:09:16.211Z|16371"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Animation",
+                    "entries": []
+                  }
+                ]
               }
             ]
           },

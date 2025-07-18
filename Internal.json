@@ -112,7 +112,7 @@
                                 "direction": "diagonal",
                                 "near": 1,
                                 "far": 2000,
-                                "aspect": 1.1933701657458564,
+                                "aspect": 1.3560145808019441,
                                 "pivot": {
                                   "translation": "[0, 0, 0]",
                                   "rotation": "[0, 0, 0]",
@@ -1417,7 +1417,7 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[-1.1462314128875732, 0.52, -1.400890827178955]",
+                                  "translation": "[-1.0002314128875738, 0.52, -1.3998908271789552]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
@@ -1487,7 +1487,7 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[-1.128272533416748, 0.52, -2.50063419342041]",
+                                  "translation": "[-1.0002725334167488, 0.52, -2.50063419342041]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
@@ -1557,7 +1557,7 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[-1.1160547733306885, 0.52, -3.585395574569702]",
+                                  "translation": "[-1, 0.52, -3.585395574569702]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
@@ -1837,7 +1837,7 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[1.004439115524292, 0.52, -1.3991401195526123]",
+                                  "translation": "[1.1999999999999997, 0.52, -1.3991401195526123]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
@@ -1907,7 +1907,7 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[1.0665453672409058, 0.52, -2.504605531692505]",
+                                  "translation": "[1.2, 0.52, -2.504605531692505]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
@@ -1977,7 +1977,7 @@
                             {
                               "ƒ.ComponentTransform": {
                                 "local": {
-                                  "translation": "[1.0997563600540161, 0.52, -3.59702730178833]",
+                                  "translation": "[1.1997563600540162, 0.52, -3.59702730178833]",
                                   "rotation": "[0, 0, 0]",
                                   "scaling": "[1, 1, 1]"
                                 },
@@ -3716,6 +3716,42 @@
       "idResource": "GraphGLTF|2025-07-17T13:55:45.125Z|60187",
       "type": "GraphGLTF",
       "url": "Assets\\GLTFs\\Stones\\Shieldstone.glb"
+    }
+  },
+  "GraphGLTF|2025-07-18T09:09:16.211Z|16371": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {},
+      "idResource": "GraphGLTF|2025-07-18T09:09:16.211Z|16371",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\WorriedWall\\WorriedWall.glb"
+    }
+  },
+  "Graph|2025-07-18T09:09:19.357Z|40707": {
+    "ƒ.Graph": {
+      "name": "WorriedWall",
+      "active": true,
+      "components": {
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "worriedWall"
+            }
+          }
+        ]
+      },
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "GraphGLTF|2025-07-18T09:09:16.211Z|16371"
+          }
+        }
+      ],
+      "idResource": "Graph|2025-07-18T09:09:19.357Z|40707",
+      "type": "Graph"
     }
   }
 }
