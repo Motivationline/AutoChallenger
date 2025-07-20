@@ -22,17 +22,43 @@ namespace Script {
         }
     }
 
-    function move(_fight: Fight) {
-        //create a new Grid, calls entity[].move(), add them to the grid
-        let newGrid = new Grid<Entity>();
+    // function move(_fight: Fight) {
+    //     //create a new Grid, calls entity[].move(), add them to the grid
+    //     let newGrid = new Grid<Entity>();
 
-        //move the entities in the grid
-        _fight.arena.away.forEachElement((entity, pos) => {
-            entity.move()
-            newGrid.set(pos, new Entity(entity));
+    //     //move the entities in the grid
+    //     _fight.arena.away.forEachElement((entity, pos) => {
+    //         entity.move()
+    //         newGrid.set(pos, new Entity(entity));
+    //     });
+
+    //     //replace old Grid
+    //     _fight.arena.away = newGrid;
+    // }
+    function move(_grid: Grid<Entity>) {
+        let grid: Grid<Entity> = _grid;
+        let maxAlternatives: number = 0;
+        let movedEntites: number = 0;
+        grid.forEachElement((el, pos) =>{
+            el.moved = false;   //TODO: maybe add a moved boolean to entity class
         });
-
-        //replace old Grid
-        _fight.arena.away = newGrid;
+        //loop untill all alternatives have been tried and every entity moved
+        while (maxAlternatives <= 8 && movedEntites < grid.occupiedSpots){ //TODO: check if && is correct
+            let movedThisTurn = false;
+            grid.forEachElement((el)=>{
+                //check if the Entity hasn't moved yet
+                if(el.moved == false){
+                    //try to move
+                    let res = el.tryToMove(grid, maxAlternatives);
+                    if(res){
+                        movedThisTurn = true;
+                        movedEntites ++;
+                    }
+                }
+            });
+            if(movedThisTurn == false){
+                maxAlternatives ++;
+            }
+        }
     }
 }

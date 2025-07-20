@@ -20,6 +20,8 @@ namespace Script {
         /** If it's in this list, this kind of spell is ignored by the entity.*/
         resistances?: SPELL_TYPE[],
         abilities?: AbilityData[],
+        moved: boolean,// TODO: passt das so?
+        currentDirection: Position;
     }
 
     export interface IEntity extends EntityData {
@@ -51,6 +53,8 @@ namespace Script {
         resistancesSet? = new Set<SPELL_TYPE>();
         startDirection?: number;
         activeEffects = new Map<SPELL_TYPE, number>();
+        moved: boolean;
+        currentDirection: Position;
 
         #arena: Arena;
         #triggers: Set<EVENT> = new Set();
@@ -209,34 +213,67 @@ namespace Script {
         }
 
         async move(): Promise<void> {
-            let move: MoveData = {
-                rotateBy: Math.floor(Math.random() * 8),
-                //direction: DIRECTION_RELATIVE,
-                distance: 1,
-                /** If this unit is blocked from moving in the desired direction, what should it do? */
-                blocked: {
-                    /** how many increments of 45° should it rotate _(clockwise)_ to try again? */
-                    rotateBy: 1,
-                    /** How many attempts should it make to rotate and move again? default: 1, max 8 */
-                    attempts: 8,
-                }
-            };
+            //this.moves?; //move data of the entity
 
-            //let newGrid: Grid<Entity>;
-
-            let occupiedSpots: Position[];
+            //let occupiedSpots: Position[];
             //newGrid.forEachElement((el) => (occupiedSpots.push(el.position)));//get the positions from entities in the Grid
 
-            let newPos: Position = this.moveMePls(move, this.position, occupiedSpots);
-            this.position = newPos;
+            //let newPos: Position = this.moveMePls(move, this.position, occupiedSpots);
+            //this.position = newPos;
 
         }
+
+        tryToMove(_grid: Grid<Entity>, maxAlternatives: number): boolean {
+            let grid: Grid<Entity> = _grid;
+            //check if the Entity has move data
+            if (this.moves) {
+                for (let i = 0; i <= maxAlternatives && i <= this.moves.blocked.attempts; i++) {//TODO: why this error? 😭
+                    let rotateBy: number = this.moves.rotateBy + i * this.moves.blocked.attempts;
+                    let nextTransform: Position[] = this.nextPositionBasedOnThisRotation(rotateBy);
+                    let nextPosition: Position = nextTransform[0];
+                    let nextRotation: Position = nextTransform[1];
+                    //check if the position is occupied or out of bounds
+                    if (grid.get(nextPosition) || Grid.outOfBounds(nextPosition)) {
+                        return false
+                    } else if (grid.get(nextPosition) == undefined) { //spot is free
+                        grid.set(nextPosition, this);
+                        this.position = nextPosition;
+                        this.currentDirection = nextRotation;
+                        //dispatchEvent(EVENT.ENTITY_MOVED);
+                        this.moved = true;
+                        return true;
+                    }
+                }
+            } else {// if the entity has no move data we just pretend it already moved
+                this.moved = true;
+                return true;
+            }
+        }
+
+        nextPositionBasedOnThisRotation(rotateBy: number): Position[] {
+            // curentDirection + nextRotation;
+            let directions: Position[] = [
+                [1, 0],    // East
+                [1, 1],    // North-East
+                [0, 1],    // North
+                [-1, 1],   // North-West
+                [-1, 0],   // West
+                [-1, -1],  // South-West
+                [0, -1],   // South
+                [1, -1]    // South-East
+            ];
+            let i: number = directions.findIndex(this.currentDirection);//TODO: Fix This
+            let selector: number = (i + rotateBy) % 8;
+            let pos: Position = [this.position[0] + directions[selector][0], this.position[1] + directions[selector][1]]
+            return [pos, directions[selector]];
+        }
+
         /* trys to move in a random direction, if it fails it goes through all neighboring spots and takes the first one thats free.
         If all spots are occupied it stays at the same spot*/
         moveMePls(_move: MoveData, position: Position, _occupiedSpots: Position[]): Position {
 
             let trymove: Position = this.makeAMove(_move, position, _occupiedSpots)
-            if(trymove == null){
+            if (trymove == null) {
                 this.tryAllMoves(_move, _occupiedSpots)
             }
             return trymove;
@@ -454,13 +491,13 @@ namespace Script {
             //try all moves
             for (let _try: number; _try = _move.blocked.attempts; _try++) {
                 let newPos: Position = this.makeAMove(_move, this.position, _occupiedSpots);
-                if(newPos != null){
+                if (newPos != null) {
                     this.position = newPos;
                 }
             }
-            if(prevPos == this.position){
+            if (prevPos == this.position) {
                 //no free spots avalable
-                
+
             }
         }
 
