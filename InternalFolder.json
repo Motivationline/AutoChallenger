@@ -41,6 +41,12 @@
                       },
                       {
                         "idResource": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771"
                       }
                     ]
                   },
@@ -121,12 +127,19 @@
                             "idResource": "Material|2025-06-26T17:27:15.461Z|18536"
                           }
                         ]
+                      },
+                      {
+                        "idResource": "GraphGLTF|2025-07-21T11:34:44.825Z|26414"
                       }
                     ]
                   },
                   {
                     "name": "Animations",
-                    "entries": []
+                    "entries": [
+                      {
+                        "idResource": "AnimationGLTF|2025-07-21T11:34:44.825Z|90377"
+                      }
+                    ]
                   }
                 ]
               },
