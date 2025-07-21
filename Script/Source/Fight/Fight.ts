@@ -68,7 +68,7 @@ namespace Script {
                 await EventBus.dispatchEvent({ type: EVENT.ROUND_START, detail: { round: r } });
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
-                await EventBus.dispatchEvent({ type: EVENT.ROUND_END, detail: { round: r } });
+                await EventBus.dispatchEvent({ type: EVENT.ROUND_END, detail: { round: r }});
                 await this.visualizer.roundEnd();
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {

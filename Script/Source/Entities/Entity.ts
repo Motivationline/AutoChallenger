@@ -226,9 +226,11 @@ namespace Script {
         tryToMove(_grid: Grid<Entity>, maxAlternatives: number): boolean {
             let grid: Grid<Entity> = _grid;
             //check if the Entity has move data
+            let moveData: MoveData;
+            moveData = this.select(this.moves, true)[0];//TODO: funktioniert das????
             if (this.moves) {
-                for (let i = 0; i <= maxAlternatives && i <= this.moves.blocked.attempts; i++) {//TODO: why this error? 😭
-                    let rotateBy: number = this.moves.rotateBy + i * this.moves.blocked.attempts;
+                for (let i = 0; i <= maxAlternatives && i <= moveData.blocked.attempts; i++) {
+                    let rotateBy: number = moveData.rotateBy + i * moveData.blocked.attempts;
                     let nextTransform: Position[] = this.nextPositionBasedOnThisRotation(rotateBy);
                     let nextPosition: Position = nextTransform[0];
                     let nextRotation: Position = nextTransform[1];
@@ -262,7 +264,7 @@ namespace Script {
                 [0, -1],   // South
                 [1, -1]    // South-East
             ];
-            let i: number = directions.findIndex(this.currentDirection);//TODO: Fix This
+            let i: number = directions.findIndex(dir => dir[0] === this.currentDirection[0] && dir[1] === this.currentDirection[1]);
             let selector: number = (i + rotateBy) % 8;
             let pos: Position = [this.position[0] + directions[selector][0], this.position[1] + directions[selector][1]]
             return [pos, directions[selector]];

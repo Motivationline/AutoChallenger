@@ -35,29 +35,35 @@ namespace Script {
     //     //replace old Grid
     //     _fight.arena.away = newGrid;
     // }
+
+    EventBus.addEventListener(EVENT.ROUND_START, eventListener);
+    function eventListener(_ev: FightEvent){
+        //TODO: call move with correct Grid get the grid somehow
+    }
+
     function move(_grid: Grid<Entity>) {
         let grid: Grid<Entity> = _grid;
         let maxAlternatives: number = 0;
         let movedEntites: number = 0;
-        grid.forEachElement((el, pos) =>{
+        grid.forEachElement((el, pos) => {
             el.moved = false;   //TODO: maybe add a moved boolean to entity class
         });
         //loop untill all alternatives have been tried and every entity moved
-        while (maxAlternatives <= 8 && movedEntites < grid.occupiedSpots){ //TODO: check if && is correct
+        while (maxAlternatives <= 8 && movedEntites < grid.occupiedSpots) { //TODO: check if && is correct
             let movedThisTurn = false;
-            grid.forEachElement((el)=>{
+            grid.forEachElement((el) => {
                 //check if the Entity hasn't moved yet
-                if(el.moved == false){
+                if (el.moved == false) {
                     //try to move
                     let res = el.tryToMove(grid, maxAlternatives);
-                    if(res){
+                    if (res) {
                         movedThisTurn = true;
-                        movedEntites ++;
+                        movedEntites++;
                     }
                 }
             });
-            if(movedThisTurn == false){
-                maxAlternatives ++;
+            if (movedThisTurn == false) {
+                maxAlternatives++;
             }
         }
     }
