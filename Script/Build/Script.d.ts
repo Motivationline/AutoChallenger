@@ -66,7 +66,6 @@ declare namespace Script {
          * **rotation occurs before movement** and is entirely mechanical, not visual.
          */
         rotateBy?: number;
-        direction: DIRECTION_RELATIVE;
         distance: number;
         /** If this unit is blocked from moving in the desired direction, what should it do? */
         blocked?: {
@@ -76,9 +75,7 @@ declare namespace Script {
             attempts?: number;
         };
     }
-    /**Move the Entity based of the Grid Data then map the position to the empty nodes in the Graph with a mapping function
-     * this could also be done in the Visualizer with a function like mapPositionToNode(_pos: Position)
-    */
+    function move(_grid: Grid<Entity>): void;
 }
 declare namespace Script {
     export enum SELECTION_ORDER {
@@ -486,12 +483,14 @@ declare namespace Script {
         /** If it's in this list, this kind of spell is ignored by the entity.*/
         resistances?: SPELL_TYPE[];
         abilities?: AbilityData[];
+        moved: boolean;
+        currentDirection: Position;
     }
     export interface IEntity extends EntityData {
         currentHealth: number;
         position: Position;
         untargetable: boolean;
-        move(_friendly: Grid<IEntity>): Promise<void>;
+        move(): Promise<void>;
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
         damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
@@ -515,6 +514,8 @@ declare namespace Script {
         resistancesSet?: Set<SPELL_TYPE>;
         startDirection?: number;
         activeEffects: Map<SPELL_TYPE, number>;
+        moved: boolean;
+        currentDirection: Position;
         constructor(_entity: EntityData, _pos?: Position);
         get untargetable(): boolean;
         get stunned(): boolean;
@@ -523,6 +524,12 @@ declare namespace Script {
         affect(_spell: SpellData, _cause?: IEntity): Promise<number>;
         setEffectLevel(_spell: SPELL_TYPE, value: number): Promise<void>;
         move(): Promise<void>;
+        tryToMove(_grid: Grid<Entity>, maxAlternatives: number): boolean;
+        nextPositionBasedOnThisRotation(rotateBy: number): Position[];
+        moveMePls(_move: MoveData, position: Position, _occupiedSpots: Position[]): Position;
+        makeAMove(_move: MoveData, position: Position, _occupiedSpots: Position[]): Position;
+        checkPosOccupied(_posX: number, _posY: number, _occupiedSpots: Position[]): boolean;
+        tryAllMoves(_move: MoveData, _occupiedSpots: Position[]): void;
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells?: SpellData[], _targetsOverride?: IEntity[]): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks?: AttackData[], _targetsOverride?: IEntity[]): Promise<void>;
         getOwnDamage(): number;

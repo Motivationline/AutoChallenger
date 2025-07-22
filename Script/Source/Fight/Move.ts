@@ -41,7 +41,7 @@ namespace Script {
         //TODO: call move with correct Grid get the grid somehow
     }
 
-    function move(_grid: Grid<Entity>) {
+    export function move(_grid: Grid<Entity>) {
         let grid: Grid<Entity> = _grid;
         let maxAlternatives: number = 0;
         let movedEntites: number = 0;
