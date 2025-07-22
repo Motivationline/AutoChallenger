@@ -20,8 +20,8 @@ namespace Script {
         /** If it's in this list, this kind of spell is ignored by the entity.*/
         resistances?: SPELL_TYPE[],
         abilities?: AbilityData[],
-        moved: boolean,// TODO: passt das so?
-        currentDirection: Position;
+        //moved: boolean,// TODO: passt das so?
+        //currentDirection: Position;
     }
 
     export interface IEntity extends EntityData {
@@ -64,6 +64,10 @@ namespace Script {
             this.health = _entity.health ?? 1;
             this.currentHealth = this.health;
             this.position = _pos;
+
+            //move stuff
+            this.moved = false;
+            this.currentDirection = [-1,0]; //facing towards player Side
 
             this.updateEntityData(_entity);
 

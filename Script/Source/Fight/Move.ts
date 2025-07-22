@@ -11,7 +11,7 @@ namespace Script {
          * **rotation occurs before movement** and is entirely mechanical, not visual.
          */
         rotateBy?: number,
-        //direction: DIRECTION_RELATIVE,
+        direction: DIRECTION_RELATIVE,
         distance: number,
         /** If this unit is blocked from moving in the desired direction, what should it do? */
         blocked?: {
