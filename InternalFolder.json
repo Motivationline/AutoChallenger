@@ -319,7 +319,17 @@
                   },
                   {
                     "name": "Animation",
-                    "entries": []
+                    "entries": [
+                      {
+                        "idResource": "AnimationGLTF|2025-07-23T10:19:21.933Z|45996"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-07-23T10:19:21.939Z|09911"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-07-23T10:19:21.941Z|95181"
+                      }
+                    ]
                   }
                 ]
               }

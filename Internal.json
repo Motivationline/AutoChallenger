@@ -2452,6 +2452,42 @@
       "type": "Graph"
     }
   },
+  "AnimationGLTF|2025-07-21T11:34:44.825Z|90377": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-21T11:34:44.825Z|90377",
+      "name": "FlameFlinger_idle",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\FlameFlinger\\FlameFlinger.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-22T10:40:59.716Z|36781": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-22T10:40:59.716Z|36781",
+      "name": "FlameFlinger_hurt",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\FlameFlinger\\FlameFlinger.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-22T10:40:59.707Z|62117": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-22T10:40:59.707Z|62117",
+      "name": "FlameFlinger_attack",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\FlameFlinger\\FlameFlinger.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-07-22T10:40:59.711Z|03752": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-22T10:40:59.711Z|03752",
+      "name": "FlameFlinger_die",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\FlameFlinger\\FlameFlinger.glb",
+      "events": {}
+    }
+  },
   "Graph|2025-06-27T09:58:39.961Z|68260": {
     "ƒ.Graph": {
       "name": "FlameFlinger",
@@ -2636,6 +2672,15 @@
       "type": "Graph"
     }
   },
+  "AnimationGLTF|2025-07-02T13:10:50.478Z|01270": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-02T13:10:50.478Z|01270",
+      "name": "countdownCoconut_idle",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\CountdownCoconut\\CountdownCoconut.glb",
+      "events": {}
+    }
+  },
   "Graph|2025-07-02T13:09:51.312Z|23018": {
     "ƒ.Graph": {
       "name": "CountdownCoconut",
@@ -2695,15 +2740,6 @@
       "idResource": "GraphGLTF|2025-07-02T13:10:50.478Z|74955",
       "type": "GraphGLTF",
       "url": "Assets\\GLTFs\\Enemies\\CountdownCoconut\\CountdownCoconut.glb"
-    }
-  },
-  "AnimationGLTF|2025-07-02T13:10:50.478Z|01270": {
-    "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-07-02T13:10:50.478Z|01270",
-      "name": "countdownCoconut_idle",
-      "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Enemies\\CountdownCoconut\\CountdownCoconut.glb",
-      "events": {}
     }
   },
   "GraphGLTF|2025-07-02T13:14:08.501Z|10311": {
@@ -3840,10 +3876,35 @@
     "ƒ.GraphGLTF": {
       "name": "Scene",
       "active": true,
-      "components": {},
+      "components": {
+        "ComponentAnimation": [
+          {
+            "ƒ.ComponentAnimation": {
+              "Component": {
+                "active": true
+              },
+              "idAnimation": "AnimationGLTF|2025-07-23T10:19:21.941Z|95181",
+              "playmode": "loop",
+              "quantization": "continous",
+              "scale": 1,
+              "scaleWithGameTime": true,
+              "animateInEditor": true
+            }
+          }
+        ]
+      },
       "idResource": "GraphGLTF|2025-07-18T09:09:16.211Z|16371",
       "type": "GraphGLTF",
       "url": "Assets\\GLTFs\\Enemies\\WorriedWall\\WorriedWall.glb"
+    }
+  },
+  "AnimationGLTF|2025-07-23T10:19:21.941Z|95181": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-23T10:19:21.941Z|95181",
+      "name": "WorriedWall_idle",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\WorriedWall\\WorriedWall.glb",
+      "events": {}
     }
   },
   "Graph|2025-07-18T09:09:19.357Z|40707": {
@@ -3856,6 +3917,29 @@
             "Script.DataLink": {
               "active": true,
               "id": "worriedWall"
+            }
+          }
+        ],
+        "AnimationLink": [
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-23T10:19:21.941Z|95181",
+              "animType": "idle"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-23T10:19:21.939Z|09911",
+              "animType": "hurt"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-23T10:19:21.933Z|45996",
+              "animType": "die"
             }
           }
         ]
@@ -3978,39 +4062,21 @@
       "url": "Assets\\GLTFs\\Enemies\\FlameFlinger\\FlameFlinger.glb"
     }
   },
-  "AnimationGLTF|2025-07-21T11:34:44.825Z|90377": {
+  "AnimationGLTF|2025-07-23T10:19:21.933Z|45996": {
     "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-07-21T11:34:44.825Z|90377",
-      "name": "FlameFlinger_idle",
+      "idResource": "AnimationGLTF|2025-07-23T10:19:21.933Z|45996",
+      "name": "WorriedWall_die",
       "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Enemies\\FlameFlinger\\FlameFlinger.glb",
+      "url": "Assets\\GLTFs\\Enemies\\WorriedWall\\WorriedWall.glb",
       "events": {}
     }
   },
-  "AnimationGLTF|2025-07-22T10:40:59.707Z|62117": {
+  "AnimationGLTF|2025-07-23T10:19:21.939Z|09911": {
     "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-07-22T10:40:59.707Z|62117",
-      "name": "FlameFlinger_attack",
+      "idResource": "AnimationGLTF|2025-07-23T10:19:21.939Z|09911",
+      "name": "WorriedWall_hurt",
       "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Enemies\\FlameFlinger\\FlameFlinger.glb",
-      "events": {}
-    }
-  },
-  "AnimationGLTF|2025-07-22T10:40:59.711Z|03752": {
-    "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-07-22T10:40:59.711Z|03752",
-      "name": "FlameFlinger_die",
-      "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Enemies\\FlameFlinger\\FlameFlinger.glb",
-      "events": {}
-    }
-  },
-  "AnimationGLTF|2025-07-22T10:40:59.716Z|36781": {
-    "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-07-22T10:40:59.716Z|36781",
-      "name": "FlameFlinger_hurt",
-      "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Enemies\\FlameFlinger\\FlameFlinger.glb",
+      "url": "Assets\\GLTFs\\Enemies\\WorriedWall\\WorriedWall.glb",
       "events": {}
     }
   }
