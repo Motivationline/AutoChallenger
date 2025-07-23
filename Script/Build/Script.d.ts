@@ -63,6 +63,8 @@ declare namespace Script {
         trigger?: AttackData | SpellData | MoveData | AbilityData;
         /** Optional data with more details about this specific event. */
         detail?: T;
+        /** Optional what Grid is affected */
+        grid?: Grid<Entity>;
     }
     type FightEventListener = (_ev?: FightEvent) => Promise<void> | void;
     class EventBus {
@@ -86,6 +88,7 @@ declare namespace Script {
          * **rotation occurs before movement** and is entirely mechanical, not visual.
          */
         rotateBy?: number;
+        direction: DIRECTION_RELATIVE;
         distance: number;
         /** If this unit is blocked from moving in the desired direction, what should it do? */
         blocked?: {
@@ -529,8 +532,6 @@ declare namespace Script {
         /** If it's in this list, this kind of spell is ignored by the entity.*/
         resistances?: SPELL_TYPE[];
         abilities?: AbilityData[];
-        moved: boolean;
-        currentDirection: Position;
     }
     export interface IEntity extends EntityData {
         currentHealth: number;
@@ -572,10 +573,6 @@ declare namespace Script {
         move(): Promise<void>;
         tryToMove(_grid: Grid<Entity>, maxAlternatives: number): boolean;
         nextPositionBasedOnThisRotation(rotateBy: number): Position[];
-        moveMePls(_move: MoveData, position: Position, _occupiedSpots: Position[]): Position;
-        makeAMove(_move: MoveData, position: Position, _occupiedSpots: Position[]): Position;
-        checkPosOccupied(_posX: number, _posY: number, _occupiedSpots: Position[]): boolean;
-        tryAllMoves(_move: MoveData, _occupiedSpots: Position[]): void;
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells?: SpellData[], _targetsOverride?: IEntity[]): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks?: AttackData[], _targetsOverride?: IEntity[]): Promise<void>;
         getOwnDamage(): number;

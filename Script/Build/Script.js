@@ -149,25 +149,26 @@ var Script;
     //     //replace old Grid
     //     _fight.arena.away = newGrid;
     // }
-    Script.EventBus.addEventListener(Script.EVENT.ROUND_START, eventListener);
-    function eventListener(_ev) {
-        //TODO: call move with correct Grid get the grid somehow
+    Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVE, moveListener);
+    function moveListener(_ev) {
+        move(_ev.grid);
+        console.log("MovingEntities");
     }
     function move(_grid) {
-        let grid = _grid;
+        //let grid: Grid<Entity> = _grid;
         let maxAlternatives = 0;
         let movedEntites = 0;
-        grid.forEachElement((el, pos) => {
-            el.moved = false; //TODO: maybe add a moved boolean to entity class
+        _grid.forEachElement((el) => {
+            el.moved = false;
         });
         //loop untill all alternatives have been tried and every entity moved
-        while (maxAlternatives <= 8 && movedEntites < grid.occupiedSpots) { //TODO: check if && is correct
+        while (maxAlternatives <= 8 && movedEntites < _grid.occupiedSpots) {
             let movedThisTurn = false;
-            grid.forEachElement((el) => {
+            _grid.forEachElement((el) => {
                 //check if the Entity hasn't moved yet
                 if (el.moved == false) {
                     //try to move
-                    let res = el.tryToMove(grid, maxAlternatives);
+                    let res = el.tryToMove(_grid, maxAlternatives);
                     if (res) {
                         movedThisTurn = true;
                         movedEntites++;
@@ -178,6 +179,8 @@ var Script;
                 maxAlternatives++;
             }
         }
+        console.log("moved Away Grid: ");
+        console.log(_grid);
     }
     Script.move = move;
 })(Script || (Script = {}));
@@ -1900,8 +1903,10 @@ var Script;
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
                 await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_END, detail: { round: r } });
-                await this.visualizer.roundEnd();
-                await Script.move(this.arena.away);
+                //output arena for debugging
+                console.log("Away Arena: ");
+                console.log(this.arena.away);
+                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVE, grid: this.arena.away }); //TODO: try to convert IEntity to Entity Grid
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {
                     return await this.fightEnd(FIGHT_RESULT.DEFEAT);
@@ -2744,6 +2749,9 @@ var Script;
             this.health = _entity.health ?? 1;
             this.currentHealth = this.health;
             this.position = _pos;
+            //move stuff
+            this.moved = false;
+            this.currentDirection = [-1, 0]; //facing towards player Side
             this.updateEntityData(_entity);
             Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_CREATE, target: this });
             Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_CREATED, target: this });
@@ -2932,249 +2940,232 @@ var Script;
         }
         /* trys to move in a random direction, if it fails it goes through all neighboring spots and takes the first one thats free.
         If all spots are occupied it stays at the same spot*/
-        moveMePls(_move, position, _occupiedSpots) {
-            let trymove = this.makeAMove(_move, position, _occupiedSpots);
-            if (trymove == null) {
-                this.tryAllMoves(_move, _occupiedSpots);
-            }
-            return trymove;
-        }
-        makeAMove(_move, position, _occupiedSpots) {
-            let outOfBounds = false;
-            let posX = position[0];
-            let posY = position[1];
-            //move in a passed rotation
-            switch (_move.rotateBy) {
-                case 0:
-                    //E
-                    //x + 1
-                    //check out of bounds
-                    if (posX == 2) {
-                        //out of bounds -> try again
-                        outOfBounds = true;
-                        return null;
-                    }
-                    else {
-                        let pos = [posX + 1, posY];
-                        //check if the position is occupied
-                        if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
-                            //position is valid
-                            outOfBounds = false;
-                            //write to the occupied spots
-                            _occupiedSpots.push(pos);
-                            return pos;
-                        }
-                        else {
-                            //spot is occupied -> try again
-                            outOfBounds = true;
-                            return null;
-                        }
-                    }
-                case 1:
-                    //SE
-                    //x,y + 1
-                    //check out of bounds
-                    if (posX == 2 || posY == 2) {
-                        //out of bounds -> try again
-                        outOfBounds = true;
-                        return null;
-                    }
-                    else {
-                        let pos = [posX + 1, posY + 1];
-                        //check if the position is occupied
-                        if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
-                            //position is valid
-                            outOfBounds = false;
-                            //write to the occupied spots
-                            _occupiedSpots.push(pos);
-                            return pos;
-                        }
-                        else {
-                            //spot is occupied -> try again
-                            outOfBounds = true;
-                            return null;
-                        }
-                    }
-                case 2:
-                    //S
-                    //y + 1
-                    //check out of bounds
-                    if (posY == 2) {
-                        //out of bounds -> try again
-                        outOfBounds = true;
-                        return null;
-                    }
-                    else {
-                        let pos = [posX, posY + 1];
-                        //check if the position is occupied
-                        if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
-                            //position is valid
-                            outOfBounds = false;
-                            //write to the occupied spots
-                            _occupiedSpots.push(pos);
-                            return pos;
-                        }
-                        else {
-                            //spot is occupied -> try again
-                            outOfBounds = true;
-                            return null;
-                        }
-                    }
-                case 3:
-                    //SW
-                    //y + 1, x - 1
-                    //check out of bounds
-                    if (posX == 0 || posY == 2) {
-                        //out of bounds -> try again
-                        outOfBounds = true;
-                        return null;
-                    }
-                    else {
-                        let pos = [posX - 1, posY + 1];
-                        //check if the position is occupied
-                        if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
-                            //position is valid
-                            outOfBounds = false;
-                            //write to the occupied spots
-                            _occupiedSpots.push(pos);
-                            return pos;
-                        }
-                        else {
-                            //spot is occupied -> try again
-                            outOfBounds = true;
-                            return null;
-                        }
-                    }
-                case 4:
-                    //W
-                    //x - 1
-                    //check out of bounds
-                    if (posX == 0) {
-                        //out of bounds -> try again
-                        outOfBounds = true;
-                        return null;
-                    }
-                    else {
-                        let pos = [posX - 1, posY];
-                        //check if the position is occupied
-                        if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
-                            //position is valid
-                            outOfBounds = false;
-                            //write to the occupied spots
-                            _occupiedSpots.push(pos);
-                            return pos;
-                        }
-                        else {
-                            //spot is occupied -> try again
-                            outOfBounds = true;
-                            return null;
-                        }
-                    }
-                case 5:
-                    //NW
-                    //x - 1, y - 1
-                    //check out of bounds
-                    if (posX == 0 || posY == 0) {
-                        //out of bounds -> try again
-                        outOfBounds = true;
-                        return null;
-                    }
-                    else {
-                        let pos = [posX - 1, posY - 1];
-                        //check if the position is occupied
-                        if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
-                            //position is valid
-                            outOfBounds = false;
-                            //write to the occupied spots
-                            _occupiedSpots.push(pos);
-                            return pos;
-                        }
-                        else {
-                            //spot is occupied -> try again
-                            outOfBounds = true;
-                            return null;
-                        }
-                    }
-                case 6:
-                    //N
-                    //y - 1
-                    //check out of bounds
-                    if (posY == 0) {
-                        //out of bounds -> try again
-                        outOfBounds = true;
-                        return null;
-                    }
-                    else {
-                        let pos = [posX, posY - 1];
-                        //check if the position is occupied
-                        if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
-                            //position is valid
-                            outOfBounds = false;
-                            //write to the occupied spots
-                            _occupiedSpots.push(pos);
-                            return pos;
-                        }
-                        else {
-                            //spot is occupied -> try again
-                            outOfBounds = true;
-                            return null;
-                        }
-                    }
-                case 7:
-                    //NE
-                    //y - 1, x + 1
-                    //check out of bounds
-                    if (posX == 2 || posY == 0) {
-                        //out of bounds -> try again
-                        outOfBounds = true;
-                        return null;
-                    }
-                    else {
-                        let pos = [posX + 1, posY - 1];
-                        //check if the position is occupied
-                        if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
-                            //position is valid
-                            outOfBounds = false;
-                            //write to the occupied spots
-                            _occupiedSpots.push(pos);
-                            return pos;
-                        }
-                        else {
-                            //spot is occupied -> try again
-                            outOfBounds = true;
-                            return null;
-                        }
-                    }
-            }
-            return null;
-        }
+        // moveMePls(_move: MoveData, position: Position, _occupiedSpots: Position[]): Position {
+        //     let trymove: Position = this.makeAMove(_move, position, _occupiedSpots)
+        //     if (trymove == null) {
+        //         this.tryAllMoves(_move, _occupiedSpots)
+        //     }
+        //     return trymove;
+        // }
+        // makeAMove(_move: MoveData, position: Position, _occupiedSpots: Position[]): Position {
+        //     let outOfBounds: boolean = false;
+        //     let posX: number = position[0];
+        //     let posY: number = position[1];
+        //     //move in a passed rotation
+        //     switch (_move.rotateBy) {
+        //         case 0:
+        //             //E
+        //             //x + 1
+        //             //check out of bounds
+        //             if (posX == 2) {
+        //                 //out of bounds -> try again
+        //                 outOfBounds = true;
+        //                 return null;
+        //             } else {
+        //                 let pos: Position = [posX + 1, posY]
+        //                 //check if the position is occupied
+        //                 if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+        //                     //position is valid
+        //                     outOfBounds = false;
+        //                     //write to the occupied spots
+        //                     _occupiedSpots.push(pos);
+        //                     return pos;
+        //                 } else {
+        //                     //spot is occupied -> try again
+        //                     outOfBounds = true;
+        //                     return null;
+        //                 }
+        //             }
+        //         case 1:
+        //             //SE
+        //             //x,y + 1
+        //             //check out of bounds
+        //             if (posX == 2 || posY == 2) {
+        //                 //out of bounds -> try again
+        //                 outOfBounds = true;
+        //                 return null;
+        //             } else {
+        //                 let pos: Position = [posX + 1, posY + 1]
+        //                 //check if the position is occupied
+        //                 if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+        //                     //position is valid
+        //                     outOfBounds = false;
+        //                     //write to the occupied spots
+        //                     _occupiedSpots.push(pos);
+        //                     return pos;
+        //                 } else {
+        //                     //spot is occupied -> try again
+        //                     outOfBounds = true;
+        //                     return null;
+        //                 }
+        //             }
+        //         case 2:
+        //             //S
+        //             //y + 1
+        //             //check out of bounds
+        //             if (posY == 2) {
+        //                 //out of bounds -> try again
+        //                 outOfBounds = true;
+        //                 return null;
+        //             } else {
+        //                 let pos: Position = [posX, posY + 1]
+        //                 //check if the position is occupied
+        //                 if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+        //                     //position is valid
+        //                     outOfBounds = false;
+        //                     //write to the occupied spots
+        //                     _occupiedSpots.push(pos);
+        //                     return pos;
+        //                 } else {
+        //                     //spot is occupied -> try again
+        //                     outOfBounds = true;
+        //                     return null;
+        //                 }
+        //             }
+        //         case 3:
+        //             //SW
+        //             //y + 1, x - 1
+        //             //check out of bounds
+        //             if (posX == 0 || posY == 2) {
+        //                 //out of bounds -> try again
+        //                 outOfBounds = true;
+        //                 return null;
+        //             } else {
+        //                 let pos: Position = [posX - 1, posY + 1]
+        //                 //check if the position is occupied
+        //                 if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+        //                     //position is valid
+        //                     outOfBounds = false;
+        //                     //write to the occupied spots
+        //                     _occupiedSpots.push(pos);
+        //                     return pos;
+        //                 } else {
+        //                     //spot is occupied -> try again
+        //                     outOfBounds = true;
+        //                     return null;
+        //                 }
+        //             }
+        //         case 4:
+        //             //W
+        //             //x - 1
+        //             //check out of bounds
+        //             if (posX == 0) {
+        //                 //out of bounds -> try again
+        //                 outOfBounds = true;
+        //                 return null;
+        //             } else {
+        //                 let pos: Position = [posX - 1, posY]
+        //                 //check if the position is occupied
+        //                 if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+        //                     //position is valid
+        //                     outOfBounds = false;
+        //                     //write to the occupied spots
+        //                     _occupiedSpots.push(pos);
+        //                     return pos;
+        //                 } else {
+        //                     //spot is occupied -> try again
+        //                     outOfBounds = true;
+        //                     return null;
+        //                 }
+        //             }
+        //         case 5:
+        //             //NW
+        //             //x - 1, y - 1
+        //             //check out of bounds
+        //             if (posX == 0 || posY == 0) {
+        //                 //out of bounds -> try again
+        //                 outOfBounds = true;
+        //                 return null;
+        //             } else {
+        //                 let pos: Position = [posX - 1, posY - 1]
+        //                 //check if the position is occupied
+        //                 if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+        //                     //position is valid
+        //                     outOfBounds = false;
+        //                     //write to the occupied spots
+        //                     _occupiedSpots.push(pos);
+        //                     return pos;
+        //                 } else {
+        //                     //spot is occupied -> try again
+        //                     outOfBounds = true;
+        //                     return null;
+        //                 }
+        //             }
+        //         case 6:
+        //             //N
+        //             //y - 1
+        //             //check out of bounds
+        //             if (posY == 0) {
+        //                 //out of bounds -> try again
+        //                 outOfBounds = true;
+        //                 return null;
+        //             } else {
+        //                 let pos: Position = [posX, posY - 1]
+        //                 //check if the position is occupied
+        //                 if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+        //                     //position is valid
+        //                     outOfBounds = false;
+        //                     //write to the occupied spots
+        //                     _occupiedSpots.push(pos);
+        //                     return pos;
+        //                 } else {
+        //                     //spot is occupied -> try again
+        //                     outOfBounds = true;
+        //                     return null;
+        //                 }
+        //             }
+        //         case 7:
+        //             //NE
+        //             //y - 1, x + 1
+        //             //check out of bounds
+        //             if (posX == 2 || posY == 0) {
+        //                 //out of bounds -> try again
+        //                 outOfBounds = true;
+        //                 return null;
+        //             } else {
+        //                 let pos: Position = [posX + 1, posY - 1]
+        //                 //check if the position is occupied
+        //                 if (this.checkPosOccupied(pos[0], pos[1], _occupiedSpots)) {
+        //                     //position is valid
+        //                     outOfBounds = false;
+        //                     //write to the occupied spots
+        //                     _occupiedSpots.push(pos);
+        //                     return pos;
+        //                 } else {
+        //                     //spot is occupied -> try again
+        //                     outOfBounds = true;
+        //                     return null;
+        //                 }
+        //             }
+        //     }
+        //     return null;
+        // }
         //TODO: check if this works
-        checkPosOccupied(_posX, _posY, _occupiedSpots) {
-            let pos = [_posX, _posY];
-            //check if the position is occupied
-            if (!_occupiedSpots.some(spot => spot[0] === pos[0] && spot[1] === pos[1])) {
-                //position is valid
-                return true;
-            }
-            else {
-                //spot is occupied -> try again
-                return false;
-            }
-        }
+        // checkPosOccupied(_posX: number, _posY: number, _occupiedSpots: Position[]): boolean {
+        //     let pos: Position = [_posX, _posY]
+        //     //check if the position is occupied
+        //     if (!_occupiedSpots.some(spot => spot[0] === pos[0] && spot[1] === pos[1])) {
+        //         //position is valid
+        //         return true;
+        //     } else {
+        //         //spot is occupied -> try again
+        //         return false;
+        //     }
+        // }
         //iterates through moves until one is valid - used when blocked
-        tryAllMoves(_move, _occupiedSpots) {
-            let prevPos = this.position;
-            //try all moves
-            for (let _try; _try = _move.blocked.attempts; _try++) {
-                let newPos = this.makeAMove(_move, this.position, _occupiedSpots);
-                if (newPos != null) {
-                    this.position = newPos;
-                }
-            }
-            if (prevPos == this.position) {
-                //no free spots avalable
-            }
-        }
+        // tryAllMoves(_move: MoveData, _occupiedSpots: Position[]) {
+        //     let prevPos: Position = this.position;
+        //     //try all moves
+        //     for (let _try: number; _try = _move.blocked.attempts; _try++) {
+        //         let newPos: Position = this.makeAMove(_move, this.position, _occupiedSpots);
+        //         if (newPos != null) {
+        //             this.position = newPos;
+        //         }
+        //     }
+        //     if (prevPos == this.position) {
+        //         //no free spots avalable
+        //     }
+        // }
         async useSpell(_friendly, _opponent, _spells = this.select(this.spells, true), _targetsOverride) {
             if (!_spells)
                 return;
@@ -4371,6 +4362,30 @@ var Script;
 //         }
 //     }
 // }
+// namespace Script {
+//     import ƒ = FudgeCore;
+//     export interface IVisualizeGrid {
+//         getRealPosition(_pos: Position): any;
+//         updateVisuals(): void;
+//     }
+//     export class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
+//         grid: Grid<VisualizeEntity>;
+//         constructor(_grid: Grid<VisualizeEntity>) {
+//             super("VisualizeGridNull");
+//             this.grid = _grid;
+//             this.addComponent(new ƒ.ComponentTransform());
+//             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3(0, 0, 0));
+//         }
+//         updateVisuals(): void {
+//             this.grid.forEachElement((element) => {
+//                 element?.updateVisuals();
+//             });
+//         }
+//         getRealPosition(_pos: Position) {
+//             return _pos;
+//         }
+//     }
+// }
 var Script;
 (function (Script) {
     //Visualize the Entities in the Grid
@@ -4447,30 +4462,6 @@ var Script;
     }
     Script.VisualizeGrid = VisualizeGrid;
 })(Script || (Script = {}));
-// namespace Script {
-//     import ƒ = FudgeCore;
-//     export interface IVisualizeGrid {
-//         getRealPosition(_pos: Position): any;
-//         updateVisuals(): void;
-//     }
-//     export class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
-//         grid: Grid<VisualizeEntity>;
-//         constructor(_grid: Grid<VisualizeEntity>) {
-//             super("VisualizeGridNull");
-//             this.grid = _grid;
-//             this.addComponent(new ƒ.ComponentTransform());
-//             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3(0, 0, 0));
-//         }
-//         updateVisuals(): void {
-//             this.grid.forEachElement((element) => {
-//                 element?.updateVisuals();
-//             });
-//         }
-//         getRealPosition(_pos: Position) {
-//             return _pos;
-//         }
-//     }
-// }
 /// <reference path="UILayer.ts" />
 var Script;
 /// <reference path="UILayer.ts" />

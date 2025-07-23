@@ -66,7 +66,10 @@ namespace Script {
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
                 await EventBus.dispatchEvent({ type: EVENT.ROUND_END, detail: { round: r }});
-                await move(this.arena.away as Grid<Entity>);// TODO: Call Move over an Event and Pass The Grid With it
+                //output arena for debugging
+                console.log("Away Arena: ");
+                console.log(this.arena.away);
+                await EventBus.dispatchEvent({type: EVENT.ENTITY_MOVE, grid: this.arena.away as Grid<Entity>}); //TODO: try to convert IEntity to Entity Grid
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {
                     return await this.fightEnd(FIGHT_RESULT.DEFEAT);

@@ -66,6 +66,8 @@ namespace Script {
         trigger?: AttackData | SpellData | MoveData | AbilityData,
         /** Optional data with more details about this specific event. */
         detail?: T;
+        /** Optional what Grid is affected */
+        grid?: Grid<Entity>//TODO: check if this works
     }
 
     export type FightEventListener = (_ev?: FightEvent) => Promise<void> | void;
