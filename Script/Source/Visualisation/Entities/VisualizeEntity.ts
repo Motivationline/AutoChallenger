@@ -52,9 +52,9 @@ namespace Script {
             await this.playAnimationIfPossible(ANIMATION.ATTACK);
         }
 
-        async move(_move: MoveData): Promise<void> {
-            this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
-            console.log("entity visualizer: move", _move);
+        async move(/*_move: MoveData*/): Promise<void> {
+            //this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
+            console.log("entity visualizer: move");
             await this.playAnimationIfPossible(ANIMATION.MOVE);
         }
 
@@ -165,6 +165,10 @@ namespace Script {
             this.tmpText.texture.text = effectText;
         }
 
+        private updatePosition(){
+            this.move();
+        }
+
         getEntity(): Readonly<IEntity> {
             return this.entity;
         }
@@ -181,6 +185,8 @@ namespace Script {
             EventBus.addEventListener(EVENT.ENTITY_AFFECTED, this.updateTmpText);
             EventBus.addEventListener(EVENT.ROUND_END, this.updateTmpText);
             EventBus.addEventListener(EVENT.ROUND_START, this.updateTmpText);
+
+            EventBus.addEventListener(EVENT.ENTITY_MOVED, this.updatePosition);
         }
 
         removeEventListeners() {

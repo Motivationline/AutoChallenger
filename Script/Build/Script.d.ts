@@ -89,6 +89,7 @@ declare namespace Script {
          */
         rotateBy?: number;
         direction: DIRECTION_RELATIVE;
+        currentDirection: Position;
         distance: number;
         /** If this unit is blocked from moving in the desired direction, what should it do? */
         blocked?: {

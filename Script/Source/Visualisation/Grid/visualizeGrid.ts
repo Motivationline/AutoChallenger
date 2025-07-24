@@ -86,6 +86,41 @@ namespace Script {
             })
         }
 
+        move() {
+            let _entity: VisualizeEntity;
+            let position: Position;
+            //read entity Positions and move the model to the fitting ancor in the Scene
+            this.grid.forEachElement((entity, pos) => {
+                position = pos;
+                _entity = entity
+
+                let visSide: ƒ.Node;
+                //get Anchors from scene
+                if (this.side === "away") {
+                    visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
+                } else if (this.side === "home") {
+                    visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
+                }
+
+                //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
+
+                /**Anchors are named from 0-8 */
+                let _anchor = this.getAnchor(visSide, position[0], position[1]);
+
+                //get the Positions from the placeholders and translate the entity to it
+                let pos3: ƒ.Vector3 = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
+                entity.mtxLocal.translation = pos3.clone;
+            });
+        }
+
+        addEventListeners(): void {
+            EventBus.addEventListener(EVENT.ENTITY_MOVED, this.move);
+        }
+
+        removeEventListeners(): void {
+            //EventBus.removeEventListener(EVENT.ENTITY_MOVED); TODO: Fix this
+        }
+
     }
 
 }

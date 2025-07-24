@@ -542,15 +542,15 @@ var Script;
             {
                 id: "moveSingle",
                 parent: "parent",
-                moves: { direction: Script.DIRECTION_RELATIVE.FORWARD, distance: 1 }
+                moves: { direction: Script.DIRECTION_RELATIVE.FORWARD, rotateBy: 4, currentDirection: [1, 0], distance: 1, blocked: { attempts: 8, rotateBy: 4 } }
             },
             {
                 id: "moveMultiple",
                 health: 5,
                 moves: {
                     options: [
-                        { direction: Script.DIRECTION_RELATIVE.FORWARD, distance: 1 },
-                        { rotateBy: 2, direction: Script.DIRECTION_RELATIVE.FORWARD, distance: 1 },
+                        { direction: Script.DIRECTION_RELATIVE.FORWARD, currentDirection: [1, 0], distance: 1 },
+                        { rotateBy: 2, direction: Script.DIRECTION_RELATIVE.FORWARD, currentDirection: [1, 0], distance: 1 },
                     ],
                     selection: {
                         order: Script.SELECTION_ORDER.ALL,
@@ -1463,8 +1463,8 @@ var Script;
             {
                 id: "cactusCrawler", // doesn't attack but gets thorns after moving
                 health: 1,
-                moves: { direction: Script.DIRECTION_RELATIVE.FORWARD, distance: 1 },
-                startDirection: 6, // down
+                moves: { direction: Script.DIRECTION_RELATIVE.FORWARD, rotateBy: 4, currentDirection: [1, 0], distance: 1, blocked: { attempts: 8, rotateBy: 4 } },
+                //startDirection: 6, // down
                 abilities: [
                     {
                         on: Script.EVENT.ENTITY_MOVED,
@@ -1665,110 +1665,11 @@ var Script;
                 difficulty: 0,
                 rounds: 3,
                 entities: [
-                    ["boxingBush", , ,],
-                    [, "boxingBush", ,],
-                    [, , "boxingBush",]
-                ],
-            },
-            {
-                difficulty: 0,
-                rounds: 3,
-                entities: [
-                    [, , ,],
-                    [, "flameFlinger", "punchingPalmtree",],
-                    [, , ,]
-                ],
-            },
-            {
-                difficulty: 0,
-                rounds: 3,
-                entities: [
-                    ["flameFlinger", , ,],
-                    [, "sandSitter", "boxingBush",],
-                    ["flameFlinger", , ,]
-                ],
-            },
-            {
-                difficulty: 0,
-                rounds: 3,
-                entities: [
-                    [, "flameFlinger", ,],
-                    ["flameFlinger", "punchingPalmtree", "flameFlinger",],
-                    [, "flameFlinger", ,]
-                ],
-            },
-            {
-                difficulty: 0,
-                rounds: 3,
-                entities: [
-                    [, , "flameFlinger",],
-                    [, "sandSitter", ,],
-                    ["boxingBush", , "flameFlinger",]
-                ],
-            },
-            {
-                difficulty: 0,
-                rounds: 3,
-                entities: [
-                    [, "punchingPalmtree", ,],
-                    ["boxingBush", , ,],
-                    [, "punchingPalmtree", ,]
-                ],
-            },
-            {
-                difficulty: 1,
-                rounds: 3,
-                entities: [
-                    [, , "punchingPalmtree",],
-                    ["worriedWall", "countdownCoconut", ,],
-                    [, , ,]
-                ],
-            },
-            {
-                difficulty: 1,
-                rounds: 3,
-                entities: [
-                    ["worriedWall", , "cactusCrawler",],
-                    [, "cactusCrawler", ,],
-                    ["cactusCrawler", "worriedWall", ,]
-                ],
-            },
-            {
-                difficulty: 1,
-                rounds: 3,
-                entities: [
                     ["cactusCrawler", , "sandSitter",],
                     [, , ,],
                     [, "cactusCrawler", "sandSitter",]
                 ],
-            },
-            {
-                difficulty: 2,
-                rounds: 3,
-                entities: [
-                    ["worriedWall", "boxingBush", "sandSitter",],
-                    ["worriedWall", "cactusCrawler", "countdownCoconut",],
-                    [, , ,]
-                ],
-            },
-            {
-                difficulty: 2,
-                rounds: 3,
-                entities: [
-                    ["boxingBush", , "flameFlinger",],
-                    ["cactusCrawler", "sandSitter", ,],
-                    ["flameFlinger", , "boxingBush",]
-                ],
-            },
-            {
-                difficulty: 2,
-                rounds: 3,
-                entities: [
-                    ["cactusCrawler", "countdownCoconut", "cactusCrawler",],
-                    [, "cactusCrawler", ,],
-                    ["cactusCrawler", , "countdownCoconut",]
-                ],
-            },
+            }
         ];
     })(DataContent = Script.DataContent || (Script.DataContent = {}));
 })(Script || (Script = {}));

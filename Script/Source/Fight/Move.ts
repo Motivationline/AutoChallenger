@@ -12,6 +12,7 @@ namespace Script {
          */
         rotateBy?: number,
         direction: DIRECTION_RELATIVE,
+        currentDirection: Position,
         distance: number,
         /** If this unit is blocked from moving in the desired direction, what should it do? */
         blocked?: {
@@ -68,7 +69,10 @@ namespace Script {
                 maxAlternatives++;
             }
         }
+        //all entities moved
         console.log("moved Away Grid: ");
         console.log(_grid);
+
+        EventBus.dispatchEvent({type: EVENT.ENTITY_MOVED});
     }
 }
