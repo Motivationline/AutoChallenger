@@ -179,8 +179,10 @@ var Script;
                 maxAlternatives++;
             }
         }
+        //all entities moved
         console.log("moved Away Grid: ");
         console.log(_grid);
+        Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVED });
     }
     Script.move = move;
 })(Script || (Script = {}));
@@ -2793,7 +2795,7 @@ var Script;
             //this.position = newPos;
         }
         tryToMove(_grid, maxAlternatives) {
-            let grid = _grid;
+            //let grid: Grid<Entity> = _grid;
             //check if the Entity has move data
             let moveData;
             moveData = this.select(this.moves, true)[0]; //TODO: funktioniert das????
@@ -2804,11 +2806,11 @@ var Script;
                     let nextPosition = nextTransform[0];
                     let nextRotation = nextTransform[1];
                     //check if the position is occupied or out of bounds
-                    if (grid.get(nextPosition) || Script.Grid.outOfBounds(nextPosition)) {
+                    if (_grid.get(nextPosition) || Script.Grid.outOfBounds(nextPosition)) {
                         return false;
                     }
-                    else if (grid.get(nextPosition) == undefined) { //spot is free
-                        grid.set(nextPosition, this);
+                    else if (_grid.get(nextPosition) == undefined) { //spot is free
+                        _grid.set(nextPosition, this);
                         this.position = nextPosition;
                         this.currentDirection = nextRotation;
                         //dispatchEvent(EVENT.ENTITY_MOVED);
@@ -2821,6 +2823,7 @@ var Script;
                 this.moved = true;
                 return true;
             }
+            return false; // TODO: check if correct
         }
         nextPositionBasedOnThisRotation(rotateBy) {
             // curentDirection + nextRotation;
@@ -2836,7 +2839,12 @@ var Script;
             ];
             let i = directions.findIndex(dir => dir[0] === this.currentDirection[0] && dir[1] === this.currentDirection[1]);
             let selector = (i + rotateBy) % 8;
+            console.log("ID: ", this.id);
+            console.log("Position before: ", this.position);
+            console.log("Direction before: ", this.currentDirection);
             let pos = [this.position[0] + directions[selector][0], this.position[1] + directions[selector][1]];
+            console.log("Position after: ", pos);
+            console.log("Direction after: ", directions[selector]);
             return [pos, directions[selector]];
         }
         /* trys to move in a random direction, if it fails it goes through all neighboring spots and takes the first one thats free.
@@ -4047,9 +4055,9 @@ var Script;
             console.log("entity visualizer: attack", { attacker: this.entity, attack: _ev.trigger, targets: _ev.detail.targets });
             await this.playAnimationIfPossible(Script.ANIMATION.ATTACK);
         }
-        async move(_move) {
-            this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
-            console.log("entity visualizer: move", _move);
+        async move( /*_move: MoveData*/) {
+            //this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
+            console.log("entity visualizer: move");
             await this.playAnimationIfPossible(Script.ANIMATION.MOVE);
         }
         async useSpell(_ev) {
@@ -4144,6 +4152,9 @@ var Script;
             if (node)
                 this.removeChild(node);
         }
+        updatePosition() {
+            //await this.move();
+        }
         getEntity() {
             return this.entity;
         }
@@ -4158,6 +4169,7 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_AFFECTED, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ROUND_END, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateTmpText);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVED, this.updatePosition);
         }
         removeEventListeners() {
             Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.eventListener);
@@ -4359,6 +4371,35 @@ var Script;
             this.grid.forEachElement((_el, pos) => {
                 this.removeEntityFromGrid(pos);
             });
+        }
+        move() {
+            //let _entity: VisualizeEntity;
+            let position;
+            //read entity Positions and move the model to the fitting ancor in the Scene
+            this.grid.forEachElement((entity, pos) => {
+                position = pos;
+                //_entity = entity
+                let visSide;
+                //get Anchors from scene
+                if (this.side === "away") {
+                    visSide = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
+                }
+                else if (this.side === "home") {
+                    visSide = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
+                }
+                //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
+                /**Anchors are named from 0-8 */
+                let _anchor = this.getAnchor(visSide, position[0], position[1]);
+                //get the Positions from the placeholders and translate the entity to it
+                let pos3 = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
+                entity.mtxLocal.translation = pos3.clone;
+            });
+        }
+        addEventListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVED, this.move);
+        }
+        removeEventListeners() {
+            //EventBus.removeEventListener(EVENT.ENTITY_MOVED); TODO: Fix this
         }
     }
     Script.VisualizeGrid = VisualizeGrid;

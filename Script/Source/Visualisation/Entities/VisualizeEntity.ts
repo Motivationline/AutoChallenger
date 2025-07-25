@@ -166,7 +166,7 @@ namespace Script {
         }
 
         private updatePosition(){
-            this.move();
+            //await this.move();
         }
 
         getEntity(): Readonly<IEntity> {

@@ -233,7 +233,7 @@ namespace Script {
         }
 
         tryToMove(_grid: Grid<Entity>, maxAlternatives: number): boolean {
-            let grid: Grid<Entity> = _grid;
+            //let grid: Grid<Entity> = _grid;
             //check if the Entity has move data
             let moveData: MoveData;
             moveData = this.select(this.moves, true)[0];//TODO: funktioniert das????
@@ -244,10 +244,10 @@ namespace Script {
                     let nextPosition: Position = nextTransform[0];
                     let nextRotation: Position = nextTransform[1];
                     //check if the position is occupied or out of bounds
-                    if (grid.get(nextPosition) || Grid.outOfBounds(nextPosition)) {
+                    if (_grid.get(nextPosition) || Grid.outOfBounds(nextPosition)) {
                         return false
-                    } else if (grid.get(nextPosition) == undefined) { //spot is free
-                        grid.set(nextPosition, this);
+                    } else if (_grid.get(nextPosition) == undefined) { //spot is free
+                        _grid.set(nextPosition, this);
                         this.position = nextPosition;
                         this.currentDirection = nextRotation;
                         //dispatchEvent(EVENT.ENTITY_MOVED);
@@ -259,6 +259,7 @@ namespace Script {
                 this.moved = true;
                 return true;
             }
+            return false;// TODO: check if correct
         }
 
         nextPositionBasedOnThisRotation(rotateBy: number): Position[] {
@@ -275,7 +276,12 @@ namespace Script {
             ];
             let i: number = directions.findIndex(dir => dir[0] === this.currentDirection[0] && dir[1] === this.currentDirection[1]);
             let selector: number = (i + rotateBy) % 8;
+            console.log("ID: ", this.id);
+            console.log("Position before: ", this.position);
+            console.log("Direction before: ", this.currentDirection);
             let pos: Position = [this.position[0] + directions[selector][0], this.position[1] + directions[selector][1]]
+            console.log("Position after: ", pos);
+            console.log("Direction after: ", directions[selector]);
             return [pos, directions[selector]];
         }
 

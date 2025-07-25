@@ -87,12 +87,12 @@ namespace Script {
         }
 
         move() {
-            let _entity: VisualizeEntity;
+            //let _entity: VisualizeEntity;
             let position: Position;
             //read entity Positions and move the model to the fitting ancor in the Scene
             this.grid.forEachElement((entity, pos) => {
                 position = pos;
-                _entity = entity
+                //_entity = entity
 
                 let visSide: ƒ.Node;
                 //get Anchors from scene
