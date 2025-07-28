@@ -367,11 +367,7 @@
                       },
                       {
                         "name": "Animations",
-                        "entries": [
-                          {
-                            "idResource": "AnimationGLTF|2025-06-27T10:03:51.942Z|07263"
-                          }
-                        ]
+                        "entries": []
                       },
                       {
                         "name": "Model",

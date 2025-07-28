@@ -13,7 +13,7 @@
       "coat": {
         "ƒ.CoatTextured": {
           "alphaClip": 0.01,
-          "color": "[1, 1, 1, 1]"
+          "color": "[1, 0.5333333333333333, 0, 1]"
         }
       }
     }
@@ -796,7 +796,7 @@
                                   "mipmap": 0,
                                   "wrap": 0,
                                   "text": "0,0",
-                                  "font": "15px monospace"
+                                  "font": "16px monospace"
                                 },
                                 "fixedSize": true
                               }
@@ -2569,15 +2569,6 @@
       "idResource": "GraphGLTF|2025-06-27T10:03:51.942Z|71133",
       "type": "GraphGLTF",
       "url": "Assets\\GLTFs\\Environment\\FightMaps\\Beach\\Beach.glb"
-    }
-  },
-  "AnimationGLTF|2025-06-27T10:03:51.942Z|07263": {
-    "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-06-27T10:03:51.942Z|07263",
-      "name": "Wave",
-      "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Environment\\FightMaps\\Beach\\Beach.glb",
-      "events": {}
     }
   },
   "AnimationGLTF|2025-07-02T13:14:08.505Z|99344": {
@@ -4420,7 +4411,7 @@
           {
             "ƒ.ComponentTransform": {
               "local": {
-                "translation": "[0, 1.2, 0]",
+                "translation": "[0, 1.3, 0]",
                 "rotation": "[-90, 0, 0]",
                 "scaling": "[1, 1, 1]"
               },
