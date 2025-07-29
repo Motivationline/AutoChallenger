@@ -1091,6 +1091,22 @@ namespace Script {
             {
                 id: "sandSitter", // enemy that attacks a plus, but spawns in round 2 (not implemented yet)
                 health: 1,
+                abilities: [
+                    {
+                        on: EVENT.FIGHT_START,
+                        target: TARGET.SELF,
+                        spell: {
+                            type: SPELL_TYPE.UNTARGETABLE,
+                        }
+                    },
+                    {
+                        on: EVENT.FIGHT_START,
+                        target: TARGET.SELF,
+                        spell: {
+                            type: SPELL_TYPE.STUN,
+                        }
+                    }
+                ],
                 attacks: {
                     options: [
                         {
