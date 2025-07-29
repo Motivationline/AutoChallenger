@@ -140,10 +140,11 @@ namespace Script {
         private async playAnimationIfPossible(_anim: ANIMATION) {
             if (!this.cmpAnimation) return this.showFallbackText(_anim);
             let animation = AnimationLink.linkedAnimations.get(this.entity.id)?.get(_anim);
+            if (!animation && this.entity.id.includes("Eumling")) animation = AnimationLink.linkedAnimations.get("defaultEumling")?.get(_anim);
             if (!animation) return this.showFallbackText(_anim);
             this.cmpAnimation.animation = animation;
             this.cmpAnimation.time = 0;
-            console.log({ totalTime: animation.totalTime });
+            // console.log({ totalTime: animation.totalTime });
             await waitMS(animation.totalTime);
             this.cmpAnimation.animation = this.defaultAnimation; // TODO: check if we should instead default back to idle or nothing at all
 
@@ -159,7 +160,7 @@ namespace Script {
             if (!this.tmpText) return;
             console.log("updateTmpText", this.entity);
             let effectText = "";
-            (<Entity>this.entity).activeEffects.forEach((value, type) => { if(value > 0) effectText += `${type}: ${value}\n`});
+            (<Entity>this.entity).activeEffects.forEach((value, type) => { if (value > 0) effectText += `${type}: ${value}\n` });
             effectText += `${this.entity.currentHealth} / ${this.entity.health} ♥️`;
             console.log(effectText);
             this.tmpText.texture.text = effectText;

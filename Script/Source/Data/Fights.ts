@@ -11,7 +11,7 @@ namespace Script {
                 // remember, opponents are usually to the left of this, so the eumling grid is mirrored internally.
                 // But for your convenience right now during the test it's the way you'd see it ingame.
                 entities: [
-                    ["defaultSkin", , ,],
+                    ["defaultEumling", , ,],
                     [, , ,],
                     [, , ,]],
             },

@@ -2761,14 +2761,44 @@
   },
   "Graph|2025-07-02T13:26:02.843Z|14722": {
     "ƒ.Graph": {
-      "name": "defaultSkin",
+      "name": "defaultEumling",
       "active": true,
       "components": {
         "DataLink": [
           {
             "Script.DataLink": {
               "active": true,
-              "id": "defaultSkin"
+              "id": "defaultEumling"
+            }
+          }
+        ],
+        "AnimationLink": [
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
+              "animType": "idle"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
+              "animType": "hurt"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
+              "animType": "affected"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
+              "animType": "attack"
             }
           }
         ]
@@ -3143,36 +3173,6 @@
               "id": "R-Eumling"
             }
           }
-        ],
-        "AnimationLink": [
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-              "animType": "idle"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
-              "animType": "hurt"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
-              "animType": "affected"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
-              "animType": "attack"
-            }
-          }
         ]
       },
       "children": [
@@ -3197,36 +3197,6 @@
             "Script.DataLink": {
               "active": false,
               "id": "RA-Eumling"
-            }
-          }
-        ],
-        "AnimationLink": [
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
-              "animType": "attack"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-              "animType": "idle"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
-              "animType": "affected"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
-              "animType": "hurt"
             }
           }
         ]
@@ -3255,36 +3225,6 @@
               "id": "RI-Eumling"
             }
           }
-        ],
-        "AnimationLink": [
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
-              "animType": "attack"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-              "animType": "idle"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
-              "animType": "affected"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
-              "animType": "hurt"
-            }
-          }
         ]
       },
       "children": [
@@ -3309,36 +3249,6 @@
             "Script.DataLink": {
               "active": true,
               "id": "RAC-Eumling"
-            }
-          }
-        ],
-        "AnimationLink": [
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
-              "animType": "attack"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-              "animType": "idle"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
-              "animType": "affected"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
-              "animType": "hurt"
             }
           }
         ]
@@ -3367,36 +3277,6 @@
               "id": "RIC-Eumling"
             }
           }
-        ],
-        "AnimationLink": [
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
-              "animType": "attack"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-              "animType": "idle"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
-              "animType": "affected"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
-              "animType": "hurt"
-            }
-          }
         ]
       },
       "children": [
@@ -3421,36 +3301,6 @@
             "Script.DataLink": {
               "active": true,
               "id": "RIE-Eumling"
-            }
-          }
-        ],
-        "AnimationLink": [
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
-              "animType": "attack"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-              "animType": "idle"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
-              "animType": "affected"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
-              "animType": "hurt"
             }
           }
         ]
@@ -3479,36 +3329,6 @@
               "id": "S-Eumling"
             }
           }
-        ],
-        "AnimationLink": [
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
-              "animType": "attack"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-              "animType": "idle"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
-              "animType": "affected"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
-              "animType": "hurt"
-            }
-          }
         ]
       },
       "children": [
@@ -3533,36 +3353,6 @@
             "Script.DataLink": {
               "active": true,
               "id": "SA-Eumling"
-            }
-          }
-        ],
-        "AnimationLink": [
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
-              "animType": "attack"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-              "animType": "idle"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
-              "animType": "affected"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
-              "animType": "hurt"
             }
           }
         ]
@@ -3591,36 +3381,6 @@
               "id": "SI-Eumling"
             }
           }
-        ],
-        "AnimationLink": [
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
-              "animType": "attack"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-              "animType": "idle"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
-              "animType": "affected"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
-              "animType": "hurt"
-            }
-          }
         ]
       },
       "children": [
@@ -3645,36 +3405,6 @@
             "Script.DataLink": {
               "active": true,
               "id": "SAC-Eumling"
-            }
-          }
-        ],
-        "AnimationLink": [
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
-              "animType": "attack"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-              "animType": "idle"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
-              "animType": "affected"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
-              "animType": "hurt"
             }
           }
         ]
@@ -3703,36 +3433,6 @@
               "id": "SIE-Eumling"
             }
           }
-        ],
-        "AnimationLink": [
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
-              "animType": "attack"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-              "animType": "idle"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
-              "animType": "affected"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
-              "animType": "hurt"
-            }
-          }
         ]
       },
       "children": [
@@ -3757,36 +3457,6 @@
             "Script.DataLink": {
               "active": true,
               "id": "SAE-Eumling"
-            }
-          }
-        ],
-        "AnimationLink": [
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
-              "animType": "attack"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-              "animType": "idle"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
-              "animType": "affected"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
-              "animType": "hurt"
             }
           }
         ]
@@ -3815,36 +3485,6 @@
               "id": "SIC-Eumling"
             }
           }
-        ],
-        "AnimationLink": [
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
-              "animType": "attack"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-              "animType": "idle"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
-              "animType": "affected"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
-              "animType": "hurt"
-            }
-          }
         ]
       },
       "children": [
@@ -3869,36 +3509,6 @@
             "Script.DataLink": {
               "active": true,
               "id": "RAE-Eumling"
-            }
-          }
-        ],
-        "AnimationLink": [
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
-              "animType": "attack"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-06-06T13:07:59.196Z|56237",
-              "animType": "idle"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
-              "animType": "affected"
-            }
-          },
-          {
-            "Script.AnimationLink": {
-              "active": true,
-              "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
-              "animType": "hurt"
             }
           }
         ]

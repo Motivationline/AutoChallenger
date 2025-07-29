@@ -58,7 +58,7 @@ namespace Script {
                 health: 10,
             },
             {
-                id: "defaultSkin",
+                id: "defaultEumling",
                 attacks: {
                     options: [
                         {

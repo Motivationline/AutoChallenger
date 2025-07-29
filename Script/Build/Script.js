@@ -468,7 +468,7 @@ var Script;
                 health: 10,
             },
             {
-                id: "defaultSkin",
+                id: "defaultEumling",
                 attacks: {
                     options: [
                         {
@@ -1588,7 +1588,7 @@ var Script;
                 // remember, opponents are usually to the left of this, so the eumling grid is mirrored internally.
                 // But for your convenience right now during the test it's the way you'd see it ingame.
                 entities: [
-                    ["defaultSkin", , ,],
+                    ["defaultEumling", , ,],
                     [, , ,],
                     [, , ,]
                 ],
@@ -3900,11 +3900,13 @@ var Script;
             if (!this.cmpAnimation)
                 return this.showFallbackText(_anim);
             let animation = Script.AnimationLink.linkedAnimations.get(this.entity.id)?.get(_anim);
+            if (!animation && this.entity.id.includes("Eumling"))
+                animation = Script.AnimationLink.linkedAnimations.get("defaultEumling")?.get(_anim);
             if (!animation)
                 return this.showFallbackText(_anim);
             this.cmpAnimation.animation = animation;
             this.cmpAnimation.time = 0;
-            console.log({ totalTime: animation.totalTime });
+            // console.log({ totalTime: animation.totalTime });
             await Script.waitMS(animation.totalTime);
             this.cmpAnimation.animation = this.defaultAnimation; // TODO: check if we should instead default back to idle or nothing at all
         }
