@@ -10,6 +10,7 @@ namespace Script {
         grid: Grid<VisualizeEntity>;
 
         side: string;
+        sideNode: ƒ.Node;
 
         constructor(_grid: Grid<VisualizeEntity>, _side: string) {
             super("VisualizeGrid");
@@ -18,6 +19,12 @@ namespace Script {
                 this.side = _side;
             } else {
                 throw new Error("Use home or away for the side parameter");
+            }
+
+            if (this.side === "away") {
+                this.sideNode = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
+            } else if (this.side === "home") {
+                this.sideNode = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
             }
 
 
@@ -40,19 +47,8 @@ namespace Script {
             });
 
             if (!_anchor) {
-
-                let visSide: ƒ.Node;
-                //get Anchors from scene
-                if (this.side === "away") {
-                    visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
-                } else if (this.side === "home") {
-                    visSide = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
-                }
-
-                //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
-
                 /**Anchors are named from 0-8 */
-                _anchor = this.getAnchor(visSide, _pos[0], _pos[1]);
+                _anchor = this.getAnchor(_pos[0], _pos[1]);
             }
             //get the Positions from the placeholders and translate the entities to it
             let position: ƒ.Vector3 = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
@@ -72,11 +68,11 @@ namespace Script {
         }
 
 
-        getAnchor(_side: ƒ.Node, _x: number, _z: number): ƒ.Node {
+        getAnchor(_x: number, _z: number): ƒ.Node {
             let anchor: ƒ.Node;
             let pointer: number = _z * 3 + _x;
             console.log("pointer: " + pointer);
-            anchor = _side.getChildByName(pointer.toString());
+            anchor = this.sideNode.getChildByName(pointer.toString());
             return anchor;
         }
 

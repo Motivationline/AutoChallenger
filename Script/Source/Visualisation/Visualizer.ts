@@ -5,12 +5,14 @@ namespace Script {
         root: ƒ.Node;
         camera: ƒ.ComponentCamera;
         viewport: ƒ.Viewport;
+        activeFight: VisualizeFight;
         #gui: VisualizeGUI;
         private entities: Map<IEntity, VisualizeEntity> = new Map();
         private fights: Map<Fight, VisualizeFight> = new Map();
 
         constructor() {
             this.root = new ƒ.Node("Root");
+            new VisualizeTarget();
             this.addEventListeners();
         }
         getEntity(_entity: IEntity): VisualizeEntity {
@@ -74,7 +76,8 @@ namespace Script {
         private fightPrepHandler = (_ev: FightEvent) => {
             const fight = _ev.detail.fight;
             if (!fight) return;
-            this.getFight(fight);
+            let fightVis = this.getFight(fight);
+            this.activeFight = fightVis;
         }
 
         addEventListeners() {

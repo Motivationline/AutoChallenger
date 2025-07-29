@@ -93,6 +93,14 @@ namespace Script {
             pos = this.away.grid.findElementPosition(entityVis);
             if (pos) this.away.removeEntityFromGrid(pos);
         }
+        whereIsEntity(_entity: VisualizeEntity): VisualizeGrid {
+            let found = false;
+            this.home.grid.forEachElement((el) => { if (el === _entity) found = true });
+            if (found) return this.home;
+            this.away.grid.forEachElement((el) => { if (el === _entity) found = true });
+            if (found) return this.away;
+            return undefined;
+        }
 
         addEventListeners() {
             this.#listeners.set(EVENT.FIGHT_START, this.fightStart);

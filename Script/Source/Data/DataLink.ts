@@ -16,6 +16,14 @@ namespace Script {
                     DataLink.linkedNodes.set(this.id, this.node);
             });
         }
+
+        static async getCopyOf(_id: string): Promise<ƒ.Node> {
+            let original = this.linkedNodes.get(_id);
+            if (!original) return undefined;
+            let node: ƒ.Node = new ƒ.Node(_id);
+            await node.deserialize(original.serialize());
+            return node;
+        }
     }
 
     export enum ANIMATION {

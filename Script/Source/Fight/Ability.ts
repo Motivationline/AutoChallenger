@@ -36,11 +36,11 @@ namespace Script {
         let conditions = Array.isArray(_ability.conditions) ? _ability.conditions : [_ability.conditions];
         for (let condition of conditions) {
             if (condition.target && _arena && _ev.target) {
-                let validTargets = getTargets(condition.target, _arena.home, _arena.away, this);
+                let validTargets = getTargets(condition.target, _arena.home, _arena.away, this).targets;
                 if (!validTargets.includes(_ev.target)) return false;
             }
             if (condition.cause && _arena && _ev.cause) {
-                let validTargets = getTargets(condition.cause, _arena.home, _arena.away, this);
+                let validTargets = getTargets(condition.cause, _arena.home, _arena.away, this).targets;
                 if (_ev.cause instanceof Entity && !validTargets.includes(_ev.cause)) return false;
             }
             let level = _ev.detail.level;
@@ -79,7 +79,7 @@ namespace Script {
                 targets = [_ev.target]
         }
         else {
-            targets = getTargets(_ability.target, _arena.home, _arena.away, this);
+            targets = getTargets(_ability.target, _arena.home, _arena.away, this).targets;
         }
 
         // no targets found, no need to do the ability
@@ -100,27 +100,36 @@ namespace Script {
     export async function executeSpell(_spells: SpellData[], _friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _targetsOverride?: IEntity[]) {
         if (!_spells) return;
         for (let spell of _spells) {
-            let targets = _targetsOverride ?? getTargets(spell.target, _friendly, _opponent, this);
-            for (let target of targets) {
-                await EventBus.dispatchEvent({ type: EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target })
-                await target.affect(spell, this);
-                await EventBus.dispatchEvent({ type: EVENT.ENTITY_SPELL, trigger: spell, cause: this, target })
+            let targets: IEntity[], side: TARGET_SIDE, positions: Grid<boolean>;
+            if (_targetsOverride) {
+                targets = _targetsOverride;
+            } else {
+                ({ targets, side, positions } = getTargets(spell.target, _friendly, _opponent, this));
             }
+            await EventBus.dispatchEvent({ type: EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target: this, detail: { targets, side, positions } });
+            for (let target of targets) {
+                await target.affect(spell, this);
+            }
+            await EventBus.dispatchEvent({ type: EVENT.ENTITY_SPELL, trigger: spell, cause: this, target: this, detail: { targets, side, positions } });
         }
     }
 
     export async function executeAttack(_attacks: AttackData[], _friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _targetsOverride?: IEntity[]) {
         if (!_attacks || _attacks.length === 0) return;
         for (let attack of _attacks) {
-            // get the target(s)
-            let targets = _targetsOverride ?? getTargets(attack.target, _friendly, _opponent, this);
-            // execute the attacks
             let attackDmg = this.getDamageOfAttacks([attack], true);
-            await EventBus.dispatchEvent({ type: EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } })
+            // get the target(s)
+            let targets: IEntity[], side: TARGET_SIDE, positions: Grid<boolean>;
+            if (_targetsOverride) {
+                targets = _targetsOverride;
+            } else {
+                ({ targets, side, positions } = getTargets(attack.target, _friendly, _opponent, this));
+            }
+            await EventBus.dispatchEvent({ type: EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets, side, positions } })
             for (let target of targets) {
                 await target.damage(attackDmg, attack.baseCritChance, this);
             }
-            await EventBus.dispatchEvent({ type: EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } })
+            await EventBus.dispatchEvent({ type: EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets, side, positions } })
         }
     }
 }

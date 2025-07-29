@@ -242,7 +242,7 @@ var Script;
     //#region Implementation
     function getTargets(_target, _allies, _opponents, _self) {
         if (!_target)
-            return [];
+            return { targets: [] };
         const targets = [];
         const side = _target.side === TARGET_SIDE.ALLY ? _allies : _opponents;
         // entity selector
@@ -280,7 +280,7 @@ var Script;
             if (_target.entity.maxNumTargets !== undefined && targets.length > _target.entity.maxNumTargets) {
                 targets.length = _target.entity.maxNumTargets;
             }
-            return targets;
+            return { targets, side: _target.side };
         }
         // area selector
         else if ("area" in _target) {
@@ -292,9 +292,9 @@ var Script;
                 if (pattern.get(pos))
                     targets.push(el);
             });
-            return targets;
+            return { targets, side: _target.side, positions: pattern };
         }
-        return targets;
+        return { targets };
     }
     Script.getTargets = getTargets;
     function getTargetPositions(_target, _self, _side) {
@@ -1961,9 +1961,11 @@ var Script;
                 const fight = _ev.detail.fight;
                 if (!fight)
                     return;
-                this.getFight(fight);
+                let fightVis = this.getFight(fight);
+                this.activeFight = fightVis;
             };
             this.root = new ƒ.Node("Root");
+            new Script.VisualizeTarget();
             this.addEventListeners();
         }
         getEntity(_entity) {
@@ -2456,6 +2458,14 @@ var Script;
                     if (this.node instanceof ƒ.Graph)
                         DataLink.linkedNodes.set(this.id, this.node);
                 });
+            }
+            static async getCopyOf(_id) {
+                let original = this.linkedNodes.get(_id);
+                if (!original)
+                    return undefined;
+                let node = new ƒ.Node(_id);
+                await node.deserialize(original.serialize());
+                return node;
             }
             static {
                 __runInitializers(_classThis, _classExtraInitializers);
@@ -3101,12 +3111,12 @@ var Script;
         let conditions = Array.isArray(_ability.conditions) ? _ability.conditions : [_ability.conditions];
         for (let condition of conditions) {
             if (condition.target && _arena && _ev.target) {
-                let validTargets = Script.getTargets(condition.target, _arena.home, _arena.away, this);
+                let validTargets = Script.getTargets(condition.target, _arena.home, _arena.away, this).targets;
                 if (!validTargets.includes(_ev.target))
                     return false;
             }
             if (condition.cause && _arena && _ev.cause) {
-                let validTargets = Script.getTargets(condition.cause, _arena.home, _arena.away, this);
+                let validTargets = Script.getTargets(condition.cause, _arena.home, _arena.away, this).targets;
                 if (_ev.cause instanceof Script.Entity && !validTargets.includes(_ev.cause))
                     return false;
             }
@@ -3152,7 +3162,7 @@ var Script;
                 targets = [_ev.target];
         }
         else {
-            targets = Script.getTargets(_ability.target, _arena.home, _arena.away, this);
+            targets = Script.getTargets(_ability.target, _arena.home, _arena.away, this).targets;
         }
         // no targets found, no need to do the ability
         if (!targets || targets.length === 0)
@@ -3171,12 +3181,18 @@ var Script;
         if (!_spells)
             return;
         for (let spell of _spells) {
-            let targets = _targetsOverride ?? Script.getTargets(spell.target, _friendly, _opponent, this);
-            for (let target of targets) {
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target });
-                await target.affect(spell, this);
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL, trigger: spell, cause: this, target });
+            let targets, side, positions;
+            if (_targetsOverride) {
+                targets = _targetsOverride;
             }
+            else {
+                ({ targets, side, positions } = Script.getTargets(spell.target, _friendly, _opponent, this));
+            }
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target: this, detail: { targets, side, positions } });
+            for (let target of targets) {
+                await target.affect(spell, this);
+            }
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL, trigger: spell, cause: this, target: this, detail: { targets, side, positions } });
         }
     }
     Script.executeSpell = executeSpell;
@@ -3184,15 +3200,20 @@ var Script;
         if (!_attacks || _attacks.length === 0)
             return;
         for (let attack of _attacks) {
-            // get the target(s)
-            let targets = _targetsOverride ?? Script.getTargets(attack.target, _friendly, _opponent, this);
-            // execute the attacks
             let attackDmg = this.getDamageOfAttacks([attack], true);
-            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } });
+            // get the target(s)
+            let targets, side, positions;
+            if (_targetsOverride) {
+                targets = _targetsOverride;
+            }
+            else {
+                ({ targets, side, positions } = Script.getTargets(attack.target, _friendly, _opponent, this));
+            }
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets, side, positions } });
             for (let target of targets) {
                 await target.damage(attackDmg, attack.baseCritChance, this);
             }
-            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } });
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets, side, positions } });
         }
     }
     Script.executeAttack = executeAttack;
@@ -3796,6 +3817,18 @@ var Script;
             if (pos)
                 this.away.removeEntityFromGrid(pos);
         }
+        whereIsEntity(_entity) {
+            let found = false;
+            this.home.grid.forEachElement((el) => { if (el === _entity)
+                found = true; });
+            if (found)
+                return this.home;
+            this.away.grid.forEachElement((el) => { if (el === _entity)
+                found = true; });
+            if (found)
+                return this.away;
+            return undefined;
+        }
         addEventListeners() {
             this.#listeners.set(Script.EVENT.FIGHT_START, this.fightStart);
             this.#listeners.set(Script.EVENT.FIGHT_END, this.fightEnd);
@@ -3817,14 +3850,6 @@ var Script;
     }
     Script.VisualizeFight = VisualizeFight;
 })(Script || (Script = {}));
-// namespace Script {
-//     import ƒ = FudgeCore;
-//     export class VisualizeAttack {
-//         static nodePool: Map<string, ƒ.Node[]> = new Map();
-//         constructor(_attack: string) {
-//         }
-//     }
-// }
 var Script;
 (function (Script) {
     var ƒ = FudgeCore;
@@ -4046,6 +4071,79 @@ var Script;
     }
     Script.VisualizeEntity = VisualizeEntity;
 })(Script || (Script = {}));
+var Script;
+(function (Script) {
+    class VisualizeTarget {
+        constructor() {
+            this.nodePool = [];
+            this.visibleNodes = [];
+            this.showTargets = async (_ev) => {
+                if (!_ev.detail)
+                    return;
+                positions: if (_ev.detail.positions) {
+                    if (!_ev.trigger || !("target" in _ev.trigger))
+                        break positions;
+                    if (typeof _ev.trigger.target === "string")
+                        break positions;
+                    const vis = Script.Provider.visualizer;
+                    let allySide, opponentSide;
+                    if (_ev.cause instanceof Script.Stone) {
+                        allySide = vis.activeFight.home;
+                        opponentSide = vis.activeFight.away;
+                    }
+                    else {
+                        const visGrid = vis.activeFight.whereIsEntity(vis.getEntity(_ev.cause));
+                        if (visGrid.side === "home") {
+                            allySide = vis.activeFight.home;
+                            opponentSide = vis.activeFight.away;
+                        }
+                        else {
+                            allySide = vis.activeFight.away;
+                            opponentSide = vis.activeFight.home;
+                        }
+                    }
+                    const targetSide = _ev.trigger.target.side === Script.TARGET_SIDE.ALLY ? allySide : opponentSide;
+                    _ev.detail.positions.forEachElement(async (_el, _pos) => {
+                        const anchor = targetSide.getAnchor(_pos[0], _pos[1]);
+                        anchor.addChild(await this.getNode());
+                    });
+                    return;
+                }
+                if (!_ev.detail.targets)
+                    return;
+                for (let target of _ev.detail.targets) {
+                    Script.Provider.visualizer.getEntity(target).addChild(await this.getNode());
+                }
+            };
+            this.hideTargets = async (_ev) => {
+                while (this.visibleNodes.length > 0) {
+                    this.returnNode(this.visibleNodes.pop());
+                }
+            };
+            this.addEventListeners();
+        }
+        addEventListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_ATTACK, this.showTargets);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_ATTACKED, this.hideTargets);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.showTargets);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL, this.hideTargets);
+        }
+        async getNode() {
+            let node;
+            if (this.nodePool.length > 0)
+                node = this.nodePool.pop();
+            else
+                node = await Script.DataLink.getCopyOf("TargetHighlightGeneric");
+            this.visibleNodes.push(node);
+            return node;
+        }
+        returnNode(_node) {
+            _node.getParent()?.removeChild(_node);
+            this.nodePool.push(_node);
+        }
+    }
+    Script.VisualizeTarget = VisualizeTarget;
+})(Script || (Script = {}));
 // namespace Script {
 //     export interface IVisualizeEntity {
 //         attack(_attack: AttackData, _targets: IEntity[]): Promise<void>;
@@ -4113,6 +4211,12 @@ var Script;
             else {
                 throw new Error("Use home or away for the side parameter");
             }
+            if (this.side === "away") {
+                this.sideNode = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
+            }
+            else if (this.side === "home") {
+                this.sideNode = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
+            }
             this.addComponent(new ƒ.ComponentTransform());
             //set the positions of the entities in the grid
             this.grid.forEachElement((element, pos) => {
@@ -4131,17 +4235,8 @@ var Script;
                     this.removeEntityFromGrid(pos);
             });
             if (!_anchor) {
-                let visSide;
-                //get Anchors from scene
-                if (this.side === "away") {
-                    visSide = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
-                }
-                else if (this.side === "home") {
-                    visSide = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
-                }
-                //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
                 /**Anchors are named from 0-8 */
-                _anchor = this.getAnchor(visSide, _pos[0], _pos[1]);
+                _anchor = this.getAnchor(_pos[0], _pos[1]);
             }
             //get the Positions from the placeholders and translate the entities to it
             let position = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
@@ -4159,11 +4254,11 @@ var Script;
             this.removeChild(elementToRemove);
             // elementToRemove.removeEventListeners();
         }
-        getAnchor(_side, _x, _z) {
+        getAnchor(_x, _z) {
             let anchor;
             let pointer = _z * 3 + _x;
             console.log("pointer: " + pointer);
-            anchor = _side.getChildByName(pointer.toString());
+            anchor = this.sideNode.getChildByName(pointer.toString());
             return anchor;
         }
         nuke() {

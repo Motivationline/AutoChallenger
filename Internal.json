@@ -4070,5 +4070,84 @@
       "type": "GraphGLTF",
       "url": "Assets\\GLTFs\\Enemies\\FlameFlinger\\FlameFlinger.glb"
     }
+  },
+  "Graph|2025-07-29T08:45:59.326Z|29252": {
+    "ƒ.Graph": {
+      "name": "TargetHighlight",
+      "active": true,
+      "components": {
+        "ComponentMesh": [
+          {
+            "ƒ.ComponentMesh": {
+              "idMesh": "MeshQuad|2025-07-03T06:11:04.933Z|59310",
+              "pivot": {
+                "translation": "[0, 0, 0]",
+                "rotation": "[0, 0, 0]",
+                "scaling": "[1, 1, 1]"
+              },
+              "Component": {
+                "active": true
+              }
+            }
+          }
+        ],
+        "ComponentMaterial": [
+          {
+            "ƒ.ComponentMaterial": {
+              "sortForAlpha": false,
+              "clrPrimary": "[0.9490196078431372, 0.39215686274509803, 0.39215686274509803, 1]",
+              "clrSecondary": "[1, 1, 1, 1]",
+              "pivot": {
+                "translation": "[0, 0]",
+                "rotation": 0,
+                "scaling": "[1, 1]"
+              },
+              "Component": {
+                "active": true
+              },
+              "idMaterial": "Material|2025-07-29T08:46:54.853Z|25572"
+            }
+          }
+        ],
+        "ComponentTransform": [
+          {
+            "ƒ.ComponentTransform": {
+              "local": {
+                "translation": "[0, 0, 0]",
+                "rotation": "[-90, 0, 0]",
+                "scaling": "[1, 1, 1]"
+              },
+              "Component": {
+                "active": true
+              }
+            }
+          }
+        ],
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "TargetHighlightGeneric"
+            }
+          }
+        ]
+      },
+      "children": [],
+      "idResource": "Graph|2025-07-29T08:45:59.326Z|29252",
+      "type": "Graph"
+    }
+  },
+  "Material|2025-07-29T08:46:54.853Z|25572": {
+    "ƒ.Material": {
+      "name": "ShaderLit",
+      "idResource": "Material|2025-07-29T08:46:54.853Z|25572",
+      "shader": "ShaderLit",
+      "coat": {
+        "ƒ.CoatColored": {
+          "alphaClip": 0.01,
+          "color": "[1, 1, 1, 1]"
+        }
+      }
+    }
   }
 }

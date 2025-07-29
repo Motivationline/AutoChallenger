@@ -269,7 +269,11 @@ declare namespace Script {
         const RANDOM_ENEMY: Readonly<Target>;
         const RANDOM_ALLY: Readonly<Target>;
     }
-    export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self: IEntity): IEntity[];
+    export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self: IEntity): {
+        targets: IEntity[];
+        positions?: Grid<boolean>;
+        side?: TARGET_SIDE;
+    };
     export function getTargetPositions(_target: TargetArea, _self: IEntity, _side: Grid<IEntity>): Grid<boolean>;
     export {};
 }
@@ -389,6 +393,7 @@ declare namespace Script {
         root: ƒ.Node;
         camera: ƒ.ComponentCamera;
         viewport: ƒ.Viewport;
+        activeFight: VisualizeFight;
         private entities;
         private fights;
         constructor();
@@ -490,6 +495,7 @@ declare namespace Script {
         static linkedNodes: Map<string, ƒ.Node>;
         id: string;
         constructor();
+        static getCopyOf(_id: string): Promise<ƒ.Node>;
     }
     enum ANIMATION {
         IDLE = "idle",
@@ -794,6 +800,7 @@ declare namespace Script {
         fightEnd(): Promise<void>;
         entityAdded(_ev: FightEvent): void;
         entityRemoved(_ev: FightEvent): void;
+        whereIsEntity(_entity: VisualizeEntity): VisualizeGrid;
         addEventListeners(): void;
         removeEventListeners(): void;
         eventListener: (_ev: FightEvent) => void;
@@ -830,14 +837,27 @@ declare namespace Script {
     }
 }
 declare namespace Script {
+    class VisualizeTarget {
+        private nodePool;
+        private visibleNodes;
+        constructor();
+        private addEventListeners;
+        private getNode;
+        private returnNode;
+        private showTargets;
+        private hideTargets;
+    }
+}
+declare namespace Script {
     import ƒ = FudgeCore;
     class VisualizeGrid extends ƒ.Node {
         grid: Grid<VisualizeEntity>;
         side: string;
+        sideNode: ƒ.Node;
         constructor(_grid: Grid<VisualizeEntity>, _side: string);
         addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting?: boolean, _anchor?: ƒ.Node): void;
         removeEntityFromGrid(_pos: Position): void;
-        getAnchor(_side: ƒ.Node, _x: number, _z: number): ƒ.Node;
+        getAnchor(_x: number, _z: number): ƒ.Node;
         nuke(): void;
     }
 }

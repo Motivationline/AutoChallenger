@@ -199,8 +199,8 @@ namespace Script {
 
     //#region Implementation
 
-    export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self: IEntity): IEntity[] {
-        if (!_target) return [];
+    export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self: IEntity): { targets: IEntity[], positions?: Grid<boolean>, side?: TARGET_SIDE} {
+        if (!_target) return {targets: []};
         const targets: IEntity[] = [];
         const side: Grid<IEntity> = _target.side === TARGET_SIDE.ALLY ? _allies : _opponents;
 
@@ -240,7 +240,7 @@ namespace Script {
                 targets.length = _target.entity.maxNumTargets;
             }
 
-            return targets;
+            return {targets, side: _target.side};
         }
 
 
@@ -255,10 +255,10 @@ namespace Script {
                     targets.push(el);
             });
 
-            return targets;
+            return {targets, side: _target.side, positions: pattern};
         }
 
-        return targets;
+        return {targets};
     }
 
     export function getTargetPositions(_target: TargetArea, _self: IEntity, _side: Grid<IEntity>): Grid<boolean> {
