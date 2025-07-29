@@ -1,17 +1,17 @@
 namespace Script {
     import ƒ = FudgeCore;
-    export interface VisualizeEntity {
-        //idle(): Promise<void>;
-        attack(_ev: FightEvent): Promise<void>;
-        move(_move: MoveData): Promise<void>;
-        getHurt(_ev: FightEvent): Promise<void>;
-        resist(): Promise<void>;
-        useSpell(_ev: FightEvent): Promise<void>;
-        showPreview(): Promise<void>;
-        hidePreview(): Promise<void>;
-        /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
-        updateVisuals(): void;
-    }
+    // export interface VisualizeEntity {
+    //     //idle(): Promise<void>;
+    //     attack(_ev: FightEvent): Promise<void>;
+    //     move(_move: MoveData): Promise<void>;
+    //     getHurt(_ev: FightEvent): Promise<void>;
+    //     resist(): Promise<void>;
+    //     useSpell(_ev: FightEvent): Promise<void>;
+    //     showPreview(): Promise<void>;
+    //     hidePreview(): Promise<void>;
+    //     /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
+    //     updateVisuals(): void;
+    // }
 
     export class VisualizeEntity extends ƒ.Node /*implements VisualizeEntity*/ {
 

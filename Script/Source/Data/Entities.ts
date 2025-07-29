@@ -1147,7 +1147,7 @@ namespace Script {
                 health: 2,
                 abilities: [
                     {
-                        on: EVENT.ROUND_END,
+                        on: EVENT.FIGHT_END,
                         target: {
                             area: {
                                 position: AREA_POSITION.ABSOLUTE,

@@ -105,6 +105,20 @@ namespace Script {
             }
         }
 
+        static dispatchEventWithoutWaiting<T>(_ev: FightEvent<T>): Promise<void>[] {
+            if (!this.listeners.has(_ev.type)) return [];
+            const listeners = [...this.listeners.get(_ev.type)]; // copying this so removing listeners doesn't skip any
+            const promises: Promise<void>[] = [];
+            for (let listener of listeners) {
+                try {
+                    promises.push(new Promise(async (resolve) => { await listener(_ev); resolve(); }));
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+            return promises;
+        }
+
         static async awaitSpecificEvent(_type: EVENT): Promise<FightEvent> {
             return new Promise((resolve) => {
                 const resolver = (_ev: FightEvent) => {

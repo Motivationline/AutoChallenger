@@ -66,7 +66,7 @@ namespace Script {
             if (_ability.on !== _ev.type) return;
         }
 
-        if (!areAbilityConditionsMet(_ability, _arena, _ev)) return;
+        if (!areAbilityConditionsMet.call(this, _ability, _arena, _ev)) return;
 
         // if we get here, we're ready to do the ability
         let targets: IEntity[] = undefined;
@@ -87,11 +87,11 @@ namespace Script {
 
         await EventBus.dispatchEvent({ type: EVENT.TRIGGER_ABILITY, cause: this, target: this, trigger: _ability });
         if (_ability.attack) {
-            await executeAttack([{ target: undefined, ..._ability.attack }], _arena.home, _arena.away, targets);
+            await executeAttack.call(this, [{ target: undefined, ..._ability.attack }], _arena.home, _arena.away, targets);
         }
 
         if (_ability.spell) {
-            await executeSpell([{ target: undefined, ..._ability.spell }], _arena.home, _arena.away, targets);
+            await executeSpell.call(this, [{ target: undefined, ..._ability.spell }], _arena.home, _arena.away, targets);
         }
         await EventBus.dispatchEvent({ type: EVENT.TRIGGERED_ABILITY, cause: this, target: this, trigger: _ability });
     }

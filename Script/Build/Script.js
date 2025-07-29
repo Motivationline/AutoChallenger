@@ -117,6 +117,21 @@ var Script;
                 }
             }
         }
+        static dispatchEventWithoutWaiting(_ev) {
+            if (!this.listeners.has(_ev.type))
+                return [];
+            const listeners = [...this.listeners.get(_ev.type)]; // copying this so removing listeners doesn't skip any
+            const promises = [];
+            for (let listener of listeners) {
+                try {
+                    promises.push(new Promise(async (resolve) => { await listener(_ev); resolve(); }));
+                }
+                catch (error) {
+                    console.error(error);
+                }
+            }
+            return promises;
+        }
         static async awaitSpecificEvent(_type) {
             return new Promise((resolve) => {
                 const resolver = (_ev) => {
@@ -233,8 +248,13 @@ var Script;
         // entity selector
         if ("entity" in _target) {
             side.forEachElement((entity) => {
-                if (entity && !entity.untargetable)
-                    targets.push(entity);
+                if (!entity)
+                    return;
+                if (entity.untargetable)
+                    return;
+                if (_target.excludeSelf && entity === _self)
+                    return;
+                targets.push(entity);
             });
             switch (_target.entity.sortBy) {
                 case "random": {
@@ -264,99 +284,8 @@ var Script;
         }
         // area selector
         else if ("area" in _target) {
-            let pos;
-            if (_target.area.position !== AREA_POSITION_ABSOLUTE.ABSOLUTE && !_self)
-                return [];
-            switch (_target.area.position) {
-                case Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW: {
-                    for (let i = 0; i < 3; i++) {
-                        if (side.get([i, _self.position[1]])) {
-                            pos = [i, _self.position[1]];
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case Script.AREA_POSITION.RELATIVE_LAST_IN_ROW: {
-                    for (let i = 2; i >= 0; i--) {
-                        if (side.get([i, _self.position[1]])) {
-                            pos = [i, _self.position[1]];
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case Script.AREA_POSITION.RELATIVE_SAME: {
-                    // intuitively for the designer "same" means "the same spot on the opposite side".
-                    // But because the own side is mirrored internally, "SAME" internally means mirrored and vice versa
-                    pos = [2 - _self.position[0], _self.position[1]];
-                    break;
-                }
-                case Script.AREA_POSITION.RELATIVE_MIRRORED: {
-                    pos = [_self.position[0], _self.position[1]];
-                    break;
-                }
-                case Script.AREA_POSITION.ABSOLUTE: {
-                    pos = _target.area.absolutePosition;
-                    break;
-                }
-            }
-            if (!pos)
-                return [];
-            let pattern = new Script.Grid();
-            let patternIsRelative = true;
-            switch (_target.area.shape) {
-                case Script.AREA_SHAPE.SINGLE:
-                    pattern.set(pos, true);
-                    patternIsRelative = false;
-                    break;
-                case Script.AREA_SHAPE.ROW:
-                    pattern.set([0, pos[1]], true);
-                    pattern.set([1, pos[1]], true);
-                    pattern.set([2, pos[1]], true);
-                    patternIsRelative = false;
-                    break;
-                case Script.AREA_SHAPE.COLUMN:
-                    pattern.set([pos[0], 0], true);
-                    pattern.set([pos[0], 1], true);
-                    pattern.set([pos[0], 2], true);
-                    patternIsRelative = false;
-                    break;
-                case Script.AREA_SHAPE.PLUS:
-                    pattern.set([1, 0], true);
-                    pattern.set([0, 1], true);
-                    pattern.set([1, 1], true);
-                    pattern.set([2, 1], true);
-                    pattern.set([1, 2], true);
-                    break;
-                case Script.AREA_SHAPE.DIAGONALS:
-                    pattern.set([0, 0], true);
-                    pattern.set([2, 0], true);
-                    pattern.set([0, 2], true);
-                    pattern.set([2, 2], true);
-                    break;
-                case Script.AREA_SHAPE.SQUARE:
-                    pattern = new Script.Grid([[true, true, true], [true, false, true], [true, true, true]]);
-                    break;
-                case Script.AREA_SHAPE.PATTERN: {
-                    if (_target.area.shape === Script.AREA_SHAPE.PATTERN) { // only so that TS doesn't complain.
-                        new Script.Grid(_target.area.pattern).forEachPosition((element, pos) => {
-                            pattern.set(pos, !!element);
-                        });
-                    }
-                }
-            }
-            if (patternIsRelative && (pos[0] !== 1 || pos[1] !== 1)) {
-                // 1, 1 is the center, so the difference to that is how much the pattern is supposed to be moved
-                let delta = [pos[0] - 1, pos[1] - 1];
-                let movedPattern = new Script.Grid();
-                pattern.forEachPosition((el, pos) => {
-                    let newPos = [pos[0] + delta[0], pos[1] + delta[1]];
-                    movedPattern.set(newPos, !!el);
-                });
-                pattern = movedPattern;
-            }
-            // final pattern achieved, get the actual entities in these areas now
+            const pattern = getTargetPositions(_target, _self, side);
+            // get the actual entities in these areas now
             side.forEachElement((el, pos) => {
                 if (el.untargetable)
                     return;
@@ -368,6 +297,102 @@ var Script;
         return targets;
     }
     Script.getTargets = getTargets;
+    function getTargetPositions(_target, _self, _side) {
+        let pattern = new Script.Grid();
+        let pos;
+        if (_target.area.position !== AREA_POSITION_ABSOLUTE.ABSOLUTE && !_self)
+            return pattern;
+        switch (_target.area.position) {
+            case Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW: {
+                for (let i = 0; i < 3; i++) {
+                    if (_side.get([i, _self.position[1]])) {
+                        pos = [i, _self.position[1]];
+                        break;
+                    }
+                }
+                break;
+            }
+            case Script.AREA_POSITION.RELATIVE_LAST_IN_ROW: {
+                for (let i = 2; i >= 0; i--) {
+                    if (_side.get([i, _self.position[1]])) {
+                        pos = [i, _self.position[1]];
+                        break;
+                    }
+                }
+                break;
+            }
+            case Script.AREA_POSITION.RELATIVE_SAME: {
+                // intuitively for the designer "same" means "the same spot on the opposite side".
+                // But because the own side is mirrored internally, "SAME" internally means mirrored and vice versa
+                pos = [2 - _self.position[0], _self.position[1]];
+                break;
+            }
+            case Script.AREA_POSITION.RELATIVE_MIRRORED: {
+                pos = [_self.position[0], _self.position[1]];
+                break;
+            }
+            case Script.AREA_POSITION.ABSOLUTE: {
+                pos = _target.area.absolutePosition;
+                break;
+            }
+        }
+        if (!pos)
+            return pattern;
+        let patternIsRelative = true;
+        switch (_target.area.shape) {
+            case Script.AREA_SHAPE.SINGLE:
+                pattern.set(pos, true);
+                patternIsRelative = false;
+                break;
+            case Script.AREA_SHAPE.ROW:
+                pattern.set([0, pos[1]], true);
+                pattern.set([1, pos[1]], true);
+                pattern.set([2, pos[1]], true);
+                patternIsRelative = false;
+                break;
+            case Script.AREA_SHAPE.COLUMN:
+                pattern.set([pos[0], 0], true);
+                pattern.set([pos[0], 1], true);
+                pattern.set([pos[0], 2], true);
+                patternIsRelative = false;
+                break;
+            case Script.AREA_SHAPE.PLUS:
+                pattern.set([1, 0], true);
+                pattern.set([0, 1], true);
+                pattern.set([1, 1], true);
+                pattern.set([2, 1], true);
+                pattern.set([1, 2], true);
+                break;
+            case Script.AREA_SHAPE.DIAGONALS:
+                pattern.set([0, 0], true);
+                pattern.set([2, 0], true);
+                pattern.set([0, 2], true);
+                pattern.set([2, 2], true);
+                break;
+            case Script.AREA_SHAPE.SQUARE:
+                pattern = new Script.Grid([[true, true, true], [true, false, true], [true, true, true]]);
+                break;
+            case Script.AREA_SHAPE.PATTERN: {
+                if (_target.area.shape === Script.AREA_SHAPE.PATTERN) { // only so that TS doesn't complain.
+                    new Script.Grid(_target.area.pattern).forEachPosition((element, pos) => {
+                        pattern.set(pos, !!element);
+                    });
+                }
+            }
+        }
+        if (patternIsRelative && (pos[0] !== 1 || pos[1] !== 1)) {
+            // 1, 1 is the center, so the difference to that is how much the pattern is supposed to be moved
+            let delta = [pos[0] - 1, pos[1] - 1];
+            let movedPattern = new Script.Grid();
+            pattern.forEachPosition((el, pos) => {
+                let newPos = [pos[0] + delta[0], pos[1] + delta[1]];
+                movedPattern.set(newPos, !!el);
+            });
+            pattern = movedPattern;
+        }
+        return pattern;
+    }
+    Script.getTargetPositions = getTargetPositions;
     //#endregion
 })(Script || (Script = {}));
 var Script;
@@ -1502,6 +1527,22 @@ var Script;
             {
                 id: "sandSitter", // enemy that attacks a plus, but spawns in round 2 (not implemented yet)
                 health: 1,
+                abilities: [
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: Script.TARGET.SELF,
+                        spell: {
+                            type: Script.SPELL_TYPE.UNTARGETABLE,
+                        }
+                    },
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: Script.TARGET.SELF,
+                        spell: {
+                            type: Script.SPELL_TYPE.STUN,
+                        }
+                    }
+                ],
                 attacks: {
                     options: [
                         {
@@ -1542,7 +1583,7 @@ var Script;
                 health: 2,
                 abilities: [
                     {
-                        on: Script.EVENT.ROUND_END,
+                        on: Script.EVENT.FIGHT_END,
                         target: {
                             area: {
                                 position: Script.AREA_POSITION.ABSOLUTE,
@@ -3098,7 +3139,7 @@ var Script;
             if (_ability.on !== _ev.type)
                 return;
         }
-        if (!areAbilityConditionsMet(_ability, _arena, _ev))
+        if (!areAbilityConditionsMet.call(this, _ability, _arena, _ev))
             return;
         // if we get here, we're ready to do the ability
         let targets = undefined;
@@ -3118,10 +3159,10 @@ var Script;
             return;
         await Script.EventBus.dispatchEvent({ type: Script.EVENT.TRIGGER_ABILITY, cause: this, target: this, trigger: _ability });
         if (_ability.attack) {
-            await executeAttack([{ target: undefined, ..._ability.attack }], _arena.home, _arena.away, targets);
+            await executeAttack.call(this, [{ target: undefined, ..._ability.attack }], _arena.home, _arena.away, targets);
         }
         if (_ability.spell) {
-            await executeSpell([{ target: undefined, ..._ability.spell }], _arena.home, _arena.away, targets);
+            await executeSpell.call(this, [{ target: undefined, ..._ability.spell }], _arena.home, _arena.away, targets);
         }
         await Script.EventBus.dispatchEvent({ type: Script.EVENT.TRIGGERED_ABILITY, cause: this, target: this, trigger: _ability });
     }
@@ -3776,9 +3817,29 @@ var Script;
     }
     Script.VisualizeFight = VisualizeFight;
 })(Script || (Script = {}));
+// namespace Script {
+//     import ƒ = FudgeCore;
+//     export class VisualizeAttack {
+//         static nodePool: Map<string, ƒ.Node[]> = new Map();
+//         constructor(_attack: string) {
+//         }
+//     }
+// }
 var Script;
 (function (Script) {
     var ƒ = FudgeCore;
+    // export interface VisualizeEntity {
+    //     //idle(): Promise<void>;
+    //     attack(_ev: FightEvent): Promise<void>;
+    //     move(_move: MoveData): Promise<void>;
+    //     getHurt(_ev: FightEvent): Promise<void>;
+    //     resist(): Promise<void>;
+    //     useSpell(_ev: FightEvent): Promise<void>;
+    //     showPreview(): Promise<void>;
+    //     hidePreview(): Promise<void>;
+    //     /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
+    //     updateVisuals(): void;
+    // }
     class VisualizeEntity extends ƒ.Node /*implements VisualizeEntity*/ {
         constructor(_entity) {
             super("entity");

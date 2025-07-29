@@ -71,6 +71,7 @@ declare namespace Script {
         static addEventListener(_ev: EVENT, _fn: FightEventListener): void;
         static removeEventListener(_ev: EVENT, _fn: FightEventListener): void;
         static dispatchEvent<T>(_ev: FightEvent<T>): Promise<void>;
+        static dispatchEventWithoutWaiting<T>(_ev: FightEvent<T>): Promise<void>[];
         static awaitSpecificEvent(_type: EVENT): Promise<FightEvent>;
     }
 }
@@ -269,6 +270,7 @@ declare namespace Script {
         const RANDOM_ALLY: Readonly<Target>;
     }
     export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self: IEntity): IEntity[];
+    export function getTargetPositions(_target: TargetArea, _self: IEntity, _side: Grid<IEntity>): Grid<boolean>;
     export {};
 }
 declare namespace Script {
@@ -799,25 +801,22 @@ declare namespace Script {
 }
 declare namespace Script {
     import ƒ = FudgeCore;
-    interface VisualizeEntity {
-        attack(_ev: FightEvent): Promise<void>;
-        move(_move: MoveData): Promise<void>;
-        getHurt(_ev: FightEvent): Promise<void>;
-        resist(): Promise<void>;
-        useSpell(_ev: FightEvent): Promise<void>;
-        showPreview(): Promise<void>;
-        hidePreview(): Promise<void>;
-        /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
-        updateVisuals(): void;
-    }
     class VisualizeEntity extends ƒ.Node {
         private entity;
         private cmpAnimation;
         private defaultAnimation;
         private tmpText;
         constructor(_entity: IEntity);
+        attack(_ev: FightEvent): Promise<void>;
+        move(_move: MoveData): Promise<void>;
+        useSpell(_ev: FightEvent): Promise<void>;
+        getHurt(_ev: FightEvent): Promise<void>;
         getAffected(_ev: FightEvent): Promise<void>;
         die(_ev: FightEvent): Promise<void>;
+        resist(): Promise<void>;
+        showPreview(): Promise<void>;
+        hidePreview(): Promise<void>;
+        updateVisuals(): Promise<void>;
         loadModel(_id: string): Promise<void>;
         givePlaceholderPls(): ƒ.Node;
         private playAnimationIfPossible;
