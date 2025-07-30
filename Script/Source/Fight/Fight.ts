@@ -67,6 +67,7 @@ namespace Script {
                 await this.runOneSide(this.arena.away, this.arena.home);
                 await EventBus.dispatchEvent({ type: EVENT.ROUND_END, detail: { round: r }});
                 //output arena for debugging
+                // @Björn falscher Zeitpunkt und Art um die Move aufzurufen. s.u.
                 console.log("Away Arena: ");
                 console.log(this.arena.away);
                 await EventBus.dispatchEvent({type: EVENT.ENTITY_MOVE, grid: this.arena.away as Grid<Entity>}); //TODO: try to convert IEntity to Entity Grid
@@ -93,7 +94,8 @@ namespace Script {
 
         private async runOneSide(_active: Grid<IEntity>, _passive: Grid<IEntity>): Promise<void> {
             // TODO: moves
-
+            // @Björn hier die move mit dem aktiven grid aufrufen (und abwarten)
+            
             // spells
             await _active.forEachElementAsync(async (el) => {
                 await el.useSpell(_active, _passive);

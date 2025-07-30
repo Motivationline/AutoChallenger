@@ -165,6 +165,10 @@ namespace Script {
             this.tmpText.texture.text = effectText;
         }
 
+        // @Björn das Problem ist, dass wenn du es so aufrufst, du `this` verlierst.
+        // um das zu fixen musst du eine lambda funktion benutzen, also private updatePosition = () => { this.move() }
+        // wie es auch bei eventListener unten gemacht ist. Und der bekommt aktuell ja auch noch jedes Event mit, nicht nur das von der eigenen Entity.
+        // In dem Fall kannst du es aber auch einfach in die eventListener/handleEvent Systematik unten mit einbauen, da wird das alles schon behandelt.
         private updatePosition(){
             this.move();
         }
@@ -186,6 +190,7 @@ namespace Script {
             EventBus.addEventListener(EVENT.ROUND_END, this.updateTmpText);
             EventBus.addEventListener(EVENT.ROUND_START, this.updateTmpText);
 
+            // @Björn besser EntityMove (ohne d) für die visuelle Darstellung nutzen. denk auch dran den wieder zu entfernen
             EventBus.addEventListener(EVENT.ENTITY_MOVED, this.updatePosition);
         }
 
@@ -214,6 +219,7 @@ namespace Script {
                         await this.useSpell(_ev);
                         break;
                     }
+                    // @Björn hier könntest du die move einbauen
                 }
             } else if (_ev.target === this.entity) {
                 // this entity is affected by something

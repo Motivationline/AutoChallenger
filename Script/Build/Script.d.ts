@@ -828,6 +828,7 @@ declare namespace Script {
         private playAnimationIfPossible;
         private showFallbackText;
         private updateTmpText;
+        private updatePosition;
         getEntity(): Readonly<IEntity>;
         addEventListeners(): void;
         removeEventListeners(): void;
@@ -845,6 +846,9 @@ declare namespace Script {
         removeEntityFromGrid(_pos: Position): void;
         getAnchor(_side: ƒ.Node, _x: number, _z: number): ƒ.Node;
         nuke(): void;
+        move(): void;
+        addEventListeners(): void;
+        removeEventListeners(): void;
     }
 }
 declare namespace Script {

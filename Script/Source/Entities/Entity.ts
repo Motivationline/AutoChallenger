@@ -54,7 +54,8 @@ namespace Script {
         startDirection?: number;
         activeEffects = new Map<SPELL_TYPE, number>();
         moved: boolean;
-        currentDirection: Position;//TODO add this to Entity Data, that they have the correct move data
+        // @Björn ich denke es wäre einfacher / besser die aktuelle rotation zu speichern
+        currentDirection: Position;//TODO add this to Entity Data, that they have the correct move data 
 
         #arena: Arena;
         #triggers: Set<EVENT> = new Set();
@@ -236,20 +237,29 @@ namespace Script {
             let grid: Grid<Entity> = _grid;
             //check if the Entity has move data
             let moveData: MoveData;
-            moveData = this.select(this.moves, true)[0];//TODO: funktioniert das????
-            if (this.moves) {
+            moveData = this.select(this.moves, true)[0];//TODO: funktioniert das???? // @Björn das sucht dir alle moves raus die es machen soll - du nimmst aber nur den ersten. Im Moment geht das weil da immer nur einer zurück kommt.
+            if (this.moves) { // @Björn hier ggf besser auf moveData testen
                 for (let i = 0; i <= maxAlternatives && i <= moveData.blocked.attempts; i++) {
-                    let rotateBy: number = moveData.rotateBy + i * moveData.blocked.attempts;
+                    // @Björn hier fehlt noch die aktuelle rotation - die wird aktuell noch in nextPositionBasedOnThisRotation einberechnet, aber siehe meinen Kommentar dort
+                    // Außerdem solltest du nicht mit blocked.attempts multiplizieren sondern blocked.rotateBy
+                    let rotateBy: number = moveData.rotateBy + i * moveData.blocked.attempts; 
                     let nextTransform: Position[] = this.nextPositionBasedOnThisRotation(rotateBy);
                     let nextPosition: Position = nextTransform[0];
                     let nextRotation: Position = nextTransform[1];
                     //check if the position is occupied or out of bounds
                     if (grid.get(nextPosition) || Grid.outOfBounds(nextPosition)) {
+                        // @Björn hier nicht komplett abbrechen, nur zur for schleife zurück springen ("continue")
+                        // sonst wird immer nur die standard variante getestet, nie die alternativen.
                         return false
                     } else if (grid.get(nextPosition) == undefined) { //spot is free
+                        // @Björn hier noch den optionalen dritten parameter auf true setzen damit die entity nicht zweimal im grid ist
                         grid.set(nextPosition, this);
                         this.position = nextPosition;
                         this.currentDirection = nextRotation;
+                        // @Björn hier wäre der richtige Zeitpunkt für das EntityMove Event
+                        // und auch das EntityMoved event, eines nach dem anderen. Ähnlich wie bei EntityDies / -Died
+                        // denk daran die entsprechenden infos dem Event mitzugeben, also welche Entity sich bewegt und von wo nach wo usw.
+                        // dann sollte das mit den abilities auch keine Fehler mehr schmeißen.
                         //dispatchEvent(EVENT.ENTITY_MOVED);
                         this.moved = true;
                         return true;
@@ -259,8 +269,19 @@ namespace Script {
                 this.moved = true;
                 return true;
             }
+            // @Björn denk an default return
         }
 
+        /* @Björn okay, ich glaube ich verstehe wo du damit hin wolltest, ich glaube aber dass es sinnvoller
+        wäre das wie folgt aufzuteilen:
+
+        - eine Funktion um auf Basis einer Rotation die richtige direction zu bekommen
+        - eine Funktion um auf Basis einer (aktuellen) position, rotation und Schrittlänge die nächste Position zurück zu geben, welche die erste Funktion nutzt
+
+        Dann ist es auch nicht mehr Entity spezifisch und kann allgemeiner angewandt werden.
+        Man könnte das in die Move.ts machen und dann hier aufrufen wo man es braucht.
+        Außerdem sollte das so deutlich lesbarer und nachvollziehbarer werden denke ich.
+        */
         nextPositionBasedOnThisRotation(rotateBy: number): Position[] {
             // curentDirection + nextRotation;
             let directions: Position[] = [
