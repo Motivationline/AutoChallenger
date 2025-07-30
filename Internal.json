@@ -4071,6 +4071,19 @@
       "url": "Assets\\GLTFs\\Enemies\\FlameFlinger\\FlameFlinger.glb"
     }
   },
+  "Material|2025-07-29T08:46:54.853Z|25572": {
+    "ƒ.Material": {
+      "name": "ShaderLit",
+      "idResource": "Material|2025-07-29T08:46:54.853Z|25572",
+      "shader": "ShaderLit",
+      "coat": {
+        "ƒ.CoatColored": {
+          "alphaClip": 0.01,
+          "color": "[1, 1, 1, 1]"
+        }
+      }
+    }
+  },
   "Graph|2025-07-29T08:45:59.326Z|29252": {
     "ƒ.Graph": {
       "name": "TargetHighlight",
@@ -4132,22 +4145,114 @@
           }
         ]
       },
-      "children": [],
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "Graph|2025-07-30T10:56:13.028Z|18796"
+          }
+        }
+      ],
       "idResource": "Graph|2025-07-29T08:45:59.326Z|29252",
       "type": "Graph"
     }
   },
-  "Material|2025-07-29T08:46:54.853Z|25572": {
+  "GraphGLTF|2025-07-30T10:28:34.055Z|67379": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {
+        "ComponentChangeMaterial": [
+          {
+            "Script.ComponentChangeMaterial": {
+              "active": true,
+              "changeMaterial": "Material|2025-07-30T10:35:46.778Z|83012",
+              "animationSprite": "AnimationSprite|2025-07-30T10:34:25.791Z|17368"
+            }
+          }
+        ]
+      },
+      "idResource": "GraphGLTF|2025-07-30T10:28:34.055Z|67379",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\SFX\\Wind.glb"
+    }
+  },
+  "Material|2025-07-30T10:35:46.778Z|83012": {
     "ƒ.Material": {
-      "name": "ShaderLit",
-      "idResource": "Material|2025-07-29T08:46:54.853Z|25572",
-      "shader": "ShaderLit",
+      "name": "ShaderLitTextured",
+      "idResource": "Material|2025-07-30T10:35:46.778Z|83012",
+      "shader": "ShaderLitTextured",
       "coat": {
-        "ƒ.CoatColored": {
+        "ƒ.CoatTextured": {
           "alphaClip": 0.01,
-          "color": "[1, 1, 1, 1]"
+          "color": "[1, 1, 1, 1]",
+          "idTexture": "TextureImage|2025-07-30T10:34:04.565Z|71502"
         }
       }
+    }
+  },
+  "TextureImage|2025-07-30T10:34:04.565Z|71502": {
+    "ƒ.TextureImage": {
+      "url": "Assets\\GLTFs\\SFX\\wind_sheet.png",
+      "type": "TextureImage",
+      "Texture": {
+        "idResource": "TextureImage|2025-07-30T10:34:04.565Z|71502",
+        "name": "Assets\\GLTFs\\SFX\\wind_sheet.png",
+        "mipmap": "CRISP",
+        "wrap": "REPEAT"
+      }
+    }
+  },
+  "AnimationSprite|2025-07-30T10:34:25.791Z|17368": {
+    "ƒ.AnimationSprite": {
+      "idResource": "AnimationSprite|2025-07-30T10:34:25.791Z|17368",
+      "idTexture": "TextureImage|2025-07-30T10:34:04.565Z|71502",
+      "frames": 8,
+      "wrapAfter": 3,
+      "start": "[0, 0]",
+      "size": "[128, 128]",
+      "next": "[128, 0]",
+      "wrap": "[0, 128]",
+      "Animation": {
+        "idResource": "AnimationSprite|2025-07-30T10:34:25.791Z|17368",
+        "name": "AnimationSprite",
+        "labels": {},
+        "events": {},
+        "framesPerSecond": 12,
+        "animationStructure": {}
+      }
+    }
+  },
+  "Graph|2025-07-30T10:56:13.028Z|18796": {
+    "ƒ.Graph": {
+      "name": "WindAttack",
+      "active": true,
+      "components": {
+        "ComponentTransform": [
+          {
+            "ƒ.ComponentTransform": {
+              "local": {
+                "translation": "[0, -0.5, 0.5]",
+                "rotation": "[0, 0, 0]",
+                "scaling": "[1, 1, 1]"
+              },
+              "Component": {
+                "active": true
+              }
+            }
+          }
+        ]
+      },
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "GraphGLTF|2025-07-30T10:28:34.055Z|67379"
+          }
+        }
+      ],
+      "idResource": "Graph|2025-07-30T10:56:13.028Z|18796",
+      "type": "Graph"
     }
   }
 }

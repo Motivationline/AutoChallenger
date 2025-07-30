@@ -710,6 +710,17 @@ declare namespace Script {
 }
 declare namespace Script {
     import ƒ = FudgeCore;
+    class ComponentChangeMaterial extends ƒ.ComponentScript {
+        static readonly iSubclass: number;
+        changeMaterial: ƒ.Material;
+        animationSprite: ƒ.AnimationSprite;
+        constructor();
+        hndEvent: (_event: Event) => void;
+        private switchMaterial;
+    }
+}
+declare namespace Script {
+    import ƒ = FudgeCore;
     export function initEntitiesInGrid<T extends IEntity>(_grid: GridData<string>, _entity: new (...data: any) => T): Grid<T>;
     export function waitMS(_ms: number): Promise<void>;
     export function getCloneNodeFromRegistry(id: string): Promise<ƒ.Node | undefined>;

@@ -403,6 +403,31 @@
                 ]
               }
             ]
+          },
+          {
+            "name": "SFX",
+            "entries": [
+              {
+                "name": "Wind",
+                "entries": [
+                  {
+                    "idResource": "GraphGLTF|2025-07-30T10:28:34.055Z|67379"
+                  },
+                  {
+                    "idResource": "TextureImage|2025-07-30T10:34:04.565Z|71502"
+                  },
+                  {
+                    "idResource": "AnimationSprite|2025-07-30T10:34:25.791Z|17368"
+                  },
+                  {
+                    "idResource": "Material|2025-07-30T10:35:46.778Z|83012"
+                  },
+                  {
+                    "idResource": "Graph|2025-07-30T10:56:13.028Z|18796"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },

@@ -3384,6 +3384,76 @@ var Script;
 var Script;
 (function (Script) {
     var ƒ = FudgeCore;
+    let ComponentChangeMaterial = (() => {
+        var _a;
+        let _classDecorators = [(_a = FudgeCore).serialize.bind(_a)];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _classSuper = ƒ.ComponentScript;
+        let _changeMaterial_decorators;
+        let _changeMaterial_initializers = [];
+        let _changeMaterial_extraInitializers = [];
+        let _animationSprite_decorators;
+        let _animationSprite_initializers = [];
+        let _animationSprite_extraInitializers = [];
+        var ComponentChangeMaterial = class extends _classSuper {
+            static { _classThis = this; }
+            static {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                _changeMaterial_decorators = [FudgeCore.serialize(FudgeCore.Material)];
+                _animationSprite_decorators = [FudgeCore.serialize(FudgeCore.AnimationSprite)];
+                __esDecorate(null, null, _changeMaterial_decorators, { kind: "field", name: "changeMaterial", static: false, private: false, access: { has: obj => "changeMaterial" in obj, get: obj => obj.changeMaterial, set: (obj, value) => { obj.changeMaterial = value; } }, metadata: _metadata }, _changeMaterial_initializers, _changeMaterial_extraInitializers);
+                __esDecorate(null, null, _animationSprite_decorators, { kind: "field", name: "animationSprite", static: false, private: false, access: { has: obj => "animationSprite" in obj, get: obj => obj.animationSprite, set: (obj, value) => { obj.animationSprite = value; } }, metadata: _metadata }, _animationSprite_initializers, _animationSprite_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                ComponentChangeMaterial = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            }
+            static { this.iSubclass = ƒ.Component.registerSubclass(ComponentChangeMaterial); }
+            constructor() {
+                super();
+                this.changeMaterial = __runInitializers(this, _changeMaterial_initializers, null);
+                this.animationSprite = (__runInitializers(this, _changeMaterial_extraInitializers), __runInitializers(this, _animationSprite_initializers, void 0));
+                // Activate the functions of this component as response to events
+                this.hndEvent = (__runInitializers(this, _animationSprite_extraInitializers), (_event) => {
+                    switch (_event.type) {
+                        case "componentAdd" /* ƒ.EVENT.COMPONENT_ADD */:
+                            break;
+                        case "componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */:
+                            this.removeEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
+                            this.removeEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
+                            break;
+                        case "nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */:
+                            this.switchMaterial();
+                            break;
+                    }
+                });
+                if (ƒ.Project.mode == ƒ.MODE.EDITOR)
+                    return;
+                // Listen to this component being added to or removed from a node
+                this.addEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
+                this.addEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
+                this.addEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
+            }
+            switchMaterial() {
+                for (const node of this.node) {
+                    if (node.getComponent(ƒ.ComponentMaterial) != null) {
+                        node.getComponent(ƒ.ComponentMaterial).material = this.changeMaterial;
+                        node.addComponent(new ƒ.ComponentAnimation(this.animationSprite));
+                    }
+                }
+            }
+            static {
+                __runInitializers(_classThis, _classExtraInitializers);
+            }
+        };
+        return ComponentChangeMaterial = _classThis;
+    })();
+    Script.ComponentChangeMaterial = ComponentChangeMaterial;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
     function initEntitiesInGrid(_grid, _entity) {
         const grid = new Script.Grid(_grid);
         const newGrid = new Script.Grid();
@@ -4196,6 +4266,30 @@ var Script;
 //         }
 //     }
 // }
+// namespace Script {
+//     import ƒ = FudgeCore;
+//     export interface IVisualizeGrid {
+//         getRealPosition(_pos: Position): any;
+//         updateVisuals(): void;
+//     }
+//     export class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
+//         grid: Grid<VisualizeEntity>;
+//         constructor(_grid: Grid<VisualizeEntity>) {
+//             super("VisualizeGridNull");
+//             this.grid = _grid;
+//             this.addComponent(new ƒ.ComponentTransform());
+//             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3(0, 0, 0));
+//         }
+//         updateVisuals(): void {
+//             this.grid.forEachElement((element) => {
+//                 element?.updateVisuals();
+//             });
+//         }
+//         getRealPosition(_pos: Position) {
+//             return _pos;
+//         }
+//     }
+// }
 var Script;
 (function (Script) {
     //Visualize the Entities in the Grid
@@ -4269,30 +4363,6 @@ var Script;
     }
     Script.VisualizeGrid = VisualizeGrid;
 })(Script || (Script = {}));
-// namespace Script {
-//     import ƒ = FudgeCore;
-//     export interface IVisualizeGrid {
-//         getRealPosition(_pos: Position): any;
-//         updateVisuals(): void;
-//     }
-//     export class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
-//         grid: Grid<VisualizeEntity>;
-//         constructor(_grid: Grid<VisualizeEntity>) {
-//             super("VisualizeGridNull");
-//             this.grid = _grid;
-//             this.addComponent(new ƒ.ComponentTransform());
-//             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3(0, 0, 0));
-//         }
-//         updateVisuals(): void {
-//             this.grid.forEachElement((element) => {
-//                 element?.updateVisuals();
-//             });
-//         }
-//         getRealPosition(_pos: Position) {
-//             return _pos;
-//         }
-//     }
-// }
 /// <reference path="UILayer.ts" />
 var Script;
 /// <reference path="UILayer.ts" />
