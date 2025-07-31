@@ -2530,6 +2530,16 @@
               "animType": "die"
             }
           }
+        ],
+        "VisualizationLink": [
+          {
+            "Script.VisualizationLink": {
+              "active": true,
+              "visualization": "SmokeGrey",
+              "for": "attack",
+              "delay": 0.6000000000000001
+            }
+          }
         ]
       },
       "children": [
@@ -3171,6 +3181,16 @@
             "Script.DataLink": {
               "active": true,
               "id": "R-Eumling"
+            }
+          }
+        ],
+        "VisualizationLink": [
+          {
+            "Script.VisualizationLink": {
+              "active": true,
+              "visualization": "EumlingPunch",
+              "for": "attack",
+              "delay": 0.30000000000000004
             }
           }
         ]
@@ -4263,6 +4283,172 @@
         }
       ],
       "idResource": "Graph|2025-07-30T10:56:13.028Z|18796",
+      "type": "Graph"
+    }
+  },
+  "GraphGLTF|2025-07-31T10:42:26.653Z|08848": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {
+        "ComponentAnimation": [
+          {
+            "ƒ.ComponentAnimation": {
+              "Component": {
+                "active": true
+              },
+              "idAnimation": "AnimationGLTF|2025-07-31T10:42:26.653Z|84716",
+              "playmode": "loop",
+              "quantization": "continous",
+              "scale": 1,
+              "scaleWithGameTime": true,
+              "animateInEditor": true
+            }
+          }
+        ]
+      },
+      "idResource": "GraphGLTF|2025-07-31T10:42:26.653Z|08848",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\SFX\\EumlingPunch\\EumlingPunchVFX.glb"
+    }
+  },
+  "AnimationGLTF|2025-07-31T10:42:26.653Z|84716": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-07-31T10:42:26.653Z|84716",
+      "name": "PunchAnimation",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\SFX\\EumlingPunch\\EumlingPunchVFX.glb",
+      "events": {}
+    }
+  },
+  "Graph|2025-07-31T10:46:05.389Z|60167": {
+    "ƒ.Graph": {
+      "name": "EumlingPunch",
+      "active": true,
+      "components": {
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "EumlingPunch"
+            }
+          }
+        ],
+        "ComponentTransform": [
+          {
+            "ƒ.ComponentTransform": {
+              "local": {
+                "translation": "[0, 0.5, 0]",
+                "rotation": "[0, 180, 0]",
+                "scaling": "[1, 1, 1]"
+              },
+              "Component": {
+                "active": true
+              }
+            }
+          }
+        ]
+      },
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "GraphGLTF|2025-07-31T10:42:26.653Z|08848"
+          }
+        }
+      ],
+      "idResource": "Graph|2025-07-31T10:46:05.389Z|60167",
+      "type": "Graph"
+    }
+  },
+  "TextureImage|2025-07-31T11:40:01.403Z|96494": {
+    "ƒ.TextureImage": {
+      "url": "Assets\\GLTFs\\SFX\\Smoke\\smoke_sheet.png",
+      "type": "TextureImage",
+      "Texture": {
+        "idResource": "TextureImage|2025-07-31T11:40:01.403Z|96494",
+        "name": "Assets\\GLTFs\\SFX\\Smoke\\smoke_sheet.png",
+        "mipmap": "CRISP",
+        "wrap": "REPEAT"
+      }
+    }
+  },
+  "Material|2025-07-31T11:40:08.086Z|89091": {
+    "ƒ.Material": {
+      "name": "ShaderSmokeGrey",
+      "idResource": "Material|2025-07-31T11:40:08.086Z|89091",
+      "shader": "ShaderLitTextured",
+      "coat": {
+        "ƒ.CoatTextured": {
+          "alphaClip": 0.01,
+          "color": "[1, 1, 1, 1]",
+          "idTexture": "TextureImage|2025-07-31T11:40:01.403Z|96494"
+        }
+      }
+    }
+  },
+  "AnimationSprite|2025-07-31T11:40:17.411Z|09048": {
+    "ƒ.AnimationSprite": {
+      "idResource": "AnimationSprite|2025-07-31T11:40:17.411Z|09048",
+      "idTexture": "TextureImage|2025-07-31T11:40:01.403Z|96494",
+      "frames": 9,
+      "wrapAfter": 3,
+      "start": "[0, 0]",
+      "size": "[128, 128]",
+      "next": "[128, 0]",
+      "wrap": "[0, 128]",
+      "Animation": {
+        "idResource": "AnimationSprite|2025-07-31T11:40:17.411Z|09048",
+        "name": "AnimationSprite",
+        "labels": {},
+        "events": {},
+        "framesPerSecond": 12,
+        "animationStructure": {}
+      }
+    }
+  },
+  "GraphGLTF|2025-07-31T11:42:19.468Z|48371": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {},
+      "idResource": "GraphGLTF|2025-07-31T11:42:19.468Z|48371",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\SFX\\Smoke\\SmokeSphere.glb"
+    }
+  },
+  "Graph|2025-07-31T11:42:39.087Z|68331": {
+    "ƒ.Graph": {
+      "name": "Smoke",
+      "active": true,
+      "components": {
+        "ComponentChangeMaterial": [
+          {
+            "Script.ComponentChangeMaterial": {
+              "active": true,
+              "changeMaterial": "Material|2025-07-31T11:40:08.086Z|89091",
+              "animationSprite": "AnimationSprite|2025-07-31T11:40:17.411Z|09048"
+            }
+          }
+        ],
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "SmokeGrey"
+            }
+          }
+        ]
+      },
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "GraphGLTF|2025-07-31T11:42:19.468Z|48371"
+          }
+        }
+      ],
+      "idResource": "Graph|2025-07-31T11:42:39.087Z|68331",
       "type": "Graph"
     }
   }

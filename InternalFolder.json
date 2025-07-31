@@ -405,7 +405,7 @@
             ]
           },
           {
-            "name": "SFX",
+            "name": "VFX",
             "entries": [
               {
                 "name": "Wind",
@@ -424,6 +424,50 @@
                   },
                   {
                     "idResource": "Graph|2025-07-30T10:56:13.028Z|18796"
+                  }
+                ]
+              },
+              {
+                "name": "EumlingPunch",
+                "entries": [
+                  {
+                    "idResource": "GraphGLTF|2025-07-31T10:42:26.653Z|08848"
+                  },
+                  {
+                    "idResource": "AnimationGLTF|2025-07-31T10:42:26.653Z|84716"
+                  },
+                  {
+                    "idResource": "Graph|2025-07-31T10:46:05.389Z|60167"
+                  }
+                ]
+              },
+              {
+                "name": "Smoke",
+                "entries": [
+                  {
+                    "idResource": "TextureImage|2025-07-31T11:40:01.403Z|96494"
+                  },
+                  {
+                    "idResource": "Material|2025-07-31T11:40:08.086Z|89091"
+                  },
+                  {
+                    "idResource": "AnimationSprite|2025-07-31T11:40:17.411Z|09048"
+                  },
+                  {
+                    "name": "Mesh",
+                    "entries": [
+                      {
+                        "idResource": "GraphGLTF|2025-07-31T11:42:19.468Z|48371"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Smoke",
+                    "entries": [
+                      {
+                        "idResource": "Graph|2025-07-31T11:42:39.087Z|68331"
+                      }
+                    ]
                   }
                 ]
               }
