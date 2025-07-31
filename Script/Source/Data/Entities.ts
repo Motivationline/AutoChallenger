@@ -1046,14 +1046,14 @@ namespace Script {
                 }
             },
             {
-                id: "boxingBush", // enemy that attacks the entire mirrored column for 1
+                id: "boxingBush", // enemy that attacks the entire mirrored row for 1
                 health: 2,
                 attacks: {
                     options: [
                         {
                             target: {
                                 area: {
-                                    shape: AREA_SHAPE.COLUMN,
+                                    shape: AREA_SHAPE.ROW,
                                     position: AREA_POSITION.RELATIVE_MIRRORED,
                                 },
                                 side: TARGET_SIDE.OPPONENT,
