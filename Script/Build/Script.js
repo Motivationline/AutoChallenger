@@ -1661,7 +1661,7 @@ var Script;
                 ],
             },
             {
-                difficulty: 10,
+                difficulty: 0,
                 rounds: 3,
                 entities: [
                     ["boxingBush", , ,],
@@ -3822,7 +3822,7 @@ var Script;
             return event.detail.encounter;
         }
         async nextEncounter(_difficulty) {
-            _difficulty = 10;
+            // _difficulty = 10;
             if (_difficulty === -1) { // shop
                 return undefined;
             }
