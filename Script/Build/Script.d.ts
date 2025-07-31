@@ -863,12 +863,13 @@ declare namespace Script {
         private visibleNodes;
         constructor();
         private addEventListeners;
-        private getVFX;
+        private showAttack;
+        private getTargets;
         private addNodesTo;
-        private returnNode;
-        private showTargets;
+        private getVFX;
         private getAdditionalVisualizer;
         private hideTargets;
+        private returnNode;
     }
 }
 declare namespace Script {

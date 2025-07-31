@@ -1482,14 +1482,14 @@ var Script;
                 }
             },
             {
-                id: "boxingBush", // enemy that attacks the entire mirrored column for 1
+                id: "boxingBush", // enemy that attacks the entire mirrored row for 1
                 health: 2,
                 attacks: {
                     options: [
                         {
                             target: {
                                 area: {
-                                    shape: Script.AREA_SHAPE.COLUMN,
+                                    shape: Script.AREA_SHAPE.ROW,
                                     position: Script.AREA_POSITION.RELATIVE_MIRRORED,
                                 },
                                 side: Script.TARGET_SIDE.OPPONENT,
@@ -4218,44 +4218,11 @@ var Script;
         constructor() {
             this.nodePool = new Map();
             this.visibleNodes = [];
-            this.showTargets = async (_ev) => {
-                if (!_ev.detail)
-                    return [];
-                positions: if (_ev.detail.positions) {
-                    if (!_ev.trigger || !("target" in _ev.trigger))
-                        break positions;
-                    if (typeof _ev.trigger.target === "string")
-                        break positions;
-                    const vis = Script.Provider.visualizer;
-                    let allySide, opponentSide;
-                    if (_ev.cause instanceof Script.Stone) {
-                        allySide = vis.activeFight.home;
-                        opponentSide = vis.activeFight.away;
-                    }
-                    else {
-                        const visGrid = vis.activeFight.whereIsEntity(vis.getEntity(_ev.cause));
-                        if (visGrid.side === "home") {
-                            allySide = vis.activeFight.home;
-                            opponentSide = vis.activeFight.away;
-                        }
-                        else {
-                            allySide = vis.activeFight.away;
-                            opponentSide = vis.activeFight.home;
-                        }
-                    }
-                    const targetSide = _ev.trigger.target.side === Script.TARGET_SIDE.ALLY ? allySide : opponentSide;
-                    const promises = [];
-                    _ev.detail.positions.forEachElement(async (_el, _pos) => {
-                        const anchor = targetSide.getAnchor(_pos[0], _pos[1]);
-                        promises.push(this.addNodesTo(anchor, this.getAdditionalVisualizer(_ev.cause, _ev.type)));
-                    });
-                    return Promise.all(promises);
-                }
-                if (!_ev.detail.targets)
-                    return [];
+            this.showAttack = async (_ev) => {
+                const nodes = this.getTargets(_ev);
                 const promises = [];
-                for (let target of _ev.detail.targets) {
-                    promises.push(this.addNodesTo(Script.Provider.visualizer.getEntity(target)));
+                for (let node of nodes) {
+                    promises.push(this.addNodesTo(node, this.getAdditionalVisualizer(_ev.cause, _ev.type)));
                 }
                 return Promise.all(promises);
             };
@@ -4267,10 +4234,60 @@ var Script;
             this.addEventListeners();
         }
         addEventListeners() {
-            Script.EventBus.addEventListener(Script.EVENT.ENTITY_ATTACK, this.showTargets);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_ATTACK, this.showAttack);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_ATTACKED, this.hideTargets);
-            Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.showTargets);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.showAttack);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL, this.hideTargets);
+        }
+        getTargets(_ev) {
+            if (!_ev.detail)
+                return [];
+            const targets = [];
+            positions: if (_ev.detail.positions) {
+                if (!_ev.trigger || !("target" in _ev.trigger))
+                    break positions;
+                if (typeof _ev.trigger.target === "string")
+                    break positions;
+                const vis = Script.Provider.visualizer;
+                let allySide, opponentSide;
+                if (_ev.cause instanceof Script.Stone) {
+                    allySide = vis.activeFight.home;
+                    opponentSide = vis.activeFight.away;
+                }
+                else {
+                    const visGrid = vis.activeFight.whereIsEntity(vis.getEntity(_ev.cause));
+                    if (visGrid.side === "home") {
+                        allySide = vis.activeFight.home;
+                        opponentSide = vis.activeFight.away;
+                    }
+                    else {
+                        allySide = vis.activeFight.away;
+                        opponentSide = vis.activeFight.home;
+                    }
+                }
+                const targetSide = _ev.trigger.target.side === Script.TARGET_SIDE.ALLY ? allySide : opponentSide;
+                _ev.detail.positions.forEachElement(async (_el, _pos) => {
+                    const anchor = targetSide.getAnchor(_pos[0], _pos[1]);
+                    targets.push(anchor);
+                });
+                return targets;
+            }
+            if (!_ev.detail.targets)
+                return [];
+            for (let target of _ev.detail.targets) {
+                targets.push(Script.Provider.visualizer.getEntity(target));
+            }
+            return targets;
+        }
+        async addNodesTo(_parent, ..._nodes) {
+            const promises = [];
+            for (let node of _nodes) {
+                if (!node)
+                    continue;
+                promises.push((await this.getVFX(node)).addToAndActivate(_parent));
+            }
+            promises.push((await this.getVFX("TargetHighlightGeneric")).addToAndActivate(_parent));
+            return Promise.all(promises);
         }
         async getVFX(_v) {
             let vfx;
@@ -4283,22 +4300,6 @@ var Script;
             this.visibleNodes.push(vfx);
             return vfx;
         }
-        async addNodesTo(_parent, ..._nodes) {
-            const promises = [];
-            for (let node of _nodes) {
-                if (!node)
-                    continue;
-                promises.push((await this.getVFX(node)).addToAndActivate(_parent));
-            }
-            promises.push((await this.getVFX("TargetHighlightGeneric")).addToAndActivate(_parent));
-            return Promise.all(promises);
-        }
-        returnNode(_node) {
-            _node.removeAndDeactivate();
-            if (!this.nodePool.has(_node.id))
-                this.nodePool.set(_node.id, []);
-            this.nodePool.get(_node.id).push(_node);
-        }
         getAdditionalVisualizer(_cause, _evtype) {
             if (_cause instanceof Script.Stone) {
                 // TODO: add something so stones can define visuals, too.
@@ -4308,6 +4309,12 @@ var Script;
             if (!id)
                 return undefined;
             return Script.VisualizationLink.linkedVisuals.get(id)?.get(_evtype === Script.EVENT.ENTITY_ATTACK ? Script.ANIMATION.ATTACK : Script.ANIMATION.SPELL);
+        }
+        returnNode(_node) {
+            _node.removeAndDeactivate();
+            if (!this.nodePool.has(_node.id))
+                this.nodePool.set(_node.id, []);
+            this.nodePool.get(_node.id).push(_node);
         }
     }
     Script.VisualizeTarget = VisualizeTarget;

@@ -16,41 +16,24 @@ namespace Script {
         }
 
         private addEventListeners() {
-            EventBus.addEventListener(EVENT.ENTITY_ATTACK, this.showTargets);
+            EventBus.addEventListener(EVENT.ENTITY_ATTACK, this.showAttack);
             EventBus.addEventListener(EVENT.ENTITY_ATTACKED, this.hideTargets);
-            EventBus.addEventListener(EVENT.ENTITY_SPELL_BEFORE, this.showTargets);
+            EventBus.addEventListener(EVENT.ENTITY_SPELL_BEFORE, this.showAttack);
             EventBus.addEventListener(EVENT.ENTITY_SPELL, this.hideTargets);
         }
 
-        private async getVFX(_v: VisualizationLink | string): Promise<VisualizeVFX> {
-            let vfx: VisualizeVFX;
-            const id: string = typeof _v === "string" ? _v : _v.id;
-            const delay: number = typeof _v === "string" ? 0 : _v.delay;
-            if (this.nodePool.get(id)?.length > 0) vfx = this.nodePool.get(id).pop();
-            else vfx = new VisualizeVFX(await DataLink.getCopyOf(id), id, delay);
-            this.visibleNodes.push(vfx);
-            return vfx;
-        }
-
-        private async addNodesTo(_parent: ƒ.Node, ..._nodes: VisualizationLink[]) {
-            const promises: Promise<void>[] = [];
-            for (let node of _nodes) {
-                if (!node) continue;
-                promises.push((await this.getVFX(node)).addToAndActivate(_parent));
+        private showAttack = async (_ev: FightEvent) => {
+            const nodes = this.getTargets(_ev);
+            const promises: Promise<any>[] = [];
+            for (let node of nodes) {
+                promises.push(this.addNodesTo(node, this.getAdditionalVisualizer(_ev.cause as Entity, _ev.type)));
             }
-            promises.push((await this.getVFX("TargetHighlightGeneric")).addToAndActivate(_parent));
             return Promise.all(promises);
         }
 
-        private returnNode(_node: VisualizeVFX) {
-            _node.removeAndDeactivate();
-            if (!this.nodePool.has(_node.id))
-                this.nodePool.set(_node.id, []);
-            this.nodePool.get(_node.id).push(_node);
-        }
-
-        private showTargets = async (_ev: FightEvent): Promise<void[]> => {
+        private getTargets(_ev: FightEvent): ƒ.Node[] {
             if (!_ev.detail) return [];
+            const targets: ƒ.Node[] = [];
             positions: if (_ev.detail.positions) {
                 if (!_ev.trigger || !("target" in _ev.trigger)) break positions;
                 if (typeof _ev.trigger.target === "string") break positions;
@@ -71,20 +54,40 @@ namespace Script {
                     }
                 }
                 const targetSide = _ev.trigger.target.side === TARGET_SIDE.ALLY ? allySide : opponentSide;
-                const promises: Promise<any>[] = [];
                 (_ev.detail.positions as Grid<boolean>).forEachElement(async (_el, _pos) => {
                     const anchor = targetSide.getAnchor(_pos[0], _pos[1]);
-                    promises.push(this.addNodesTo(anchor, this.getAdditionalVisualizer(_ev.cause as Entity, _ev.type)));
+                    targets.push(anchor);
                 });
-                return Promise.all(promises);
+                return targets;
             }
             if (!_ev.detail.targets) return [];
-            const promises: Promise<any>[] = [];
             for (let target of _ev.detail.targets as IEntity[]) {
-                promises.push(this.addNodesTo(Provider.visualizer.getEntity(target)));
+                targets.push(Provider.visualizer.getEntity(target));
             }
+            return targets;
+        }
+
+        private async addNodesTo(_parent: ƒ.Node, ..._nodes: VisualizationLink[]) {
+            const promises: Promise<void>[] = [];
+            for (let node of _nodes) {
+                if (!node) continue;
+                promises.push((await this.getVFX(node)).addToAndActivate(_parent));
+            }
+            promises.push((await this.getVFX("TargetHighlightGeneric")).addToAndActivate(_parent));
             return Promise.all(promises);
         }
+
+
+        private async getVFX(_v: VisualizationLink | string): Promise<VisualizeVFX> {
+            let vfx: VisualizeVFX;
+            const id: string = typeof _v === "string" ? _v : _v.id;
+            const delay: number = typeof _v === "string" ? 0 : _v.delay;
+            if (this.nodePool.get(id)?.length > 0) vfx = this.nodePool.get(id).pop();
+            else vfx = new VisualizeVFX(await DataLink.getCopyOf(id), id, delay);
+            this.visibleNodes.push(vfx);
+            return vfx;
+        }
+
 
         private getAdditionalVisualizer(_cause: Entity | Stone, _evtype: EVENT): VisualizationLink {
             if (_cause instanceof Stone) {
@@ -102,6 +105,13 @@ namespace Script {
             while (this.visibleNodes.length > 0) {
                 this.returnNode(this.visibleNodes.pop());
             }
+        }
+
+        private returnNode(_node: VisualizeVFX) {
+            _node.removeAndDeactivate();
+            if (!this.nodePool.has(_node.id))
+                this.nodePool.set(_node.id, []);
+            this.nodePool.get(_node.id).push(_node);
         }
     }
 }
