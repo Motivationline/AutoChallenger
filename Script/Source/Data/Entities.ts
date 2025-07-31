@@ -1096,14 +1096,14 @@ namespace Script {
                         on: EVENT.FIGHT_START,
                         target: TARGET.SELF,
                         spell: {
-                            type: SPELL_TYPE.UNTARGETABLE,
+                            type: SPELL_TYPE.STUN,
                         }
                     },
                     {
                         on: EVENT.FIGHT_START,
                         target: TARGET.SELF,
                         spell: {
-                            type: SPELL_TYPE.STUN,
+                            type: SPELL_TYPE.UNTARGETABLE,
                         }
                     }
                 ],
@@ -1130,14 +1130,14 @@ namespace Script {
                 id: "worriedWall", // very strong wall, which dies when others die
                 health: 6,
                 abilities: [
-                    {   // if an ally dies, deal inf damage to self
+                    {   // if an ally dies, kill itself
                         on: EVENT.ENTITY_DIED,
                         conditions: [{
                             target: { side: TARGET_SIDE.ALLY, entity: {}, excludeSelf: true }
                         }],
                         target: TARGET.SELF,
                         attack: {
-                            baseDamage: Infinity,
+                            baseDamage: 20,
                         }
                     },
                 ]
@@ -1162,7 +1162,14 @@ namespace Script {
                         },
                         attack: {
                             baseDamage: 2,
-                        }, // NEEDS TO BLOW UP ITSELF ASWELL
+                        }, 
+                    },
+                    {
+                        on: EVENT.FIGHT_END,
+                        target: TARGET.SELF,
+                        attack: {
+                            baseDamage: 10,
+                        }
                     },
                 ]
             },
