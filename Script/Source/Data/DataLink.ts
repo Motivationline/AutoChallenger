@@ -20,9 +20,7 @@ namespace Script {
         static async getCopyOf(_id: string): Promise<ƒ.Node> {
             let original = this.linkedNodes.get(_id);
             if (!original) return undefined;
-            let node: ƒ.Node = new ƒ.Node(_id);
-            await node.deserialize(original.serialize());
-            return node;
+            return getDuplicateOfNode(original);
         }
     }
 
@@ -64,4 +62,44 @@ namespace Script {
             });
         }
     }
+
+    
+    @ƒ.serialize
+    export class VisualizationLink extends ƒ.Component {
+        public static linkedVisuals: Map<string, Map<ANIMATION, VisualizationLink>> = new Map();
+
+        protected singleton: boolean = false;
+
+        get id(){
+            return this.visualization;
+        }
+
+        @ƒ.serialize(String)
+        visualization: string;
+
+        // TODO: this is hacky, use its own thing for it to properly map it to the actual events
+        @ƒ.serialize(ANIMATION)
+        for: ANIMATION;
+
+        @ƒ.serialize(Number)
+        delay: number;
+
+        constructor() {
+            super();
+
+            if (ƒ.Project.mode === ƒ.MODE.EDITOR) return;
+            ƒ.Project.addEventListener(ƒ.EVENT.RESOURCES_LOADED, () => {
+                if (this.node instanceof ƒ.Graph) {
+                    let link = this.node.getComponent(DataLink);
+                    if (!link) return;
+                    if (!VisualizationLink.linkedVisuals.has(link.id)) {
+                        VisualizationLink.linkedVisuals.set(link.id, new Map());
+                    }
+                    VisualizationLink.linkedVisuals.get(link.id).set(this.for, this);
+                }
+            });
+        }
+    }
+
+
 }

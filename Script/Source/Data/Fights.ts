@@ -39,7 +39,7 @@ namespace Script {
                     ["kacki", "kacki", "kacki",]],
             },
             {
-                difficulty: 0,
+                difficulty: 10,
                 rounds: 3,
                 entities: [
                     ["boxingBush", , ,],

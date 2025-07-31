@@ -3829,6 +3829,16 @@
               "animType": "die"
             }
           }
+        ],
+        "VisualizationLink": [
+          {
+            "Script.VisualizationLink": {
+              "active": true,
+              "visualization": "WindAttack",
+              "for": "attack",
+              "delay": 1.7000000000000002
+            }
+          }
         ]
       },
       "children": [
@@ -4145,14 +4155,7 @@
           }
         ]
       },
-      "children": [
-        {
-          "ƒ.GraphInstance": {
-            "deserializeFromSource": true,
-            "idSource": "Graph|2025-07-30T10:56:13.028Z|18796"
-          }
-        }
-      ],
+      "children": [],
       "idResource": "Graph|2025-07-29T08:45:59.326Z|29252",
       "type": "Graph"
     }
@@ -4232,13 +4235,21 @@
           {
             "ƒ.ComponentTransform": {
               "local": {
-                "translation": "[0, -0.5, 0.5]",
+                "translation": "[0, 0, 0]",
                 "rotation": "[0, 0, 0]",
                 "scaling": "[1, 1, 1]"
               },
               "Component": {
                 "active": true
               }
+            }
+          }
+        ],
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "WindAttack"
             }
           }
         ]

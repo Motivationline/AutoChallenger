@@ -78,4 +78,10 @@ namespace Script {
 
         return el;
     }
+
+    export async function getDuplicateOfNode(_node: ƒ.Node) : Promise<ƒ.Node> {
+        let newNode: ƒ.Node = new ƒ.Node(_node.name);
+        await newNode.deserialize(_node.serialize());
+        return newNode;
+    }
 }

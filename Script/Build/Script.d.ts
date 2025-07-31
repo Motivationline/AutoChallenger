@@ -64,7 +64,7 @@ declare namespace Script {
         /** Optional data with more details about this specific event. */
         detail?: T;
     }
-    type FightEventListener = (_ev?: FightEvent) => Promise<void> | void;
+    type FightEventListener = (_ev?: FightEvent) => Promise<any> | void;
     class EventBus {
         static listeners: Map<EVENT, FightEventListener[]>;
         static removeAllEventListeners(): void;
@@ -513,6 +513,15 @@ declare namespace Script {
         animType: ANIMATION;
         constructor();
     }
+    class VisualizationLink extends ƒ.Component {
+        static linkedVisuals: Map<string, Map<ANIMATION, VisualizationLink>>;
+        protected singleton: boolean;
+        get id(): string;
+        visualization: string;
+        for: ANIMATION;
+        delay: number;
+        constructor();
+    }
 }
 declare namespace Script {
     namespace DataContent {
@@ -733,6 +742,7 @@ declare namespace Script {
         attributes: [string, string][];
     }
     export function createElementAdvanced<K extends keyof HTMLElementTagNameMap>(_type: K, _options?: Partial<CreateElementAdvancedOptions>): HTMLElementTagNameMap[K];
+    export function getDuplicateOfNode(_node: ƒ.Node): Promise<ƒ.Node>;
     export {};
 }
 declare namespace Script {
@@ -853,10 +863,27 @@ declare namespace Script {
         private visibleNodes;
         constructor();
         private addEventListeners;
-        private getNode;
+        private getVFX;
+        private addNodesTo;
         private returnNode;
         private showTargets;
+        private getAdditionalVisualizer;
         private hideTargets;
+    }
+}
+declare namespace Script {
+    import ƒ = FudgeCore;
+    class VisualizeVFX {
+        id: string;
+        node: ƒ.Node;
+        anim: ƒ.ComponentAnimation;
+        delay: number;
+        constructor(_node: ƒ.Node, _id: string, _delay?: number);
+        addToAndActivate(_parent: ƒ.Node): Promise<void>;
+        activate(): Promise<void>;
+        removeAndDeactivate(): void;
+        deactivate(): void;
+        private findFirstAnimComp;
     }
 }
 declare namespace Script {

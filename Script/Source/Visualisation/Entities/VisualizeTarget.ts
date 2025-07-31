@@ -1,8 +1,15 @@
 namespace Script {
     import ƒ = FudgeCore;
+
+
+    // This whole VFX effect thing is convoluted and I'm unhappy with how it turned out.
+    // All those nested promises and shit... we should probably rewrite that at some point.
+    // But for now it seems to be doing its job decently.
+
+
     export class VisualizeTarget {
-        private nodePool: ƒ.Node[] = [];
-        private visibleNodes: ƒ.Node[] = [];
+        private nodePool: Map<string, VisualizeVFX[]> = new Map();
+        private visibleNodes: VisualizeVFX[] = [];
 
         constructor() {
             this.addEventListeners();
@@ -15,21 +22,35 @@ namespace Script {
             EventBus.addEventListener(EVENT.ENTITY_SPELL, this.hideTargets);
         }
 
-        private async getNode(): Promise<ƒ.Node> {
-            let node: ƒ.Node;
-            if (this.nodePool.length > 0) node = this.nodePool.pop();
-            else node = await DataLink.getCopyOf("TargetHighlightGeneric");
-            this.visibleNodes.push(node);
-            return node;
+        private async getVFX(_v: VisualizationLink | string): Promise<VisualizeVFX> {
+            let vfx: VisualizeVFX;
+            const id: string = typeof _v === "string" ? _v : _v.id;
+            const delay: number = typeof _v === "string" ? 0 : _v.delay;
+            if (this.nodePool.get(id)?.length > 0) vfx = this.nodePool.get(id).pop();
+            else vfx = new VisualizeVFX(await DataLink.getCopyOf(id), id, delay);
+            this.visibleNodes.push(vfx);
+            return vfx;
         }
 
-        private returnNode(_node: ƒ.Node) {
-            _node.getParent()?.removeChild(_node);
-            this.nodePool.push(_node);
+        private async addNodesTo(_parent: ƒ.Node, ..._nodes: VisualizationLink[]) {
+            const promises: Promise<void>[] = [];
+            for (let node of _nodes) {
+                if (!node) continue;
+                promises.push((await this.getVFX(node)).addToAndActivate(_parent));
+            }
+            promises.push((await this.getVFX("TargetHighlightGeneric")).addToAndActivate(_parent));
+            return Promise.all(promises);
         }
 
-        private showTargets = async (_ev: FightEvent) => {
-            if (!_ev.detail) return;
+        private returnNode(_node: VisualizeVFX) {
+            _node.removeAndDeactivate();
+            if (!this.nodePool.has(_node.id))
+                this.nodePool.set(_node.id, []);
+            this.nodePool.get(_node.id).push(_node);
+        }
+
+        private showTargets = async (_ev: FightEvent): Promise<void[]> => {
+            if (!_ev.detail) return [];
             positions: if (_ev.detail.positions) {
                 if (!_ev.trigger || !("target" in _ev.trigger)) break positions;
                 if (typeof _ev.trigger.target === "string") break positions;
@@ -50,16 +71,31 @@ namespace Script {
                     }
                 }
                 const targetSide = _ev.trigger.target.side === TARGET_SIDE.ALLY ? allySide : opponentSide;
+                const promises: Promise<any>[] = [];
                 (_ev.detail.positions as Grid<boolean>).forEachElement(async (_el, _pos) => {
                     const anchor = targetSide.getAnchor(_pos[0], _pos[1]);
-                    anchor.addChild(await this.getNode());
+                    promises.push(this.addNodesTo(anchor, this.getAdditionalVisualizer(_ev.cause as Entity, _ev.type)));
                 });
-                return;
+                return Promise.all(promises);
             }
-            if (!_ev.detail.targets) return;
+            if (!_ev.detail.targets) return [];
+            const promises: Promise<any>[] = [];
             for (let target of _ev.detail.targets as IEntity[]) {
-                Provider.visualizer.getEntity(target).addChild(await this.getNode());
+                promises.push(this.addNodesTo(Provider.visualizer.getEntity(target)));
             }
+            return Promise.all(promises);
+        }
+
+        private getAdditionalVisualizer(_cause: Entity | Stone, _evtype: EVENT): VisualizationLink {
+            if (_cause instanceof Stone) {
+                // TODO: add something so stones can define visuals, too.
+                return undefined;
+            }
+            const id = _cause.id;
+            if (!id)
+                return undefined;
+
+            return VisualizationLink.linkedVisuals.get(id)?.get(_evtype === EVENT.ENTITY_ATTACK ? ANIMATION.ATTACK : ANIMATION.SPELL);
         }
 
         private hideTargets = async (_ev: FightEvent) => {

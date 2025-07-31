@@ -1661,7 +1661,7 @@ var Script;
                 ],
             },
             {
-                difficulty: 0,
+                difficulty: 10,
                 rounds: 3,
                 entities: [
                     ["boxingBush", , ,],
@@ -2463,9 +2463,7 @@ var Script;
                 let original = this.linkedNodes.get(_id);
                 if (!original)
                     return undefined;
-                let node = new ƒ.Node(_id);
-                await node.deserialize(original.serialize());
-                return node;
+                return Script.getDuplicateOfNode(original);
             }
             static {
                 __runInitializers(_classThis, _classExtraInitializers);
@@ -2537,6 +2535,69 @@ var Script;
         return AnimationLink = _classThis;
     })();
     Script.AnimationLink = AnimationLink;
+    let VisualizationLink = (() => {
+        var _a;
+        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _classSuper = ƒ.Component;
+        let _visualization_decorators;
+        let _visualization_initializers = [];
+        let _visualization_extraInitializers = [];
+        let _for_decorators;
+        let _for_initializers = [];
+        let _for_extraInitializers = [];
+        let _delay_decorators;
+        let _delay_initializers = [];
+        let _delay_extraInitializers = [];
+        var VisualizationLink = class extends _classSuper {
+            static { _classThis = this; }
+            static {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                _visualization_decorators = [ƒ.serialize(String)];
+                _for_decorators = [ƒ.serialize(ANIMATION)];
+                _delay_decorators = [ƒ.serialize(Number)];
+                __esDecorate(null, null, _visualization_decorators, { kind: "field", name: "visualization", static: false, private: false, access: { has: obj => "visualization" in obj, get: obj => obj.visualization, set: (obj, value) => { obj.visualization = value; } }, metadata: _metadata }, _visualization_initializers, _visualization_extraInitializers);
+                __esDecorate(null, null, _for_decorators, { kind: "field", name: "for", static: false, private: false, access: { has: obj => "for" in obj, get: obj => obj.for, set: (obj, value) => { obj.for = value; } }, metadata: _metadata }, _for_initializers, _for_extraInitializers);
+                __esDecorate(null, null, _delay_decorators, { kind: "field", name: "delay", static: false, private: false, access: { has: obj => "delay" in obj, get: obj => obj.delay, set: (obj, value) => { obj.delay = value; } }, metadata: _metadata }, _delay_initializers, _delay_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                VisualizationLink = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            }
+            static { this.linkedVisuals = new Map(); }
+            get id() {
+                return this.visualization;
+            }
+            constructor() {
+                super();
+                this.singleton = false;
+                this.visualization = __runInitializers(this, _visualization_initializers, void 0);
+                // TODO: this is hacky, use its own thing for it to properly map it to the actual events
+                this.for = (__runInitializers(this, _visualization_extraInitializers), __runInitializers(this, _for_initializers, void 0));
+                this.delay = (__runInitializers(this, _for_extraInitializers), __runInitializers(this, _delay_initializers, void 0));
+                __runInitializers(this, _delay_extraInitializers);
+                if (ƒ.Project.mode === ƒ.MODE.EDITOR)
+                    return;
+                ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
+                    if (this.node instanceof ƒ.Graph) {
+                        let link = this.node.getComponent(DataLink);
+                        if (!link)
+                            return;
+                        if (!VisualizationLink.linkedVisuals.has(link.id)) {
+                            VisualizationLink.linkedVisuals.set(link.id, new Map());
+                        }
+                        VisualizationLink.linkedVisuals.get(link.id).set(this.for, this);
+                    }
+                });
+            }
+            static {
+                __runInitializers(_classThis, _classExtraInitializers);
+            }
+        };
+        return VisualizationLink = _classThis;
+    })();
+    Script.VisualizationLink = VisualizationLink;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -3209,7 +3270,7 @@ var Script;
             else {
                 ({ targets, side, positions } = Script.getTargets(attack.target, _friendly, _opponent, this));
             }
-            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets, side, positions } });
+            await Promise.all(Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets, side, positions } }));
             for (let target of targets) {
                 await target.damage(attackDmg, attack.baseCritChance, this);
             }
@@ -3523,6 +3584,12 @@ var Script;
         return el;
     }
     Script.createElementAdvanced = createElementAdvanced;
+    async function getDuplicateOfNode(_node) {
+        let newNode = new ƒ.Node(_node.name);
+        await newNode.deserialize(_node.serialize());
+        return newNode;
+    }
+    Script.getDuplicateOfNode = getDuplicateOfNode;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -3755,6 +3822,7 @@ var Script;
             return event.detail.encounter;
         }
         async nextEncounter(_difficulty) {
+            _difficulty = 10;
             if (_difficulty === -1) { // shop
                 return undefined;
             }
@@ -4143,13 +4211,16 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
+    // This whole VFX effect thing is convoluted and I'm unhappy with how it turned out.
+    // All those nested promises and shit... we should probably rewrite that at some point.
+    // But for now it seems to be doing its job decently.
     class VisualizeTarget {
         constructor() {
-            this.nodePool = [];
+            this.nodePool = new Map();
             this.visibleNodes = [];
             this.showTargets = async (_ev) => {
                 if (!_ev.detail)
-                    return;
+                    return [];
                 positions: if (_ev.detail.positions) {
                     if (!_ev.trigger || !("target" in _ev.trigger))
                         break positions;
@@ -4173,17 +4244,20 @@ var Script;
                         }
                     }
                     const targetSide = _ev.trigger.target.side === Script.TARGET_SIDE.ALLY ? allySide : opponentSide;
+                    const promises = [];
                     _ev.detail.positions.forEachElement(async (_el, _pos) => {
                         const anchor = targetSide.getAnchor(_pos[0], _pos[1]);
-                        anchor.addChild(await this.getNode());
+                        promises.push(this.addNodesTo(anchor, this.getAdditionalVisualizer(_ev.cause, _ev.type)));
                     });
-                    return;
+                    return Promise.all(promises);
                 }
                 if (!_ev.detail.targets)
-                    return;
+                    return [];
+                const promises = [];
                 for (let target of _ev.detail.targets) {
-                    Script.Provider.visualizer.getEntity(target).addChild(await this.getNode());
+                    promises.push(this.addNodesTo(Script.Provider.visualizer.getEntity(target)));
                 }
+                return Promise.all(promises);
             };
             this.hideTargets = async (_ev) => {
                 while (this.visibleNodes.length > 0) {
@@ -4198,21 +4272,100 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.showTargets);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL, this.hideTargets);
         }
-        async getNode() {
-            let node;
-            if (this.nodePool.length > 0)
-                node = this.nodePool.pop();
+        async getVFX(_v) {
+            let vfx;
+            const id = typeof _v === "string" ? _v : _v.id;
+            const delay = typeof _v === "string" ? 0 : _v.delay;
+            if (this.nodePool.get(id)?.length > 0)
+                vfx = this.nodePool.get(id).pop();
             else
-                node = await Script.DataLink.getCopyOf("TargetHighlightGeneric");
-            this.visibleNodes.push(node);
-            return node;
+                vfx = new Script.VisualizeVFX(await Script.DataLink.getCopyOf(id), id, delay);
+            this.visibleNodes.push(vfx);
+            return vfx;
+        }
+        async addNodesTo(_parent, ..._nodes) {
+            const promises = [];
+            for (let node of _nodes) {
+                if (!node)
+                    continue;
+                promises.push((await this.getVFX(node)).addToAndActivate(_parent));
+            }
+            promises.push((await this.getVFX("TargetHighlightGeneric")).addToAndActivate(_parent));
+            return Promise.all(promises);
         }
         returnNode(_node) {
-            _node.getParent()?.removeChild(_node);
-            this.nodePool.push(_node);
+            _node.removeAndDeactivate();
+            if (!this.nodePool.has(_node.id))
+                this.nodePool.set(_node.id, []);
+            this.nodePool.get(_node.id).push(_node);
+        }
+        getAdditionalVisualizer(_cause, _evtype) {
+            if (_cause instanceof Script.Stone) {
+                // TODO: add something so stones can define visuals, too.
+                return undefined;
+            }
+            const id = _cause.id;
+            if (!id)
+                return undefined;
+            return Script.VisualizationLink.linkedVisuals.get(id)?.get(_evtype === Script.EVENT.ENTITY_ATTACK ? Script.ANIMATION.ATTACK : Script.ANIMATION.SPELL);
         }
     }
     Script.VisualizeTarget = VisualizeTarget;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    class VisualizeVFX {
+        constructor(_node, _id, _delay = 0) {
+            this.delay = 0;
+            this.node = _node;
+            this.anim = this.findFirstAnimComp(this.node);
+            this.id = _id;
+            this.delay = _delay;
+            this.deactivate();
+        }
+        async addToAndActivate(_parent) {
+            _parent.addChild(this.node);
+            return this.activate();
+        }
+        async activate() {
+            this.node?.activate(true);
+            if (this.anim) {
+                this.anim.jumpTo(0);
+                return new Promise((resolve) => {
+                    ƒ.Time.game.setTimer(this.delay * 1000, 1, () => {
+                        this.anim.jumpTo(0);
+                        this.anim.playmode = ƒ.ANIMATION_PLAYMODE.PLAY_ONCE;
+                    });
+                    ƒ.Time.game.setTimer(this.delay * 1000 + this.anim.animation.totalTime, 1, () => {
+                        resolve();
+                    });
+                });
+            }
+        }
+        removeAndDeactivate() {
+            this.node?.getParent()?.removeChild(this.node);
+            this.deactivate();
+        }
+        deactivate() {
+            this.node?.activate(false);
+            if (this.anim) {
+                this.anim.playmode = ƒ.ANIMATION_PLAYMODE.STOP;
+            }
+        }
+        findFirstAnimComp(_node) {
+            const nodesToCheck = [_node];
+            while (nodesToCheck.length > 0) {
+                const node = nodesToCheck.shift();
+                let cmp = node.getComponent(ƒ.ComponentAnimation);
+                if (cmp)
+                    return cmp;
+                nodesToCheck.push(...node.getChildren());
+            }
+            return undefined;
+        }
+    }
+    Script.VisualizeVFX = VisualizeVFX;
 })(Script || (Script = {}));
 // namespace Script {
 //     export interface IVisualizeEntity {
@@ -4263,30 +4416,6 @@ var Script;
 //         }
 //         getEntity(): Readonly<IEntity> {
 //             return this.#entity;
-//         }
-//     }
-// }
-// namespace Script {
-//     import ƒ = FudgeCore;
-//     export interface IVisualizeGrid {
-//         getRealPosition(_pos: Position): any;
-//         updateVisuals(): void;
-//     }
-//     export class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
-//         grid: Grid<VisualizeEntity>;
-//         constructor(_grid: Grid<VisualizeEntity>) {
-//             super("VisualizeGridNull");
-//             this.grid = _grid;
-//             this.addComponent(new ƒ.ComponentTransform());
-//             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3(0, 0, 0));
-//         }
-//         updateVisuals(): void {
-//             this.grid.forEachElement((element) => {
-//                 element?.updateVisuals();
-//             });
-//         }
-//         getRealPosition(_pos: Position) {
-//             return _pos;
 //         }
 //     }
 // }
@@ -4363,6 +4492,30 @@ var Script;
     }
     Script.VisualizeGrid = VisualizeGrid;
 })(Script || (Script = {}));
+// namespace Script {
+//     import ƒ = FudgeCore;
+//     export interface IVisualizeGrid {
+//         getRealPosition(_pos: Position): any;
+//         updateVisuals(): void;
+//     }
+//     export class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
+//         grid: Grid<VisualizeEntity>;
+//         constructor(_grid: Grid<VisualizeEntity>) {
+//             super("VisualizeGridNull");
+//             this.grid = _grid;
+//             this.addComponent(new ƒ.ComponentTransform());
+//             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3(0, 0, 0));
+//         }
+//         updateVisuals(): void {
+//             this.grid.forEachElement((element) => {
+//                 element?.updateVisuals();
+//             });
+//         }
+//         getRealPosition(_pos: Position) {
+//             return _pos;
+//         }
+//     }
+// }
 /// <reference path="UILayer.ts" />
 var Script;
 /// <reference path="UILayer.ts" />

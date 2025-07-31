@@ -125,7 +125,7 @@ namespace Script {
             } else {
                 ({ targets, side, positions } = getTargets(attack.target, _friendly, _opponent, this));
             }
-            await EventBus.dispatchEvent({ type: EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets, side, positions } })
+            await Promise.all(EventBus.dispatchEventWithoutWaiting({ type: EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets, side, positions } }));
             for (let target of targets) {
                 await target.damage(attackDmg, attack.baseCritChance, this);
             }

@@ -132,6 +132,7 @@ namespace Script {
         }
 
         async nextEncounter(_difficulty: number) {
+            _difficulty = 10;
             if (_difficulty === -1) { // shop
                 return undefined;
             }

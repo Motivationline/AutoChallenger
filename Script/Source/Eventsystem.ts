@@ -68,7 +68,7 @@ namespace Script {
         detail?: T;
     }
 
-    export type FightEventListener = (_ev?: FightEvent) => Promise<void> | void;
+    export type FightEventListener = (_ev?: FightEvent) => Promise<any> | void;
 
     export class EventBus {
         static listeners = new Map<EVENT, FightEventListener[]>();
