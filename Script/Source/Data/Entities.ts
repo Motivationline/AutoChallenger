@@ -1174,6 +1174,134 @@ namespace Script {
                 ]
             },
             {
+                id: "floppyFish", // attacks random position and then moves randomly TODO
+                health: 1,
+                attacks: {
+                    options: [
+                        {
+                            target: {
+                                side: TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 0],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 0],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 0],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 1],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 1],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 1],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 2],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 2],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 2],
+                                    shape: AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                    ],
+                    selection: {
+                        order: SELECTION_ORDER.RANDOM_EACH_ROUND,
+                        amount: 1,
+                    }
+                }
+            },
+            {
+                id: "okayOyster", // shields others upon taking damage
+                health: 3,
+                abilities: [
+                    {   // if take damage, shield others
+                        on: EVENT.ENTITY_HURT,
+                        conditions: [{
+                            target: TARGET.SELF,
+                        }],
+                        target: TARGET.RANDOM_ALLY,
+                        spell: {
+                            type: SPELL_TYPE.SHIELD,
+                            level: 1,
+                        }
+                    },
+                ]
+            },
+            {
 
                 id: "Björn", // Björn's entity for testing
                 health: 100000000
