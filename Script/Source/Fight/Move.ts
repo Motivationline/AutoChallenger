@@ -37,6 +37,8 @@ namespace Script {
     //     _fight.arena.away = newGrid;
     // }
 
+    // @Björn die Verrenkung brauchst du nicht machen, du kannst move() einfach direkt in der Fight runOneSide aufrufen
+    // außerdem ist das EntityMove Event dazu gedacht dass eine Entity das auslöst, wenn sie sich bewegt
     EventBus.addEventListener(EVENT.ENTITY_MOVE, moveListener);
 
     function moveListener(_ev: FightEvent){
@@ -44,6 +46,7 @@ namespace Script {
         console.log("MovingEntities");
     }
 
+    // @Björn hier sollten noch ein paar asyncs und awaits rein
     export function move(_grid: Grid<Entity>) {
         //let grid: Grid<Entity> = _grid;
         let maxAlternatives: number = 0;
