@@ -234,7 +234,7 @@ namespace Script {
         }
 
         tryToMove(_grid: Grid<Entity>, maxAlternatives: number): boolean {
-            //let grid: Grid<Entity> = _grid;
+            let grid: Grid<Entity> = _grid;
             //check if the Entity has move data
             let moveData: MoveData;
             moveData = this.select(this.moves, true)[0];//TODO: funktioniert das???? // @Björn das sucht dir alle moves raus die es machen soll - du nimmst aber nur den ersten. Im Moment geht das weil da immer nur einer zurück kommt.
@@ -250,16 +250,18 @@ namespace Script {
                     if (grid.get(nextPosition) || Grid.outOfBounds(nextPosition)) {
                         // @Björn hier nicht komplett abbrechen, nur zur for schleife zurück springen ("continue")
                         // sonst wird immer nur die standard variante getestet, nie die alternativen.
-                        return false
+                        continue;
                     } else if (grid.get(nextPosition) == undefined) { //spot is free
                         // @Björn hier noch den optionalen dritten parameter auf true setzen damit die entity nicht zweimal im grid ist
-                        grid.set(nextPosition, this);
+                        grid.set(nextPosition, this, true);
                         this.position = nextPosition;
                         this.currentDirection = nextRotation;
                         // @Björn hier wäre der richtige Zeitpunkt für das EntityMove Event
                         // und auch das EntityMoved event, eines nach dem anderen. Ähnlich wie bei EntityDies / -Died
                         // denk daran die entsprechenden infos dem Event mitzugeben, also welche Entity sich bewegt und von wo nach wo usw.
                         // dann sollte das mit den abilities auch keine Fehler mehr schmeißen.
+                        EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVE, });
+                        EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVED, });
                         //dispatchEvent(EVENT.ENTITY_MOVED);
                         this.moved = true;
                         return true;
@@ -270,6 +272,7 @@ namespace Script {
                 return true;
             }
             // @Björn denk an default return
+            return;
         }
 
         /* @Björn okay, ich glaube ich verstehe wo du damit hin wolltest, ich glaube aber dass es sinnvoller

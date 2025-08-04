@@ -41,7 +41,7 @@ namespace Script {
     // außerdem ist das EntityMove Event dazu gedacht dass eine Entity das auslöst, wenn sie sich bewegt
     EventBus.addEventListener(EVENT.ENTITY_MOVE, moveListener);
 
-    function moveListener(_ev: FightEvent){
+    function moveListener(_ev: FightEvent) {
         move(_ev.grid);
         console.log("MovingEntities");
     }
@@ -76,6 +76,28 @@ namespace Script {
         console.log("moved Away Grid: ");
         console.log(_grid);
 
-        EventBus.dispatchEvent({type: EVENT.ENTITY_MOVED});
+        //EventBus.dispatchEvent({type: EVENT.ENTITY_MOVED});
+    }
+
+    export function getDirectionBasedOnRotation(_rotation: number): Position {
+        let directions: Position[] = [
+            [1, 0],    // East
+            [1, 1],    // North-East
+            [0, 1],    // North
+            [-1, 1],   // North-West
+            [-1, 0],   // West
+            [-1, -1],  // South-West
+            [0, -1],   // South
+            [1, -1]    // South-East
+        ];
+        //calculate direction and align components to -1,0,1
+        let dir: Position = [Math.cos(_rotation), Math.sin(_rotation)];
+        //TODO: make components be -1/0/1
+        let direction = directions.findIndex()
+        return direction
+    }
+
+    export function getPositionBasedOnMove(_pos: Position, _rotation: number, _step: number) {
+        let dir: Position = getDirectionBasedOnRotation(_rotation);
     }
 }
