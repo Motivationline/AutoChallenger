@@ -132,6 +132,11 @@ canvas.fullscreen {
   place-items: center;
 }
 
+/* Game Overlay Info */
+.EntityOverlay {
+  position: absolute;
+}
+
 /* Reusables */
 
 .EumlingUIElement {

@@ -56,14 +56,16 @@ namespace Script {
             _entity.mtxLocal.translation = position.clone;
             this.addChild(_entity);
             this.grid.set(_pos, _entity, true);
+            _entity.activate(true);
         }
-
+        
         removeEntityFromGrid(_pos: Position) {
             if (Grid.outOfBounds(_pos)) return;
             let elementToRemove = this.grid.get(_pos);
             if (!elementToRemove) return;
             this.grid.remove(_pos);
             this.removeChild(elementToRemove);
+            elementToRemove.activate(false);
             // elementToRemove.removeEventListeners();
         }
 

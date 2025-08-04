@@ -20,7 +20,7 @@ namespace Script {
         private defaultAnimation: ƒ.Animation;
         //private grid: VisualizeGridNull;
         // TODO: remove this again when it's not needed anymore.
-        private tmpText: ƒ.ComponentText;
+        private tmpText: HTMLDivElement;
 
         constructor(_entity: IEntity) {
             super("entity");
@@ -35,6 +35,9 @@ namespace Script {
             // this.addComponent(entityMat);
             // entityMesh.mtxPivot.scale(ƒ.Vector3.ONE(this.size));
             // entityMat.clrPrimary.setCSS("white");
+
+            this.tmpText = createElementAdvanced("div", { classes: ["EntityOverlay"] });
+            this.updateTmpText();
 
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
@@ -95,13 +98,6 @@ namespace Script {
             await waitMS(200);
         }
 
-        async updateVisuals(): Promise<void> {
-            //TODO: remove the Entity from Scene Graph if this is an enemy, Player should not be removed just repositioned in the next run
-            // this.removeAllChildren();
-            // console.log("entity visualizer null: updateVisuals", this.entity);
-            // await waitMS(200);
-        }
-
 
         async loadModel(_id: string) {
             let model: ƒ.Node = new ƒ.Node(_id);
@@ -116,14 +112,6 @@ namespace Script {
                 console.warn(`Model with ID: ${_id} not found, using placeholder instead 👉👈`);
             }
             this.addChild(model);
-
-            // TODO: this is a temp vis for all the info, we need to remove this
-            let entityInfoGraph = DataLink.linkedNodes.get("entityInfo");
-            let textNode: ƒ.Node = new ƒ.Node("text");
-            await textNode.deserialize(entityInfoGraph.serialize());
-            this.addChild(textNode);
-            this.tmpText = textNode.getComponent(ƒ.ComponentText);
-            this.updateTmpText();
         }
 
         //retuns a placeholder if needed
@@ -156,14 +144,28 @@ namespace Script {
             if (node) this.removeChild(node);
         }
 
-        private updateTmpText = () => {
+        public updateTmpText = () => {
             if (!this.tmpText) return;
             console.log("updateTmpText", this.entity);
             let effectText = "";
             (<Entity>this.entity).activeEffects.forEach((value, type) => { if (value > 0) effectText += `${type}: ${value}\n` });
             effectText += `${this.entity.currentHealth} / ${this.entity.health} ♥️`;
             console.log(effectText);
-            this.tmpText.texture.text = effectText;
+            this.tmpText.innerText = effectText;
+
+            let rect = this.tmpText.getBoundingClientRect();
+
+            const pos = viewport.pointWorldToClient(this.mtxWorld.translation);
+            this.tmpText.style.left = (pos.x - rect.width / 2) + "px";
+            this.tmpText.style.top = pos.y + "px";
+        }
+
+        private addText = () => {
+            document.getElementById("GameOverlayInfos").appendChild(this.tmpText);
+            requestAnimationFrame(this.updateTmpText);
+        }
+        private removeText = () => {
+            this.tmpText.remove();
         }
 
         getEntity(): Readonly<IEntity> {
@@ -182,6 +184,9 @@ namespace Script {
             EventBus.addEventListener(EVENT.ENTITY_AFFECTED, this.updateTmpText);
             EventBus.addEventListener(EVENT.ROUND_END, this.updateTmpText);
             EventBus.addEventListener(EVENT.ROUND_START, this.updateTmpText);
+
+            this.addEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
+            this.addEventListener(ƒ.EVENT.NODE_DEACTIVATE, this.removeText);
         }
 
         removeEventListeners() {
@@ -191,6 +196,9 @@ namespace Script {
             EventBus.removeEventListener(EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_AFFECTED, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_DIES, this.eventListener);
+
+            this.removeEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
+            this.removeEventListener(ƒ.EVENT.NODE_DEACTIVATE, this.removeText);
         }
 
         eventListener = async (_ev: FightEvent) => {

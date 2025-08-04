@@ -1611,6 +1611,134 @@ var Script;
                 ]
             },
             {
+                id: "floppyFish", // attacks random position and then moves randomly TODO
+                health: 1,
+                attacks: {
+                    options: [
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 0],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 0],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 0],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 1],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 1],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 1],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 2],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 2],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 2],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                    ],
+                    selection: {
+                        order: Script.SELECTION_ORDER.RANDOM_EACH_ROUND,
+                        amount: 1,
+                    }
+                }
+            },
+            {
+                id: "okayOyster", // shields others upon taking damage
+                health: 3,
+                abilities: [
+                    {
+                        on: Script.EVENT.ENTITY_HURT,
+                        conditions: [{
+                                target: Script.TARGET.SELF,
+                            }],
+                        target: Script.TARGET.RANDOM_ALLY,
+                        spell: {
+                            type: Script.SPELL_TYPE.SHIELD,
+                            level: 1,
+                        }
+                    },
+                ]
+            },
+            {
                 id: "Björn", // Björn's entity for testing
                 health: 100000000
             },
@@ -2441,15 +2569,15 @@ var Script;
         let _classExtraInitializers = [];
         let _classThis;
         let _classSuper = ƒ.ComponentScript;
-        let _instanceExtraInitializers = [];
         let _id_decorators;
         let _id_initializers = [];
+        let _id_extraInitializers = [];
         var DataLink = class extends _classSuper {
             static { _classThis = this; }
             static {
                 const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
                 _id_decorators = [ƒ.serialize(String)];
-                __esDecorate(null, null, _id_decorators, { kind: "field", name: "id", static: false, private: false, access: { has: obj => "id" in obj, get: obj => obj.id, set: (obj, value) => { obj.id = value; } }, metadata: _metadata }, _id_initializers, _instanceExtraInitializers);
+                __esDecorate(null, null, _id_decorators, { kind: "field", name: "id", static: false, private: false, access: { has: obj => "id" in obj, get: obj => obj.id, set: (obj, value) => { obj.id = value; } }, metadata: _metadata }, _id_initializers, _id_extraInitializers);
                 __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
                 DataLink = _classThis = _classDescriptor.value;
                 if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
@@ -2457,7 +2585,8 @@ var Script;
             static { this.linkedNodes = new Map(); }
             constructor() {
                 super();
-                this.id = (__runInitializers(this, _instanceExtraInitializers), __runInitializers(this, _id_initializers, void 0));
+                this.id = __runInitializers(this, _id_initializers, void 0);
+                __runInitializers(this, _id_extraInitializers);
                 if (ƒ.Project.mode === ƒ.MODE.EDITOR)
                     return;
                 ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
@@ -2495,19 +2624,20 @@ var Script;
         let _classExtraInitializers = [];
         let _classThis;
         let _classSuper = ƒ.Component;
-        let _instanceExtraInitializers = [];
         let _animation_decorators;
         let _animation_initializers = [];
+        let _animation_extraInitializers = [];
         let _animType_decorators;
         let _animType_initializers = [];
+        let _animType_extraInitializers = [];
         var AnimationLink = class extends _classSuper {
             static { _classThis = this; }
             static {
                 const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
                 _animation_decorators = [ƒ.serialize(ƒ.Animation)];
                 _animType_decorators = [ƒ.serialize(ANIMATION)];
-                __esDecorate(null, null, _animation_decorators, { kind: "field", name: "animation", static: false, private: false, access: { has: obj => "animation" in obj, get: obj => obj.animation, set: (obj, value) => { obj.animation = value; } }, metadata: _metadata }, _animation_initializers, _instanceExtraInitializers);
-                __esDecorate(null, null, _animType_decorators, { kind: "field", name: "animType", static: false, private: false, access: { has: obj => "animType" in obj, get: obj => obj.animType, set: (obj, value) => { obj.animType = value; } }, metadata: _metadata }, _animType_initializers, _instanceExtraInitializers);
+                __esDecorate(null, null, _animation_decorators, { kind: "field", name: "animation", static: false, private: false, access: { has: obj => "animation" in obj, get: obj => obj.animation, set: (obj, value) => { obj.animation = value; } }, metadata: _metadata }, _animation_initializers, _animation_extraInitializers);
+                __esDecorate(null, null, _animType_decorators, { kind: "field", name: "animType", static: false, private: false, access: { has: obj => "animType" in obj, get: obj => obj.animType, set: (obj, value) => { obj.animType = value; } }, metadata: _metadata }, _animType_initializers, _animType_extraInitializers);
                 __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
                 AnimationLink = _classThis = _classDescriptor.value;
                 if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
@@ -2515,9 +2645,10 @@ var Script;
             static { this.linkedAnimations = new Map(); }
             constructor() {
                 super();
-                this.singleton = (__runInitializers(this, _instanceExtraInitializers), false);
+                this.singleton = false;
                 this.animation = __runInitializers(this, _animation_initializers, void 0);
-                this.animType = __runInitializers(this, _animType_initializers, void 0);
+                this.animType = (__runInitializers(this, _animation_extraInitializers), __runInitializers(this, _animType_initializers, void 0));
+                __runInitializers(this, _animType_extraInitializers);
                 if (ƒ.Project.mode === ƒ.MODE.EDITOR)
                     return;
                 ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
@@ -2546,13 +2677,15 @@ var Script;
         let _classExtraInitializers = [];
         let _classThis;
         let _classSuper = ƒ.Component;
-        let _instanceExtraInitializers = [];
         let _visualization_decorators;
         let _visualization_initializers = [];
+        let _visualization_extraInitializers = [];
         let _for_decorators;
         let _for_initializers = [];
+        let _for_extraInitializers = [];
         let _delay_decorators;
         let _delay_initializers = [];
+        let _delay_extraInitializers = [];
         var VisualizationLink = class extends _classSuper {
             static { _classThis = this; }
             static {
@@ -2560,9 +2693,9 @@ var Script;
                 _visualization_decorators = [ƒ.serialize(String)];
                 _for_decorators = [ƒ.serialize(ANIMATION)];
                 _delay_decorators = [ƒ.serialize(Number)];
-                __esDecorate(null, null, _visualization_decorators, { kind: "field", name: "visualization", static: false, private: false, access: { has: obj => "visualization" in obj, get: obj => obj.visualization, set: (obj, value) => { obj.visualization = value; } }, metadata: _metadata }, _visualization_initializers, _instanceExtraInitializers);
-                __esDecorate(null, null, _for_decorators, { kind: "field", name: "for", static: false, private: false, access: { has: obj => "for" in obj, get: obj => obj.for, set: (obj, value) => { obj.for = value; } }, metadata: _metadata }, _for_initializers, _instanceExtraInitializers);
-                __esDecorate(null, null, _delay_decorators, { kind: "field", name: "delay", static: false, private: false, access: { has: obj => "delay" in obj, get: obj => obj.delay, set: (obj, value) => { obj.delay = value; } }, metadata: _metadata }, _delay_initializers, _instanceExtraInitializers);
+                __esDecorate(null, null, _visualization_decorators, { kind: "field", name: "visualization", static: false, private: false, access: { has: obj => "visualization" in obj, get: obj => obj.visualization, set: (obj, value) => { obj.visualization = value; } }, metadata: _metadata }, _visualization_initializers, _visualization_extraInitializers);
+                __esDecorate(null, null, _for_decorators, { kind: "field", name: "for", static: false, private: false, access: { has: obj => "for" in obj, get: obj => obj.for, set: (obj, value) => { obj.for = value; } }, metadata: _metadata }, _for_initializers, _for_extraInitializers);
+                __esDecorate(null, null, _delay_decorators, { kind: "field", name: "delay", static: false, private: false, access: { has: obj => "delay" in obj, get: obj => obj.delay, set: (obj, value) => { obj.delay = value; } }, metadata: _metadata }, _delay_initializers, _delay_extraInitializers);
                 __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
                 VisualizationLink = _classThis = _classDescriptor.value;
                 if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
@@ -2573,11 +2706,12 @@ var Script;
             }
             constructor() {
                 super();
-                this.singleton = (__runInitializers(this, _instanceExtraInitializers), false);
+                this.singleton = false;
                 this.visualization = __runInitializers(this, _visualization_initializers, void 0);
                 // TODO: this is hacky, use its own thing for it to properly map it to the actual events
-                this.for = __runInitializers(this, _for_initializers, void 0);
-                this.delay = __runInitializers(this, _delay_initializers, void 0);
+                this.for = (__runInitializers(this, _visualization_extraInitializers), __runInitializers(this, _for_initializers, void 0));
+                this.delay = (__runInitializers(this, _for_extraInitializers), __runInitializers(this, _delay_initializers, void 0));
+                __runInitializers(this, _delay_extraInitializers);
                 if (ƒ.Project.mode === ƒ.MODE.EDITOR)
                     return;
                 ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
@@ -3453,19 +3587,20 @@ var Script;
         let _classExtraInitializers = [];
         let _classThis;
         let _classSuper = ƒ.ComponentScript;
-        let _instanceExtraInitializers = [];
         let _changeMaterial_decorators;
         let _changeMaterial_initializers = [];
+        let _changeMaterial_extraInitializers = [];
         let _animationSprite_decorators;
         let _animationSprite_initializers = [];
+        let _animationSprite_extraInitializers = [];
         var ComponentChangeMaterial = class extends _classSuper {
             static { _classThis = this; }
             static {
                 const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
                 _changeMaterial_decorators = [FudgeCore.serialize(FudgeCore.Material)];
                 _animationSprite_decorators = [FudgeCore.serialize(FudgeCore.AnimationSprite)];
-                __esDecorate(null, null, _changeMaterial_decorators, { kind: "field", name: "changeMaterial", static: false, private: false, access: { has: obj => "changeMaterial" in obj, get: obj => obj.changeMaterial, set: (obj, value) => { obj.changeMaterial = value; } }, metadata: _metadata }, _changeMaterial_initializers, _instanceExtraInitializers);
-                __esDecorate(null, null, _animationSprite_decorators, { kind: "field", name: "animationSprite", static: false, private: false, access: { has: obj => "animationSprite" in obj, get: obj => obj.animationSprite, set: (obj, value) => { obj.animationSprite = value; } }, metadata: _metadata }, _animationSprite_initializers, _instanceExtraInitializers);
+                __esDecorate(null, null, _changeMaterial_decorators, { kind: "field", name: "changeMaterial", static: false, private: false, access: { has: obj => "changeMaterial" in obj, get: obj => obj.changeMaterial, set: (obj, value) => { obj.changeMaterial = value; } }, metadata: _metadata }, _changeMaterial_initializers, _changeMaterial_extraInitializers);
+                __esDecorate(null, null, _animationSprite_decorators, { kind: "field", name: "animationSprite", static: false, private: false, access: { has: obj => "animationSprite" in obj, get: obj => obj.animationSprite, set: (obj, value) => { obj.animationSprite = value; } }, metadata: _metadata }, _animationSprite_initializers, _animationSprite_extraInitializers);
                 __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
                 ComponentChangeMaterial = _classThis = _classDescriptor.value;
                 if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
@@ -3473,10 +3608,10 @@ var Script;
             static { this.iSubclass = ƒ.Component.registerSubclass(ComponentChangeMaterial); }
             constructor() {
                 super();
-                this.changeMaterial = (__runInitializers(this, _instanceExtraInitializers), __runInitializers(this, _changeMaterial_initializers, null));
-                this.animationSprite = __runInitializers(this, _animationSprite_initializers, void 0);
+                this.changeMaterial = __runInitializers(this, _changeMaterial_initializers, null);
+                this.animationSprite = (__runInitializers(this, _changeMaterial_extraInitializers), __runInitializers(this, _animationSprite_initializers, void 0));
                 // Activate the functions of this component as response to events
-                this.hndEvent = (_event) => {
+                this.hndEvent = (__runInitializers(this, _animationSprite_extraInitializers), (_event) => {
                     switch (_event.type) {
                         case "componentAdd" /* ƒ.EVENT.COMPONENT_ADD */:
                             break;
@@ -3488,7 +3623,7 @@ var Script;
                             this.switchMaterial();
                             break;
                     }
-                };
+                });
                 if (ƒ.Project.mode == ƒ.MODE.EDITOR)
                     return;
                 // Listen to this component being added to or removed from a node
@@ -3605,6 +3740,7 @@ var Script;
         let _get_radius_decorators;
         let _offset_decorators;
         let _offset_initializers = [];
+        let _offset_extraInitializers = [];
         var PickSphere = class extends _classSuper {
             static { _classThis = this; }
             static {
@@ -3612,7 +3748,7 @@ var Script;
                 _get_radius_decorators = [ƒ.serialize(Number)];
                 _offset_decorators = [ƒ.serialize(ƒ.Vector3)];
                 __esDecorate(this, null, _get_radius_decorators, { kind: "getter", name: "radius", static: false, private: false, access: { has: obj => "radius" in obj, get: obj => obj.radius }, metadata: _metadata }, null, _instanceExtraInitializers);
-                __esDecorate(null, null, _offset_decorators, { kind: "field", name: "offset", static: false, private: false, access: { has: obj => "offset" in obj, get: obj => obj.offset, set: (obj, value) => { obj.offset = value; } }, metadata: _metadata }, _offset_initializers, _instanceExtraInitializers);
+                __esDecorate(null, null, _offset_decorators, { kind: "field", name: "offset", static: false, private: false, access: { has: obj => "offset" in obj, get: obj => obj.offset, set: (obj, value) => { obj.offset = value; } }, metadata: _metadata }, _offset_initializers, _offset_extraInitializers);
                 __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
                 PickSphere = _classThis = _classDescriptor.value;
                 if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
@@ -3623,6 +3759,7 @@ var Script;
                 this.#radius = (__runInitializers(this, _instanceExtraInitializers), 1);
                 this.#radiusSquared = 1;
                 this.offset = __runInitializers(this, _offset_initializers, new ƒ.Vector3());
+                __runInitializers(this, _offset_extraInitializers);
                 if (ƒ.Project.mode == ƒ.MODE.EDITOR)
                     return;
             }
@@ -4013,7 +4150,18 @@ var Script;
                     effectText += `${type}: ${value}\n`; });
                 effectText += `${this.entity.currentHealth} / ${this.entity.health} ♥️`;
                 console.log(effectText);
-                this.tmpText.texture.text = effectText;
+                this.tmpText.innerText = effectText;
+                let rect = this.tmpText.getBoundingClientRect();
+                const pos = Script.viewport.pointWorldToClient(this.mtxWorld.translation);
+                this.tmpText.style.left = (pos.x - rect.width / 2) + "px";
+                this.tmpText.style.top = pos.y + "px";
+            };
+            this.addText = () => {
+                document.getElementById("GameOverlayInfos").appendChild(this.tmpText);
+                requestAnimationFrame(this.updateTmpText);
+            };
+            this.removeText = () => {
+                this.tmpText.remove();
             };
             this.eventListener = async (_ev) => {
                 await this.handleEvent(_ev);
@@ -4028,6 +4176,8 @@ var Script;
             // this.addComponent(entityMat);
             // entityMesh.mtxPivot.scale(ƒ.Vector3.ONE(this.size));
             // entityMat.clrPrimary.setCSS("white");
+            this.tmpText = Script.createElementAdvanced("div", { classes: ["EntityOverlay"] });
+            this.updateTmpText();
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
             this.addEventListeners();
@@ -4080,12 +4230,6 @@ var Script;
             console.log("entity visualizer null: hide preview", this.entity);
             await Script.waitMS(200);
         }
-        async updateVisuals() {
-            //TODO: remove the Entity from Scene Graph if this is an enemy, Player should not be removed just repositioned in the next run
-            // this.removeAllChildren();
-            // console.log("entity visualizer null: updateVisuals", this.entity);
-            // await waitMS(200);
-        }
         async loadModel(_id) {
             let model = new ƒ.Node(_id);
             let original = Script.DataLink.linkedNodes.get(_id);
@@ -4100,13 +4244,6 @@ var Script;
                 console.warn(`Model with ID: ${_id} not found, using placeholder instead 👉👈`);
             }
             this.addChild(model);
-            // TODO: this is a temp vis for all the info, we need to remove this
-            let entityInfoGraph = Script.DataLink.linkedNodes.get("entityInfo");
-            let textNode = new ƒ.Node("text");
-            await textNode.deserialize(entityInfoGraph.serialize());
-            this.addChild(textNode);
-            this.tmpText = textNode.getComponent(ƒ.ComponentText);
-            this.updateTmpText();
         }
         //retuns a placeholder if needed
         givePlaceholderPls() {
@@ -4154,6 +4291,8 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_AFFECTED, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ROUND_END, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateTmpText);
+            this.addEventListener("nodeActivate" /* ƒ.EVENT.NODE_ACTIVATE */, this.addText);
+            this.addEventListener("nodeDeactivate" /* ƒ.EVENT.NODE_DEACTIVATE */, this.removeText);
         }
         removeEventListeners() {
             Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.eventListener);
@@ -4162,6 +4301,8 @@ var Script;
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_AFFECTED, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_DIES, this.eventListener);
+            this.removeEventListener("nodeActivate" /* ƒ.EVENT.NODE_ACTIVATE */, this.addText);
+            this.removeEventListener("nodeDeactivate" /* ƒ.EVENT.NODE_DEACTIVATE */, this.removeText);
         }
         async handleEvent(_ev) {
             if (_ev.cause === this.entity) {
@@ -4424,30 +4565,6 @@ var Script;
 //         }
 //     }
 // }
-// namespace Script {
-//     import ƒ = FudgeCore;
-//     export interface IVisualizeGrid {
-//         getRealPosition(_pos: Position): any;
-//         updateVisuals(): void;
-//     }
-//     export class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
-//         grid: Grid<VisualizeEntity>;
-//         constructor(_grid: Grid<VisualizeEntity>) {
-//             super("VisualizeGridNull");
-//             this.grid = _grid;
-//             this.addComponent(new ƒ.ComponentTransform());
-//             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3(0, 0, 0));
-//         }
-//         updateVisuals(): void {
-//             this.grid.forEachElement((element) => {
-//                 element?.updateVisuals();
-//             });
-//         }
-//         getRealPosition(_pos: Position) {
-//             return _pos;
-//         }
-//     }
-// }
 var Script;
 (function (Script) {
     //Visualize the Entities in the Grid
@@ -4495,6 +4612,7 @@ var Script;
             _entity.mtxLocal.translation = position.clone;
             this.addChild(_entity);
             this.grid.set(_pos, _entity, true);
+            _entity.activate(true);
         }
         removeEntityFromGrid(_pos) {
             if (Script.Grid.outOfBounds(_pos))
@@ -4504,6 +4622,7 @@ var Script;
                 return;
             this.grid.remove(_pos);
             this.removeChild(elementToRemove);
+            elementToRemove.activate(false);
             // elementToRemove.removeEventListeners();
         }
         getAnchor(_x, _z) {
@@ -4521,6 +4640,30 @@ var Script;
     }
     Script.VisualizeGrid = VisualizeGrid;
 })(Script || (Script = {}));
+// namespace Script {
+//     import ƒ = FudgeCore;
+//     export interface IVisualizeGrid {
+//         getRealPosition(_pos: Position): any;
+//         updateVisuals(): void;
+//     }
+//     export class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
+//         grid: Grid<VisualizeEntity>;
+//         constructor(_grid: Grid<VisualizeEntity>) {
+//             super("VisualizeGridNull");
+//             this.grid = _grid;
+//             this.addComponent(new ƒ.ComponentTransform());
+//             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3(0, 0, 0));
+//         }
+//         updateVisuals(): void {
+//             this.grid.forEachElement((element) => {
+//                 element?.updateVisuals();
+//             });
+//         }
+//         getRealPosition(_pos: Position) {
+//             return _pos;
+//         }
+//     }
+// }
 /// <reference path="UILayer.ts" />
 var Script;
 /// <reference path="UILayer.ts" />

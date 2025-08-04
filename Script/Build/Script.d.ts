@@ -844,12 +844,13 @@ declare namespace Script {
         resist(): Promise<void>;
         showPreview(): Promise<void>;
         hidePreview(): Promise<void>;
-        updateVisuals(): Promise<void>;
         loadModel(_id: string): Promise<void>;
         givePlaceholderPls(): ƒ.Node;
         private playAnimationIfPossible;
         private showFallbackText;
-        private updateTmpText;
+        updateTmpText: () => void;
+        private addText;
+        private removeText;
         getEntity(): Readonly<IEntity>;
         addEventListeners(): void;
         removeEventListeners(): void;
