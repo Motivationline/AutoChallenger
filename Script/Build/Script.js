@@ -1,4 +1,11 @@
 "use strict";
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
+};
 var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
     function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
     var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
@@ -25,13 +32,6 @@ var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, 
     }
     if (target) Object.defineProperty(target, contextIn.name, descriptor);
     done = true;
-};
-var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
-    var useValue = arguments.length > 2;
-    for (var i = 0; i < initializers.length; i++) {
-        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
-    }
-    return useValue ? value : void 0;
 };
 var Script;
 (function (Script) {
@@ -771,64 +771,67 @@ var Script;
                         order: Script.SELECTION_ORDER.RANDOM_EACH_FIGHT,
                         amount: 1,
                     }
-                }
+                },
+                info: "Attacks the opposite column, row or in a cross for 1 damage. Picks one at random each new fight."
             },
             {
                 id: "RI-Eumling",
                 health: 4,
                 attacks: {
                     baseDamage: 1,
-                    baseCritChance: 25,
+                    baseCritChance: 50,
                     target: {
                         side: Script.TARGET_SIDE.OPPONENT,
                         area: {
-                            position: Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW, // TODO: NEEDS TO ATTACK NEXT ROW IF NO ENEMY
-                            shape: Script.AREA_SHAPE.SINGLE,
+                            position: Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW,
+                            shape: Script.AREA_SHAPE.SINGLE
                         },
-                    }
-                }
+                    },
+                },
+                info: "Attacks the first opponent in the opposite column for 1 damage. Has a 50% crit-chance."
             },
             {
                 id: "RAC-Eumling",
                 health: 5,
-                spells: {
+                attacks: {
                     options: [
                         {
+                            baseDamage: 1,
                             target: {
-                                side: Script.TARGET_SIDE.ALLY,
+                                side: Script.TARGET_SIDE.OPPONENT,
                                 area: {
-                                    position: Script.AREA_POSITION.RELATIVE_SAME,
+                                    position: Script.AREA_POSITION.RELATIVE_MIRRORED,
                                     shape: Script.AREA_SHAPE.ROW,
                                 },
                             },
-                            type: Script.SPELL_TYPE.STRENGTH,
                         },
                         {
+                            baseDamage: 1,
                             target: {
-                                side: Script.TARGET_SIDE.ALLY,
+                                side: Script.TARGET_SIDE.OPPONENT,
                                 area: {
-                                    position: Script.AREA_POSITION.RELATIVE_SAME,
+                                    position: Script.AREA_POSITION.RELATIVE_MIRRORED,
                                     shape: Script.AREA_SHAPE.COLUMN,
                                 },
                             },
-                            type: Script.SPELL_TYPE.STRENGTH,
                         },
                         {
+                            baseDamage: 1,
                             target: {
-                                side: Script.TARGET_SIDE.ALLY,
+                                side: Script.TARGET_SIDE.OPPONENT,
                                 area: {
-                                    position: Script.AREA_POSITION.RELATIVE_SAME,
+                                    position: Script.AREA_POSITION.RELATIVE_MIRRORED,
                                     shape: Script.AREA_SHAPE.DIAGONALS,
                                 },
                             },
-                            type: Script.SPELL_TYPE.STRENGTH,
                         },
                     ],
                     selection: {
                         order: Script.SELECTION_ORDER.RANDOM_EACH_FIGHT,
-                        amount: 1,
+                        amount: 2,
                     }
-                }
+                },
+                info: "Attacks the opposite column, row or in a cross for 1 damage. Picks two at random each new fight."
             },
             {
                 id: "RAE-Eumling",
@@ -871,40 +874,65 @@ var Script;
                         amount: 1,
                     }
                 },
-                abilities: [ // TODO: Needs to earn +1 gold for each damage dealt
-                ]
+                abilities: [
+                    {
+                        on: Script.EVENT.ENTITY_ATTACK,
+                        target: "target",
+                        conditions: {
+                            cause: Script.TARGET.SELF
+                        },
+                        spell: {
+                            type: Script.SPELL_TYPE.GOLD,
+                            level: 1,
+                        }
+                    }
+                ],
+                info: "Attacks the opposite column, row or in a cross for 1 damage. Picks one at random each new fight. Gains 1 gold on each attack."
             },
             {
                 id: "RIC-Eumling",
                 health: 5,
                 attacks: {
                     baseDamage: 1,
-                    baseCritChance: 25,
+                    baseCritChance: 75,
                     target: {
                         side: Script.TARGET_SIDE.OPPONENT,
                         area: {
-                            position: Script.AREA_POSITION.RELATIVE_MIRRORED, // TODO: NEEDS TO ATTACK NEXT ROW IF NO ENEMY
+                            position: Script.AREA_POSITION.RELATIVE_MIRRORED,
                             shape: Script.AREA_SHAPE.ROW,
                         },
                     }
-                }
+                },
+                info: "Attacks the entire opposite column for 1 damage. Has a 75% crit-chance."
             },
             {
                 id: "RIE-Eumling",
                 health: 5,
                 attacks: {
-                    baseDamage: 1,
+                    baseDamage: 2,
                     baseCritChance: 50,
                     target: {
                         side: Script.TARGET_SIDE.OPPONENT,
                         area: {
-                            position: Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW, // TODO: NEEDS TO ATTACK NEXT ROW IF NO ENEMY
+                            position: Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW,
                             shape: Script.AREA_SHAPE.SINGLE,
                         },
                     }
                 },
-                abilities: [ // TODO: Needs to earn +2 gold every time it crits
-                ]
+                abilities: [
+                    {
+                        on: Script.EVENT.ENTITY_ATTACK,
+                        target: "target",
+                        conditions: {
+                            cause: Script.TARGET.SELF
+                        },
+                        spell: {
+                            type: Script.SPELL_TYPE.GOLD,
+                            level: 2,
+                        }
+                    }
+                ],
+                info: "Attacks the first opponent in the opposite column for 2 damage. Has a 50% crit-chance. Gains 2 gold on each attack."
             },
             {
                 id: "S-Eumling",
@@ -914,6 +942,7 @@ var Script;
                     type: Script.SPELL_TYPE.HEAL,
                     level: 1,
                 },
+                info: "Heals itself for 1 health every round."
             },
             {
                 id: "SA-Eumling",
@@ -1044,7 +1073,8 @@ var Script;
                             type: Script.SPELL_TYPE.SHIELD,
                             level: 1,
                         }
-                    }]
+                    }],
+                info: "Selects three random fields every combat and heals them for 1 health every round. Gives healed allies 1 shield."
             },
             {
                 id: "SI-Eumling",
@@ -1054,6 +1084,7 @@ var Script;
                     type: Script.SPELL_TYPE.HEAL,
                     level: 2,
                 },
+                info: "Heals a random ally for 2 health every round."
             },
             {
                 id: "SAC-Eumling",
@@ -1184,7 +1215,8 @@ var Script;
                             type: Script.SPELL_TYPE.SHIELD,
                             level: 2,
                         }
-                    }]
+                    }],
+                info: "Selects three random fields every combat and heals them for 1 health every round. Gives healed allies 2 shield."
             },
             {
                 id: "SAE-Eumling",
@@ -1302,7 +1334,7 @@ var Script;
                     ],
                     selection: {
                         order: Script.SELECTION_ORDER.RANDOM_EACH_FIGHT,
-                        amount: 3,
+                        amount: 5,
                     }
                 },
                 abilities: [{
@@ -1312,10 +1344,11 @@ var Script;
                             }],
                         target: "target",
                         spell: {
-                            type: Script.SPELL_TYPE.SHIELD,
+                            type: Script.SPELL_TYPE.GOLD,
                             level: 1,
                         }
-                    }]
+                    }],
+                info: "Selects five random fields every combat and heals them for 1 health every round. Gains 1 gold when healing allies."
             },
             {
                 id: "SIC-Eumling",
@@ -1332,7 +1365,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1344,7 +1377,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1356,7 +1389,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1368,7 +1401,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1380,7 +1413,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1392,7 +1425,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1404,7 +1437,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1416,7 +1449,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1428,14 +1461,15 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                     ],
                     selection: {
                         order: Script.SELECTION_ORDER.RANDOM_EACH_FIGHT,
-                        amount: 6,
+                        amount: 4,
                     }
-                }
+                },
+                info: "Selects four random fields every combat and heals them for 2 health every round."
             },
             {
                 id: "SIE-Eumling", // TODO: +1 Gold per heart that is healed
@@ -1443,8 +1477,20 @@ var Script;
                 spells: {
                     target: Script.TARGET.RANDOM_ALLY,
                     type: Script.SPELL_TYPE.HEAL,
-                    level: 2,
+                    level: 3,
                 },
+                abilities: [{
+                        on: Script.EVENT.ENTITY_HEALED,
+                        conditions: [{
+                                target: { side: Script.TARGET_SIDE.ALLY, entity: {}, excludeSelf: false }
+                            }],
+                        target: "target",
+                        spell: {
+                            type: Script.SPELL_TYPE.GOLD,
+                            level: 1,
+                        }
+                    }],
+                info: "Heals a random ally for 3 health every round. Gains 1 gold when healing allies."
             },
             {
                 id: "cactusCrawler", // doesn't attack but gets thorns after moving
@@ -1468,7 +1514,8 @@ var Script;
                             level: 1,
                         }
                     }
-                ]
+                ],
+                info: "Moves left and right, and gains 1 Thorns after moving."
             },
             {
                 id: "flameFlinger", // low hp but massive single target damage
@@ -1482,7 +1529,8 @@ var Script;
                             shape: Script.AREA_SHAPE.SINGLE,
                         },
                     }
-                }
+                },
+                info: "Attacks the opposite field for 2 damage."
             },
             {
                 id: "boxingBush", // enemy that attacks the entire mirrored row for 1
@@ -1503,7 +1551,8 @@ var Script;
                     selection: {
                         order: Script.SELECTION_ORDER.ALL,
                     }
-                }
+                },
+                info: "Attacks the entire opposite row for 1 damage."
             },
             {
                 id: "punchingPalmtree", // enemy that attacks everywhere but the center
@@ -1525,7 +1574,8 @@ var Script;
                     selection: {
                         order: Script.SELECTION_ORDER.ALL,
                     }
-                }
+                },
+                info: "Attacks all opposite fields except for the center for 1 damage."
             },
             {
                 id: "sandSitter", // enemy that attacks a plus, but spawns in round 2 (not implemented yet)
@@ -1563,7 +1613,8 @@ var Script;
                     selection: {
                         order: Script.SELECTION_ORDER.ALL,
                     }
-                }
+                },
+                info: "Appears after the first round and attacks in a plus pattern for 1 damage."
             },
             {
                 id: "worriedWall", // very strong wall, which dies when others die
@@ -1579,7 +1630,8 @@ var Script;
                             baseDamage: 20,
                         }
                     },
-                ]
+                ],
+                info: "Doesn't attack and disappears when another enemy is defeated."
             },
             {
                 id: "countdownCoconut", // coconut that blows up on the final turn
@@ -1611,7 +1663,8 @@ var Script;
                             baseDamage: 10,
                         }
                     },
-                ]
+                ],
+                info: "Blows itself up at the end of the fight, dealing 2 damage on all opposite fields."
             },
             {
                 id: "floppyFish", // attacks random position and then moves randomly TODO
@@ -1722,7 +1775,8 @@ var Script;
                         order: Script.SELECTION_ORDER.RANDOM_EACH_ROUND,
                         amount: 1,
                     }
-                }
+                },
+                info: "Attacks a random opposite field for 1 damage each round."
             },
             {
                 id: "okayOyster", // shields others upon taking damage
@@ -1739,11 +1793,13 @@ var Script;
                             level: 1,
                         }
                     },
-                ]
+                ],
+                info: "Doesn't attack but gives other enemies 1 shield upon taking damage."
             },
             {
                 id: "Björn", // Björn's entity for testing
-                health: 100000000
+                health: 100000000,
+                info: "This is Björn. Björn has a lot of health."
             },
             {
                 id: "pushover",
@@ -2517,11 +2573,11 @@ var Script;
     async function startLoading() {
         if (ƒ.Project.mode === ƒ.MODE.EDITOR)
             return;
+        new Script.MusicManager();
         Script.Provider.setVisualizer();
         Script.Provider.GUI.replaceUI("loading");
         Script.viewport = await Script.loadResourcesAndInitViewport(document.getElementById("GameCanvas"));
         await initProvider();
-        // TODO Music
         Script.Provider.GUI.replaceUI("mainMenu");
         ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
         ƒ.Loop.start(); // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
@@ -2535,13 +2591,476 @@ var Script;
     function update(_event) {
         // ƒ.Physics.simulate();  // if physics is included and used
         Script.viewport.draw();
-        ƒ.AudioManager.default.update();
+        // ƒ.AudioManager.default.update();
     }
     async function run() {
         const run = new Script.Run();
         run.start();
     }
     Script.run = run;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    function initEntitiesInGrid(_grid, _entity) {
+        const grid = new Script.Grid(_grid);
+        const newGrid = new Script.Grid();
+        const data = Script.Provider.data;
+        //const visualizer = Provider.visualizer;
+        grid.forEachElement((entityId, pos) => {
+            let entityData = data.getEntity(entityId);
+            if (!entityData)
+                throw new Error(`Entity ${entityId} not found.`);
+            newGrid.set(pos, new _entity(entityData, pos));
+        });
+        console.log("init Grid: " + newGrid);
+        return newGrid;
+    }
+    Script.initEntitiesInGrid = initEntitiesInGrid;
+    // TODO: replace this with a fudge timeout so it scales with gametime
+    // Alternatively, make a second one that does that and replace where reasonable
+    async function waitMS(_ms) {
+        return new Promise((resolve) => {
+            setTimeout(resolve, _ms);
+        });
+    }
+    Script.waitMS = waitMS;
+    async function getCloneNodeFromRegistry(id) {
+        let node = Script.DataLink.linkedNodes.get(id);
+        if (!node)
+            return undefined;
+        const newNode = new ƒ.Node("");
+        await newNode.deserialize(node.serialize());
+        return newNode;
+    }
+    Script.getCloneNodeFromRegistry = getCloneNodeFromRegistry;
+    function randomRange(min = 0, max = 1) {
+        const range = max - min;
+        return Math.random() * range + min;
+    }
+    Script.randomRange = randomRange;
+    function chooseRandomElementsFromArray(_array, _max, _exclude = []) {
+        let filteredOptions = _array.filter((element) => !_exclude.includes(element));
+        if (filteredOptions.length < _max) {
+            return filteredOptions;
+        }
+        let result = [];
+        for (let i = 0; i < _max; i++) {
+            const index = Math.floor(Math.random() * filteredOptions.length);
+            result.push(...filteredOptions.splice(index, 1));
+        }
+        return result;
+    }
+    Script.chooseRandomElementsFromArray = chooseRandomElementsFromArray;
+    function createElementAdvanced(_type, _options = {}) {
+        let el = document.createElement(_type);
+        if (_options.id) {
+            el.id = _options.id;
+        }
+        if (_options.classes) {
+            el.classList.add(..._options.classes);
+        }
+        if (_options.innerHTML) {
+            el.innerHTML = _options.innerHTML;
+        }
+        if (_options.attributes) {
+            for (let attribute of _options.attributes) {
+                el.setAttribute(attribute[0], attribute[1]);
+            }
+        }
+        return el;
+    }
+    Script.createElementAdvanced = createElementAdvanced;
+    async function getDuplicateOfNode(_node) {
+        let newNode = new ƒ.Node(_node.name);
+        await newNode.deserialize(_node.serialize());
+        return newNode;
+    }
+    Script.getDuplicateOfNode = getDuplicateOfNode;
+    function getPickableObjectsFromClientPos(_pos) {
+        const ray = Script.viewport.getRayFromClient(_pos);
+        const picks = Script.PickSphere.pick(ray, { sortBy: "distanceToRay" });
+        return picks;
+    }
+    Script.getPickableObjectsFromClientPos = getPickableObjectsFromClientPos;
+    function randomString(length) {
+        let result = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const charactersLength = characters.length;
+        for (let counter = 0; counter < length; counter++) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
+    }
+    Script.randomString = randomString;
+    function enumToArray(anEnum) {
+        return Object.keys(anEnum)
+            .map(n => Number.parseInt(n))
+            .filter(n => !Number.isNaN(n));
+    }
+    Script.enumToArray = enumToArray;
+    function findFirstComponentInGraph(_graph, _cmp) {
+        let foundCmp = _graph.getComponent(_cmp);
+        if (foundCmp)
+            return foundCmp;
+        for (let child of _graph.getChildren()) {
+            foundCmp = findFirstComponentInGraph(child, _cmp);
+            if (foundCmp)
+                return foundCmp;
+        }
+        return undefined;
+    }
+    Script.findFirstComponentInGraph = findFirstComponentInGraph;
+    async function loadResourcesAndInitViewport(canvas) {
+        await ƒ.Project.loadResourcesFromHTML();
+        let graphId /* : string */ = document.head.querySelector("meta[autoView]").getAttribute("autoView");
+        let graph = ƒ.Project.resources[graphId];
+        let viewport = new ƒ.Viewport();
+        let camera = findFirstComponentInGraph(graph, ƒ.ComponentCamera);
+        viewport.initialize("game", graph, camera, canvas);
+        return viewport;
+    }
+    Script.loadResourcesAndInitViewport = loadResourcesAndInitViewport;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    class Settings {
+        static { this.settings = []; }
+        static proxySetting(_setting, onValueChange) {
+            return new Proxy(_setting, {
+                set(target, prop, newValue, receiver) {
+                    if (prop === "value")
+                        onValueChange(target[prop], newValue);
+                    return Reflect.set(target, prop, newValue, receiver);
+                },
+            });
+        }
+        static addSettings(..._settings) {
+            _settings.forEach(setting => this.settings.push(setting));
+        }
+        static generateHTML(_settings = this.settings) {
+            const wrapper = Script.createElementAdvanced("div", { classes: ["settings-wrapper"], innerHTML: "<h2 class='h'><span>Settings</span></h2>" });
+            for (let setting of _settings) {
+                wrapper.appendChild(this.generateSingleHTML(setting));
+            }
+            return wrapper;
+        }
+        static generateSingleHTML(_setting) {
+            let element;
+            switch (_setting.type) {
+                case "string": {
+                    element = this.generateStringInput(_setting);
+                    break;
+                }
+                case "number": {
+                    element = this.generateNumberInput(_setting);
+                    break;
+                }
+                case "category": {
+                    element = Script.createElementAdvanced("div", { classes: ["settings-category"], innerHTML: `<span class="settings-category-name">${_setting.name}</span>` });
+                    for (let setting of _setting.settings) {
+                        element.appendChild(this.generateSingleHTML(setting));
+                    }
+                    break;
+                }
+                default: {
+                    element = Script.createElementAdvanced("div", { innerHTML: "Unknown Setting Type", classes: ["settings-unknown"] });
+                }
+            }
+            return element;
+        }
+        static generateStringInput(_setting) {
+            const id = Script.randomString(10);
+            const element = Script.createElementAdvanced("label", { classes: ["settings-string-wrapper", "settings-label"], innerHTML: `<span class="settings-string-label settings-label-text">${_setting.name}</span>`, attributes: [["for", id]] });
+            const input = Script.createElementAdvanced("input", { classes: ["settings-string-input", "settings-input"], attributes: [["type", "string"], ["value", _setting.value], ["name", id]], id });
+            element.appendChild(input);
+            input.addEventListener("change", () => {
+                _setting.value = input.value;
+            });
+            return element;
+        }
+        static generateNumberInput(_setting) {
+            const id = Script.randomString(10);
+            const element = Script.createElementAdvanced("label", { classes: ["settings-number-wrapper", "settings-label", _setting.name.toLowerCase()], innerHTML: `<span class="settings-number-label settings-label-text">${_setting.name}</span>`, attributes: [["for", id]] });
+            switch (_setting.variant) {
+                case "percent": {
+                    const buttonMinus = Script.createElementAdvanced("button", {
+                        classes: ["settings-number-input-button", "minus", "settings-input"],
+                        innerHTML: "-"
+                    });
+                    const input = Script.createElementAdvanced("input", {
+                        classes: ["settings-number-input", "settings-input", "number-input"],
+                        attributes: [["type", "number"], ["value", (_setting.value * 100).toString()], ["name", id], ["min", (_setting.min * 100).toString()], ["max", (_setting.max * 100).toString()], ["step", (_setting.step * 100).toString()]],
+                        id
+                    });
+                    const buttonPlus = Script.createElementAdvanced("button", {
+                        classes: ["settings-number-input-button", "plus", "settings-input"],
+                        innerHTML: "+"
+                    });
+                    element.append(buttonMinus, input, buttonPlus);
+                    input.addEventListener("change", () => {
+                        let value = Math.min(_setting.max, Math.max(_setting.min, Number(input.value) / 100));
+                        _setting.value = value;
+                        input.value = Math.round(value * 100).toString();
+                    });
+                    buttonMinus.addEventListener("click", () => { input.stepDown(); input.dispatchEvent(new InputEvent("change")); });
+                    buttonPlus.addEventListener("click", () => { input.stepUp(); input.dispatchEvent(new InputEvent("change")); });
+                    break;
+                }
+                case "range": {
+                    const input = Script.createElementAdvanced("input", {
+                        classes: ["settings-number-input", "settings-input", "slider"],
+                        attributes: [["type", "range"], ["value", _setting.value.toString()], ["name", id], ["min", _setting.min.toString()], ["max", _setting.max.toString()], ["step", _setting.step.toString()]],
+                        id
+                    });
+                    input.addEventListener("input", () => {
+                        _setting.value = Number(input.value);
+                        const percent = _setting.value / (_setting.max - _setting.min) * 100;
+                        input.style.setProperty("--percent", `${percent}%`);
+                    });
+                    break;
+                }
+            }
+            return element;
+        }
+    }
+    Script.Settings = Settings;
+})(Script || (Script = {}));
+/// <reference path="../Misc/Utils.ts" />
+/// <reference path="../Plugins/Settings.ts" />
+var Script;
+/// <reference path="../Misc/Utils.ts" />
+/// <reference path="../Plugins/Settings.ts" />
+(function (Script) {
+    var ƒ = FudgeCore;
+    let AUDIO_CHANNEL;
+    (function (AUDIO_CHANNEL) {
+        AUDIO_CHANNEL[AUDIO_CHANNEL["MASTER"] = 0] = "MASTER";
+        AUDIO_CHANNEL[AUDIO_CHANNEL["SOUNDS"] = 1] = "SOUNDS";
+        AUDIO_CHANNEL[AUDIO_CHANNEL["MUSIC"] = 2] = "MUSIC";
+    })(AUDIO_CHANNEL = Script.AUDIO_CHANNEL || (Script.AUDIO_CHANNEL = {}));
+    const enumToName = new Map([
+        [AUDIO_CHANNEL.MASTER, "Master"],
+        [AUDIO_CHANNEL.MUSIC, "Music"],
+        [AUDIO_CHANNEL.SOUNDS, "Sounds"],
+    ]);
+    class AudioManager {
+        static { this.Instance = new AudioManager(); }
+        constructor() {
+            this.gainNodes = {};
+            if (ƒ.Project.mode == ƒ.MODE.EDITOR)
+                return;
+            if (AudioManager.Instance)
+                return AudioManager.Instance;
+            const settingCategory = { name: "Sound", settings: [], type: "category" };
+            for (let channel of Script.enumToArray(AUDIO_CHANNEL)) {
+                this.gainNodes[channel] = ƒ.AudioManager.default.createGain();
+                if (channel === AUDIO_CHANNEL.MASTER) {
+                    this.gainNodes[channel].connect(ƒ.AudioManager.default.gain);
+                }
+                else {
+                    this.gainNodes[channel].connect(this.gainNodes[AUDIO_CHANNEL.MASTER]);
+                }
+                let setting = { type: "number", max: 1, min: 0, name: enumToName.get(channel), step: 0.2, value: 1, variant: "percent" };
+                setting = Script.Settings.proxySetting(setting, (_old, _new) => { AudioManager.setChannelVolume(channel, _new); });
+                settingCategory.settings.push(setting);
+            }
+            Script.Settings.addSettings(settingCategory);
+        }
+        static addAudioCmpToChannel(_cmpAudio, _channel) {
+            _cmpAudio.setGainTarget(AudioManager.Instance.gainNodes[_channel]);
+        }
+        static setChannelVolume(_channel, _volume) {
+            let channel = AudioManager.Instance.gainNodes[_channel];
+            if (!channel)
+                return;
+            channel.gain.value = _volume;
+        }
+    }
+    Script.AudioManager = AudioManager;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    let ComponentAudioMixed = (() => {
+        var _a;
+        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _classSuper = ƒ.ComponentAudio;
+        let _instanceExtraInitializers = [];
+        let _get_channel_decorators;
+        var ComponentAudioMixed = class extends _classSuper {
+            static { _classThis = this; }
+            static {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                _get_channel_decorators = [ƒ.serialize(Script.AUDIO_CHANNEL)];
+                __esDecorate(this, null, _get_channel_decorators, { kind: "getter", name: "channel", static: false, private: false, access: { has: obj => "channel" in obj, get: obj => obj.channel }, metadata: _metadata }, null, _instanceExtraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                ComponentAudioMixed = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            }
+            static { this.iSubclass = ƒ.Component.registerSubclass(ComponentAudioMixed); }
+            #channel = (__runInitializers(this, _instanceExtraInitializers), Script.AUDIO_CHANNEL.MASTER);
+            constructor(_audio, _loop, _start, _audioManager = ƒ.AudioManager.default, _channel = Script.AUDIO_CHANNEL.MASTER) {
+                super(_audio, _loop, _start, _audioManager);
+                this.gainTarget = _audioManager.gain;
+                if (ƒ.Project.mode == ƒ.MODE.EDITOR)
+                    return;
+                this.channel = _channel;
+            }
+            get channel() {
+                return this.#channel;
+            }
+            set channel(_channel) {
+                this.#channel = _channel;
+                Script.AudioManager.addAudioCmpToChannel(this, this.#channel);
+            }
+            setGainTarget(node) {
+                if (this.isConnected) {
+                    this.gain.disconnect(this.gainTarget);
+                }
+                this.gainTarget = node;
+                if (this.isConnected) {
+                    this.gain.connect(this.gainTarget);
+                }
+            }
+            connect(_on) {
+                if (_on)
+                    this.gain.connect(this.gainTarget ?? this.audioManager.gain);
+                else
+                    this.gain.disconnect(this.gainTarget ?? this.audioManager.gain);
+                this.isConnected = _on;
+            }
+            fadeTo(_volume, _duration) {
+                // (<GainNode>this.gain).gain.linearRampToValueAtTime(_volume, ƒ.AudioManager.default.currentTime + _duration);
+                this.gain.gain.setValueCurveAtTime([this.volume, _volume], ƒ.AudioManager.default.currentTime, _duration);
+            }
+            drawGizmos() {
+                if (this.isPlaying)
+                    super.drawGizmos();
+            }
+            play(_on) {
+                super.play(_on);
+                // Hacky bullshit because super.play creates a new source every time and the ƒ.EVENT_AUDIO.ENDED isn't fired at all
+                this.source.addEventListener("ended", () => {
+                    this.dispatchEvent(new CustomEvent("ended" /* ƒ.EVENT_AUDIO.ENDED */));
+                });
+            }
+            static {
+                __runInitializers(_classThis, _classExtraInitializers);
+            }
+        };
+        return ComponentAudioMixed = _classThis;
+    })();
+    Script.ComponentAudioMixed = ComponentAudioMixed;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    let MUSIC_TITLE;
+    (function (MUSIC_TITLE) {
+        MUSIC_TITLE[MUSIC_TITLE["COMBAT_INTRO"] = 0] = "COMBAT_INTRO";
+        MUSIC_TITLE[MUSIC_TITLE["COMBAT_PICKUP"] = 1] = "COMBAT_PICKUP";
+        MUSIC_TITLE[MUSIC_TITLE["COMBAT_LOOP"] = 2] = "COMBAT_LOOP";
+        MUSIC_TITLE[MUSIC_TITLE["SHOP_LOOP"] = 3] = "SHOP_LOOP";
+        MUSIC_TITLE[MUSIC_TITLE["TITLE_INTRO"] = 4] = "TITLE_INTRO";
+        MUSIC_TITLE[MUSIC_TITLE["TITLE_LOOP"] = 5] = "TITLE_LOOP";
+    })(MUSIC_TITLE || (MUSIC_TITLE = {}));
+    let MUSIC;
+    (function (MUSIC) {
+        MUSIC[MUSIC["COMBAT"] = 0] = "COMBAT";
+        MUSIC[MUSIC["SHOP"] = 1] = "SHOP";
+        MUSIC[MUSIC["TITLE"] = 2] = "TITLE";
+    })(MUSIC || (MUSIC = {}));
+    class MusicManager {
+        constructor() {
+            this.sounds = new Map([
+                [MUSIC_TITLE.COMBAT_INTRO, new Script.ComponentAudioMixed(new ƒ.Audio("Assets/Music/Combat/Combat_Intro.opus"), false, false, undefined, Script.AUDIO_CHANNEL.MUSIC)],
+                [MUSIC_TITLE.COMBAT_LOOP, new Script.ComponentAudioMixed(new ƒ.Audio("Assets/Music/Combat/Combat_Loop.opus"), true, false, undefined, Script.AUDIO_CHANNEL.MUSIC)],
+                [MUSIC_TITLE.COMBAT_PICKUP, new Script.ComponentAudioMixed(new ƒ.Audio("Assets/Music/Combat/Combat_Pickup.opus"), false, false, undefined, Script.AUDIO_CHANNEL.MUSIC)],
+                [MUSIC_TITLE.SHOP_LOOP, new Script.ComponentAudioMixed(new ƒ.Audio("Assets/Music/Shop/Shop_Loop.opus"), true, false, undefined, Script.AUDIO_CHANNEL.MUSIC)],
+                [MUSIC_TITLE.TITLE_INTRO, new Script.ComponentAudioMixed(new ƒ.Audio("Assets/Music/Title/TitleMenu_Intro.opus"), false, false, undefined, Script.AUDIO_CHANNEL.MUSIC)],
+                [MUSIC_TITLE.TITLE_LOOP, new Script.ComponentAudioMixed(new ƒ.Audio("Assets/Music/Title/TitleMenu_Loop.opus"), true, false, undefined, Script.AUDIO_CHANNEL.MUSIC)],
+            ]);
+            for (let cmp of this.sounds.values())
+                [
+                    cmp.connect(true)
+                ];
+            this.addEventListeners();
+            this.setupIntros();
+            this.changeMusic(MUSIC.TITLE);
+        }
+        setupIntros() {
+            this.sounds.get(MUSIC_TITLE.TITLE_INTRO).addEventListener("ended" /* ƒ.EVENT_AUDIO.ENDED */, () => {
+                if (this.activeMusic === MUSIC.TITLE) {
+                    this.playTitle(MUSIC_TITLE.TITLE_LOOP);
+                }
+            });
+            this.sounds.get(MUSIC_TITLE.COMBAT_INTRO).addEventListener("ended" /* ƒ.EVENT_AUDIO.ENDED */, () => {
+                if (this.activeMusic === MUSIC.COMBAT) {
+                    this.playTitle(MUSIC_TITLE.COMBAT_LOOP);
+                    this.sounds.get(MUSIC_TITLE.SHOP_LOOP).play(true);
+                    this.sounds.get(MUSIC_TITLE.SHOP_LOOP).volume = 0;
+                }
+            });
+            // this.sounds.get(MUSIC_TITLE.COMBAT_PICKUP).addEventListener(ƒ.EVENT_AUDIO.ENDED, () => {
+            //     if (this.activeMusic === MUSIC.COMBAT) {
+            //         this.playTitle(MUSIC_TITLE.COMBAT_LOOP);
+            //     }
+            // });
+        }
+        changeMusic(_music) {
+            if (this.activeMusic === _music)
+                return;
+            switch (_music) {
+                case MUSIC.COMBAT: {
+                    if (this.activeMusic === MUSIC.TITLE) {
+                        this.playTitle(MUSIC_TITLE.COMBAT_INTRO, 1);
+                    }
+                    else if (this.activeMusic === MUSIC.SHOP) {
+                        this.sounds.get(MUSIC_TITLE.SHOP_LOOP).fadeTo(0, 1);
+                        this.sounds.get(MUSIC_TITLE.COMBAT_PICKUP).play(true);
+                        this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).volume = 0;
+                        this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).play(true);
+                        this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).fadeTo(1, 4);
+                    }
+                    break;
+                }
+                case MUSIC.SHOP: {
+                    if (this.activeMusic !== MUSIC.COMBAT)
+                        return;
+                    this.activeComponent.fadeTo(0, 1);
+                    this.sounds.get(MUSIC_TITLE.SHOP_LOOP).fadeTo(1, 1);
+                    break;
+                }
+                case MUSIC.TITLE: {
+                    this.playTitle(MUSIC_TITLE.TITLE_INTRO, 1);
+                    break;
+                }
+            }
+            this.activeMusic = _music;
+        }
+        playTitle(_title, _fadeTime = 0.01) {
+            console.log("play title", _title, this.activeComponent, _fadeTime);
+            const cmp = this.sounds.get(_title);
+            if (!cmp)
+                return;
+            cmp.play(true);
+            this.activeComponent?.fadeTo(0, _fadeTime);
+            cmp.volume = 0;
+            cmp.fadeTo(1, _fadeTime);
+            this.activeComponent = cmp;
+        }
+        addEventListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.RUN_PREPARE, () => { this.changeMusic(MUSIC.COMBAT); });
+            Script.EventBus.addEventListener(Script.EVENT.SHOP_OPEN, () => { this.changeMusic(MUSIC.SHOP); });
+            Script.EventBus.addEventListener(Script.EVENT.SHOP_CLOSE, () => { this.changeMusic(MUSIC.COMBAT); });
+            Script.EventBus.addEventListener(Script.EVENT.RUN_END, () => { this.changeMusic(MUSIC.TITLE); });
+        }
+    }
+    Script.MusicManager = MusicManager;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -3619,129 +4138,6 @@ var Script;
         return ComponentChangeMaterial = _classThis;
     })();
     Script.ComponentChangeMaterial = ComponentChangeMaterial;
-})(Script || (Script = {}));
-var Script;
-(function (Script) {
-    var ƒ = FudgeCore;
-    function initEntitiesInGrid(_grid, _entity) {
-        const grid = new Script.Grid(_grid);
-        const newGrid = new Script.Grid();
-        const data = Script.Provider.data;
-        //const visualizer = Provider.visualizer;
-        grid.forEachElement((entityId, pos) => {
-            let entityData = data.getEntity(entityId);
-            if (!entityData)
-                throw new Error(`Entity ${entityId} not found.`);
-            newGrid.set(pos, new _entity(entityData, pos));
-        });
-        console.log("init Grid: " + newGrid);
-        return newGrid;
-    }
-    Script.initEntitiesInGrid = initEntitiesInGrid;
-    // TODO: replace this with a fudge timeout so it scales with gametime
-    // Alternatively, make a second one that does that and replace where reasonable
-    async function waitMS(_ms) {
-        return new Promise((resolve) => {
-            setTimeout(resolve, _ms);
-        });
-    }
-    Script.waitMS = waitMS;
-    async function getCloneNodeFromRegistry(id) {
-        let node = Script.DataLink.linkedNodes.get(id);
-        if (!node)
-            return undefined;
-        const newNode = new ƒ.Node("");
-        await newNode.deserialize(node.serialize());
-        return newNode;
-    }
-    Script.getCloneNodeFromRegistry = getCloneNodeFromRegistry;
-    function randomRange(min = 0, max = 1) {
-        const range = max - min;
-        return Math.random() * range + min;
-    }
-    Script.randomRange = randomRange;
-    function chooseRandomElementsFromArray(_array, _max, _exclude = []) {
-        let filteredOptions = _array.filter((element) => !_exclude.includes(element));
-        if (filteredOptions.length < _max) {
-            return filteredOptions;
-        }
-        let result = [];
-        for (let i = 0; i < _max; i++) {
-            const index = Math.floor(Math.random() * filteredOptions.length);
-            result.push(...filteredOptions.splice(index, 1));
-        }
-        return result;
-    }
-    Script.chooseRandomElementsFromArray = chooseRandomElementsFromArray;
-    function createElementAdvanced(_type, _options = {}) {
-        let el = document.createElement(_type);
-        if (_options.id) {
-            el.id = _options.id;
-        }
-        if (_options.classes) {
-            el.classList.add(..._options.classes);
-        }
-        if (_options.innerHTML) {
-            el.innerHTML = _options.innerHTML;
-        }
-        if (_options.attributes) {
-            for (let attribute of _options.attributes) {
-                el.setAttribute(attribute[0], attribute[1]);
-            }
-        }
-        return el;
-    }
-    Script.createElementAdvanced = createElementAdvanced;
-    async function getDuplicateOfNode(_node) {
-        let newNode = new ƒ.Node(_node.name);
-        await newNode.deserialize(_node.serialize());
-        return newNode;
-    }
-    Script.getDuplicateOfNode = getDuplicateOfNode;
-    function getPickableObjectsFromClientPos(_pos) {
-        const ray = Script.viewport.getRayFromClient(_pos);
-        const picks = Script.PickSphere.pick(ray, { sortBy: "distanceToRay" });
-        return picks;
-    }
-    Script.getPickableObjectsFromClientPos = getPickableObjectsFromClientPos;
-    function randomString(length) {
-        let result = '';
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        const charactersLength = characters.length;
-        for (let counter = 0; counter < length; counter++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        }
-        return result;
-    }
-    Script.randomString = randomString;
-    function enumToArray(anEnum) {
-        return Object.keys(anEnum)
-            .map(n => Number.parseInt(n))
-            .filter(n => !Number.isNaN(n));
-    }
-    Script.enumToArray = enumToArray;
-    function findFirstComponentInGraph(_graph, _cmp) {
-        let foundCmp = _graph.getComponent(_cmp);
-        if (foundCmp)
-            return foundCmp;
-        for (let child of _graph.getChildren()) {
-            foundCmp = findFirstComponentInGraph(child, _cmp);
-            if (foundCmp)
-                return foundCmp;
-        }
-        return undefined;
-    }
-    Script.findFirstComponentInGraph = findFirstComponentInGraph;
-    async function loadResourcesAndInitViewport(canvas) {
-        await ƒ.Project.loadResourcesFromHTML();
-        let graphId /* : string */ = document.head.querySelector("meta[autoView]").getAttribute("autoView");
-        let graph = ƒ.Project.resources[graphId];
-        let viewport = new ƒ.Viewport();
-        let camera = findFirstComponentInGraph(graph, ƒ.ComponentCamera);
-        viewport.initialize("game", graph, camera, canvas);
-        return viewport;
-    }
-    Script.loadResourcesAndInitViewport = loadResourcesAndInitViewport;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -4986,7 +5382,9 @@ var Script;
             this.startButton.removeEventListener("click", this.startFight);
         }
         async moveCamera(_translate, _rotate, _timeMS) {
-            const camera = Script.viewport.camera;
+            const camera = Script.viewport?.camera;
+            if (!camera)
+                return;
             let elapsedTime = 0;
             const translationStart = camera.mtxPivot.translation.clone;
             const rotationStart = camera.mtxPivot.rotation.clone;
@@ -5248,6 +5646,10 @@ var Script;
             };
             this.element = document.getElementById("Options");
             this.closeButton = document.getElementById("OptionsClose");
+        }
+        async onAdd(_zindex, _ev) {
+            await super.onAdd(_zindex, _ev);
+            document.getElementById("OptionsWrapper").replaceChildren(Script.Settings.generateHTML());
         }
         addEventListeners() {
             this.closeButton.addEventListener("click", this.close);

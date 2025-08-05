@@ -202,7 +202,8 @@ namespace Script {
 
 
         private async moveCamera(_translate: ƒ.Vector3, _rotate: ƒ.Vector3, _timeMS: number): Promise<void> {
-            const camera = viewport.camera;
+            const camera = viewport?.camera;
+            if(!camera) return;
             let elapsedTime: number = 0;
             const translationStart: ƒ.Vector3 = camera.mtxPivot.translation.clone;
             const rotationStart: ƒ.Vector3 = camera.mtxPivot.rotation.clone;

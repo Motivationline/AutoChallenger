@@ -3465,7 +3465,7 @@ declare namespace FudgeCore {
         private audio;
         protected gain;
         private panner;
-        private source;
+        protected source;
         protected audioManager;
         private playing;
         private listened;

@@ -14,6 +14,8 @@ namespace Script {
 
   export async function startLoading() {
     if (ƒ.Project.mode === ƒ.MODE.EDITOR) return;
+    new MusicManager();
+
     Provider.setVisualizer();
     Provider.GUI.replaceUI("loading");
 
@@ -21,7 +23,6 @@ namespace Script {
 
     await initProvider();
 
-    // TODO Music
     Provider.GUI.replaceUI("mainMenu");
 
     ƒ.Loop.addEventListener(ƒ.EVENT.LOOP_FRAME, update);
@@ -37,7 +38,7 @@ namespace Script {
   function update(_event: Event): void {
     // ƒ.Physics.simulate();  // if physics is included and used
     viewport.draw();
-    ƒ.AudioManager.default.update();
+    // ƒ.AudioManager.default.update();
   }
 
   export async function run() {

@@ -9,6 +9,11 @@ namespace Script {
             this.closeButton = document.getElementById("OptionsClose") as HTMLButtonElement;
         }
 
+        async onAdd(_zindex: number, _ev?: FightEvent): Promise<void> {
+            await super.onAdd(_zindex, _ev);
+            document.getElementById("OptionsWrapper").replaceChildren(Settings.generateHTML());
+        }
+
         close = () => {
             Provider.GUI.removeTopmostUI();
         }

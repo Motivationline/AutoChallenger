@@ -496,6 +496,118 @@ declare namespace Script {
 }
 declare namespace Script {
     import ƒ = FudgeCore;
+    export function initEntitiesInGrid<T extends IEntity>(_grid: GridData<string>, _entity: new (...data: any) => T): Grid<T>;
+    export function waitMS(_ms: number): Promise<void>;
+    export function getCloneNodeFromRegistry(id: string): Promise<ƒ.Node | undefined>;
+    export function randomRange(min?: number, max?: number): number;
+    export function chooseRandomElementsFromArray<T>(_array: readonly T[], _max: number, _exclude?: T[]): T[];
+    interface CreateElementAdvancedOptions {
+        classes: string[];
+        id: string;
+        innerHTML: string;
+        attributes: [string, string][];
+    }
+    export function createElementAdvanced<K extends keyof HTMLElementTagNameMap>(_type: K, _options?: Partial<CreateElementAdvancedOptions>): HTMLElementTagNameMap[K];
+    export function getDuplicateOfNode(_node: ƒ.Node): Promise<ƒ.Node>;
+    export function getPickableObjectsFromClientPos(_pos: ƒ.Vector2): PickSphere[];
+    export function randomString(length: number): string;
+    export function enumToArray<T extends object>(anEnum: T): T[keyof T][];
+    export function findFirstComponentInGraph<T extends ƒ.Component>(_graph: ƒ.Node, _cmp: new () => T): T;
+    export function loadResourcesAndInitViewport(canvas: HTMLCanvasElement): Promise<ƒ.Viewport>;
+    export {};
+}
+declare namespace Script {
+    export type Setting = SettingCategory | SettingNumber | SettingString;
+    interface SettingsBase {
+        type: string;
+        name: string;
+    }
+    export interface SettingCategory extends SettingsBase {
+        type: "category";
+        settings: Setting[];
+    }
+    export interface SettingString extends SettingsBase {
+        type: "string";
+        value: string;
+    }
+    export interface SettingNumber extends SettingsBase {
+        type: "number";
+        value: number;
+        min: number;
+        max: number;
+        step: number;
+        variant: "range" | "percent";
+    }
+    export class Settings {
+        private static settings;
+        static proxySetting<T extends Setting>(_setting: T, onValueChange: (_old: any, _new: any) => void): T;
+        static addSettings(..._settings: Setting[]): void;
+        static generateHTML(_settings?: Setting[]): HTMLElement;
+        private static generateSingleHTML;
+        private static generateStringInput;
+        private static generateNumberInput;
+    }
+    export {};
+}
+declare namespace Script {
+    enum AUDIO_CHANNEL {
+        MASTER = 0,
+        SOUNDS = 1,
+        MUSIC = 2
+    }
+    class AudioManager {
+        private static Instance;
+        private gainNodes;
+        private constructor();
+        static addAudioCmpToChannel(_cmpAudio: ComponentAudioMixed, _channel: AUDIO_CHANNEL): void;
+        static setChannelVolume(_channel: AUDIO_CHANNEL, _volume: number): void;
+    }
+}
+declare namespace Script {
+    import ƒ = FudgeCore;
+    class ComponentAudioMixed extends ƒ.ComponentAudio {
+        #private;
+        static readonly iSubclass: number;
+        private gainTarget;
+        private isConnected;
+        constructor(_audio?: ƒ.Audio, _loop?: boolean, _start?: boolean, _audioManager?: ƒ.AudioManager, _channel?: AUDIO_CHANNEL);
+        get channel(): AUDIO_CHANNEL;
+        set channel(_channel: AUDIO_CHANNEL);
+        setGainTarget(node: AudioNode): void;
+        connect(_on: boolean): void;
+        fadeTo(_volume: number, _duration: number): void;
+        drawGizmos(): void;
+        play(_on: boolean): void;
+    }
+}
+declare namespace Script {
+    enum MUSIC_TITLE {
+        COMBAT_INTRO = 0,
+        COMBAT_PICKUP = 1,
+        COMBAT_LOOP = 2,
+        SHOP_LOOP = 3,
+        TITLE_INTRO = 4,
+        TITLE_LOOP = 5
+    }
+    enum MUSIC {
+        COMBAT = 0,
+        SHOP = 1,
+        TITLE = 2
+    }
+    export class MusicManager {
+        sounds: Map<MUSIC_TITLE, ComponentAudioMixed>;
+        constructor();
+        private setupIntros;
+        activeMusic: MUSIC;
+        activeComponent: ComponentAudioMixed;
+        private changeMusic;
+        private playTitle;
+        addEventListeners(): void;
+    }
+    export {};
+}
+declare namespace Script {
+    import ƒ = FudgeCore;
     class DataLink extends ƒ.ComponentScript {
         static linkedNodes: Map<string, ƒ.Node>;
         id: string;
@@ -736,28 +848,6 @@ declare namespace Script {
         hndEvent: (_event: Event) => void;
         private switchMaterial;
     }
-}
-declare namespace Script {
-    import ƒ = FudgeCore;
-    export function initEntitiesInGrid<T extends IEntity>(_grid: GridData<string>, _entity: new (...data: any) => T): Grid<T>;
-    export function waitMS(_ms: number): Promise<void>;
-    export function getCloneNodeFromRegistry(id: string): Promise<ƒ.Node | undefined>;
-    export function randomRange(min?: number, max?: number): number;
-    export function chooseRandomElementsFromArray<T>(_array: readonly T[], _max: number, _exclude?: T[]): T[];
-    interface CreateElementAdvancedOptions {
-        classes: string[];
-        id: string;
-        innerHTML: string;
-        attributes: [string, string][];
-    }
-    export function createElementAdvanced<K extends keyof HTMLElementTagNameMap>(_type: K, _options?: Partial<CreateElementAdvancedOptions>): HTMLElementTagNameMap[K];
-    export function getDuplicateOfNode(_node: ƒ.Node): Promise<ƒ.Node>;
-    export function getPickableObjectsFromClientPos(_pos: ƒ.Vector2): PickSphere[];
-    export function randomString(length: number): string;
-    export function enumToArray<T extends object>(anEnum: T): T[keyof T][];
-    export function findFirstComponentInGraph<T extends ƒ.Component>(_graph: ƒ.Node, _cmp: new () => T): T;
-    export function loadResourcesAndInitViewport(canvas: HTMLCanvasElement): Promise<ƒ.Viewport>;
-    export {};
 }
 declare namespace Script {
     import ƒ = FudgeCore;
@@ -1033,6 +1123,7 @@ declare namespace Script {
     class OptionsUI extends UILayer {
         closeButton: HTMLButtonElement;
         constructor();
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
         close: () => void;
         addEventListeners(): void;
         removeEventListeners(): void;
