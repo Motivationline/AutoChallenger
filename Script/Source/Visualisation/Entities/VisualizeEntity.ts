@@ -112,6 +112,10 @@ namespace Script {
                 console.warn(`Model with ID: ${_id} not found, using placeholder instead 👉👈`);
             }
             this.addChild(model);
+
+            const pick = new PickSphere();
+            pick.radius = 0.5;
+            this.addComponent(pick);
         }
 
         //retuns a placeholder if needed
@@ -146,11 +150,9 @@ namespace Script {
 
         public updateTmpText = () => {
             if (!this.tmpText) return;
-            console.log("updateTmpText", this.entity);
             let effectText = "";
             (<Entity>this.entity).activeEffects.forEach((value, type) => { if (value > 0) effectText += `${type}: ${value}\n` });
             effectText += `${this.entity.currentHealth} / ${this.entity.health} ♥️`;
-            console.log(effectText);
             this.tmpText.innerText = effectText;
 
             let rect = this.tmpText.getBoundingClientRect();

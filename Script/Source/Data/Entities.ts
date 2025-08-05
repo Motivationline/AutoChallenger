@@ -290,7 +290,8 @@ namespace Script {
                             shape: AREA_SHAPE.SINGLE,
                         },
                     }
-                }
+                },
+                info: "Attacks the first opponent in the opposite column for 1 damage."
             },
             {
                 id: "RA-Eumling",

@@ -20,6 +20,7 @@ namespace Script {
         /** If it's in this list, this kind of spell is ignored by the entity.*/
         resistances?: SPELL_TYPE[],
         abilities?: AbilityData[],
+        info?: string,
     }
 
     export interface IEntity extends EntityData {
@@ -50,6 +51,7 @@ namespace Script {
         resistancesSet? = new Set<SPELL_TYPE>();
         startDirection?: number;
         activeEffects = new Map<SPELL_TYPE, number>();
+        info?: string;
 
         #arena: Arena;
         #triggers: Set<EVENT> = new Set();
@@ -66,6 +68,7 @@ namespace Script {
             EventBus.dispatchEvent({ type: EVENT.ENTITY_CREATED, target: this });
 
             this.registerEventListeners();
+            this.info = _entity.info;
         }
 
         public get untargetable() {
@@ -240,7 +243,7 @@ namespace Script {
         }
 
         selections = new Map<SelectableWithData<any>, any[]>(); // not sure how to make this type-safe
-        protected select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[] {
+        select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[] {
             if (!_options) return [];
             const selection: T[] = [];
             if ("options" in _options) {

@@ -20,6 +20,8 @@ namespace Script {
             EventBus.addEventListener(EVENT.ENTITY_ATTACKED, this.hideTargets);
             EventBus.addEventListener(EVENT.ENTITY_SPELL_BEFORE, this.showAttack);
             EventBus.addEventListener(EVENT.ENTITY_SPELL, this.hideTargets);
+            EventBus.addEventListener(EVENT.SHOW_PREVIEW, this.showPreview);
+            EventBus.addEventListener(EVENT.HIDE_PREVIEW, this.hideTargets);
         }
 
         private showAttack = async (_ev: FightEvent) => {
@@ -29,6 +31,13 @@ namespace Script {
                 promises.push(this.addNodesTo(node, this.getAdditionalVisualizer(_ev.cause as Entity, _ev.type)));
             }
             return Promise.all(promises);
+        }
+
+        private showPreview = async(_ev: FightEvent) => {
+            const nodes = this.getTargets(_ev);
+            for(let node of nodes){
+                this.addNodesTo(node);
+            }
         }
 
         private getTargets(_ev: FightEvent): ƒ.Node[] {

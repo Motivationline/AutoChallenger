@@ -82,6 +82,8 @@ var Script;
         EVENT["EUMLING_LEVELUP_CHOOSE"] = "eumlingLevelupChoose";
         EVENT["EUMLING_LEVELUP_CHOSEN"] = "eumlingLevelupChosen";
         EVENT["EUMLING_LEVELUP"] = "eumlingLevelup";
+        EVENT["SHOW_PREVIEW"] = "showPreview";
+        EVENT["HIDE_PREVIEW"] = "hidePreview";
     })(EVENT = Script.EVENT || (Script.EVENT = {}));
     class EventBus {
         static { this.listeners = new Map(); }
@@ -726,7 +728,8 @@ var Script;
                             shape: Script.AREA_SHAPE.SINGLE,
                         },
                     }
-                }
+                },
+                info: "Attacks the first opponent in the opposite column for 1 damage."
             },
             {
                 id: "RA-Eumling",
@@ -2518,6 +2521,7 @@ var Script;
     }
     function start(_event) {
         Script.viewport = _event.detail;
+        // viewport.gizmosEnabled = true;
         initProvider();
         ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
         ƒ.Loop.start(); // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
@@ -2954,6 +2958,7 @@ var Script;
             Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_CREATE, target: this });
             Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_CREATED, target: this });
             this.registerEventListeners();
+            this.info = _entity.info;
         }
         get untargetable() {
             if (this.activeEffects.get(Script.SPELL_TYPE.UNTARGETABLE) > 0) {
@@ -3725,6 +3730,12 @@ var Script;
         return newNode;
     }
     Script.getDuplicateOfNode = getDuplicateOfNode;
+    function getPickableObjectsFromClientPos(_pos) {
+        const ray = Script.viewport.getRayFromClient(_pos);
+        const picks = Script.PickSphere.pick(ray, { sortBy: "distanceToRay" });
+        return picks;
+    }
+    Script.getPickableObjectsFromClientPos = getPickableObjectsFromClientPos;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -4126,6 +4137,49 @@ var Script;
 var Script;
 (function (Script) {
     var ƒ = FudgeCore;
+    class VisualizeBench extends ƒ.Component {
+        constructor() {
+            super();
+            if (ƒ.Project.mode == ƒ.MODE.EDITOR)
+                return;
+        }
+        #entities = new Set();
+        addEntity(_entity) {
+            this.#entities.add(_entity);
+            this.arrangeEntities();
+            this.node.addChild(_entity);
+            _entity.activate(true);
+        }
+        hasEntity(_entity) {
+            return this.#entities.has(_entity);
+        }
+        removeEntity(_entity) {
+            this.#entities.delete(_entity);
+            this.arrangeEntities();
+            this.node.removeChild(_entity);
+            _entity.activate(false);
+        }
+        clear() {
+            const arr = Array.from(this.#entities);
+            for (let entity of arr) {
+                this.removeEntity(entity);
+            }
+        }
+        arrangeEntities() {
+            const distanceBetweenEntities = 1;
+            const arr = Array.from(this.#entities);
+            for (let i = 0; i < arr.length; i++) {
+                const entity = arr[i];
+                const newX = (i - (arr.length - 1) / 2) * distanceBetweenEntities;
+                entity.mtxLocal.translation = new ƒ.Vector3(newX);
+            }
+        }
+    }
+    Script.VisualizeBench = VisualizeBench;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
     // export interface VisualizeEntity {
     //     //idle(): Promise<void>;
     //     attack(_ev: FightEvent): Promise<void>;
@@ -4144,12 +4198,10 @@ var Script;
             this.updateTmpText = () => {
                 if (!this.tmpText)
                     return;
-                console.log("updateTmpText", this.entity);
                 let effectText = "";
                 this.entity.activeEffects.forEach((value, type) => { if (value > 0)
                     effectText += `${type}: ${value}\n`; });
                 effectText += `${this.entity.currentHealth} / ${this.entity.health} ♥️`;
-                console.log(effectText);
                 this.tmpText.innerText = effectText;
                 let rect = this.tmpText.getBoundingClientRect();
                 const pos = Script.viewport.pointWorldToClient(this.mtxWorld.translation);
@@ -4244,6 +4296,9 @@ var Script;
                 console.warn(`Model with ID: ${_id} not found, using placeholder instead 👉👈`);
             }
             this.addChild(model);
+            const pick = new Script.PickSphere();
+            pick.radius = 0.5;
+            this.addComponent(pick);
         }
         //retuns a placeholder if needed
         givePlaceholderPls() {
@@ -4365,6 +4420,12 @@ var Script;
                 }
                 return Promise.all(promises);
             };
+            this.showPreview = async (_ev) => {
+                const nodes = this.getTargets(_ev);
+                for (let node of nodes) {
+                    this.addNodesTo(node);
+                }
+            };
             this.hideTargets = async (_ev) => {
                 while (this.visibleNodes.length > 0) {
                     this.returnNode(this.visibleNodes.pop());
@@ -4377,6 +4438,8 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_ATTACKED, this.hideTargets);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.showAttack);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL, this.hideTargets);
+            Script.EventBus.addEventListener(Script.EVENT.SHOW_PREVIEW, this.showPreview);
+            Script.EventBus.addEventListener(Script.EVENT.HIDE_PREVIEW, this.hideTargets);
         }
         getTargets(_ev) {
             if (!_ev.detail)
@@ -4736,70 +4799,45 @@ var Script;
     class FightPrepUI extends Script.UILayer {
         constructor() {
             super();
-            this.eumlingElements = new Map();
-            this.pickEumling = (_ev) => {
-                const element = _ev.currentTarget;
-                let eumling;
-                this.eumlingElements.forEach((_element, _eumling) => {
-                    _element.classList.remove("selected");
-                    if (_element === element) {
-                        eumling = _eumling;
-                    }
-                });
-                if (!eumling)
-                    return;
-                element.classList.add("selected");
-                this.selectedEumling = eumling;
-                this.selectedSpace = undefined;
-            };
-            this.clickCanvas = (_ev) => {
-                const ray = Script.viewport.getRayFromClient(new ƒ.Vector2(_ev.clientX, _ev.clientY));
-                const picks = Script.PickSphere.pick(ray, { sortBy: "distanceToRay" });
-                if (!picks || picks.length === 0)
-                    return;
-                const pick = picks[0];
-                if (this.selectedEumling) {
-                    // place eumling in map
-                    const posId = parseInt(pick.node.name);
-                    Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ADDED, target: this.selectedEumling, detail: { side: "home", pos: [posId % 3, Math.floor(posId / 3)] } });
-                    if (!this.selectedSpace) {
-                        // hide from UI
-                        let uiElement = this.eumlingElements.get(this.selectedEumling);
-                        uiElement.classList.remove("selected");
-                        uiElement.classList.add("hidden");
-                    }
-                    this.selectedSpace = pick.node;
-                    this.startButton.disabled = false;
-                }
-            };
-            this.returnEumling = (_ev) => {
-                if (_ev.target.id !== "FightPrepEumlings")
-                    return;
-                if (!this.selectedEumling)
-                    return;
-                // remove from field
-                Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_REMOVED, target: this.selectedEumling });
-                // add to UI
-                this.eumlingElements.get(this.selectedEumling).classList.remove("hidden");
-                this.selectedEumling = undefined;
-                this.selectedSpace = undefined;
-                if (this.eumlingElements.values().reduce((prev, curr) => prev + (curr.classList.contains("hidden") ? 1 : 0), 0) === 0) {
-                    this.startButton.disabled = true;
-                }
-            };
+            this.placedEumlings = new Set();
             this.startFight = (_ev) => {
-                Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_PREPARE_COMPLETED });
+                Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.FIGHT_PREPARE_COMPLETED });
+            };
+            this.pointerStartPosition = new ƒ.Vector2();
+            this.deadzone = 20;
+            this.pointerOnCanvas = (_ev) => {
+                if (_ev.type === "pointerdown") {
+                    this.pointerStartPosition.x = _ev.clientX;
+                    this.pointerStartPosition.y = _ev.clientY;
+                }
+                else if (_ev.type === "pointerup") {
+                    const pointerEndPosition = new ƒ.Vector2(_ev.clientX, _ev.clientY);
+                    const distance = pointerEndPosition.getDistance(this.pointerStartPosition);
+                    if (distance > this.deadzone) {
+                        // drag
+                        this.dragCanvas(this.pointerStartPosition, pointerEndPosition);
+                    }
+                    else {
+                        // click
+                        this.clickCanvas(pointerEndPosition);
+                    }
+                }
             };
             this.element = document.getElementById("FightPrep");
             this.stoneWrapper = document.getElementById("FightPrepStones");
-            this.eumlingWrapper = document.getElementById("FightPrepEumlings");
+            this.infoElement = document.getElementById("FightPrepInfo");
             this.startButton = document.getElementById("FightStart");
+            Script.DataLink.getCopyOf("PreviewHighlight").then(node => this.highlightNode = node);
         }
         onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
             this.startButton.disabled = true;
             this.initStones();
             this.initEumlings();
+            this.placedEumlings.clear();
+        }
+        onRemove() {
+            this.hideEntityInfo();
         }
         initStones() {
             const stones = [];
@@ -4809,23 +4847,122 @@ var Script;
             this.stoneWrapper.replaceChildren(...stones);
         }
         initEumlings() {
+            const bench = Script.viewport.getBranch().getChildByName("Bench")?.getComponent(Script.VisualizeBench);
+            this.bench = bench;
+            if (!bench)
+                return;
+            bench.clear();
             for (let eumling of Script.Run.currentRun.eumlings) {
-                const element = Script.EumlingUIElement.getUIElement(eumling).element;
-                this.eumlingElements.set(eumling, element);
-                element.addEventListener("click", this.pickEumling);
+                bench.addEntity(Script.Provider.visualizer.getEntity(eumling));
             }
-            this.eumlingWrapper.replaceChildren(...this.eumlingElements.values());
+        }
+        returnEumling(_eumling) {
+            // remove from field
+            Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.ENTITY_REMOVED, target: _eumling });
+            // add to bench
+            const vis = Script.Provider.visualizer.getEntity(_eumling);
+            this.bench?.addEntity(vis);
+            this.placedEumlings.delete(_eumling);
+            // can we start?
+            if (this.placedEumlings.size <= 0) {
+                this.startButton.disabled = true;
+            }
+            // update visuals
+            if (vis === this.#highlightedEntity) {
+                this.showEntityInfo(vis);
+            }
+        }
+        moveEumlingToGrid(_eumling, _target) {
+            const posId = parseInt(_target.name);
+            const vis = Script.Provider.visualizer.getEntity(_eumling);
+            this.bench?.removeEntity(vis);
+            Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.ENTITY_ADDED, target: _eumling, detail: { side: "home", pos: [posId % 3, Math.floor(posId / 3)] } });
+            this.placedEumlings.add(_eumling);
+            this.startButton.disabled = false;
+            // update visuals
+            if (vis === this.#highlightedEntity) {
+                this.showEntityInfo(vis);
+            }
+        }
+        clickCanvas(_pos) {
+            this.hideEntityInfo();
+            const picks = Script.getPickableObjectsFromClientPos(_pos);
+            if (!picks || picks.length === 0)
+                return;
+            for (const pick of picks) {
+                if (!(pick.node instanceof Script.VisualizeEntity)) {
+                    continue;
+                }
+                this.showEntityInfo(pick.node);
+                break;
+            }
+        }
+        dragCanvas(_startPos, _endPos) {
+            // find which Eumling should be moved
+            const picksStart = Script.getPickableObjectsFromClientPos(_startPos);
+            if (!picksStart || picksStart.length === 0)
+                return;
+            let draggedEumling;
+            for (let pick of picksStart) {
+                if (!(pick.node instanceof Script.VisualizeEntity))
+                    continue;
+                if (!(pick.node.getEntity() instanceof Script.Eumling))
+                    continue;
+                draggedEumling = pick.node.getEntity();
+                break;
+            }
+            if (!draggedEumling)
+                return;
+            // find where to move it to
+            const picksEnd = Script.getPickableObjectsFromClientPos(_endPos);
+            if (!picksEnd || picksEnd.length === 0) {
+                // nowhere = back to the bench
+                return this.returnEumling(draggedEumling);
+            }
+            for (const pick of picksEnd) {
+                // one of the home fields
+                const num = Number(pick.node.name);
+                if (!isNaN(num)) {
+                    return this.moveEumlingToGrid(draggedEumling, pick.node);
+                }
+            }
+        }
+        #highlightedEntity;
+        showEntityInfo(_entity) {
+            this.hideEntityInfo();
+            this.infoElement.classList.remove("hidden");
+            this.infoElement.innerText = _entity.getEntity().info ?? "PLACEHOLDER TEXT";
+            if (this.highlightNode && !this.bench.hasEntity(_entity)) {
+                _entity.addChild(this.highlightNode);
+                this.highlightNode.mtxLocal.translation = ƒ.Vector3.ZERO();
+            }
+            this.#highlightedEntity = _entity;
+            const entity = _entity.getEntity();
+            const attacks = entity.select(entity.attacks, false);
+            for (let attack of attacks) {
+                const allies = entity instanceof Script.Eumling ? Script.Fight.activeFight.arena.home : Script.Fight.activeFight.arena.away;
+                const opponents = entity instanceof Script.Eumling ? Script.Fight.activeFight.arena.away : Script.Fight.activeFight.arena.home;
+                const detail = Script.getTargets(attack.target, allies, opponents, entity);
+                Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.SHOW_PREVIEW, cause: entity, target: entity, trigger: attack, detail });
+            }
+        }
+        hideEntityInfo() {
+            this.infoElement.classList.add("hidden");
+            this.highlightNode?.getParent()?.removeChild(this.highlightNode);
+            Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.HIDE_PREVIEW });
+            this.#highlightedEntity = undefined;
         }
         addEventListeners() {
-            document.getElementById("GameCanvas").addEventListener("click", this.clickCanvas);
+            const canvas = document.getElementById("GameCanvas");
+            canvas.addEventListener("pointerdown", this.pointerOnCanvas);
+            canvas.addEventListener("pointerup", this.pointerOnCanvas);
             this.startButton.addEventListener("click", this.startFight);
-            document.getElementById("FightPrepEumlings").addEventListener("click", this.returnEumling);
         }
         removeEventListeners() {
-            document.getElementById("GameCanvas").removeEventListener("click", this.clickCanvas);
+            const canvas = document.getElementById("GameCanvas");
+            canvas.removeEventListener("pointerdown", this.pointerOnCanvas);
+            canvas.removeEventListener("pointerup", this.pointerOnCanvas);
             this.startButton.removeEventListener("click", this.startFight);
-            document.getElementById("FightPrepEumlings").removeEventListener("click", this.returnEumling);
-            this.eumlingElements.forEach(element => element.removeEventListener("click", this.pickEumling));
         }
     }
     Script.FightPrepUI = FightPrepUI;

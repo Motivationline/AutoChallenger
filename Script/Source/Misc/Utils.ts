@@ -84,4 +84,10 @@ namespace Script {
         await newNode.deserialize(_node.serialize());
         return newNode;
     }
+
+    export function getPickableObjectsFromClientPos(_pos: ƒ.Vector2): PickSphere[] {
+        const ray = viewport.getRayFromClient(_pos);
+        const picks = PickSphere.pick(ray, {sortBy: "distanceToRay"});
+        return picks;
+    }
 }

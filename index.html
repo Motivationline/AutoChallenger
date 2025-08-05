@@ -83,7 +83,9 @@
         <div id="FightStartWrapper" class="interact">
             <button id="FightStart">Start</button>
         </div>
-        <div id="FightPrepEumlings" class="interact">
+        <div id="FightPrepInfoWrapper">
+            <div id="FightPrepInfo">
+            </div>
         </div>
     </div>
     <div id="Fight" class="UI hidden">
@@ -158,8 +160,9 @@
     <div id="Options" class="UI blur hidden">
     </div>
     <!--Canvas for FUDGE to render to-->
-    <canvas class="fullscreen" id="GameCanvas">
+    <canvas class="fullscreen" id="GameCanvas" draggable="false">
     </canvas>
-    <div class="UI no-interact" id="GameOverlayInfos"></div>
+    <div class="UI no-interact" id="GameOverlayInfos">
+</div>
 </body>
 </html>

@@ -46,6 +46,8 @@ namespace Script {
         EUMLING_LEVELUP_CHOOSE = "eumlingLevelupChoose",
         EUMLING_LEVELUP_CHOSEN = "eumlingLevelupChosen",
         EUMLING_LEVELUP = "eumlingLevelup",
+        SHOW_PREVIEW = "showPreview",
+        HIDE_PREVIEW = "hidePreview",
     }
 
     /**

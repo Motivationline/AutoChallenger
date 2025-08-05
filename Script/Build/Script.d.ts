@@ -44,7 +44,9 @@ declare namespace Script {
         EUMLING_XP_GAIN = "eumlingXPGain",
         EUMLING_LEVELUP_CHOOSE = "eumlingLevelupChoose",
         EUMLING_LEVELUP_CHOSEN = "eumlingLevelupChosen",
-        EUMLING_LEVELUP = "eumlingLevelup"
+        EUMLING_LEVELUP = "eumlingLevelup",
+        SHOW_PREVIEW = "showPreview",
+        HIDE_PREVIEW = "hidePreview"
     }
     /**
      * There are a lot of callbacks / events that things inside the game can hook into to do something at a specific point in time.
@@ -549,6 +551,7 @@ declare namespace Script {
         /** If it's in this list, this kind of spell is ignored by the entity.*/
         resistances?: SPELL_TYPE[];
         abilities?: AbilityData[];
+        info?: string;
     }
     export interface IEntity extends EntityData {
         currentHealth: number;
@@ -578,6 +581,7 @@ declare namespace Script {
         resistancesSet?: Set<SPELL_TYPE>;
         startDirection?: number;
         activeEffects: Map<SPELL_TYPE, number>;
+        info?: string;
         constructor(_entity: EntityData, _pos?: Position);
         get untargetable(): boolean;
         get stunned(): boolean;
@@ -590,7 +594,7 @@ declare namespace Script {
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks?: AttackData[], _targetsOverride?: IEntity[]): Promise<void>;
         getOwnDamage(): number;
         selections: Map<any, any[]>;
-        protected select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[];
+        select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[];
         protected getDamageOfAttacks(_attacks: Readonly<AttackDataNoTarget[]>, _consumeEffects: boolean): number;
         setGrids(_home: Grid<Entity>, _away: Grid<Entity>): void;
         registerEventListeners(): void;
@@ -743,6 +747,7 @@ declare namespace Script {
     }
     export function createElementAdvanced<K extends keyof HTMLElementTagNameMap>(_type: K, _options?: Partial<CreateElementAdvancedOptions>): HTMLElementTagNameMap[K];
     export function getDuplicateOfNode(_node: ƒ.Node): Promise<ƒ.Node>;
+    export function getPickableObjectsFromClientPos(_pos: ƒ.Vector2): PickSphere[];
     export {};
 }
 declare namespace Script {
@@ -829,6 +834,18 @@ declare namespace Script {
 }
 declare namespace Script {
     import ƒ = FudgeCore;
+    class VisualizeBench extends ƒ.Component {
+        #private;
+        constructor();
+        addEntity(_entity: VisualizeEntity): void;
+        hasEntity(_entity: VisualizeEntity): boolean;
+        removeEntity(_entity: VisualizeEntity): void;
+        clear(): void;
+        private arrangeEntities;
+    }
+}
+declare namespace Script {
+    import ƒ = FudgeCore;
     class VisualizeEntity extends ƒ.Node {
         private entity;
         private cmpAnimation;
@@ -865,6 +882,7 @@ declare namespace Script {
         constructor();
         private addEventListeners;
         private showAttack;
+        private showPreview;
         private getTargets;
         private addNodesTo;
         private getVFX;
@@ -921,20 +939,28 @@ declare namespace Script {
 declare namespace Script {
     import ƒ = FudgeCore;
     class FightPrepUI extends UILayer {
+        #private;
         stoneWrapper: HTMLElement;
-        eumlingWrapper: HTMLElement;
-        selectedEumling: Eumling;
+        infoElement: HTMLElement;
         startButton: HTMLButtonElement;
-        selectedSpace: ƒ.Node;
-        eumlingElements: Map<Eumling, HTMLElement>;
+        highlightNode: ƒ.Node;
+        bench: VisualizeBench;
+        placedEumlings: Set<Eumling>;
         constructor();
         onAdd(_zindex: number, _ev?: FightEvent): void;
+        onRemove(): void;
         private initStones;
         private initEumlings;
-        private pickEumling;
-        private clickCanvas;
         private returnEumling;
+        private moveEumlingToGrid;
         private startFight;
+        pointerStartPosition: ƒ.Vector2;
+        readonly deadzone: number;
+        private pointerOnCanvas;
+        private clickCanvas;
+        private dragCanvas;
+        private showEntityInfo;
+        private hideEntityInfo;
         addEventListeners(): void;
         removeEventListeners(): void;
     }
