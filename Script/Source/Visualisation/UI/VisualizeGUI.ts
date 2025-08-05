@@ -11,6 +11,10 @@ namespace Script {
 
         constructor() {
             this.uis.clear();
+            this.uis.set("start", new StartScreenUI());
+            this.uis.set("loading", new LoadingScreenUI());
+            this.uis.set("mainMenu", new MainMenuUI());
+            this.uis.set("options", new OptionsUI());
             this.uis.set("chooseEumling", new ChooseEumlingUI());
             this.uis.set("chooseStone", new ChooseStoneUI());
             this.uis.set("chooseEncounter", new MapUI());
@@ -25,6 +29,7 @@ namespace Script {
             for(let ui of this.uis.values()){
                 ui.onRemove();
             }
+            this.replaceUI("start");
         }
 
         private get topmostLevel() {

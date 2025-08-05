@@ -24,12 +24,12 @@ namespace Script {
 
             Provider.visualizer.addToScene(this.away);
             Provider.visualizer.addToScene(this.home);
-            Provider.visualizer.drawScene();
+            // Provider.visualizer.drawScene();
             this.addEventListeners();
         }
 
         async showGrid(): Promise<void> {
-            let visualizer = Provider.visualizer;
+            // let visualizer = Provider.visualizer;
 
             // let grid: string[][] = [[, , , , , , ,], [], []];
 
@@ -48,7 +48,7 @@ namespace Script {
 
             // console.table(grid);
             //draw the 3D scene
-            visualizer.drawScene();
+            // visualizer.drawScene();
         }
         async nukeGrid(): Promise<void> {
             this.home.nuke();

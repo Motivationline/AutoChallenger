@@ -13,6 +13,7 @@ namespace Script {
         constructor() {
             this.root = new ƒ.Node("Root");
             new VisualizeTarget();
+            this.getGUI();
             this.addEventListeners();
         }
         getEntity(_entity: IEntity): VisualizeEntity {
@@ -57,9 +58,6 @@ namespace Script {
         }
         getGraph(): ƒ.Graph {
             return this.viewport.getBranch() as ƒ.Graph;
-        }
-        drawScene(): void {
-            this.viewport.draw();
         }
 
         private createEntity(_entity: IEntity) {

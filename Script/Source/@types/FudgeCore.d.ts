@@ -3463,10 +3463,10 @@ declare namespace FudgeCore {
         mtxPivot: Matrix4x4;
         protected singleton: boolean;
         private audio;
-        private gain;
+        protected gain;
         private panner;
         private source;
-        private audioManager;
+        protected audioManager;
         private playing;
         private listened;
         constructor(_audio?: Audio, _loop?: boolean, _start?: boolean, _audioManager?: AudioManager);

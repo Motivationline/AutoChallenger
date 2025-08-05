@@ -6,7 +6,7 @@ namespace Script {
         constructor() {
             super();
             this.element = document.getElementById("RunEnd");
-            this.continueButton = document.getElementById("Restart") as HTMLButtonElement;
+            this.continueButton = document.getElementById("RunEndMainMenu") as HTMLButtonElement;
         }
 
         async onAdd(_zindex: number, _ev?: FightEvent): Promise<void> {
@@ -14,15 +14,14 @@ namespace Script {
             document.getElementById("RunEndInner").innerHTML = 
             _ev.detail.success ?
             `<h2>Success!</h2>
-            <p>You won! :&gt;</p>
-            <p>Try again?</p>`:
+            <p>You won! :&gt;</p>`:
             `<h2>Defeat!</h2>
-            <p>You lost. :(;</p>
-            <p>Try again?</p>`;
+            <p>You lost. :(;</p>`;
         }
 
         close = () => {
-            location.reload();
+            Provider.GUI.removeAllLayers();
+            Provider.GUI.addUI("mainMenu");
         }
 
         addEventListeners(): void {

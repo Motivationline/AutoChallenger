@@ -210,3 +210,8 @@ canvas.fullscreen {
 .blur {
   backdrop-filter: blur(40px);
 }
+
+.center-center {
+  display: grid;
+  place-items: center;
+}

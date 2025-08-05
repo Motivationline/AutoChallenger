@@ -15,30 +15,43 @@
     <!--Load FUDGE. You may want to download local copies to work offline and be independent from future changes! Developers working on FUDGE itself may want to create symlinks-->
     <!-- <script type="text/javascript" src="https://hs-furtwangen.github.io/FUDGE/Distribution/FudgeCore.js"></script> -->
     <script type="text/javascript" src="Script/FudgeCore.js"></script>
-    <script type="text/javascript" src="Script/FudgeAid.js"></script>
+    <!-- <script type="text/javascript" src="Script/FudgeAid.js"></script> -->
 
 
     <!--Link internal resources. The editor only loads the first, but at runtime, multiple fi   les can contribute-->
     <link type="resources" src="Internal.json" />
 
     <!--Load custom scripts-->
-    <script type="text/javascript" src="Script/Build/Script.js" editor="true"></script>
+    <script type="text/javascript" src="Script/Build/Script.js" editor="true" defer></script>
 
     <!--Load Autoview script-->
-    <script type="text/javascript" src="Autoview.js"></script>
+    <!-- <script type="text/javascript" src="Autoview.js"></script> -->
 
 </head>
 
 <body>
     <!--Dialog shown at startup only-->
-    <dialog>
-        <p>FUDGE Autoview</p>
-        <h1>Title (will be replaced by Autoview)</h1>
-        <p>click to start</p>
-    </dialog>
+    <div id="StartScreen" class="UI center-center">
+        <div>
+            <h1>The Eumlings</h1>
+            <h2>Click anywhere...</h2>
+        </div>
+    </div>
 
-    <div id="MainMenu" class="UI hidden">
+    <div id="LoadingScreen" class="UI hidden center-center">
+        <div>Loading...</div>
+    </div>
+
+    <div id="MainMenu" class="UI hidden blur">
         <!--Menu UI-->
+        Main Menu
+        <button id="MainStart">Start</button>
+        <button id="MainOptions">Options</button>
+    </div>
+
+    <div id="Options" class="UI hidden blur">
+        Options
+        <button id="OptionsClose">Close</button>
     </div>
 
     <div id="ChooseEumling" class="UI hidden">
@@ -138,7 +151,7 @@
     <div id="RunEnd" class="UI blur hidden">
         <div id="RunEndInner">
         </div>
-        <button id="Restart">Restart</button>
+        <button id="RunEndMainMenu">Main Menu</button>
     </div>
 
     <div id="Shop" class="UI blur hidden">
@@ -162,8 +175,6 @@
         <div id="ShopCloseWrapper">
             <button id="ShopClose">Continue</button>
         </div>
-    </div>
-    <div id="Options" class="UI blur hidden">
     </div>
     <!--Canvas for FUDGE to render to-->
     <canvas class="fullscreen" id="GameCanvas" draggable="false">

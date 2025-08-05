@@ -407,7 +407,6 @@ declare namespace Script {
         getCamera(): ƒ.ComponentCamera;
         getRoot(): ƒ.Node;
         getGraph(): ƒ.Graph;
-        drawScene(): void;
         private createEntity;
         private createEntityHandler;
         private fightPrepHandler;
@@ -492,6 +491,8 @@ declare namespace Script {
 declare namespace Script {
     import ƒ = FudgeCore;
     let viewport: ƒ.Viewport;
+    function startLoading(): Promise<void>;
+    function run(): Promise<void>;
 }
 declare namespace Script {
     import ƒ = FudgeCore;
@@ -752,6 +753,10 @@ declare namespace Script {
     export function createElementAdvanced<K extends keyof HTMLElementTagNameMap>(_type: K, _options?: Partial<CreateElementAdvancedOptions>): HTMLElementTagNameMap[K];
     export function getDuplicateOfNode(_node: ƒ.Node): Promise<ƒ.Node>;
     export function getPickableObjectsFromClientPos(_pos: ƒ.Vector2): PickSphere[];
+    export function randomString(length: number): string;
+    export function enumToArray<T extends object>(anEnum: T): T[keyof T][];
+    export function findFirstComponentInGraph<T extends ƒ.Component>(_graph: ƒ.Node, _cmp: new () => T): T;
+    export function loadResourcesAndInitViewport(canvas: HTMLCanvasElement): Promise<ƒ.Viewport>;
     export {};
 }
 declare namespace Script {
@@ -992,8 +997,20 @@ declare namespace Script {
     }
 }
 declare namespace Script {
-    class MainMenuUI extends UILayer {
+    class LoadingScreenUI extends UILayer {
         constructor();
+        startLoad(): void;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+    }
+}
+declare namespace Script {
+    class MainMenuUI extends UILayer {
+        startButton: HTMLButtonElement;
+        optionsButton: HTMLButtonElement;
+        constructor();
+        start: () => void;
+        openOptions: () => void;
         addEventListeners(): void;
         removeEventListeners(): void;
     }
@@ -1014,7 +1031,9 @@ declare namespace Script {
 }
 declare namespace Script {
     class OptionsUI extends UILayer {
+        closeButton: HTMLButtonElement;
         constructor();
+        close: () => void;
         addEventListeners(): void;
         removeEventListeners(): void;
     }
@@ -1052,6 +1071,13 @@ declare namespace Script {
         private initEumlingHealing;
         close: () => void;
         refresh: () => void;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+    }
+}
+declare namespace Script {
+    class StartScreenUI extends UILayer {
+        constructor();
         addEventListeners(): void;
         removeEventListeners(): void;
     }

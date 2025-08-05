@@ -2104,6 +2104,7 @@ var Script;
             };
             this.root = new ƒ.Node("Root");
             new Script.VisualizeTarget();
+            this.getGUI();
             this.addEventListeners();
         }
         getEntity(_entity) {
@@ -2146,9 +2147,6 @@ var Script;
         }
         getGraph() {
             return this.viewport.getBranch();
-        }
-        drawScene() {
-            this.viewport.draw();
         }
         createEntity(_entity) {
             const entityVis = new Script.VisualizeEntity(_entity);
@@ -2402,6 +2400,10 @@ var Script;
                 }
             };
             this.uis.clear();
+            this.uis.set("start", new Script.StartScreenUI());
+            this.uis.set("loading", new Script.LoadingScreenUI());
+            this.uis.set("mainMenu", new Script.MainMenuUI());
+            this.uis.set("options", new Script.OptionsUI());
             this.uis.set("chooseEumling", new Script.ChooseEumlingUI());
             this.uis.set("chooseStone", new Script.ChooseStoneUI());
             this.uis.set("chooseEncounter", new Script.MapUI());
@@ -2416,6 +2418,7 @@ var Script;
             for (let ui of this.uis.values()) {
                 ui.onRemove();
             }
+            this.replaceUI("start");
         }
         get topmostLevel() {
             if (this.activeLayers.length === 0)
@@ -2489,7 +2492,7 @@ var Script;
         }
         static setVisualizer(_vis) {
             if (!_vis) {
-                this.#visualizer = new Script.Visualizer;
+                this.#visualizer = new Script.Visualizer();
                 return;
             }
             this.#visualizer = _vis;
@@ -2509,26 +2512,25 @@ var Script;
 (function (Script) {
     var ƒ = FudgeCore;
     ƒ.Project.registerScriptNamespace(Script); // Register the namespace to FUDGE for serialization
-    ƒ.Debug.info("Main Program Template running!");
     let visualizer;
-    document.addEventListener("interactiveViewportStarted", start);
-    async function initProvider() {
+    document.addEventListener("click", startLoading, { once: true });
+    async function startLoading() {
         if (ƒ.Project.mode === ƒ.MODE.EDITOR)
             return;
-        await Script.Provider.data.load();
-        //TODO load correct visualizer here
         Script.Provider.setVisualizer();
-        visualizer = Script.Provider.visualizer;
-        visualizer.initializeScene(Script.viewport);
-        visualizer.drawScene();
-        run();
-    }
-    function start(_event) {
-        Script.viewport = _event.detail;
-        // viewport.gizmosEnabled = true;
-        initProvider();
+        Script.Provider.GUI.replaceUI("loading");
+        Script.viewport = await Script.loadResourcesAndInitViewport(document.getElementById("GameCanvas"));
+        await initProvider();
+        // TODO Music
+        Script.Provider.GUI.replaceUI("mainMenu");
         ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
         ƒ.Loop.start(); // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
+    }
+    Script.startLoading = startLoading;
+    async function initProvider() {
+        await Script.Provider.data.load();
+        visualizer = Script.Provider.visualizer;
+        visualizer.initializeScene(Script.viewport);
     }
     function update(_event) {
         // ƒ.Physics.simulate();  // if physics is included and used
@@ -2536,36 +2538,10 @@ var Script;
         ƒ.AudioManager.default.update();
     }
     async function run() {
-        // const eumlingData = Provider.data.fights[0].entities;
-        // rotate entities in first fight around because they're meant to be testing eumlings for now
-        // TODO: remove this once this sort of testing is obsolete.
-        // [eumlingData[0][0], eumlingData[0][2]] = [eumlingData[0][2], eumlingData[0][0]];
-        // [eumlingData[1][0], eumlingData[1][2]] = [eumlingData[1][2], eumlingData[1][0]];
-        // [eumlingData[2][0], eumlingData[2][2]] = [eumlingData[2][2], eumlingData[2][0]];
-        // let eumlings: Grid<IEntity> = initEntitiesInGrid(eumlingData, Entity);
-        // eumlings.forEachElement((eumling) => {
-        //   let visualizer = new VisualizeEntity(eumling);
-        //   root.addChild(visualizer);
-        // });
-        // console.log("Root: ", root);
-        // viewport.draw();
-        // let tmp = eumlings.get([0, 0]);
-        // eumlings.set([0, 0], eumlings.get([2, 0]));
-        // eumlings.set([2, 0], tmp);
-        // tmp = eumlings.get([0, 0]);
-        // eumlings.set([0, 0], eumlings.get([2, 0]));
-        // eumlings.set([2, 0], tmp);
-        // tmp = eumlings.get([0, 0]);
-        // eumlings.set([0, 0], eumlings.get([2, 0]));
-        // eumlings.set([2, 0], tmp);
-        // visualizer.drawScene();
-        // let fightData = Provider.data.fights[3];
-        // let fight = new Fight(fightData, eumlings);
-        // console.log("Rounds: " + fight.getRounds());
-        // await fight.run();
         const run = new Script.Run();
         run.start();
     }
+    Script.run = run;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -3728,6 +3704,44 @@ var Script;
         return picks;
     }
     Script.getPickableObjectsFromClientPos = getPickableObjectsFromClientPos;
+    function randomString(length) {
+        let result = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const charactersLength = characters.length;
+        for (let counter = 0; counter < length; counter++) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
+    }
+    Script.randomString = randomString;
+    function enumToArray(anEnum) {
+        return Object.keys(anEnum)
+            .map(n => Number.parseInt(n))
+            .filter(n => !Number.isNaN(n));
+    }
+    Script.enumToArray = enumToArray;
+    function findFirstComponentInGraph(_graph, _cmp) {
+        let foundCmp = _graph.getComponent(_cmp);
+        if (foundCmp)
+            return foundCmp;
+        for (let child of _graph.getChildren()) {
+            foundCmp = findFirstComponentInGraph(child, _cmp);
+            if (foundCmp)
+                return foundCmp;
+        }
+        return undefined;
+    }
+    Script.findFirstComponentInGraph = findFirstComponentInGraph;
+    async function loadResourcesAndInitViewport(canvas) {
+        await ƒ.Project.loadResourcesFromHTML();
+        let graphId /* : string */ = document.head.querySelector("meta[autoView]").getAttribute("autoView");
+        let graph = ƒ.Project.resources[graphId];
+        let viewport = new ƒ.Viewport();
+        let camera = findFirstComponentInGraph(graph, ƒ.ComponentCamera);
+        viewport.initialize("game", graph, camera, canvas);
+        return viewport;
+    }
+    Script.loadResourcesAndInitViewport = loadResourcesAndInitViewport;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -4030,11 +4044,11 @@ var Script;
             this.home = new Script.VisualizeGrid(homeGrid, "home");
             Script.Provider.visualizer.addToScene(this.away);
             Script.Provider.visualizer.addToScene(this.home);
-            Script.Provider.visualizer.drawScene();
+            // Provider.visualizer.drawScene();
             this.addEventListeners();
         }
         async showGrid() {
-            let visualizer = Script.Provider.visualizer;
+            // let visualizer = Provider.visualizer;
             // let grid: string[][] = [[, , , , , , ,], [], []];
             // this.#home.grid.forEachElement((el, pos) => {
             //     if (!el) return;
@@ -4050,7 +4064,7 @@ var Script;
             // })
             // console.table(grid);
             //draw the 3D scene
-            visualizer.drawScene();
+            // visualizer.drawScene();
         }
         async nukeGrid() {
             this.home.nuke();
@@ -4622,6 +4636,30 @@ var Script;
 //         }
 //     }
 // }
+// namespace Script {
+//     import ƒ = FudgeCore;
+//     export interface IVisualizeGrid {
+//         getRealPosition(_pos: Position): any;
+//         updateVisuals(): void;
+//     }
+//     export class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
+//         grid: Grid<VisualizeEntity>;
+//         constructor(_grid: Grid<VisualizeEntity>) {
+//             super("VisualizeGridNull");
+//             this.grid = _grid;
+//             this.addComponent(new ƒ.ComponentTransform());
+//             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3(0, 0, 0));
+//         }
+//         updateVisuals(): void {
+//             this.grid.forEachElement((element) => {
+//                 element?.updateVisuals();
+//             });
+//         }
+//         getRealPosition(_pos: Position) {
+//             return _pos;
+//         }
+//     }
+// }
 var Script;
 (function (Script) {
     //Visualize the Entities in the Grid
@@ -4697,30 +4735,6 @@ var Script;
     }
     Script.VisualizeGrid = VisualizeGrid;
 })(Script || (Script = {}));
-// namespace Script {
-//     import ƒ = FudgeCore;
-//     export interface IVisualizeGrid {
-//         getRealPosition(_pos: Position): any;
-//         updateVisuals(): void;
-//     }
-//     export class VisualizeGridNull extends ƒ.Node implements IVisualizeGrid {
-//         grid: Grid<VisualizeEntity>;
-//         constructor(_grid: Grid<VisualizeEntity>) {
-//             super("VisualizeGridNull");
-//             this.grid = _grid;
-//             this.addComponent(new ƒ.ComponentTransform());
-//             this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3(0, 0, 0));
-//         }
-//         updateVisuals(): void {
-//             this.grid.forEachElement((element) => {
-//                 element?.updateVisuals();
-//             });
-//         }
-//         getRealPosition(_pos: Position) {
-//             return _pos;
-//         }
-//     }
-// }
 /// <reference path="UILayer.ts" />
 var Script;
 /// <reference path="UILayer.ts" />
@@ -5108,14 +5122,47 @@ var Script;
 var Script;
 /// <reference path="UILayer.ts" />
 (function (Script) {
+    class LoadingScreenUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.element = document.getElementById("LoadingScreen");
+        }
+        startLoad() {
+        }
+        addEventListeners() {
+            this.element.addEventListener("click", this.startLoad);
+        }
+        removeEventListeners() {
+            this.element.removeEventListener("click", this.startLoad);
+        }
+    }
+    Script.LoadingScreenUI = LoadingScreenUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
     class MainMenuUI extends Script.UILayer {
         constructor() {
             super();
+            this.start = () => {
+                Script.run();
+                Script.Provider.GUI.removeTopmostUI();
+            };
+            this.openOptions = () => {
+                Script.Provider.GUI.addUI("options");
+            };
             this.element = document.getElementById("MainMenu");
+            this.startButton = document.getElementById("MainStart");
+            this.optionsButton = document.getElementById("MainOptions");
         }
         addEventListeners() {
+            this.startButton.addEventListener("click", this.start);
+            this.optionsButton.addEventListener("click", this.openOptions);
         }
         removeEventListeners() {
+            this.startButton.removeEventListener("click", this.start);
+            this.optionsButton.removeEventListener("click", this.openOptions);
         }
     }
     Script.MainMenuUI = MainMenuUI;
@@ -5196,11 +5243,17 @@ var Script;
     class OptionsUI extends Script.UILayer {
         constructor() {
             super();
-            this.element = document.getElementById("MainMenu");
+            this.close = () => {
+                Script.Provider.GUI.removeTopmostUI();
+            };
+            this.element = document.getElementById("Options");
+            this.closeButton = document.getElementById("OptionsClose");
         }
         addEventListeners() {
+            this.closeButton.addEventListener("click", this.close);
         }
         removeEventListeners() {
+            this.closeButton.removeEventListener("click", this.close);
         }
     }
     Script.OptionsUI = OptionsUI;
@@ -5213,21 +5266,20 @@ var Script;
         constructor() {
             super();
             this.close = () => {
-                location.reload();
+                Script.Provider.GUI.removeAllLayers();
+                Script.Provider.GUI.addUI("mainMenu");
             };
             this.element = document.getElementById("RunEnd");
-            this.continueButton = document.getElementById("Restart");
+            this.continueButton = document.getElementById("RunEndMainMenu");
         }
         async onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
             document.getElementById("RunEndInner").innerHTML =
                 _ev.detail.success ?
                     `<h2>Success!</h2>
-            <p>You won! :&gt;</p>
-            <p>Try again?</p>` :
+            <p>You won! :&gt;</p>` :
                     `<h2>Defeat!</h2>
-            <p>You lost. :(;</p>
-            <p>Try again?</p>`;
+            <p>You lost. :(;</p>`;
         }
         addEventListeners() {
             this.continueButton.addEventListener("click", this.close);
@@ -5403,6 +5455,22 @@ var Script;
         }
     }
     Script.ShopUI = ShopUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class StartScreenUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.element = document.getElementById("StartScreen");
+        }
+        addEventListeners() {
+        }
+        removeEventListeners() {
+        }
+    }
+    Script.StartScreenUI = StartScreenUI;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {

@@ -14,7 +14,7 @@ namespace Script {
         console.log("init Grid: " + newGrid);
         return newGrid;
     }
-    
+
     // TODO: replace this with a fudge timeout so it scales with gametime
     // Alternatively, make a second one that does that and replace where reasonable
     export async function waitMS(_ms: number): Promise<void> {
@@ -57,7 +57,7 @@ namespace Script {
         innerHTML: string,
         attributes: [string, string][],
     }
-    
+
     export function createElementAdvanced<K extends keyof HTMLElementTagNameMap>(_type: K, _options: Partial<CreateElementAdvancedOptions> = {}): HTMLElementTagNameMap[K] {
         let el = document.createElement(_type);
 
@@ -79,7 +79,7 @@ namespace Script {
         return el;
     }
 
-    export async function getDuplicateOfNode(_node: ƒ.Node) : Promise<ƒ.Node> {
+    export async function getDuplicateOfNode(_node: ƒ.Node): Promise<ƒ.Node> {
         let newNode: ƒ.Node = new ƒ.Node(_node.name);
         await newNode.deserialize(_node.serialize());
         return newNode;
@@ -87,7 +87,48 @@ namespace Script {
 
     export function getPickableObjectsFromClientPos(_pos: ƒ.Vector2): PickSphere[] {
         const ray = viewport.getRayFromClient(_pos);
-        const picks = PickSphere.pick(ray, {sortBy: "distanceToRay"});
+        const picks = PickSphere.pick(ray, { sortBy: "distanceToRay" });
         return picks;
+    }
+
+
+    export function randomString(length: number): string {
+        let result = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const charactersLength = characters.length;
+        for (let counter = 0; counter < length; counter++) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
+    }
+
+
+    export function enumToArray<T extends object>(anEnum: T): T[keyof T][] {
+        return Object.keys(anEnum)
+            .map(n => Number.parseInt(n))
+            .filter(n => !Number.isNaN(n)) as unknown as T[keyof T][]
+    }
+
+
+    export function findFirstComponentInGraph<T extends ƒ.Component>(_graph: ƒ.Node, _cmp: new () => T): T {
+        let foundCmp = _graph.getComponent(_cmp);
+        if (foundCmp) return foundCmp;
+        for (let child of _graph.getChildren()) {
+            foundCmp = findFirstComponentInGraph(child, _cmp);
+            if (foundCmp) return foundCmp;
+        }
+        return undefined;
+    }
+
+    export async function loadResourcesAndInitViewport(canvas: HTMLCanvasElement): Promise<ƒ.Viewport> {
+        await ƒ.Project.loadResourcesFromHTML();
+
+        let graphId/* : string */ = document.head.querySelector("meta[autoView]").getAttribute("autoView");
+        let graph: ƒ.Graph = <ƒ.Graph>ƒ.Project.resources[graphId];
+        let viewport = new ƒ.Viewport();
+        let camera = findFirstComponentInGraph(graph, ƒ.ComponentCamera);
+
+        viewport.initialize("game", graph, camera, canvas);
+        return viewport;
     }
 }
