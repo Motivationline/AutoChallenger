@@ -2167,18 +2167,18 @@ var Script;
 var Script;
 (function (Script) {
     class UILayer {
-        onAdd(_zindex, _ev) {
+        async onAdd(_zindex, _ev) {
             this.element.classList.remove("hidden");
             this.element.style.zIndex = _zindex.toString();
             this.addEventListeners();
         }
-        onShow() {
+        async onShow() {
             this.element.classList.remove("hidden");
         }
-        onHide() {
+        async onHide() {
             this.element.classList.add("hidden"); // TODO should it really get hidden? or just disabled?
         }
-        onRemove() {
+        async onRemove() {
             this.element.classList.add("hidden");
             this.removeEventListeners();
         }
@@ -2208,7 +2208,7 @@ var Script;
             this.element = document.getElementById("Fight");
             this.stoneWrapper = document.getElementById("FightStones");
         }
-        onAdd(_zindex, _ev) {
+        async onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
             this.initStones();
         }
@@ -2260,7 +2260,7 @@ var Script;
             this.infoElement = document.getElementById("ChooseEumlingInfo");
             this.confirmButton = document.getElementById("ChooseEumlingConfirm");
         }
-        onAdd(_zindex) {
+        async onAdd(_zindex) {
             this.removeEventListeners();
             super.onAdd(_zindex);
             this.confirmButton.disabled = true;
@@ -2320,7 +2320,7 @@ var Script;
             this.infoElement = document.getElementById("ChooseStoneInfo");
             this.confirmButton = document.getElementById("ChooseStoneConfirm");
         }
-        onAdd(_zindex) {
+        async onAdd(_zindex) {
             this.removeEventListeners();
             super.onAdd(_zindex);
             this.confirmButton.disabled = true;
@@ -2361,42 +2361,42 @@ var Script;
         constructor() {
             this.uis = new Map();
             this.activeLayers = [];
-            this.switchUI = (_ev) => {
+            this.switchUI = async (_ev) => {
                 switch (_ev.type) {
                     case Script.EVENT.FIGHT_START: {
-                        this.replaceUI("fight", _ev);
+                        await this.replaceUI("fight", _ev);
                         break;
                     }
                     case Script.EVENT.CHOOSE_STONE: {
-                        this.replaceUI("chooseStone", _ev);
+                        await this.replaceUI("chooseStone", _ev);
                         break;
                     }
                     case Script.EVENT.CHOOSE_EUMLING: {
-                        this.replaceUI("chooseEumling", _ev);
+                        await this.replaceUI("chooseEumling", _ev);
                         break;
                     }
                     case Script.EVENT.CHOOSE_ENCOUNTER: {
-                        this.replaceUI("chooseEncounter", _ev);
+                        await this.replaceUI("chooseEncounter", _ev);
                         break;
                     }
                     case Script.EVENT.FIGHT_PREPARE: {
-                        this.replaceUI("fightPrepare", _ev);
+                        await this.replaceUI("fightPrepare", _ev);
                         break;
                     }
                     case Script.EVENT.REWARDS_OPEN: {
-                        this.replaceUI("fightReward", _ev);
+                        await this.replaceUI("fightReward", _ev);
                         break;
                     }
                     case Script.EVENT.EUMLING_LEVELUP_CHOOSE: {
-                        this.addUI("eumlingLevelup", _ev);
+                        await this.addUI("eumlingLevelup", _ev);
                         break;
                     }
                     case Script.EVENT.SHOP_OPEN: {
-                        this.replaceUI("shop", _ev);
+                        await this.replaceUI("shop", _ev);
                         break;
                     }
                     case Script.EVENT.RUN_END: {
-                        this.replaceUI("runEnd", _ev);
+                        await this.replaceUI("runEnd", _ev);
                         break;
                     }
                 }
@@ -2422,27 +2422,27 @@ var Script;
                 return undefined;
             return this.activeLayers[this.activeLayers.length - 1];
         }
-        addUI(_id, _ev) {
+        async addUI(_id, _ev) {
             let ui = this.uis.get(_id);
             if (!ui)
                 return;
             let prevTop = this.topmostLevel;
             if (prevTop)
-                prevTop.onHide();
+                await prevTop.onHide();
             this.activeLayers.push(ui);
-            ui.onAdd(1000 + this.activeLayers.length, _ev);
+            await ui.onAdd(1000 + this.activeLayers.length, _ev);
         }
-        replaceUI(_id, _ev) {
-            this.removeTopmostUI();
-            this.addUI(_id, _ev);
+        async replaceUI(_id, _ev) {
+            await this.removeTopmostUI();
+            await this.addUI(_id, _ev);
         }
-        removeTopmostUI() {
+        async removeTopmostUI() {
             let last = this.activeLayers.pop();
-            last?.onHide();
-            last?.onRemove();
+            await last?.onHide();
+            await last?.onRemove();
             let newTop = this.topmostLevel;
             if (newTop)
-                newTop.onShow();
+                await newTop.onShow();
         }
         removeAllLayers() {
             while (this.activeLayers.length > 0) {
@@ -4199,6 +4199,7 @@ var Script;
                 const pos = Script.viewport.pointWorldToClient(this.mtxWorld.translation);
                 this.tmpText.style.left = (pos.x - rect.width / 2) + "px";
                 this.tmpText.style.top = pos.y + "px";
+                this.textUpdater = requestAnimationFrame(this.updateTmpText);
             };
             this.addText = () => {
                 document.getElementById("GameOverlayInfos").appendChild(this.tmpText);
@@ -4206,6 +4207,7 @@ var Script;
             };
             this.removeText = () => {
                 this.tmpText.remove();
+                cancelAnimationFrame(this.textUpdater);
             };
             this.eventListener = async (_ev) => {
                 await this.handleEvent(_ev);
@@ -4755,7 +4757,7 @@ var Script;
             this.infoElement = document.getElementById("EumlingLevelupInfo");
             this.confirmButton = document.getElementById("EumlingLevelupConfirm");
         }
-        onAdd(_zindex, _ev) {
+        async onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
             this.confirmButton.disabled = true;
             this.eumling = _ev.target;
@@ -4825,15 +4827,17 @@ var Script;
             this.startButton = document.getElementById("FightStart");
             Script.DataLink.getCopyOf("PreviewHighlight").then(node => this.highlightNode = node);
         }
-        onAdd(_zindex, _ev) {
+        async onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
             this.startButton.disabled = true;
             this.initStones();
             this.initEumlings();
             this.placedEumlings.clear();
+            await this.moveCamera(ƒ.Vector3.Z(-3), ƒ.Vector3.X(10), 1000);
         }
-        onRemove() {
+        async onRemove() {
             this.hideEntityInfo();
+            await this.moveCamera(ƒ.Vector3.Z(3), ƒ.Vector3.X(-10), 1000);
         }
         initStones() {
             const stones = [];
@@ -4967,6 +4971,30 @@ var Script;
             canvas.removeEventListener("pointerup", this.pointerOnCanvas);
             this.startButton.removeEventListener("click", this.startFight);
         }
+        async moveCamera(_translate, _rotate, _timeMS) {
+            const camera = Script.viewport.camera;
+            let elapsedTime = 0;
+            const translationStart = camera.mtxPivot.translation.clone;
+            const rotationStart = camera.mtxPivot.rotation.clone;
+            const translationGoal = ƒ.Vector3.SUM(translationStart, _translate);
+            const rotationGoal = ƒ.Vector3.SUM(rotationStart, _rotate);
+            return new Promise((resolve) => {
+                const mover = () => {
+                    const delta = ƒ.Loop.timeFrameGame;
+                    elapsedTime += delta;
+                    if (elapsedTime > _timeMS) {
+                        camera.mtxPivot.translation = translationGoal;
+                        camera.mtxPivot.rotation = rotationGoal;
+                        ƒ.Loop.removeEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, mover);
+                        resolve();
+                        return;
+                    }
+                    camera.mtxPivot.translation = ƒ.Vector3.LERP(translationStart, translationGoal, elapsedTime / _timeMS);
+                    camera.mtxPivot.rotation = ƒ.Vector3.LERP(rotationStart, rotationGoal, elapsedTime / _timeMS);
+                };
+                ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, mover);
+            });
+        }
     }
     Script.FightPrepUI = FightPrepUI;
 })(Script || (Script = {}));
@@ -5006,7 +5034,7 @@ var Script;
             this.continueButton = document.getElementById("FightRewardContinue");
             this.convertButton = document.getElementById("FightRewardConvert");
         }
-        onAdd(_zindex, _ev) {
+        async onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
             let { gold, xp, stones } = _ev.detail;
             const rewardIcons = [];
@@ -5044,7 +5072,7 @@ var Script;
             this.continueButton.disabled = true;
             this.convertButton.disabled = false;
         }
-        onShow() {
+        async onShow() {
             super.onShow();
             this.addEventListeners();
             for (let element of this.eumlings.keys()) {
@@ -5052,7 +5080,7 @@ var Script;
             }
             document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
         }
-        onHide() {
+        async onHide() {
             super.onHide();
             this.removeEventListeners();
         }
@@ -5117,7 +5145,7 @@ var Script;
             this.element = document.getElementById("Map");
             this.submitBtn = document.getElementById("MapActionButton");
         }
-        onAdd(_zindex, _ev) {
+        async onAdd(_zindex, _ev) {
             super.onAdd(_zindex);
             this.updateProgress();
             this.displayEncounters(_ev);
@@ -5190,7 +5218,7 @@ var Script;
             this.element = document.getElementById("RunEnd");
             this.continueButton = document.getElementById("Restart");
         }
-        onAdd(_zindex, _ev) {
+        async onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
             document.getElementById("RunEndInner").innerHTML =
                 _ev.detail.success ?
@@ -5273,7 +5301,7 @@ var Script;
             this.stoneUpgradeWrapper = document.getElementById("ShopStoneUpgrades");
             this.eumlingHealWrapper = document.getElementById("ShopEumlingHeal");
         }
-        onAdd(_zindex, _ev) {
+        async onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
             this.setupStonesToBuy();
             this.setupStonesToUpgrade();

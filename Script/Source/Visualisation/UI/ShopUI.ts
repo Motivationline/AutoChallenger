@@ -33,7 +33,7 @@ namespace Script {
             this.eumlingHealWrapper = document.getElementById("ShopEumlingHeal");
         }
 
-        onAdd(_zindex: number, _ev?: FightEvent): void {
+        async onAdd(_zindex: number, _ev?: FightEvent): Promise<void> {
             super.onAdd(_zindex, _ev);
 
             this.setupStonesToBuy();

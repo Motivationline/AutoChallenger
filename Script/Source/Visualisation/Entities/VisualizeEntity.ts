@@ -160,14 +160,17 @@ namespace Script {
             const pos = viewport.pointWorldToClient(this.mtxWorld.translation);
             this.tmpText.style.left = (pos.x - rect.width / 2) + "px";
             this.tmpText.style.top = pos.y + "px";
+            this.textUpdater = requestAnimationFrame(this.updateTmpText);
         }
 
+        textUpdater: number;
         private addText = () => {
             document.getElementById("GameOverlayInfos").appendChild(this.tmpText);
             requestAnimationFrame(this.updateTmpText);
         }
         private removeText = () => {
             this.tmpText.remove();
+            cancelAnimationFrame(this.textUpdater);
         }
 
         getEntity(): Readonly<IEntity> {

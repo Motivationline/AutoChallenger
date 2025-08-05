@@ -27,7 +27,7 @@ namespace Script {
             this.confirmButton = document.getElementById("EumlingLevelupConfirm") as HTMLButtonElement;
         }
 
-        onAdd(_zindex: number, _ev?: FightEvent): void {
+        async onAdd(_zindex: number, _ev?: FightEvent): Promise<void> {
             super.onAdd(_zindex, _ev);
             this.confirmButton.disabled = true;
             this.eumling = _ev.target as Eumling;

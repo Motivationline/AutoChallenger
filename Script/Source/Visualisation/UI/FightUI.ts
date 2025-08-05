@@ -11,7 +11,7 @@ namespace Script {
             this.stoneWrapper = document.getElementById("FightStones")
         }
 
-        onAdd(_zindex: number, _ev?: FightEvent): void {
+        async onAdd(_zindex: number, _ev?: FightEvent): Promise<void> {
             super.onAdd(_zindex, _ev);
 
             this.initStones();

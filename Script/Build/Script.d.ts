@@ -418,10 +418,10 @@ declare namespace Script {
 declare namespace Script {
     abstract class UILayer {
         protected element: HTMLElement;
-        onAdd(_zindex: number, _ev?: FightEvent): void;
-        onShow(): void;
-        onHide(): void;
-        onRemove(): void;
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
+        onShow(): Promise<void>;
+        onHide(): Promise<void>;
+        onRemove(): Promise<void>;
         abstract addEventListeners(): void;
         abstract removeEventListeners(): void;
     }
@@ -430,7 +430,7 @@ declare namespace Script {
     class FightUI extends UILayer {
         stoneWrapper: HTMLElement;
         constructor();
-        onAdd(_zindex: number, _ev?: FightEvent): void;
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
         private initStones;
         private updateRoundCounter;
         addEventListeners(): void;
@@ -444,7 +444,7 @@ declare namespace Script {
         infoElement: HTMLElement;
         selectedEumling: Eumling;
         constructor();
-        onAdd(_zindex: number): void;
+        onAdd(_zindex: number): Promise<void>;
         private clickedEumling;
         private confirm;
         addEventListeners(): void;
@@ -458,7 +458,7 @@ declare namespace Script {
         confirmButton: HTMLButtonElement;
         selectedStone: Stone;
         constructor();
-        onAdd(_zindex: number): void;
+        onAdd(_zindex: number): Promise<void>;
         private clickedStone;
         private confirm;
         addEventListeners(): void;
@@ -471,13 +471,13 @@ declare namespace Script {
         readonly activeLayers: UILayer[];
         constructor();
         private get topmostLevel();
-        addUI(_id: string, _ev?: FightEvent): void;
-        replaceUI(_id: string, _ev?: FightEvent): void;
-        removeTopmostUI(): void;
+        addUI(_id: string, _ev?: FightEvent): Promise<void>;
+        replaceUI(_id: string, _ev?: FightEvent): Promise<void>;
+        removeTopmostUI(): Promise<void>;
         removeAllLayers(): void;
         private updateGoldCounter;
         addFightListeners(): void;
-        switchUI: (_ev: FightEvent) => void;
+        switchUI: (_ev: FightEvent) => Promise<void>;
     }
 }
 declare namespace Script {
@@ -870,6 +870,7 @@ declare namespace Script {
         private playAnimationIfPossible;
         private showFallbackText;
         updateTmpText: () => void;
+        textUpdater: number;
         private addText;
         private removeText;
         getEntity(): Readonly<IEntity>;
@@ -933,7 +934,7 @@ declare namespace Script {
         selectedOption: string;
         static orientationInfo: Map<string, string>;
         constructor();
-        onAdd(_zindex: number, _ev?: FightEvent): void;
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
         private selectOption;
         private confirm;
         addEventListeners(): void;
@@ -951,8 +952,8 @@ declare namespace Script {
         bench: VisualizeBench;
         placedEumlings: Set<Eumling>;
         constructor();
-        onAdd(_zindex: number, _ev?: FightEvent): void;
-        onRemove(): void;
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
+        onRemove(): Promise<void>;
         private initStones;
         private initEumlings;
         private returnEumling;
@@ -967,6 +968,7 @@ declare namespace Script {
         private hideEntityInfo;
         addEventListeners(): void;
         removeEventListeners(): void;
+        private moveCamera;
     }
 }
 declare namespace Script {
@@ -978,9 +980,9 @@ declare namespace Script {
         eumlings: Map<HTMLElement, Eumling>;
         xp: number;
         gold: number;
-        onAdd(_zindex: number, _ev?: FightEvent): void;
-        onShow(): void;
-        onHide(): void;
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
+        onShow(): Promise<void>;
+        onHide(): Promise<void>;
         clickOnEumling: (_ev: MouseEvent) => void;
         private updateXPText;
         convert: () => void;
@@ -1002,7 +1004,7 @@ declare namespace Script {
         optionElements: HTMLElement[];
         selectedEncounter: number;
         constructor();
-        onAdd(_zindex: number, _ev: FightEvent): void;
+        onAdd(_zindex: number, _ev: FightEvent): Promise<void>;
         private updateProgress;
         private displayEncounters;
         private selectionDone;
@@ -1021,7 +1023,7 @@ declare namespace Script {
     class RunEndUI extends UILayer {
         continueButton: HTMLButtonElement;
         constructor();
-        onAdd(_zindex: number, _ev?: FightEvent): void;
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
         close: () => void;
         addEventListeners(): void;
         removeEventListeners(): void;
@@ -1040,7 +1042,7 @@ declare namespace Script {
         eumlingHealWrapper: HTMLElement;
         stoneToHtmlElement: Map<Stone, HTMLElement>;
         constructor();
-        onAdd(_zindex: number, _ev?: FightEvent): void;
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
         selectedStone: Stone;
         private setupStonesToBuy;
         private buyStone;

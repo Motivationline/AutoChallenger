@@ -9,7 +9,7 @@ namespace Script {
             this.continueButton = document.getElementById("Restart") as HTMLButtonElement;
         }
 
-        onAdd(_zindex: number, _ev?: FightEvent): void {
+        async onAdd(_zindex: number, _ev?: FightEvent): Promise<void> {
             super.onAdd(_zindex, _ev);
             document.getElementById("RunEndInner").innerHTML = 
             _ev.detail.success ?

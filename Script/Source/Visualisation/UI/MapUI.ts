@@ -11,7 +11,7 @@ namespace Script {
             this.submitBtn = document.getElementById("MapActionButton") as HTMLButtonElement;
         }
 
-        onAdd(_zindex: number, _ev: FightEvent): void {
+        async onAdd(_zindex: number, _ev: FightEvent): Promise<void> {
             super.onAdd(_zindex);
             this.updateProgress();
             this.displayEncounters(_ev);

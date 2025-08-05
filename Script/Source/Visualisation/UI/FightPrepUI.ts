@@ -20,16 +20,18 @@ namespace Script {
             DataLink.getCopyOf("PreviewHighlight").then(node => this.highlightNode = node);
         }
 
-        onAdd(_zindex: number, _ev?: FightEvent): void {
+        async onAdd(_zindex: number, _ev?: FightEvent): Promise<void> {
             super.onAdd(_zindex, _ev);
             this.startButton.disabled = true;
             this.initStones();
             this.initEumlings();
             this.placedEumlings.clear();
+            await this.moveCamera(ƒ.Vector3.Z(-3), ƒ.Vector3.X(10), 1000);
         }
 
-        onRemove(): void {
+        async onRemove(): Promise<void> {
             this.hideEntityInfo();
+            await this.moveCamera(ƒ.Vector3.Z(3), ƒ.Vector3.X(-10), 1000);
         }
 
         private initStones() {
@@ -198,5 +200,32 @@ namespace Script {
             this.startButton.removeEventListener("click", this.startFight);
         }
 
+
+        private async moveCamera(_translate: ƒ.Vector3, _rotate: ƒ.Vector3, _timeMS: number): Promise<void> {
+            const camera = viewport.camera;
+            let elapsedTime: number = 0;
+            const translationStart: ƒ.Vector3 = camera.mtxPivot.translation.clone;
+            const rotationStart: ƒ.Vector3 = camera.mtxPivot.rotation.clone;
+            const translationGoal: ƒ.Vector3 = ƒ.Vector3.SUM(translationStart, _translate);
+            const rotationGoal: ƒ.Vector3 = ƒ.Vector3.SUM(rotationStart, _rotate);
+
+            return new Promise<void>((resolve) => {
+                const mover = () => {
+                    const delta = ƒ.Loop.timeFrameGame;
+                    elapsedTime += delta;
+                    if (elapsedTime > _timeMS) {
+                        camera.mtxPivot.translation = translationGoal;
+                        camera.mtxPivot.rotation = rotationGoal;
+                        ƒ.Loop.removeEventListener(ƒ.EVENT.LOOP_FRAME, mover);
+                        resolve();
+                        return;
+                    }
+                    camera.mtxPivot.translation = ƒ.Vector3.LERP(translationStart, translationGoal, elapsedTime / _timeMS);
+                    camera.mtxPivot.rotation = ƒ.Vector3.LERP(rotationStart, rotationGoal, elapsedTime / _timeMS);
+
+                };
+                ƒ.Loop.addEventListener(ƒ.EVENT.LOOP_FRAME, mover);
+            });
+        }
     }
 }

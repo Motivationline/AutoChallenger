@@ -14,7 +14,7 @@ namespace Script {
             this.confirmButton = document.getElementById("ChooseStoneConfirm") as HTMLButtonElement;
         }
 
-        onAdd(_zindex: number): void {
+        async onAdd(_zindex: number): Promise<void> {
             this.removeEventListeners();
             super.onAdd(_zindex);
             this.confirmButton.disabled = true;
