@@ -3020,19 +3020,32 @@ var Script;
                         this.playTitle(MUSIC_TITLE.COMBAT_INTRO, 1);
                     }
                     else if (this.activeMusic === MUSIC.SHOP) {
-                        this.sounds.get(MUSIC_TITLE.SHOP_LOOP).fadeTo(0, 1);
+                        this.sounds.get(MUSIC_TITLE.SHOP_LOOP).fadeTo(0, 0.01);
                         this.sounds.get(MUSIC_TITLE.COMBAT_PICKUP).play(true);
                         this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).volume = 0;
                         this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).play(true);
-                        this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).fadeTo(1, 4);
+                        setTimeout(() => {
+                            this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).fadeTo(1, 0.01);
+                            this.sounds.get(MUSIC_TITLE.COMBAT_PICKUP).fadeTo(0, 3);
+                        }, 4750);
                     }
                     break;
                 }
                 case MUSIC.SHOP: {
                     if (this.activeMusic !== MUSIC.COMBAT)
                         return;
-                    this.activeComponent.fadeTo(0, 1);
-                    this.sounds.get(MUSIC_TITLE.SHOP_LOOP).fadeTo(1, 1);
+                    // make sure the sound is actually playing
+                    if (!this.sounds.get(MUSIC_TITLE.SHOP_LOOP).isPlaying) {
+                        this.playTitle(MUSIC_TITLE.COMBAT_LOOP);
+                        this.sounds.get(MUSIC_TITLE.SHOP_LOOP).play(true);
+                        setTimeout(() => {
+                            this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).volume = 0;
+                        }, 100);
+                    }
+                    else {
+                        this.activeComponent.fadeTo(0, 2);
+                        this.sounds.get(MUSIC_TITLE.SHOP_LOOP).fadeTo(1, 2);
+                    }
                     break;
                 }
                 case MUSIC.TITLE: {
@@ -3054,7 +3067,7 @@ var Script;
             this.activeComponent = cmp;
         }
         addEventListeners() {
-            Script.EventBus.addEventListener(Script.EVENT.RUN_PREPARE, () => { this.changeMusic(MUSIC.COMBAT); });
+            Script.EventBus.addEventListener(Script.EVENT.RUN_START, () => { this.changeMusic(MUSIC.COMBAT); });
             Script.EventBus.addEventListener(Script.EVENT.SHOP_OPEN, () => { this.changeMusic(MUSIC.SHOP); });
             Script.EventBus.addEventListener(Script.EVENT.SHOP_CLOSE, () => { this.changeMusic(MUSIC.COMBAT); });
             Script.EventBus.addEventListener(Script.EVENT.RUN_END, () => { this.changeMusic(MUSIC.TITLE); });
@@ -3248,12 +3261,14 @@ var Script;
                     {
                         on: Script.EVENT.FIGHT_END,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
-                        spell: { type: Script.SPELL_TYPE.HEAL, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.HEAL, level: 1 },
+                        info: "Heals a random ally for 1 health at the end of the fight."
                     },
                     {
                         on: Script.EVENT.FIGHT_END,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2 } },
-                        spell: { type: Script.SPELL_TYPE.HEAL, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.HEAL, level: 1 },
+                        info: "Heals two random allies for 1 health at the end of the fight."
                     }
                 ]
             },
@@ -3263,12 +3278,14 @@ var Script;
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1, sortBy: Script.TARGET_SORT.HEALTHIEST, reverse: true } },
-                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 1 },
+                        info: "Gives 1 shield to the ally with the lowest health at the start of the fight."
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1, sortBy: Script.TARGET_SORT.HEALTHIEST, reverse: true } },
-                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 2 }
+                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 2 },
+                        info: "Gives 2 shield to the ally with the lowest health at the start of the fight."
                     }
                 ]
             },
@@ -3278,12 +3295,14 @@ var Script;
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [0, 0], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 1 },
+                        info: "Gives 1 shield to each ally in the first row at the start of the fight."
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [0, 0], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 2 }
+                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 2 },
+                        info: "Gives 2 shield to each ally in the first row at the start of the fight."
                     }
                 ]
             },
@@ -3293,12 +3312,14 @@ var Script;
                     {
                         on: Script.EVENT.FIGHT_END,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
-                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 },
+                        info: "SHOULD give 1 xp at the end of the fight. CURRENTLY JUST 1 GOLD"
                     },
                     {
                         on: Script.EVENT.FIGHT_END,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2 } },
-                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 },
+                        info: "SHOULD give 2 xp at the end of the fight. CURRENTLY JUST 1 GOLD"
                     }
                 ]
             },
@@ -3311,11 +3332,13 @@ var Script;
                         spell: {
                             type: Script.SPELL_TYPE.SHIELD, level: 1
                         },
+                        info: "SHOULD give a random buff to a random ally at the start of the fight. CURRENTLY JUST SHIELD 1"
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2 } },
-                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 },
+                        info: "SHOULD give a random buff to two random allies at the start of the fight. CURRENTLY JUST 1 GOLD?"
                     }
                 ]
             },
@@ -3326,11 +3349,13 @@ var Script;
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1 } },
                         attack: { baseDamage: 1 },
+                        info: "Deals 1 damage to a random enemy at the start of the fight."
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 2 } },
                         attack: { baseDamage: 1 },
+                        info: "Deals 1 damage to two random enemies at the start of the fight."
                     }
                 ]
             },
@@ -3340,12 +3365,14 @@ var Script;
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1 } },
-                        spell: { type: Script.SPELL_TYPE.WEAKNESS, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.WEAKNESS, level: 1 },
+                        info: "Gives 1 weakness to a random enemy at the start of the fight."
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1, sortBy: Script.TARGET_SORT.STRONGEST } },
-                        spell: { type: Script.SPELL_TYPE.WEAKNESS, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.WEAKNESS, level: 1 },
+                        info: "Gives 1 weakness to the strongest enemy at the start of the fight."
                     }
                 ]
             },
@@ -3355,12 +3382,14 @@ var Script;
                     {
                         on: Script.EVENT.FIGHT_END,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
-                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 },
+                        info: "Gives 1 gold at the end of combat."
                     },
                     {
                         on: Script.EVENT.FIGHT_END,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
-                        spell: { type: Script.SPELL_TYPE.GOLD, level: 2 }
+                        spell: { type: Script.SPELL_TYPE.GOLD, level: 2 },
+                        info: "Gives 2 gold at the end of combat."
                     }
                 ]
             },
@@ -3370,12 +3399,14 @@ var Script;
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.THORNS, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.THORNS, level: 1 },
+                        info: "Gives 1 thorns to all allies in the last row."
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.THORNS, level: 2 }
+                        spell: { type: Script.SPELL_TYPE.THORNS, level: 2 },
+                        info: "Gives 2 thorns to all allies in the last row."
                     }
                 ]
             },
@@ -3386,13 +3417,13 @@ var Script;
                         on: Script.EVENT.CHOOSE_STONE,
                         target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
                         spell: { type: Script.SPELL_TYPE.THORNS, level: 1 },
-                        info: "Doubles chance for rare stones to appear in the shop.",
+                        info: "SHOULD Double the chance for rare stones to appear in the shop. CURRENTLY BROKEN",
                     },
                     {
                         on: Script.EVENT.CHOOSE_STONE,
                         target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
                         spell: { type: Script.SPELL_TYPE.THORNS, level: 2 },
-                        info: "Triples chance for rare stones to appear in the shop.",
+                        info: "SHOULD Triple the chance for rare stones to appear in the shop. CURRENTLY BROKEN",
                     }
                 ]
             },
@@ -3402,12 +3433,14 @@ var Script;
                     {
                         on: Script.EVENT.ENTITY_MOVE,
                         target: "target",
-                        attack: { baseDamage: 1 }
+                        attack: { baseDamage: 1 },
+                        info: "Deals 1 damage to enemies whenever they move. CURRENTLY 1 TO EVERY ENEMY"
                     },
                     {
                         on: Script.EVENT.ENTITY_MOVE,
                         target: "target",
-                        attack: { baseDamage: 2 }
+                        attack: { baseDamage: 2 },
+                        info: "Deals 2 damage to enemies whenever they move. CURRENTLY 2 TO EVERY ENEMY"
                     }
                 ]
             },

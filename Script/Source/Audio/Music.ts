@@ -68,18 +68,30 @@ namespace Script {
                     if (this.activeMusic === MUSIC.TITLE) {
                         this.playTitle(MUSIC_TITLE.COMBAT_INTRO, 1);
                     } else if (this.activeMusic === MUSIC.SHOP) {
-                        this.sounds.get(MUSIC_TITLE.SHOP_LOOP).fadeTo(0, 1);
+                        this.sounds.get(MUSIC_TITLE.SHOP_LOOP).fadeTo(0, 0.01);
                         this.sounds.get(MUSIC_TITLE.COMBAT_PICKUP).play(true);
                         this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).volume = 0;
                         this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).play(true);
-                        this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).fadeTo(1, 4);
+                        setTimeout(() => {
+                            this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).fadeTo(1, 0.01);
+                            this.sounds.get(MUSIC_TITLE.COMBAT_PICKUP).fadeTo(0, 3);
+                        }, 4750);
                     }
                     break;
                 }
                 case MUSIC.SHOP: {
                     if (this.activeMusic !== MUSIC.COMBAT) return;
-                    this.activeComponent.fadeTo(0, 1);
-                    this.sounds.get(MUSIC_TITLE.SHOP_LOOP).fadeTo(1, 1);
+                    // make sure the sound is actually playing
+                    if (!this.sounds.get(MUSIC_TITLE.SHOP_LOOP).isPlaying) {
+                        this.playTitle(MUSIC_TITLE.COMBAT_LOOP);
+                        this.sounds.get(MUSIC_TITLE.SHOP_LOOP).play(true);
+                        setTimeout(()=>{
+                            this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).volume = 0;
+                        }, 100);
+                    } else {
+                        this.activeComponent.fadeTo(0, 2);
+                        this.sounds.get(MUSIC_TITLE.SHOP_LOOP).fadeTo(1, 2);
+                    }
                     break;
                 }
                 case MUSIC.TITLE: {
@@ -103,7 +115,7 @@ namespace Script {
         }
 
         addEventListeners() {
-            EventBus.addEventListener(EVENT.RUN_PREPARE, () => { this.changeMusic(MUSIC.COMBAT) });
+            EventBus.addEventListener(EVENT.RUN_START, () => { this.changeMusic(MUSIC.COMBAT) });
             EventBus.addEventListener(EVENT.SHOP_OPEN, () => { this.changeMusic(MUSIC.SHOP) });
             EventBus.addEventListener(EVENT.SHOP_CLOSE, () => { this.changeMusic(MUSIC.COMBAT) });
             EventBus.addEventListener(EVENT.RUN_END, () => { this.changeMusic(MUSIC.TITLE) });
