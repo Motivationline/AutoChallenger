@@ -169,9 +169,6 @@ namespace Script {
         // um das zu fixen musst du eine lambda funktion benutzen, also private updatePosition = () => { this.move() }
         // wie es auch bei eventListener unten gemacht ist. Und der bekommt aktuell ja auch noch jedes Event mit, nicht nur das von der eigenen Entity.
         // In dem Fall kannst du es aber auch einfach in die eventListener/handleEvent Systematik unten mit einbauen, da wird das alles schon behandelt.
-        private updatePosition(){
-            //await this.move();
-        }
 
         getEntity(): Readonly<IEntity> {
             return this.entity;
@@ -191,7 +188,7 @@ namespace Script {
             EventBus.addEventListener(EVENT.ROUND_START, this.updateTmpText);
 
             // @Björn besser EntityMove (ohne d) für die visuelle Darstellung nutzen. denk auch dran den wieder zu entfernen
-            EventBus.addEventListener(EVENT.ENTITY_MOVED, this.updatePosition);
+            EventBus.addEventListener(EVENT.ENTITY_MOVE, this.eventListener);
         }
 
         removeEventListeners() {
@@ -201,6 +198,7 @@ namespace Script {
             EventBus.removeEventListener(EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_AFFECTED, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_DIES, this.eventListener);
+            EventBus.removeEventListener(EVENT.ENTITY_MOVE, this.eventListener);
         }
 
         eventListener = async (_ev: FightEvent) => {
@@ -220,6 +218,10 @@ namespace Script {
                         break;
                     }
                     // @Björn hier könntest du die move einbauen
+                    case EVENT.ENTITY_MOVE:{
+                        await this.move()
+                        break;
+                    }
                 }
             } else if (_ev.target === this.entity) {
                 // this entity is affected by something

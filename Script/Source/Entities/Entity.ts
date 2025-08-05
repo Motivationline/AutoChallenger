@@ -238,14 +238,14 @@ namespace Script {
             //check if the Entity has move data
             let moveData: MoveData;
             moveData = this.select(this.moves, true)[0];//TODO: funktioniert das???? // @Björn das sucht dir alle moves raus die es machen soll - du nimmst aber nur den ersten. Im Moment geht das weil da immer nur einer zurück kommt.
-            if (this.moves) { // @Björn hier ggf besser auf moveData testen
+            if (moveData) { // @Björn hier ggf besser auf moveData testen
                 for (let i = 0; i <= maxAlternatives && i <= moveData.blocked.attempts; i++) {
                     // @Björn hier fehlt noch die aktuelle rotation - die wird aktuell noch in nextPositionBasedOnThisRotation einberechnet, aber siehe meinen Kommentar dort
                     // Außerdem solltest du nicht mit blocked.attempts multiplizieren sondern blocked.rotateBy
-                    let rotateBy: number = moveData.rotateBy + i * moveData.blocked.attempts; 
-                    let nextTransform: Position[] = this.nextPositionBasedOnThisRotation(rotateBy);
-                    let nextPosition: Position = nextTransform[0];
-                    let nextRotation: Position = nextTransform[1];
+                    let rotateBy: number = i * moveData.rotateBy;// moveData.blocked.attempts;
+
+                    let nextPosition: Position = getPositionBasedOnMove(this.position, this.currentDirection, moveData.distance, rotateBy);
+                    let nextDirection: Position =  getNextDirection(rotateBy, this.currentDirection);
                     //check if the position is occupied or out of bounds
                     if (grid.get(nextPosition) || Grid.outOfBounds(nextPosition)) {
                         // @Björn hier nicht komplett abbrechen, nur zur for schleife zurück springen ("continue")
@@ -255,12 +255,12 @@ namespace Script {
                         // @Björn hier noch den optionalen dritten parameter auf true setzen damit die entity nicht zweimal im grid ist
                         grid.set(nextPosition, this, true);
                         this.position = nextPosition;
-                        this.currentDirection = nextRotation;
+                        this.currentDirection = nextDirection;
                         // @Björn hier wäre der richtige Zeitpunkt für das EntityMove Event
                         // und auch das EntityMoved event, eines nach dem anderen. Ähnlich wie bei EntityDies / -Died
                         // denk daran die entsprechenden infos dem Event mitzugeben, also welche Entity sich bewegt und von wo nach wo usw.
                         // dann sollte das mit den abilities auch keine Fehler mehr schmeißen.
-                        EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVE, });
+                        EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVE, detail: {entity: this, position: this.position}});
                         EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVED, });
                         //dispatchEvent(EVENT.ENTITY_MOVED);
                         this.moved = true;
@@ -285,28 +285,28 @@ namespace Script {
         Man könnte das in die Move.ts machen und dann hier aufrufen wo man es braucht.
         Außerdem sollte das so deutlich lesbarer und nachvollziehbarer werden denke ich.
         */
-        nextPositionBasedOnThisRotation(rotateBy: number): Position[] {
-            // curentDirection + nextRotation;
-            let directions: Position[] = [
-                [1, 0],    // East
-                [1, 1],    // North-East
-                [0, 1],    // North
-                [-1, 1],   // North-West
-                [-1, 0],   // West
-                [-1, -1],  // South-West
-                [0, -1],   // South
-                [1, -1]    // South-East
-            ];
-            let i: number = directions.findIndex(dir => dir[0] === this.currentDirection[0] && dir[1] === this.currentDirection[1]);
-            let selector: number = (i + rotateBy) % 8;
-            console.log("ID: ", this.id);
-            console.log("Position before: ", this.position);
-            console.log("Direction before: ", this.currentDirection);
-            let pos: Position = [this.position[0] + directions[selector][0], this.position[1] + directions[selector][1]]
-            console.log("Position after: ", pos);
-            console.log("Direction after: ", directions[selector]);
-            return [pos, directions[selector]];
-        }
+        // nextPositionBasedOnThisRotation(rotateBy: number): Position[] {
+        //     // curentDirection + nextRotation;
+        //     let directions: Position[] = [
+        //         [1, 0],    // East
+        //         [1, 1],    // North-East
+        //         [0, 1],    // North
+        //         [-1, 1],   // North-West
+        //         [-1, 0],   // West
+        //         [-1, -1],  // South-West
+        //         [0, -1],   // South
+        //         [1, -1]    // South-East
+        //     ];
+        //     let i: number = directions.findIndex(dir => dir[0] === this.currentDirection[0] && dir[1] === this.currentDirection[1]);
+        //     let selector: number = (i + rotateBy) % 8;
+        //     console.log("ID: ", this.id);
+        //     console.log("Position before: ", this.position);
+        //     console.log("Direction before: ", this.currentDirection);
+        //     let pos: Position = [this.position[0] + directions[selector][0], this.position[1] + directions[selector][1]]
+        //     console.log("Position after: ", pos);
+        //     console.log("Direction after: ", directions[selector]);
+        //     return [pos, directions[selector]];
+        // }
 
         /* trys to move in a random direction, if it fails it goes through all neighboring spots and takes the first one thats free.
         If all spots are occupied it stays at the same spot*/

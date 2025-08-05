@@ -79,7 +79,7 @@ namespace Script {
         //EventBus.dispatchEvent({type: EVENT.ENTITY_MOVED});
     }
 
-    export function getDirectionBasedOnRotation(_rotation: number): Position {
+    export function getNextDirection(_rotateBy: number, _direction: Position): Position {
         let directions: Position[] = [
             [1, 0],    // East
             [1, 1],    // North-East
@@ -90,14 +90,17 @@ namespace Script {
             [0, -1],   // South
             [1, -1]    // South-East
         ];
-        //calculate direction and align components to -1,0,1
-        let dir: Position = [Math.cos(_rotation), Math.sin(_rotation)];
-        //TODO: make components be -1/0/1
-        let direction = directions.findIndex()
-        return direction
+        let i: number = directions.findIndex(dir => dir[0] === this.currentDirection[0] && dir[1] === this.currentDirection[1]);
+        //get the index for the next rotation
+        let selector: number = (i + _rotateBy) % 8;
+        //get the direction from the array
+        let dir: Position = directions[selector]
+        return dir;
     }
-
-    export function getPositionBasedOnMove(_pos: Position, _rotation: number, _step: number) {
-        let dir: Position = getDirectionBasedOnRotation(_rotation);
+    // calculate the next position based on the current position, the entities rotation and the step size
+    export function getPositionBasedOnMove(_pos: Position, _direction: Position, _step: number, _rotateBy: number): Position {
+        let dir: Position = getNextDirection(_rotateBy, _direction);
+        let pos: Position = [_pos[0] * _step + dir[0], _pos[1] * _step + dir[1]];
+        return pos;
     }
 }
