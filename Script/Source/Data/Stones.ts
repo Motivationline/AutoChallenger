@@ -145,27 +145,14 @@ namespace Script {
                     {
                         on: EVENT.CHOOSE_STONE,
                         target: { side: TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: AREA_SHAPE.COLUMN, position: AREA_POSITION.ABSOLUTE } },
-                        spell: { type: SPELL_TYPE.THORNS, level: 1 }
+                        spell: { type: SPELL_TYPE.THORNS, level: 1 },
+                        info: "Doubles chance for rare stones to appear in the shop.",
                     },
                     {
                         on: EVENT.CHOOSE_STONE,
                         target: { side: TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: AREA_SHAPE.COLUMN, position: AREA_POSITION.ABSOLUTE } },
-                        spell: { type: SPELL_TYPE.THORNS, level: 2 }
-                    }
-                ]
-            },
-            {
-                id: "luckystone", // TODO - doubles the chance for rare stones
-                abilityLevels: [
-                    {
-                        on: EVENT.CHOOSE_STONE,
-                        target: { side: TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: AREA_SHAPE.COLUMN, position: AREA_POSITION.ABSOLUTE } },
-                        spell: { type: SPELL_TYPE.THORNS, level: 1 }
-                    },
-                    {
-                        on: EVENT.CHOOSE_STONE,
-                        target: { side: TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: AREA_SHAPE.COLUMN, position: AREA_POSITION.ABSOLUTE } },
-                        spell: { type: SPELL_TYPE.THORNS, level: 2 }
+                        spell: { type: SPELL_TYPE.THORNS, level: 2 },
+                        info: "Triples chance for rare stones to appear in the shop.",
                     }
                 ]
             },

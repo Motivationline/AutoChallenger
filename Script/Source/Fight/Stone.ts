@@ -2,6 +2,7 @@ namespace Script {
     export interface StoneData {
         id: string;
         abilityLevels: AbilityData[];
+        info?: string;
     }
 
     export class Stone {

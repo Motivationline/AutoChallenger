@@ -24,7 +24,7 @@ namespace Script {
         ]
         #shopChance: number[] =
             [
-                0,
+                1,
                 0,
                 1,
                 0,

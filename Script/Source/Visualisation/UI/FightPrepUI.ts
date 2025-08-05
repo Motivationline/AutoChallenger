@@ -35,7 +35,14 @@ namespace Script {
         private initStones() {
             const stones: HTMLElement[] = [];
             for (let stone of Run.currentRun.stones) {
-                stones.push(StoneUIElement.getUIElement(stone).element);
+                const element = createElementAdvanced("div");
+                stones.push(element);
+                element.appendChild(StoneUIElement.getUIElement(stone).element);
+                element.addEventListener("click", () => {
+                    this.hideEntityInfo();
+                    this.infoElement.innerText = stone.data.abilityLevels[stone.level].info;
+                    this.infoElement.classList.remove("hidden");
+                });
             }
             this.stoneWrapper.replaceChildren(...stones);
         }
@@ -62,11 +69,11 @@ namespace Script {
                 this.startButton.disabled = true;
             }
             // update visuals
-            if(vis === this.#highlightedEntity) {
+            if (vis === this.#highlightedEntity) {
                 this.showEntityInfo(vis);
             }
         }
-        
+
         private moveEumlingToGrid(_eumling: Eumling, _target: ƒ.Node) {
             const posId = parseInt(_target.name);
             const vis = Provider.visualizer.getEntity(_eumling);
@@ -75,7 +82,7 @@ namespace Script {
             this.placedEumlings.add(_eumling);
             this.startButton.disabled = false;
             // update visuals
-            if(vis === this.#highlightedEntity) {
+            if (vis === this.#highlightedEntity) {
                 this.showEntityInfo(vis);
             }
         }

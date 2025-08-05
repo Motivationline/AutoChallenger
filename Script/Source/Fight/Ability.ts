@@ -28,6 +28,7 @@ namespace Script {
         target: "target" | "cause" | Target,
         attack?: AttackDataNoTarget,
         spell?: SpellDataNoTarget,
+        info?: string,
     }
 
     export function areAbilityConditionsMet(_ability: AbilityData, _arena: Arena, _ev: FightEvent): boolean {

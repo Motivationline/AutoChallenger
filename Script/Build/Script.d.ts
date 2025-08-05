@@ -441,6 +441,7 @@ declare namespace Script {
     class ChooseEumlingUI extends UILayer {
         optionElements: Map<HTMLElement, Eumling>;
         confirmButton: HTMLButtonElement;
+        infoElement: HTMLElement;
         selectedEumling: Eumling;
         constructor();
         onAdd(_zindex: number): void;
@@ -453,6 +454,7 @@ declare namespace Script {
 declare namespace Script {
     class ChooseStoneUI extends UILayer {
         optionElements: Map<HTMLElement, Stone>;
+        infoElement: HTMLElement;
         confirmButton: HTMLButtonElement;
         selectedStone: Stone;
         constructor();
@@ -653,6 +655,7 @@ declare namespace Script {
         target: "target" | "cause" | Target;
         attack?: AttackDataNoTarget;
         spell?: SpellDataNoTarget;
+        info?: string;
     }
     function areAbilityConditionsMet(_ability: AbilityData, _arena: Arena, _ev: FightEvent): boolean;
     function executeAbility(_ability: AbilityData, _arena: Arena, _ev: FightEvent): Promise<void>;
@@ -673,6 +676,7 @@ declare namespace Script {
     interface StoneData {
         id: string;
         abilityLevels: AbilityData[];
+        info?: string;
     }
     class Stone {
         #private;
@@ -1027,13 +1031,22 @@ declare namespace Script {
     class ShopUI extends UILayer {
         closeButton: HTMLButtonElement;
         stonesWrapper: HTMLElement;
+        stonesInfo: HTMLElement;
+        stoneUpgradeInfo: HTMLElement;
+        stoneBuyButton: HTMLButtonElement;
+        stoneUpgradeButton: HTMLButtonElement;
         stonesRefreshButton: HTMLButtonElement;
         stoneUpgradeWrapper: HTMLElement;
         eumlingHealWrapper: HTMLElement;
+        stoneToHtmlElement: Map<Stone, HTMLElement>;
         constructor();
         onAdd(_zindex: number, _ev?: FightEvent): void;
+        selectedStone: Stone;
         private setupStonesToBuy;
+        private buyStone;
+        selectedStoneToUpgrade: Stone;
         private setupStonesToUpgrade;
+        private upgradeStone;
         private initEumlingHealing;
         close: () => void;
         refresh: () => void;

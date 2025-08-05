@@ -4,11 +4,13 @@ namespace Script {
     export class ChooseStoneUI extends UILayer {
 
         optionElements: Map<HTMLElement, Stone> = new Map();
+        infoElement: HTMLElement;
         confirmButton: HTMLButtonElement;
         selectedStone: Stone;
         constructor() {
             super();
             this.element = document.getElementById("ChooseStone");
+            this.infoElement = document.getElementById("ChooseStoneInfo");
             this.confirmButton = document.getElementById("ChooseStoneConfirm") as HTMLButtonElement;
         }
 
@@ -39,6 +41,7 @@ namespace Script {
             element.classList.add("selected");
             this.selectedStone = stone;
             this.confirmButton.disabled = false;
+            this.infoElement.innerText = stone.data.abilityLevels[stone.level].info;
         }
 
 

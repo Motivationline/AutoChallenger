@@ -2245,6 +2245,7 @@ var Script;
                 element.classList.add("selected");
                 this.selectedEumling = eumling;
                 this.confirmButton.disabled = false;
+                this.infoElement.innerText = eumling.info;
             };
             this.confirm = () => {
                 if (!this.selectedEumling)
@@ -2256,6 +2257,7 @@ var Script;
                 Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_EUMLING, detail: { eumling: this.selectedEumling } });
             };
             this.element = document.getElementById("ChooseEumling");
+            this.infoElement = document.getElementById("ChooseEumlingInfo");
             this.confirmButton = document.getElementById("ChooseEumlingConfirm");
         }
         onAdd(_zindex) {
@@ -2303,6 +2305,7 @@ var Script;
                 element.classList.add("selected");
                 this.selectedStone = stone;
                 this.confirmButton.disabled = false;
+                this.infoElement.innerText = stone.data.abilityLevels[stone.level].info;
             };
             this.confirm = () => {
                 if (!this.selectedStone)
@@ -2314,6 +2317,7 @@ var Script;
                 Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_STONE, detail: { stone: this.selectedStone } });
             };
             this.element = document.getElementById("ChooseStone");
+            this.infoElement = document.getElementById("ChooseStoneInfo");
             this.confirmButton = document.getElementById("ChooseStoneConfirm");
         }
         onAdd(_zindex) {
@@ -2886,27 +2890,14 @@ var Script;
                     {
                         on: Script.EVENT.CHOOSE_STONE,
                         target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.THORNS, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.THORNS, level: 1 },
+                        info: "Doubles chance for rare stones to appear in the shop.",
                     },
                     {
                         on: Script.EVENT.CHOOSE_STONE,
                         target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.THORNS, level: 2 }
-                    }
-                ]
-            },
-            {
-                id: "luckystone", // TODO - doubles the chance for rare stones
-                abilityLevels: [
-                    {
-                        on: Script.EVENT.CHOOSE_STONE,
-                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.THORNS, level: 1 }
-                    },
-                    {
-                        on: Script.EVENT.CHOOSE_STONE,
-                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.THORNS, level: 2 }
+                        spell: { type: Script.SPELL_TYPE.THORNS, level: 2 },
+                        info: "Triples chance for rare stones to appear in the shop.",
                     }
                 ]
             },
@@ -2974,6 +2965,7 @@ var Script;
         }
         updateEntityData(_newData) {
             this.id = _newData.id;
+            this.info = _newData.info;
             let healthDifference = (_newData.health ?? 1) - (this.health ?? 0);
             this.currentHealth = (this.health ?? 0) + healthDifference;
             this.health = _newData.health ?? 1;
@@ -3863,7 +3855,7 @@ var Script;
                 [0, 0, 1],
             ];
             this.#shopChance = [
-                0,
+                1,
                 0,
                 1,
                 0,
@@ -4778,7 +4770,11 @@ var Script;
                     attributes: [["data-option", option]],
                 });
                 optionElements.push(elem);
-                elem.addEventListener("click", this.selectOption);
+                elem.addEventListener("click", (_ev) => {
+                    this.selectOption(_ev);
+                    const newEumlingType = this.eumling.types.join("") + option + "-Eumling";
+                    this.infoElement.innerText = Script.Provider.data.getEntity(newEumlingType).info;
+                });
             }
             this.optionsElement.replaceChildren(...optionElements);
         }
@@ -4842,7 +4838,14 @@ var Script;
         initStones() {
             const stones = [];
             for (let stone of Script.Run.currentRun.stones) {
-                stones.push(Script.StoneUIElement.getUIElement(stone).element);
+                const element = Script.createElementAdvanced("div");
+                stones.push(element);
+                element.appendChild(Script.StoneUIElement.getUIElement(stone).element);
+                element.addEventListener("click", () => {
+                    this.hideEntityInfo();
+                    this.infoElement.innerText = stone.data.abilityLevels[stone.level].info;
+                    this.infoElement.classList.remove("hidden");
+                });
             }
             this.stoneWrapper.replaceChildren(...stones);
         }
@@ -5221,6 +5224,35 @@ var Script;
     class ShopUI extends Script.UILayer {
         constructor() {
             super();
+            this.stoneToHtmlElement = new Map();
+            this.buyStone = (_ev) => {
+                const stone = this.selectedStone;
+                if (!stone)
+                    return;
+                const cost = stone.level == 0 ? COST.BUY_LVL1 : COST.BUY_LVL2;
+                if (Script.Run.currentRun.gold < cost)
+                    return;
+                Script.Run.currentRun.changeGold(-cost);
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_STONE, detail: { stone } });
+                this.selectedStone = undefined;
+                this.stoneBuyButton.disabled = true;
+                this.stonesInfo.innerText = "";
+                this.stoneToHtmlElement.get(stone)?.remove();
+            };
+            this.upgradeStone = (_ev) => {
+                const stone = this.selectedStoneToUpgrade;
+                if (!stone)
+                    return;
+                const cost = COST.UPGRADE_STONE;
+                if (Script.Run.currentRun.gold < cost)
+                    return;
+                Script.Run.currentRun.changeGold(-cost);
+                stone.level++;
+                this.stoneUpgradeButton.disabled = true;
+                this.selectedStoneToUpgrade = undefined;
+                this.stoneUpgradeInfo.innerText = "";
+                this.stoneToHtmlElement.get(stone)?.remove();
+            };
             this.close = () => {
                 Script.EventBus.dispatchEvent({ type: Script.EVENT.SHOP_CLOSE });
             };
@@ -5233,7 +5265,11 @@ var Script;
             this.element = document.getElementById("Shop");
             this.closeButton = document.getElementById("ShopClose");
             this.stonesWrapper = document.getElementById("ShopStones");
+            this.stonesInfo = document.getElementById("ShopStonesInfo");
             this.stonesRefreshButton = document.getElementById("ShopStonesRefresh");
+            this.stoneBuyButton = document.getElementById("ShopStonesBuy");
+            this.stoneUpgradeButton = document.getElementById("ShopStonesUpgrade");
+            this.stoneUpgradeInfo = document.getElementById("ShopStonesUpgradeInfo");
             this.stoneUpgradeWrapper = document.getElementById("ShopStoneUpgrades");
             this.eumlingHealWrapper = document.getElementById("ShopEumlingHeal");
         }
@@ -5244,6 +5280,8 @@ var Script;
             this.initEumlingHealing();
         }
         setupStonesToBuy() {
+            this.stoneBuyButton.disabled = true;
+            this.stonesInfo.innerText = "";
             const existingStones = Script.Run.currentRun.stones.map((stone) => stone.data);
             const newStones = Script.chooseRandomElementsFromArray(Script.Provider.data.stones, 2, existingStones);
             if (newStones.length === 0) {
@@ -5259,21 +5297,23 @@ var Script;
                 let wrapper = Script.createElementAdvanced("div", {
                     classes: ["BuyStone", "ShopOption"],
                     attributes: [["data-level", level.toString()]],
-                    innerHTML: `<span>${cost} Gold</span>`,
                 });
                 wrapper.prepend(uiStoneElement.element);
                 newStoneElements.push(wrapper);
+                this.stoneToHtmlElement.set(stone, wrapper);
                 wrapper.addEventListener("click", () => {
-                    if (Script.Run.currentRun.gold < cost)
-                        return;
-                    Script.Run.currentRun.changeGold(-cost);
-                    Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_STONE, detail: { stone } });
-                    wrapper.remove();
+                    this.selectedStone = stone;
+                    this.stonesInfo.innerText = stone.data.abilityLevels[stone.level].info;
+                    this.stoneBuyButton.innerText = `${cost} Gold`;
+                    this.stoneBuyButton.disabled = Script.Run.currentRun.gold < cost;
+                    newStoneElements.forEach(el => el.classList.remove("selected"));
+                    wrapper.classList.add("selected");
                 });
             }
             this.stonesWrapper.replaceChildren(...newStoneElements);
         }
         setupStonesToUpgrade() {
+            this.stoneUpgradeButton.disabled = true;
             const upgradeableStones = Script.chooseRandomElementsFromArray(Script.Run.currentRun.stones, Infinity, Script.Run.currentRun.stones.filter(stone => stone.level === 1));
             if (upgradeableStones.length === 0) {
                 this.stoneUpgradeWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No more stones upgradeable." }));
@@ -5282,18 +5322,18 @@ var Script;
             const upgradeStoneElements = [];
             for (let stone of upgradeableStones) {
                 const element = Script.createElementAdvanced("div", {
-                    innerHTML: `<span>Levelup: ${COST.UPGRADE_STONE} Gold</span>`,
                     classes: ["ShopOption"],
                 });
                 element.prepend(Script.StoneUIElement.getUIElement(stone).element);
                 upgradeStoneElements.push(element);
                 element.addEventListener("click", () => {
-                    if (Script.Run.currentRun.gold < COST.UPGRADE_STONE)
-                        return;
-                    stone.level++;
-                    Script.Run.currentRun.changeGold(-COST.UPGRADE_STONE);
-                    element.remove();
+                    this.selectedStoneToUpgrade = stone;
+                    this.stoneUpgradeButton.disabled = Script.Run.currentRun.gold < COST.UPGRADE_STONE;
+                    this.stoneUpgradeInfo.innerText = stone.data.abilityLevels[stone.level + 1].info;
+                    upgradeStoneElements.forEach(el => el.classList.remove("selected"));
+                    element.classList.add("selected");
                 });
+                this.stoneToHtmlElement.set(stone, element);
             }
             this.stoneUpgradeWrapper.replaceChildren(...upgradeStoneElements);
         }
@@ -5324,10 +5364,14 @@ var Script;
         addEventListeners() {
             this.closeButton.addEventListener("click", this.close);
             this.stonesRefreshButton.addEventListener("click", this.refresh);
+            this.stoneBuyButton.addEventListener("click", this.buyStone);
+            this.stoneUpgradeButton.addEventListener("click", this.upgradeStone);
         }
         removeEventListeners() {
             this.closeButton.removeEventListener("click", this.close);
             this.stonesRefreshButton.removeEventListener("click", this.refresh);
+            this.stoneBuyButton.removeEventListener("click", this.buyStone);
+            this.stoneUpgradeButton.removeEventListener("click", this.upgradeStone);
         }
     }
     Script.ShopUI = ShopUI;

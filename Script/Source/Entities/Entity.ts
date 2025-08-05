@@ -87,6 +87,7 @@ namespace Script {
 
         updateEntityData(_newData: EntityData) {
             this.id = _newData.id;
+            this.info = _newData.info;
 
             let healthDifference = (_newData.health ?? 1) - (this.health ?? 0);
             this.currentHealth = (this.health ?? 0) + healthDifference;
