@@ -95,7 +95,7 @@ namespace Script {
         private async runOneSide(_active: Grid<IEntity>, _passive: Grid<IEntity>): Promise<void> {
             // TODO: moves
             // @Björn hier die move mit dem aktiven grid aufrufen (und abwarten)
-            
+            await move(_active as Grid<Entity>);
             // spells
             await _active.forEachElementAsync(async (el) => {
                 await el.useSpell(_active, _passive);

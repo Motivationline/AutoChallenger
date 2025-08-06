@@ -100,6 +100,8 @@ declare namespace Script {
         };
     }
     function move(_grid: Grid<Entity>): void;
+    function getNextDirection(_rotateBy: number, _direction: Position): Position;
+    function getPositionBasedOnMove(_pos: Position, _direction: Position, _step: number, _rotateBy: number): Position;
 }
 declare namespace Script {
     export enum SELECTION_ORDER {
@@ -573,7 +575,6 @@ declare namespace Script {
         setEffectLevel(_spell: SPELL_TYPE, value: number): Promise<void>;
         move(): Promise<void>;
         tryToMove(_grid: Grid<Entity>, maxAlternatives: number): boolean;
-        nextPositionBasedOnThisRotation(rotateBy: number): Position[];
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells?: SpellData[], _targetsOverride?: IEntity[]): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks?: AttackData[], _targetsOverride?: IEntity[]): Promise<void>;
         getOwnDamage(): number;
@@ -806,7 +807,7 @@ declare namespace Script {
     import ƒ = FudgeCore;
     interface VisualizeEntity {
         attack(_ev: FightEvent): Promise<void>;
-        move(_move: MoveData): Promise<void>;
+        move(_move: FightEvent): Promise<void>;
         getHurt(_ev: FightEvent): Promise<void>;
         resist(): Promise<void>;
         useSpell(_ev: FightEvent): Promise<void>;
@@ -828,7 +829,6 @@ declare namespace Script {
         private playAnimationIfPossible;
         private showFallbackText;
         private updateTmpText;
-        private updatePosition;
         getEntity(): Readonly<IEntity>;
         addEventListeners(): void;
         removeEventListeners(): void;
@@ -847,6 +847,7 @@ declare namespace Script {
         getAnchor(_side: ƒ.Node, _x: number, _z: number): ƒ.Node;
         nuke(): void;
         move(): void;
+        private updatePosition;
         addEventListeners(): void;
         removeEventListeners(): void;
     }

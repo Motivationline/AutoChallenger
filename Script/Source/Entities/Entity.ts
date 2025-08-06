@@ -254,13 +254,14 @@ namespace Script {
                     } else if (grid.get(nextPosition) == undefined) { //spot is free
                         // @Björn hier noch den optionalen dritten parameter auf true setzen damit die entity nicht zweimal im grid ist
                         grid.set(nextPosition, this, true);
+                        let oldPos = this.position;
                         this.position = nextPosition;
                         this.currentDirection = nextDirection;
                         // @Björn hier wäre der richtige Zeitpunkt für das EntityMove Event
                         // und auch das EntityMoved event, eines nach dem anderen. Ähnlich wie bei EntityDies / -Died
                         // denk daran die entsprechenden infos dem Event mitzugeben, also welche Entity sich bewegt und von wo nach wo usw.
                         // dann sollte das mit den abilities auch keine Fehler mehr schmeißen.
-                        EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVE, detail: {entity: this, position: this.position}});
+                        EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVE, detail: {entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance}});
                         EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVED, });
                         //dispatchEvent(EVENT.ENTITY_MOVED);
                         this.moved = true;

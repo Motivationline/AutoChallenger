@@ -39,25 +39,19 @@ namespace Script {
 
     // @Björn die Verrenkung brauchst du nicht machen, du kannst move() einfach direkt in der Fight runOneSide aufrufen
     // außerdem ist das EntityMove Event dazu gedacht dass eine Entity das auslöst, wenn sie sich bewegt
-    EventBus.addEventListener(EVENT.ENTITY_MOVE, moveListener);
-
-    function moveListener(_ev: FightEvent) {
-        move(_ev.grid);
-        console.log("MovingEntities");
-    }
 
     // @Björn hier sollten noch ein paar asyncs und awaits rein
-    export function move(_grid: Grid<Entity>) {
+    export async function move(_grid: Grid<Entity>) {
         //let grid: Grid<Entity> = _grid;
         let maxAlternatives: number = 0;
         let movedEntites: number = 0;
-        _grid.forEachElement((el) => {
+        await _grid.forEachElement((el) => {
             el.moved = false;
         });
         //loop untill all alternatives have been tried and every entity moved
         while (maxAlternatives <= 8 && movedEntites < _grid.occupiedSpots) {
             let movedThisTurn = false;
-            _grid.forEachElement((el) => {
+            await _grid.forEachElement((el) => {
                 //check if the Entity hasn't moved yet
                 if (el.moved == false) {
                     //try to move
@@ -90,7 +84,7 @@ namespace Script {
             [0, -1],   // South
             [1, -1]    // South-East
         ];
-        let i: number = directions.findIndex(dir => dir[0] === this.currentDirection[0] && dir[1] === this.currentDirection[1]);
+        let i: number = directions.findIndex(dir => dir[0] === _direction[0] && dir[1] === _direction[1]);
         //get the index for the next rotation
         let selector: number = (i + _rotateBy) % 8;
         //get the direction from the array

@@ -185,9 +185,35 @@ var Script;
         //all entities moved
         console.log("moved Away Grid: ");
         console.log(_grid);
-        Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVED });
+        //EventBus.dispatchEvent({type: EVENT.ENTITY_MOVED});
     }
     Script.move = move;
+    function getNextDirection(_rotateBy, _direction) {
+        let directions = [
+            [1, 0], // East
+            [1, 1], // North-East
+            [0, 1], // North
+            [-1, 1], // North-West
+            [-1, 0], // West
+            [-1, -1], // South-West
+            [0, -1], // South
+            [1, -1] // South-East
+        ];
+        let i = directions.findIndex(dir => dir[0] === _direction[0] && dir[1] === _direction[1]);
+        //get the index for the next rotation
+        let selector = (i + _rotateBy) % 8;
+        //get the direction from the array
+        let dir = directions[selector];
+        return dir;
+    }
+    Script.getNextDirection = getNextDirection;
+    // calculate the next position based on the current position, the entities rotation and the step size
+    function getPositionBasedOnMove(_pos, _direction, _step, _rotateBy) {
+        let dir = getNextDirection(_rotateBy, _direction);
+        let pos = [_pos[0] * _step + dir[0], _pos[1] * _step + dir[1]];
+        return pos;
+    }
+    Script.getPositionBasedOnMove = getPositionBasedOnMove;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -2800,33 +2826,35 @@ var Script;
             //this.position = newPos;
         }
         tryToMove(_grid, maxAlternatives) {
-            //let grid: Grid<Entity> = _grid;
+            let grid = _grid;
             //check if the Entity has move data
             let moveData;
             moveData = this.select(this.moves, true)[0]; //TODO: funktioniert das???? // @Björn das sucht dir alle moves raus die es machen soll - du nimmst aber nur den ersten. Im Moment geht das weil da immer nur einer zurück kommt.
-            if (this.moves) { // @Björn hier ggf besser auf moveData testen
+            if (moveData) { // @Björn hier ggf besser auf moveData testen
                 for (let i = 0; i <= maxAlternatives && i <= moveData.blocked.attempts; i++) {
                     // @Björn hier fehlt noch die aktuelle rotation - die wird aktuell noch in nextPositionBasedOnThisRotation einberechnet, aber siehe meinen Kommentar dort
                     // Außerdem solltest du nicht mit blocked.attempts multiplizieren sondern blocked.rotateBy
-                    let rotateBy = moveData.rotateBy + i * moveData.blocked.attempts;
-                    let nextTransform = this.nextPositionBasedOnThisRotation(rotateBy);
-                    let nextPosition = nextTransform[0];
-                    let nextRotation = nextTransform[1];
+                    let rotateBy = i * moveData.rotateBy; // moveData.blocked.attempts;
+                    let nextPosition = Script.getPositionBasedOnMove(this.position, this.currentDirection, moveData.distance, rotateBy);
+                    let nextDirection = Script.getNextDirection(rotateBy, this.currentDirection);
                     //check if the position is occupied or out of bounds
                     if (grid.get(nextPosition) || Script.Grid.outOfBounds(nextPosition)) {
                         // @Björn hier nicht komplett abbrechen, nur zur for schleife zurück springen ("continue")
                         // sonst wird immer nur die standard variante getestet, nie die alternativen.
-                        return false;
+                        continue;
                     }
                     else if (grid.get(nextPosition) == undefined) { //spot is free
                         // @Björn hier noch den optionalen dritten parameter auf true setzen damit die entity nicht zweimal im grid ist
-                        grid.set(nextPosition, this);
+                        grid.set(nextPosition, this, true);
+                        let oldPos = this.position;
                         this.position = nextPosition;
-                        this.currentDirection = nextRotation;
+                        this.currentDirection = nextDirection;
                         // @Björn hier wäre der richtige Zeitpunkt für das EntityMove Event
                         // und auch das EntityMoved event, eines nach dem anderen. Ähnlich wie bei EntityDies / -Died
                         // denk daran die entsprechenden infos dem Event mitzugeben, also welche Entity sich bewegt und von wo nach wo usw.
                         // dann sollte das mit den abilities auch keine Fehler mehr schmeißen.
+                        Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVE, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
+                        Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVED, });
                         //dispatchEvent(EVENT.ENTITY_MOVED);
                         this.moved = true;
                         return true;
@@ -2838,6 +2866,7 @@ var Script;
                 return true;
             }
             // @Björn denk an default return
+            return;
         }
         /* @Björn okay, ich glaube ich verstehe wo du damit hin wolltest, ich glaube aber dass es sinnvoller
         wäre das wie folgt aufzuteilen:
@@ -2849,28 +2878,28 @@ var Script;
         Man könnte das in die Move.ts machen und dann hier aufrufen wo man es braucht.
         Außerdem sollte das so deutlich lesbarer und nachvollziehbarer werden denke ich.
         */
-        nextPositionBasedOnThisRotation(rotateBy) {
-            // curentDirection + nextRotation;
-            let directions = [
-                [1, 0], // East
-                [1, 1], // North-East
-                [0, 1], // North
-                [-1, 1], // North-West
-                [-1, 0], // West
-                [-1, -1], // South-West
-                [0, -1], // South
-                [1, -1] // South-East
-            ];
-            let i = directions.findIndex(dir => dir[0] === this.currentDirection[0] && dir[1] === this.currentDirection[1]);
-            let selector = (i + rotateBy) % 8;
-            console.log("ID: ", this.id);
-            console.log("Position before: ", this.position);
-            console.log("Direction before: ", this.currentDirection);
-            let pos = [this.position[0] + directions[selector][0], this.position[1] + directions[selector][1]];
-            console.log("Position after: ", pos);
-            console.log("Direction after: ", directions[selector]);
-            return [pos, directions[selector]];
-        }
+        // nextPositionBasedOnThisRotation(rotateBy: number): Position[] {
+        //     // curentDirection + nextRotation;
+        //     let directions: Position[] = [
+        //         [1, 0],    // East
+        //         [1, 1],    // North-East
+        //         [0, 1],    // North
+        //         [-1, 1],   // North-West
+        //         [-1, 0],   // West
+        //         [-1, -1],  // South-West
+        //         [0, -1],   // South
+        //         [1, -1]    // South-East
+        //     ];
+        //     let i: number = directions.findIndex(dir => dir[0] === this.currentDirection[0] && dir[1] === this.currentDirection[1]);
+        //     let selector: number = (i + rotateBy) % 8;
+        //     console.log("ID: ", this.id);
+        //     console.log("Position before: ", this.position);
+        //     console.log("Direction before: ", this.currentDirection);
+        //     let pos: Position = [this.position[0] + directions[selector][0], this.position[1] + directions[selector][1]]
+        //     console.log("Position after: ", pos);
+        //     console.log("Direction after: ", directions[selector]);
+        //     return [pos, directions[selector]];
+        // }
         /* trys to move in a random direction, if it fails it goes through all neighboring spots and takes the first one thats free.
         If all spots are occupied it stays at the same spot*/
         // moveMePls(_move: MoveData, position: Position, _occupiedSpots: Position[]): Position {
@@ -4079,9 +4108,9 @@ var Script;
             console.log("entity visualizer: attack", { attacker: this.entity, attack: _ev.trigger, targets: _ev.detail.targets });
             await this.playAnimationIfPossible(Script.ANIMATION.ATTACK);
         }
-        async move( /*_move: MoveData*/) {
+        async move(_ev) {
             //this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
-            console.log("entity visualizer: move");
+            console.log("entity visualizer: move", { entity: _ev.detail.entity, oldPosition: _ev.detail.oldPosition, position: _ev.detail.position, direction: _ev.detail.direction, step: _ev.detail.step });
             await this.playAnimationIfPossible(Script.ANIMATION.MOVE);
         }
         async useSpell(_ev) {
@@ -4180,9 +4209,6 @@ var Script;
         // um das zu fixen musst du eine lambda funktion benutzen, also private updatePosition = () => { this.move() }
         // wie es auch bei eventListener unten gemacht ist. Und der bekommt aktuell ja auch noch jedes Event mit, nicht nur das von der eigenen Entity.
         // In dem Fall kannst du es aber auch einfach in die eventListener/handleEvent Systematik unten mit einbauen, da wird das alles schon behandelt.
-        updatePosition() {
-            this.move();
-        }
         getEntity() {
             return this.entity;
         }
@@ -4198,7 +4224,7 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ROUND_END, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateTmpText);
             // @Björn besser EntityMove (ohne d) für die visuelle Darstellung nutzen. denk auch dran den wieder zu entfernen
-            Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVED, this.updatePosition);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVE, this.eventListener);
         }
         removeEventListeners() {
             Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.eventListener);
@@ -4207,6 +4233,7 @@ var Script;
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_AFFECTED, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_DIES, this.eventListener);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_MOVE, this.eventListener);
         }
         async handleEvent(_ev) {
             if (_ev.cause === this.entity) {
@@ -4221,6 +4248,10 @@ var Script;
                         break;
                     }
                     // @Björn hier könntest du die move einbauen
+                    case Script.EVENT.ENTITY_MOVE: {
+                        await this.move(_ev);
+                        break;
+                    }
                 }
             }
             else if (_ev.target === this.entity) {
@@ -4337,6 +4368,7 @@ var Script;
     class VisualizeGrid extends ƒ.Node {
         constructor(_grid, _side) {
             super("VisualizeGrid");
+            this.updatePosition = () => { this.move(); };
             this.grid = _grid;
             if (_side === "home" || "away") {
                 this.side = _side;
@@ -4408,13 +4440,13 @@ var Script;
         // @Björn auch hier das problem dass du den Bezug zu "this" verlierst. 
         // Lambda Funktionsschreibweise (s. VisualizeEntity.updatePosition Kommentar) ist der Weg das zu reparieren.
         move() {
-            let _entity;
+            //let _entity: VisualizeEntity;
             let position;
             // @Björn vllt ist es sinnvoller nur die entity zu bewegen die sich auch bewegt hat statt alle auf einmal. Geht aber fürs erste auch.
             //read entity Positions and move the model to the fitting ancor in the Scene
             this.grid.forEachElement((entity, pos) => {
                 position = pos;
-                _entity = entity;
+                //_entity = entity
                 let visSide;
                 //get Anchors from scene
                 if (this.side === "away") {
@@ -4433,7 +4465,7 @@ var Script;
             });
         }
         addEventListeners() {
-            Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVED, this.move);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVED, this.updatePosition);
         }
         removeEventListeners() {
             //EventBus.removeEventListener(EVENT.ENTITY_MOVED); //TODO: Fix this

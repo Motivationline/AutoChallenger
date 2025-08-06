@@ -3,7 +3,7 @@ namespace Script {
     export interface VisualizeEntity {
         //idle(): Promise<void>;
         attack(_ev: FightEvent): Promise<void>;
-        move(_move: MoveData): Promise<void>;
+        move(_move: FightEvent): Promise<void>;
         getHurt(_ev: FightEvent): Promise<void>;
         resist(): Promise<void>;
         useSpell(_ev: FightEvent): Promise<void>;
@@ -52,9 +52,9 @@ namespace Script {
             await this.playAnimationIfPossible(ANIMATION.ATTACK);
         }
 
-        async move(/*_move: MoveData*/): Promise<void> {
+        async move(_ev: FightEvent): Promise<void> {
             //this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
-            console.log("entity visualizer: move");
+            console.log("entity visualizer: move", {entity: _ev.detail.entity, oldPosition: _ev.detail.oldPosition, position: _ev.detail.position, direction: _ev.detail.direction, step: _ev.detail.step});
             await this.playAnimationIfPossible(ANIMATION.MOVE);
         }
 
@@ -219,7 +219,7 @@ namespace Script {
                     }
                     // @Björn hier könntest du die move einbauen
                     case EVENT.ENTITY_MOVE:{
-                        await this.move()
+                        await this.move(_ev)
                         break;
                     }
                 }

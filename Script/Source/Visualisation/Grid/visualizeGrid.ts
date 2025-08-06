@@ -120,9 +120,11 @@ namespace Script {
             });
         }
 
+        private updatePosition = () => { this.move() }
 
         addEventListeners(): void {
-            EventBus.addEventListener(EVENT.ENTITY_MOVED, this.move);
+            EventBus.addEventListener(EVENT.ENTITY_MOVED, this.updatePosition);
+            
         }
 
         removeEventListeners(): void {
