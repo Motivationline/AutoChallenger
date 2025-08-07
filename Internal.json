@@ -2402,6 +2402,37 @@
               "id": "cactusCrawler"
             }
           }
+        ],
+        "VisualizationLink": [
+          {
+            "Script.VisualizationLink": {
+              "active": true,
+              "visualization": "WindAttack"
+            }
+          }
+        ],
+        "AnimationLink": [
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-06-24T11:23:56.089Z|47567",
+              "animType": "idle"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-08-07T14:07:16.752Z|05018",
+              "animType": "hurt"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-08-07T14:07:16.746Z|17360",
+              "animType": "die"
+            }
+          }
         ]
       },
       "children": [
@@ -2565,7 +2596,7 @@
           {
             "Script.VisualizationLink": {
               "active": true,
-              "visualization": "SmokeGrey",
+              "visualization": "WindAttack",
               "for": "attack",
               "delay": 0.6000000000000001
             }
@@ -2689,6 +2720,14 @@
               "animType": "attack"
             }
           }
+        ],
+        "VisualizationLink": [
+          {
+            "Script.VisualizationLink": {
+              "active": true,
+              "visualization": "WindAttack"
+            }
+          }
         ]
       },
       "children": [
@@ -2731,6 +2770,14 @@
               "active": true,
               "animation": "AnimationGLTF|2025-07-02T13:10:50.478Z|01270",
               "animType": "idle"
+            }
+          }
+        ],
+        "VisualizationLink": [
+          {
+            "Script.VisualizationLink": {
+              "active": true,
+              "visualization": "WindAttack"
             }
           }
         ]
@@ -3680,6 +3727,13 @@
               "animation": "AnimationGLTF|2025-07-04T10:20:56.775Z|95217",
               "animType": "attack"
             }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-08-07T14:09:09.279Z|95645",
+              "animType": "hurt"
+            }
           }
         ],
         "SandSitter": [
@@ -3688,6 +3742,14 @@
               "active": true,
               "emerge": "AnimationGLTF|2025-07-04T10:20:56.783Z|19131",
               "emerged_idle": "AnimationGLTF|2025-07-04T10:20:56.780Z|15246"
+            }
+          }
+        ],
+        "VisualizationLink": [
+          {
+            "Script.VisualizationLink": {
+              "active": true,
+              "visualization": "WindAttack"
             }
           }
         ]
@@ -4555,6 +4617,33 @@
       "children": [],
       "idResource": "Graph|2025-08-05T06:38:47.376Z|88317",
       "type": "Graph"
+    }
+  },
+  "AnimationGLTF|2025-08-07T14:07:16.746Z|17360": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-08-07T14:07:16.746Z|17360",
+      "name": "cc_die",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\CactusCrawler\\CactusCrawler.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-08-07T14:07:16.752Z|05018": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-08-07T14:07:16.752Z|05018",
+      "name": "cc_hurt",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\CactusCrawler\\CactusCrawler.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-08-07T14:09:09.279Z|95645": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-08-07T14:09:09.279Z|95645",
+      "name": "SandSitter_hurt",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\SandSitter\\SandSitter.glb",
+      "events": {}
     }
   }
 }

@@ -81,6 +81,12 @@
                     "entries": [
                       {
                         "idResource": "AnimationGLTF|2025-06-24T11:23:56.089Z|47567"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-08-07T14:07:16.746Z|17360"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-08-07T14:07:16.752Z|05018"
                       }
                     ]
                   },
@@ -255,6 +261,9 @@
                       },
                       {
                         "idResource": "AnimationGLTF|2025-07-04T10:20:56.783Z|19131"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-08-07T14:09:09.279Z|95645"
                       }
                     ]
                   }
