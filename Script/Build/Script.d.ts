@@ -63,8 +63,6 @@ declare namespace Script {
         trigger?: AttackData | SpellData | MoveData | AbilityData;
         /** Optional data with more details about this specific event. */
         detail?: T;
-        /** Optional what Grid is affected */
-        grid?: Grid<Entity>;
     }
     type FightEventListener = (_ev?: FightEvent) => Promise<void> | void;
     class EventBus {
@@ -99,7 +97,7 @@ declare namespace Script {
             attempts?: number;
         };
     }
-    function move(_grid: Grid<Entity>): void;
+    function move(_grid: Grid<Entity>): Promise<void>;
     function getNextDirection(_rotateBy: number, _direction: Position): Position;
     function getPositionBasedOnMove(_pos: Position, _direction: Position, _step: number, _rotateBy: number): Position;
 }
@@ -574,7 +572,7 @@ declare namespace Script {
         affect(_spell: SpellData, _cause?: IEntity): Promise<number>;
         setEffectLevel(_spell: SPELL_TYPE, value: number): Promise<void>;
         move(): Promise<void>;
-        tryToMove(_grid: Grid<Entity>, maxAlternatives: number): boolean;
+        tryToMove(_grid: Grid<Entity>, maxAlternatives: number): Promise<boolean>;
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells?: SpellData[], _targetsOverride?: IEntity[]): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks?: AttackData[], _targetsOverride?: IEntity[]): Promise<void>;
         getOwnDamage(): number;
@@ -846,7 +844,7 @@ declare namespace Script {
         removeEntityFromGrid(_pos: Position): void;
         getAnchor(_side: ƒ.Node, _x: number, _z: number): ƒ.Node;
         nuke(): void;
-        move(): void;
+        move(_ev: FightEvent): void;
         private updatePosition;
         addEventListeners(): void;
         removeEventListeners(): void;

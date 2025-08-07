@@ -43,7 +43,7 @@ namespace Script {
 
                 let visSide: ƒ.Node;
                 //get Anchors from scene
-                // @Björn das machst du an mehreren Stellen - wäre besser wenn du das einmal im Konstruktor machst und dir die richtige Seite direkt als Node abspeicherst.
+                // TODO: @Björn das machst du an mehreren Stellen - wäre besser wenn du das einmal im Konstruktor machst und dir die richtige Seite direkt als Node abspeicherst.
                 // auf dem main branch hab ich das schon gemacht, schau mal hier: https://github.com/Motivationline/AutoChallenger/blob/main/Script/Source/Visualisation/Grid/visualizeGrid.ts#L13
                 // beachte auch die Änderungen an den anderen Funktionen wie getAnchor.
                 if (this.side === "away") {
@@ -91,10 +91,13 @@ namespace Script {
 
         // @Björn auch hier das problem dass du den Bezug zu "this" verlierst. 
         // Lambda Funktionsschreibweise (s. VisualizeEntity.updatePosition Kommentar) ist der Weg das zu reparieren.
-        move() {
+        move(_ev: FightEvent) {
             //let _entity: VisualizeEntity;
             let position: Position;
             // @Björn vllt ist es sinnvoller nur die entity zu bewegen die sich auch bewegt hat statt alle auf einmal. Geht aber fürs erste auch.
+            
+            //this.grid.
+
             //read entity Positions and move the model to the fitting ancor in the Scene
             this.grid.forEachElement((entity, pos) => {
                 position = pos;
@@ -120,7 +123,7 @@ namespace Script {
             });
         }
 
-        private updatePosition = () => { this.move() }
+        private updatePosition = (_ev: FightEvent) => { this.move(_ev) }
 
         addEventListeners(): void {
             EventBus.addEventListener(EVENT.ENTITY_MOVED, this.updatePosition);
@@ -128,7 +131,7 @@ namespace Script {
         }
 
         removeEventListeners(): void {
-            //EventBus.removeEventListener(EVENT.ENTITY_MOVED); //TODO: Fix this
+            EventBus.removeEventListener(EVENT.ENTITY_MOVED, this.updatePosition);
         }
 
     }

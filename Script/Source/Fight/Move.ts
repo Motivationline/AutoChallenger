@@ -39,13 +39,15 @@ namespace Script {
 
     // @Björn die Verrenkung brauchst du nicht machen, du kannst move() einfach direkt in der Fight runOneSide aufrufen
     // außerdem ist das EntityMove Event dazu gedacht dass eine Entity das auslöst, wenn sie sich bewegt
-
+    // ✓
     // @Björn hier sollten noch ein paar asyncs und awaits rein
     export async function move(_grid: Grid<Entity>) {
+        console.log("start Grid: ");
+        console.log(_grid);
         //let grid: Grid<Entity> = _grid;
         let maxAlternatives: number = 0;
         let movedEntites: number = 0;
-        await _grid.forEachElement((el) => {
+        _grid.forEachElement((el) => {
             el.moved = false;
         });
         //loop untill all alternatives have been tried and every entity moved
@@ -69,8 +71,6 @@ namespace Script {
         //all entities moved
         console.log("moved Away Grid: ");
         console.log(_grid);
-
-        //EventBus.dispatchEvent({type: EVENT.ENTITY_MOVED});
     }
 
     export function getNextDirection(_rotateBy: number, _direction: Position): Position {
@@ -89,12 +89,16 @@ namespace Script {
         let selector: number = (i + _rotateBy) % 8;
         //get the direction from the array
         let dir: Position = directions[selector]
+        
         return dir;
     }
+
     // calculate the next position based on the current position, the entities rotation and the step size
     export function getPositionBasedOnMove(_pos: Position, _direction: Position, _step: number, _rotateBy: number): Position {
+        console.log("direction: " + _direction + "step: " + _step + "position: " + _pos + "rotateBy: " + _rotateBy);
         let dir: Position = getNextDirection(_rotateBy, _direction);
-        let pos: Position = [_pos[0] * _step + dir[0], _pos[1] * _step + dir[1]];
+        let pos: Position = [_step * dir[0] + _pos[0] , _step * dir[1] + _pos[1]];
+        console.log("New direction: " + dir + "New position: " + pos);
         return pos;
     }
 }
