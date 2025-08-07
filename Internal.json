@@ -3681,6 +3681,15 @@
               "animType": "attack"
             }
           }
+        ],
+        "SandSitter": [
+          {
+            "Script.SandSitter": {
+              "active": true,
+              "emerge": "AnimationGLTF|2025-07-04T10:20:56.783Z|19131",
+              "emerged_idle": "AnimationGLTF|2025-07-04T10:20:56.780Z|15246"
+            }
+          }
         ]
       },
       "children": [

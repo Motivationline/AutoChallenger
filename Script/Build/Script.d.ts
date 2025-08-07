@@ -905,6 +905,18 @@ declare namespace Script {
     }
 }
 declare namespace Script {
+    import ƒ = FudgeCore;
+    class SandSitter extends ƒ.Component {
+        emerge: ƒ.Animation;
+        emerged_idle: ƒ.Animation;
+        constructor();
+        burried: boolean;
+        buryNow: (_ev: FightEvent) => Promise<void>;
+        emergeNow: (_ev: FightEvent) => Promise<void>;
+        addEventListeners(): void;
+    }
+}
+declare namespace Script {
     interface IVisualizeFight {
         showGrid(): Promise<void>;
         fightStart(): Promise<void>;
@@ -948,7 +960,7 @@ declare namespace Script {
     class VisualizeEntity extends ƒ.Node {
         private entity;
         private cmpAnimation;
-        private defaultAnimation;
+        defaultAnimation: ƒ.Animation;
         private tmpText;
         constructor(_entity: IEntity);
         attack(_ev: FightEvent): Promise<void>;
@@ -962,7 +974,7 @@ declare namespace Script {
         hidePreview(): Promise<void>;
         loadModel(_id: string): Promise<void>;
         givePlaceholderPls(): ƒ.Node;
-        private playAnimationIfPossible;
+        playAnimationIfPossible(_anim: ANIMATION | ƒ.Animation): Promise<void>;
         private showFallbackText;
         updateTmpText: () => void;
         textUpdater: number;

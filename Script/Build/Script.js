@@ -1909,6 +1909,33 @@ var Script;
                 ],
             },
             {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, , "floppyFish",],
+                    ["floppyFish", , ,],
+                    [, "floppyFish", ,]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, "floppyFish", ,],
+                    [, , "boxingBush",],
+                    ["floppyFish", , ,]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    ["floppyFish", "punchingPalmtree", ,],
+                    [, , ,],
+                    [, , "floppyFish",]
+                ],
+            },
+            {
                 difficulty: 1,
                 rounds: 3,
                 entities: [
@@ -1936,6 +1963,33 @@ var Script;
                 ],
             },
             {
+                difficulty: 1,
+                rounds: 3,
+                entities: [
+                    [, "floppyFish", "floppyFish",],
+                    [, "floppyFish", "floppyFish",],
+                    [, "floppyFish", "floppyFish",]
+                ],
+            },
+            {
+                difficulty: 1,
+                rounds: 3,
+                entities: [
+                    [, , ,],
+                    [, , ,],
+                    ["okayOyster", , "countdownCoconut",]
+                ],
+            },
+            {
+                difficulty: 1,
+                rounds: 3,
+                entities: [
+                    [, "okayOyster", "sandSitter",],
+                    [, , ,],
+                    [, "okayOyster", "punchingPalmtree",]
+                ],
+            },
+            {
                 difficulty: 2,
                 rounds: 3,
                 entities: [
@@ -1960,6 +2014,24 @@ var Script;
                     ["cactusCrawler", "countdownCoconut", "cactusCrawler",],
                     [, "cactusCrawler", ,],
                     ["cactusCrawler", , "countdownCoconut",]
+                ],
+            },
+            {
+                difficulty: 2,
+                rounds: 3,
+                entities: [
+                    ["floppyFish", "punchingPalmtree", "flameFlinger",],
+                    ["floppyFish", , "boxingBush",],
+                    ["floppyFish", "sandSitter", "flameFlinger",]
+                ],
+            },
+            {
+                difficulty: 2,
+                rounds: 3,
+                entities: [
+                    ["okayOyster", "worriedWall", "countdownCoconut",],
+                    ["okayOyster", "worriedWall", ,],
+                    ["okayOyster", "worriedWall", "countdownCoconut",]
                 ],
             },
         ];
@@ -4455,6 +4527,66 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
+    var ƒ = FudgeCore;
+    let SandSitter = (() => {
+        var _a;
+        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _classSuper = ƒ.Component;
+        let _emerge_decorators;
+        let _emerge_initializers = [];
+        let _emerge_extraInitializers = [];
+        let _emerged_idle_decorators;
+        let _emerged_idle_initializers = [];
+        let _emerged_idle_extraInitializers = [];
+        var SandSitter = class extends _classSuper {
+            static { _classThis = this; }
+            static {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                _emerge_decorators = [ƒ.serialize(ƒ.Animation)];
+                _emerged_idle_decorators = [ƒ.serialize(ƒ.Animation)];
+                __esDecorate(null, null, _emerge_decorators, { kind: "field", name: "emerge", static: false, private: false, access: { has: obj => "emerge" in obj, get: obj => obj.emerge, set: (obj, value) => { obj.emerge = value; } }, metadata: _metadata }, _emerge_initializers, _emerge_extraInitializers);
+                __esDecorate(null, null, _emerged_idle_decorators, { kind: "field", name: "emerged_idle", static: false, private: false, access: { has: obj => "emerged_idle" in obj, get: obj => obj.emerged_idle, set: (obj, value) => { obj.emerged_idle = value; } }, metadata: _metadata }, _emerged_idle_initializers, _emerged_idle_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                SandSitter = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            }
+            constructor() {
+                super();
+                this.emerge = __runInitializers(this, _emerge_initializers, void 0);
+                this.emerged_idle = (__runInitializers(this, _emerge_extraInitializers), __runInitializers(this, _emerged_idle_initializers, void 0));
+                this.burried = (__runInitializers(this, _emerged_idle_extraInitializers), false);
+                this.buryNow = async (_ev) => {
+                    this.burried = true;
+                };
+                this.emergeNow = async (_ev) => {
+                    if (!this.burried)
+                        return;
+                    const vis = this.node.getParent();
+                    if (!vis)
+                        return;
+                    vis.defaultAnimation = this.emerged_idle;
+                    await vis.playAnimationIfPossible(this.emerge);
+                    this.burried = false;
+                };
+                this.addEventListener("componentActivate" /* ƒ.EVENT.COMPONENT_ACTIVATE */, () => {
+                    this.addEventListeners();
+                }, { once: true });
+            }
+            addEventListeners() {
+                Script.EventBus.addEventListener(Script.EVENT.FIGHT_START, this.buryNow);
+                Script.EventBus.addEventListener(Script.EVENT.ROUND_END, this.emergeNow);
+            }
+        };
+        return SandSitter = _classThis;
+    })();
+    Script.SandSitter = SandSitter;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
     class VisualizeFight {
         constructor(_fight) {
             this.#listeners = new Map();
@@ -4748,13 +4880,19 @@ var Script;
             return placeholder;
         }
         async playAnimationIfPossible(_anim) {
-            if (!this.cmpAnimation)
-                return this.showFallbackText(_anim);
-            let animation = Script.AnimationLink.linkedAnimations.get(this.entity.id)?.get(_anim);
-            if (!animation && this.entity.id.includes("Eumling"))
-                animation = Script.AnimationLink.linkedAnimations.get("defaultEumling")?.get(_anim);
-            if (!animation)
-                return this.showFallbackText(_anim);
+            let animation;
+            if (typeof _anim === "string") {
+                if (!this.cmpAnimation)
+                    return this.showFallbackText(_anim);
+                animation = Script.AnimationLink.linkedAnimations.get(this.entity.id)?.get(_anim);
+                if (!animation && this.entity.id.includes("Eumling"))
+                    animation = Script.AnimationLink.linkedAnimations.get("defaultEumling")?.get(_anim);
+                if (!animation)
+                    return this.showFallbackText(_anim);
+            }
+            else {
+                animation = _anim;
+            }
             this.cmpAnimation.animation = animation;
             this.cmpAnimation.time = 0;
             // console.log({ totalTime: animation.totalTime });

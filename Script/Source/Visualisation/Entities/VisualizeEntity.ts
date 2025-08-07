@@ -17,7 +17,7 @@ namespace Script {
 
         private entity: IEntity;
         private cmpAnimation: ƒ.ComponentAnimation;
-        private defaultAnimation: ƒ.Animation;
+        public defaultAnimation: ƒ.Animation;
         //private grid: VisualizeGridNull;
         // TODO: remove this again when it's not needed anymore.
         private tmpText: HTMLDivElement;
@@ -129,11 +129,16 @@ namespace Script {
             return placeholder;
         }
 
-        private async playAnimationIfPossible(_anim: ANIMATION) {
-            if (!this.cmpAnimation) return this.showFallbackText(_anim);
-            let animation = AnimationLink.linkedAnimations.get(this.entity.id)?.get(_anim);
-            if (!animation && this.entity.id.includes("Eumling")) animation = AnimationLink.linkedAnimations.get("defaultEumling")?.get(_anim);
-            if (!animation) return this.showFallbackText(_anim);
+        public async playAnimationIfPossible(_anim: ANIMATION | ƒ.Animation) {
+            let animation: ƒ.Animation;
+            if (typeof _anim === "string") {
+                if (!this.cmpAnimation) return this.showFallbackText(_anim);
+                animation = AnimationLink.linkedAnimations.get(this.entity.id)?.get(_anim);
+                if (!animation && this.entity.id.includes("Eumling")) animation = AnimationLink.linkedAnimations.get("defaultEumling")?.get(_anim);
+                if (!animation) return this.showFallbackText(_anim);
+            } else {
+                animation = _anim;
+            }
             this.cmpAnimation.animation = animation;
             this.cmpAnimation.time = 0;
             // console.log({ totalTime: animation.totalTime });
