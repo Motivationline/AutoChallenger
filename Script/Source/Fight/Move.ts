@@ -53,11 +53,11 @@ namespace Script {
         //loop untill all alternatives have been tried and every entity moved
         while (maxAlternatives <= 8 && movedEntites < _grid.occupiedSpots) {
             let movedThisTurn = false;
-            await _grid.forEachElement((el) => {
+            await _grid.forEachElementAsync(async (el) => {
                 //check if the Entity hasn't moved yet
                 if (el.moved == false) {
                     //try to move
-                    let res = el.tryToMove(_grid, maxAlternatives);
+                    let res = await el.tryToMove(_grid, maxAlternatives);
                     if (res) {
                         movedThisTurn = true;
                         movedEntites++;
