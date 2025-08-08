@@ -95,10 +95,10 @@ namespace Script {
 
     // calculate the next position based on the current position, the entities rotation and the step size
     export function getPositionBasedOnMove(_pos: Position, _direction: Position, _step: number, _rotateBy: number): Position {
-        console.log("direction: " + _direction + "step: " + _step + "position: " + _pos + "rotateBy: " + _rotateBy);
+        console.log("direction: " + _direction + ", step: " + _step + ", position: " + _pos + ", rotateBy: " + _rotateBy);
         let dir: Position = getNextDirection(_rotateBy, _direction);
         let pos: Position = [_step * dir[0] + _pos[0] , _step * dir[1] + _pos[1]];
-        console.log("New direction: " + dir + "New position: " + pos);
+        console.log(" New direction: " + dir + ", New position: " + pos);
         return pos;
     }
 }

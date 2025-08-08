@@ -95,8 +95,8 @@ namespace Script {
             //let _entity: VisualizeEntity;
             let position: Position;
             // @Björn vllt ist es sinnvoller nur die entity zu bewegen die sich auch bewegt hat statt alle auf einmal. Geht aber fürs erste auch.
-            
-            //this.grid.
+            //_ev.detail.entity.position
+            //TODO: Über die entity den richtigen Visualizer Finden
 
             //read entity Positions and move the model to the fitting ancor in the Scene
             this.grid.forEachElement((entity, pos) => {

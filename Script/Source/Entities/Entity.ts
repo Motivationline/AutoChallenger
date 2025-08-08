@@ -258,6 +258,7 @@ namespace Script {
                     } else if (_grid.get(nextPosition) == undefined) { //spot is free
                         // @Björn hier noch den optionalen dritten parameter auf true setzen damit die entity nicht zweimal im grid ist
                         // ✓
+                        //TODO: Fix entities being undefined.
                         _grid.set(nextPosition, this, true);
                         let oldPos = this.position;
                         this.position = nextPosition;
@@ -273,6 +274,8 @@ namespace Script {
                         return true;
                     }
                 }
+                console.log("entity Grid: ");
+                console.log(_grid);
             } else {// if the entity has no move data we just pretend it already moved
                 this.moved = true;
                 return true;

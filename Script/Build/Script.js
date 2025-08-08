@@ -206,10 +206,10 @@ var Script;
     Script.getNextDirection = getNextDirection;
     // calculate the next position based on the current position, the entities rotation and the step size
     function getPositionBasedOnMove(_pos, _direction, _step, _rotateBy) {
-        console.log("direction: " + _direction + "step: " + _step + "position: " + _pos + "rotateBy: " + _rotateBy);
+        console.log("direction: " + _direction + ", step: " + _step + ", position: " + _pos + ", rotateBy: " + _rotateBy);
         let dir = getNextDirection(_rotateBy, _direction);
         let pos = [_step * dir[0] + _pos[0], _step * dir[1] + _pos[1]];
-        console.log("New direction: " + dir + "New position: " + pos);
+        console.log(" New direction: " + dir + ", New position: " + pos);
         return pos;
     }
     Script.getPositionBasedOnMove = getPositionBasedOnMove;
@@ -2826,6 +2826,7 @@ var Script;
         }
         async tryToMove(_grid, maxAlternatives) {
             //let grid: Grid<Entity> = _grid;
+            let grid = new Script.Grid;
             //check if the Entity has move data
             let moveData;
             moveData = this.select(this.moves, true)[0]; //TODO: funktioniert das???? // @Björn das sucht dir alle moves raus die es machen soll - du nimmst aber nur den ersten. Im Moment geht das weil da immer nur einer zurück kommt.
@@ -2849,6 +2850,7 @@ var Script;
                         // @Björn hier noch den optionalen dritten parameter auf true setzen damit die entity nicht zweimal im grid ist
                         // ✓
                         _grid.set(nextPosition, this, true);
+                        grid.set(nextPosition, this, true);
                         let oldPos = this.position;
                         this.position = nextPosition;
                         this.currentDirection = nextDirection;
@@ -2863,6 +2865,10 @@ var Script;
                         return true;
                     }
                 }
+                console.log("New entity Grid: ");
+                console.log(grid);
+                console.log("entity Grid: ");
+                console.log(_grid);
             }
             else { // if the entity has no move data we just pretend it already moved
                 this.moved = true;
@@ -4196,7 +4202,8 @@ var Script;
             //let _entity: VisualizeEntity;
             let position;
             // @Björn vllt ist es sinnvoller nur die entity zu bewegen die sich auch bewegt hat statt alle auf einmal. Geht aber fürs erste auch.
-            //this.grid.
+            //_ev.detail.entity.position
+            //TODO: Über die entity den richtigen Visualizer Finden
             //read entity Positions and move the model to the fitting ancor in the Scene
             this.grid.forEachElement((entity, pos) => {
                 position = pos;
