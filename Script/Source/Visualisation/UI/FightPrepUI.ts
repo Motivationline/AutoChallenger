@@ -1,4 +1,5 @@
 /// <reference path="UILayer.ts" />
+/// <reference path="../../Data/DataLink.ts" />
 
 namespace Script {
     import ƒ = FudgeCore;
@@ -30,6 +31,7 @@ namespace Script {
         }
 
         async onRemove(): Promise<void> {
+            super.onRemove();
             this.hideEntityInfo();
             await this.moveCamera(ƒ.Vector3.Z(3), ƒ.Vector3.X(-10), 1000);
         }

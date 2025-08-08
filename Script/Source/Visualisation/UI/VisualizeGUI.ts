@@ -1,6 +1,17 @@
-/// <reference path="FightUI.ts" />
+/// <reference path="StartScreenUI.ts" />
+/// <reference path="LoadingScreenUI.ts" />
+/// <reference path="MainMenuUI.ts" />
+/// <reference path="OptionsUI.ts" />
 /// <reference path="ChooseEumlingUI.ts" />
 /// <reference path="ChooseStoneUI.ts" />
+/// <reference path="MapUI.ts" />
+/// <reference path="MapUI.ts" />
+/// <reference path="FightPrepUI.ts" />
+/// <reference path="FightUI.ts" />
+/// <reference path="FightRewardUI.ts" />
+/// <reference path="EumlingLevelupUI.ts" />
+/// <reference path="ShopUI.ts" />
+/// <reference path="RunEndUI.ts" />
 
 namespace Script {
 

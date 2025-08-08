@@ -1,3 +1,6 @@
+/// <reference path="Entities/VisualizeTarget.ts" />
+
+
 namespace Script {
     import ƒ = FudgeCore;
 

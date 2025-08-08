@@ -10,7 +10,7 @@ namespace Script {
             this.element.classList.remove("hidden");
         }
         async onHide(): Promise<void> {
-            this.element.classList.add("hidden"); // TODO should it really get hidden? or just disabled?
+            // this.element.classList.add("hidden"); // TODO should it really get hidden? or just disabled?
         }
         async onRemove(): Promise<void> {
             this.element.classList.add("hidden");

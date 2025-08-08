@@ -48,7 +48,8 @@ namespace Script {
             const existingStones = Run.currentRun.stones.map((stone) => stone.data);
             const newStones = chooseRandomElementsFromArray(Provider.data.stones, 2, existingStones);
             if (newStones.length === 0) {
-                this.stonesWrapper.replaceChildren(createElementAdvanced("p", { innerHTML: "No more stones available." }))
+                this.stonesWrapper.replaceChildren(createElementAdvanced("p", { innerHTML: "No more stones available." }));
+                this.stonesRefreshButton.disabled = true;
                 return;
             }
             const newStoneElements: HTMLElement[] = [];

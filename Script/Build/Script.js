@@ -1,11 +1,4 @@
 "use strict";
-var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
-    var useValue = arguments.length > 2;
-    for (var i = 0; i < initializers.length; i++) {
-        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
-    }
-    return useValue ? value : void 0;
-};
 var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
     function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
     var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
@@ -32,6 +25,13 @@ var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, 
     }
     if (target) Object.defineProperty(target, contextIn.name, descriptor);
     done = true;
+};
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 };
 var Script;
 (function (Script) {
@@ -2211,6 +2211,126 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
+    // This whole VFX effect thing is convoluted and I'm unhappy with how it turned out.
+    // All those nested promises and shit... we should probably rewrite that at some point.
+    // But for now it seems to be doing its job decently.
+    class VisualizeTarget {
+        constructor() {
+            this.nodePool = new Map();
+            this.visibleNodes = [];
+            this.showAttack = async (_ev) => {
+                const nodes = this.getTargets(_ev);
+                const promises = [];
+                for (let node of nodes) {
+                    promises.push(this.addNodesTo(node, this.getAdditionalVisualizer(_ev.cause, _ev.type)));
+                }
+                return Promise.all(promises);
+            };
+            this.showPreview = async (_ev) => {
+                const nodes = this.getTargets(_ev);
+                for (let node of nodes) {
+                    this.addNodesTo(node);
+                }
+            };
+            this.hideTargets = async (_ev) => {
+                while (this.visibleNodes.length > 0) {
+                    this.returnNode(this.visibleNodes.pop());
+                }
+            };
+            this.addEventListeners();
+        }
+        addEventListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_ATTACK, this.showAttack);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_ATTACKED, this.hideTargets);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.showAttack);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL, this.hideTargets);
+            Script.EventBus.addEventListener(Script.EVENT.SHOW_PREVIEW, this.showPreview);
+            Script.EventBus.addEventListener(Script.EVENT.HIDE_PREVIEW, this.hideTargets);
+        }
+        getTargets(_ev) {
+            if (!_ev.detail)
+                return [];
+            const targets = [];
+            positions: if (_ev.detail.positions) {
+                if (!_ev.trigger || !("target" in _ev.trigger))
+                    break positions;
+                if (typeof _ev.trigger.target === "string")
+                    break positions;
+                const vis = Script.Provider.visualizer;
+                let allySide, opponentSide;
+                if (_ev.cause instanceof Script.Stone) {
+                    allySide = vis.activeFight.home;
+                    opponentSide = vis.activeFight.away;
+                }
+                else {
+                    const visGrid = vis.activeFight.whereIsEntity(vis.getEntity(_ev.cause));
+                    if (visGrid.side === "home") {
+                        allySide = vis.activeFight.home;
+                        opponentSide = vis.activeFight.away;
+                    }
+                    else {
+                        allySide = vis.activeFight.away;
+                        opponentSide = vis.activeFight.home;
+                    }
+                }
+                const targetSide = _ev.trigger.target.side === Script.TARGET_SIDE.ALLY ? allySide : opponentSide;
+                _ev.detail.positions.forEachElement(async (_el, _pos) => {
+                    const anchor = targetSide.getAnchor(_pos[0], _pos[1]);
+                    targets.push(anchor);
+                });
+                return targets;
+            }
+            if (!_ev.detail.targets)
+                return [];
+            for (let target of _ev.detail.targets) {
+                targets.push(Script.Provider.visualizer.getEntity(target));
+            }
+            return targets;
+        }
+        async addNodesTo(_parent, ..._nodes) {
+            const promises = [];
+            for (let node of _nodes) {
+                if (!node)
+                    continue;
+                promises.push((await this.getVFX(node)).addToAndActivate(_parent));
+            }
+            promises.push((await this.getVFX("TargetHighlightGeneric")).addToAndActivate(_parent));
+            return Promise.all(promises);
+        }
+        async getVFX(_v) {
+            let vfx;
+            const id = typeof _v === "string" ? _v : _v.id;
+            const delay = typeof _v === "string" ? 0 : _v.delay;
+            if (this.nodePool.get(id)?.length > 0)
+                vfx = this.nodePool.get(id).pop();
+            else
+                vfx = new Script.VisualizeVFX(await Script.DataLink.getCopyOf(id), id, delay);
+            this.visibleNodes.push(vfx);
+            return vfx;
+        }
+        getAdditionalVisualizer(_cause, _evtype) {
+            if (_cause instanceof Script.Stone) {
+                // TODO: add something so stones can define visuals, too.
+                return undefined;
+            }
+            const id = _cause.id;
+            if (!id)
+                return undefined;
+            return Script.VisualizationLink.linkedVisuals.get(id)?.get(_evtype === Script.EVENT.ENTITY_ATTACK ? Script.ANIMATION.ATTACK : Script.ANIMATION.SPELL);
+        }
+        returnNode(_node) {
+            _node.removeAndDeactivate();
+            if (!this.nodePool.has(_node.id))
+                this.nodePool.set(_node.id, []);
+            this.nodePool.get(_node.id).push(_node);
+        }
+    }
+    Script.VisualizeTarget = VisualizeTarget;
+})(Script || (Script = {}));
+/// <reference path="Entities/VisualizeTarget.ts" />
+var Script;
+/// <reference path="Entities/VisualizeTarget.ts" />
+(function (Script) {
     var ƒ = FudgeCore;
     class Visualizer {
         #gui;
@@ -2302,7 +2422,7 @@ var Script;
             this.element.classList.remove("hidden");
         }
         async onHide() {
-            this.element.classList.add("hidden"); // TODO should it really get hidden? or just disabled?
+            // this.element.classList.add("hidden"); // TODO should it really get hidden? or just disabled?
         }
         async onRemove() {
             this.element.classList.add("hidden");
@@ -2315,44 +2435,98 @@ var Script;
 var Script;
 /// <reference path="UILayer.ts" />
 (function (Script) {
-    class FightUI extends Script.UILayer {
+    class StartScreenUI extends Script.UILayer {
         constructor() {
             super();
-            this.updateRoundCounter = async (_ev) => {
-                let round = _ev.detail.round;
-                const roundCounters = document.querySelectorAll(".RoundCounter");
-                await Script.waitMS(500);
-                for (let roundCounter of roundCounters) {
-                    roundCounter.innerText = `Round: ${round + 1}`;
-                }
-                const overlay = document.getElementById("FightPhaseOverlay");
-                overlay.classList.add("active");
-                await Script.waitMS(1000);
-                overlay.classList.remove("active");
-                await Script.waitMS(500);
+            this.parallax = (_ev) => {
+                this.element.style.setProperty("--x", (_ev.clientX / window.innerWidth).toString());
+                this.element.style.setProperty("--y", (_ev.clientY / window.innerHeight).toString());
             };
-            this.element = document.getElementById("Fight");
-            this.stoneWrapper = document.getElementById("FightStones");
-        }
-        async onAdd(_zindex, _ev) {
-            super.onAdd(_zindex, _ev);
-            this.initStones();
-        }
-        initStones() {
-            const stones = [];
-            for (let stone of Script.Run.currentRun.stones) {
-                stones.push(Script.StoneUIElement.getUIElement(stone).element);
-            }
-            this.stoneWrapper.replaceChildren(...stones);
+            this.element = document.getElementById("StartScreen");
         }
         addEventListeners() {
-            Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateRoundCounter);
+            document.addEventListener("mousemove", this.parallax);
         }
         removeEventListeners() {
-            Script.EventBus.removeEventListener(Script.EVENT.ROUND_START, this.updateRoundCounter);
+            document.removeEventListener("mousemove", this.parallax);
         }
     }
-    Script.FightUI = FightUI;
+    Script.StartScreenUI = StartScreenUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class LoadingScreenUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.element = document.getElementById("LoadingScreen");
+        }
+        startLoad() {
+        }
+        addEventListeners() {
+            this.element.addEventListener("click", this.startLoad);
+        }
+        removeEventListeners() {
+            this.element.removeEventListener("click", this.startLoad);
+        }
+    }
+    Script.LoadingScreenUI = LoadingScreenUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class MainMenuUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.start = () => {
+                Script.run();
+                Script.Provider.GUI.removeTopmostUI();
+            };
+            this.openOptions = () => {
+                Script.Provider.GUI.addUI("options");
+            };
+            this.element = document.getElementById("MainMenu");
+            this.startButton = document.getElementById("MainStart");
+            this.optionsButton = document.getElementById("MainOptions");
+        }
+        addEventListeners() {
+            this.startButton.addEventListener("click", this.start);
+            this.optionsButton.addEventListener("click", this.openOptions);
+        }
+        removeEventListeners() {
+            this.startButton.removeEventListener("click", this.start);
+            this.optionsButton.removeEventListener("click", this.openOptions);
+        }
+    }
+    Script.MainMenuUI = MainMenuUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class OptionsUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.close = () => {
+                Script.Provider.GUI.removeTopmostUI();
+            };
+            this.element = document.getElementById("Options");
+            this.closeButton = document.getElementById("OptionsClose");
+        }
+        async onAdd(_zindex, _ev) {
+            await super.onAdd(_zindex, _ev);
+            document.getElementById("OptionsWrapper").replaceChildren(Script.Settings.generateHTML());
+        }
+        addEventListeners() {
+            this.closeButton.addEventListener("click", this.close);
+        }
+        removeEventListeners() {
+            this.closeButton.removeEventListener("click", this.close);
+        }
+    }
+    Script.OptionsUI = OptionsUI;
 })(Script || (Script = {}));
 /// <reference path="UILayer.ts" />
 var Script;
@@ -2474,13 +2648,909 @@ var Script;
     }
     Script.ChooseStoneUI = ChooseStoneUI;
 })(Script || (Script = {}));
-/// <reference path="FightUI.ts" />
-/// <reference path="ChooseEumlingUI.ts" />
-/// <reference path="ChooseStoneUI.ts" />
+/// <reference path="UILayer.ts" />
 var Script;
-/// <reference path="FightUI.ts" />
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class MapUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.selectionDone = async () => {
+                this.submitBtn.disabled = true;
+                for (let opt of this.optionElements) {
+                    if (opt.classList.contains("selected")) {
+                        opt.classList.add("center");
+                    }
+                    else {
+                        opt.classList.add("remove");
+                    }
+                }
+                this.optionElements.find((el) => el.classList.contains("selected"));
+                this.element.classList.add("no-interact");
+                await Script.waitMS(1000);
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_ENCOUNTER, detail: { encounter: this.selectedEncounter } });
+            };
+            this.element = document.getElementById("Map");
+            this.submitBtn = document.getElementById("MapActionButton");
+        }
+        async onAdd(_zindex, _ev) {
+            super.onAdd(_zindex);
+            this.updateProgress();
+            this.displayEncounters(_ev);
+            this.element.classList.remove("no-interact");
+        }
+        updateProgress() {
+            const inner = document.getElementById("MapProgressBarCurrent");
+            const progress = Script.Run.currentRun.progress / Script.Run.currentRun.encountersUntilBoss;
+            inner.style.height = progress * 100 + "";
+        }
+        displayEncounters(_ev) {
+            let options = _ev.detail.options;
+            this.optionElements = [];
+            for (let option of options) {
+                const elem = Script.createElementAdvanced("div", { classes: ["MapOption"] });
+                if (option < 0) {
+                    // shop
+                    elem.innerText = "Shop";
+                }
+                else {
+                    elem.innerText = `Fight lvl ${option + 1}`;
+                }
+                elem.addEventListener("click", () => {
+                    for (let opt of this.optionElements) {
+                        opt.classList.remove("selected");
+                    }
+                    elem.classList.add("selected");
+                    this.selectedEncounter = option;
+                    this.submitBtn.disabled = false;
+                });
+                this.optionElements.push(elem);
+            }
+            document.getElementById("MapOptions").replaceChildren(...this.optionElements);
+            this.submitBtn.disabled = true;
+        }
+        addEventListeners() {
+            this.submitBtn.addEventListener("click", this.selectionDone);
+        }
+        removeEventListeners() {
+        }
+    }
+    Script.MapUI = MapUI;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    let DataLink = (() => {
+        var _a;
+        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _classSuper = ƒ.ComponentScript;
+        let _id_decorators;
+        let _id_initializers = [];
+        let _id_extraInitializers = [];
+        var DataLink = class extends _classSuper {
+            static { _classThis = this; }
+            static {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                _id_decorators = [ƒ.serialize(String)];
+                __esDecorate(null, null, _id_decorators, { kind: "field", name: "id", static: false, private: false, access: { has: obj => "id" in obj, get: obj => obj.id, set: (obj, value) => { obj.id = value; } }, metadata: _metadata }, _id_initializers, _id_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                DataLink = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            }
+            static { this.linkedNodes = new Map(); }
+            constructor() {
+                super();
+                this.id = __runInitializers(this, _id_initializers, void 0);
+                __runInitializers(this, _id_extraInitializers);
+                if (ƒ.Project.mode === ƒ.MODE.EDITOR)
+                    return;
+                ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
+                    if (this.node instanceof ƒ.Graph)
+                        DataLink.linkedNodes.set(this.id, this.node);
+                });
+            }
+            static async getCopyOf(_id) {
+                let original = this.linkedNodes.get(_id);
+                if (!original)
+                    return undefined;
+                return Script.getDuplicateOfNode(original);
+            }
+            static {
+                __runInitializers(_classThis, _classExtraInitializers);
+            }
+        };
+        return DataLink = _classThis;
+    })();
+    Script.DataLink = DataLink;
+    let ANIMATION;
+    (function (ANIMATION) {
+        ANIMATION["IDLE"] = "idle";
+        ANIMATION["MOVE"] = "move";
+        ANIMATION["HURT"] = "hurt";
+        ANIMATION["AFFECTED"] = "affected";
+        ANIMATION["DIE"] = "die";
+        ANIMATION["ATTACK"] = "attack";
+        ANIMATION["SPELL"] = "spell";
+    })(ANIMATION = Script.ANIMATION || (Script.ANIMATION = {}));
+    let AnimationLink = (() => {
+        var _a;
+        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _classSuper = ƒ.Component;
+        let _animation_decorators;
+        let _animation_initializers = [];
+        let _animation_extraInitializers = [];
+        let _animType_decorators;
+        let _animType_initializers = [];
+        let _animType_extraInitializers = [];
+        var AnimationLink = class extends _classSuper {
+            static { _classThis = this; }
+            static {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                _animation_decorators = [ƒ.serialize(ƒ.Animation)];
+                _animType_decorators = [ƒ.serialize(ANIMATION)];
+                __esDecorate(null, null, _animation_decorators, { kind: "field", name: "animation", static: false, private: false, access: { has: obj => "animation" in obj, get: obj => obj.animation, set: (obj, value) => { obj.animation = value; } }, metadata: _metadata }, _animation_initializers, _animation_extraInitializers);
+                __esDecorate(null, null, _animType_decorators, { kind: "field", name: "animType", static: false, private: false, access: { has: obj => "animType" in obj, get: obj => obj.animType, set: (obj, value) => { obj.animType = value; } }, metadata: _metadata }, _animType_initializers, _animType_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                AnimationLink = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            }
+            static { this.linkedAnimations = new Map(); }
+            constructor() {
+                super();
+                this.singleton = false;
+                this.animation = __runInitializers(this, _animation_initializers, void 0);
+                this.animType = (__runInitializers(this, _animation_extraInitializers), __runInitializers(this, _animType_initializers, void 0));
+                __runInitializers(this, _animType_extraInitializers);
+                if (ƒ.Project.mode === ƒ.MODE.EDITOR)
+                    return;
+                ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
+                    if (this.node instanceof ƒ.Graph) {
+                        let link = this.node.getComponent(DataLink);
+                        if (!link)
+                            return;
+                        if (!AnimationLink.linkedAnimations.has(link.id)) {
+                            AnimationLink.linkedAnimations.set(link.id, new Map());
+                        }
+                        AnimationLink.linkedAnimations.get(link.id).set(this.animType, this.animation);
+                    }
+                });
+            }
+            static {
+                __runInitializers(_classThis, _classExtraInitializers);
+            }
+        };
+        return AnimationLink = _classThis;
+    })();
+    Script.AnimationLink = AnimationLink;
+    let VisualizationLink = (() => {
+        var _a;
+        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _classSuper = ƒ.Component;
+        let _visualization_decorators;
+        let _visualization_initializers = [];
+        let _visualization_extraInitializers = [];
+        let _for_decorators;
+        let _for_initializers = [];
+        let _for_extraInitializers = [];
+        let _delay_decorators;
+        let _delay_initializers = [];
+        let _delay_extraInitializers = [];
+        var VisualizationLink = class extends _classSuper {
+            static { _classThis = this; }
+            static {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                _visualization_decorators = [ƒ.serialize(String)];
+                _for_decorators = [ƒ.serialize(ANIMATION)];
+                _delay_decorators = [ƒ.serialize(Number)];
+                __esDecorate(null, null, _visualization_decorators, { kind: "field", name: "visualization", static: false, private: false, access: { has: obj => "visualization" in obj, get: obj => obj.visualization, set: (obj, value) => { obj.visualization = value; } }, metadata: _metadata }, _visualization_initializers, _visualization_extraInitializers);
+                __esDecorate(null, null, _for_decorators, { kind: "field", name: "for", static: false, private: false, access: { has: obj => "for" in obj, get: obj => obj.for, set: (obj, value) => { obj.for = value; } }, metadata: _metadata }, _for_initializers, _for_extraInitializers);
+                __esDecorate(null, null, _delay_decorators, { kind: "field", name: "delay", static: false, private: false, access: { has: obj => "delay" in obj, get: obj => obj.delay, set: (obj, value) => { obj.delay = value; } }, metadata: _metadata }, _delay_initializers, _delay_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                VisualizationLink = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            }
+            static { this.linkedVisuals = new Map(); }
+            get id() {
+                return this.visualization;
+            }
+            constructor() {
+                super();
+                this.singleton = false;
+                this.visualization = __runInitializers(this, _visualization_initializers, void 0);
+                // TODO: this is hacky, use its own thing for it to properly map it to the actual events
+                this.for = (__runInitializers(this, _visualization_extraInitializers), __runInitializers(this, _for_initializers, void 0));
+                this.delay = (__runInitializers(this, _for_extraInitializers), __runInitializers(this, _delay_initializers, void 0));
+                __runInitializers(this, _delay_extraInitializers);
+                if (ƒ.Project.mode === ƒ.MODE.EDITOR)
+                    return;
+                ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
+                    if (this.node instanceof ƒ.Graph) {
+                        let link = this.node.getComponent(DataLink);
+                        if (!link)
+                            return;
+                        if (!VisualizationLink.linkedVisuals.has(link.id)) {
+                            VisualizationLink.linkedVisuals.set(link.id, new Map());
+                        }
+                        VisualizationLink.linkedVisuals.get(link.id).set(this.for, this);
+                    }
+                });
+            }
+            static {
+                __runInitializers(_classThis, _classExtraInitializers);
+            }
+        };
+        return VisualizationLink = _classThis;
+    })();
+    Script.VisualizationLink = VisualizationLink;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+/// <reference path="../../Data/DataLink.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+/// <reference path="../../Data/DataLink.ts" />
+(function (Script) {
+    var ƒ = FudgeCore;
+    class FightPrepUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.placedEumlings = new Set();
+            this.startFight = (_ev) => {
+                Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.FIGHT_PREPARE_COMPLETED });
+            };
+            this.pointerStartPosition = new ƒ.Vector2();
+            this.deadzone = 20;
+            this.pointerOnCanvas = (_ev) => {
+                if (_ev.type === "pointerdown") {
+                    this.pointerStartPosition.x = _ev.clientX;
+                    this.pointerStartPosition.y = _ev.clientY;
+                }
+                else if (_ev.type === "pointerup") {
+                    const pointerEndPosition = new ƒ.Vector2(_ev.clientX, _ev.clientY);
+                    const distance = pointerEndPosition.getDistance(this.pointerStartPosition);
+                    if (distance > this.deadzone) {
+                        // drag
+                        this.dragCanvas(this.pointerStartPosition, pointerEndPosition);
+                    }
+                    else {
+                        // click
+                        this.clickCanvas(pointerEndPosition);
+                    }
+                }
+            };
+            this.element = document.getElementById("FightPrep");
+            this.stoneWrapper = document.getElementById("FightPrepStones");
+            this.infoElement = document.getElementById("FightPrepInfo");
+            this.startButton = document.getElementById("FightStart");
+            Script.DataLink.getCopyOf("PreviewHighlight").then(node => this.highlightNode = node);
+        }
+        async onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            this.startButton.disabled = true;
+            this.initStones();
+            this.initEumlings();
+            this.placedEumlings.clear();
+            await this.moveCamera(ƒ.Vector3.Z(-3), ƒ.Vector3.X(10), 1000);
+        }
+        async onRemove() {
+            super.onRemove();
+            this.hideEntityInfo();
+            await this.moveCamera(ƒ.Vector3.Z(3), ƒ.Vector3.X(-10), 1000);
+        }
+        initStones() {
+            const stones = [];
+            for (let stone of Script.Run.currentRun.stones) {
+                const element = Script.createElementAdvanced("div");
+                stones.push(element);
+                element.appendChild(Script.StoneUIElement.getUIElement(stone).element);
+                element.addEventListener("click", () => {
+                    this.hideEntityInfo();
+                    this.infoElement.innerText = stone.data.abilityLevels[stone.level].info;
+                    this.infoElement.classList.remove("hidden");
+                });
+            }
+            this.stoneWrapper.replaceChildren(...stones);
+        }
+        initEumlings() {
+            const bench = Script.viewport.getBranch().getChildByName("Bench")?.getComponent(Script.VisualizeBench);
+            this.bench = bench;
+            if (!bench)
+                return;
+            bench.clear();
+            for (let eumling of Script.Run.currentRun.eumlings) {
+                bench.addEntity(Script.Provider.visualizer.getEntity(eumling));
+            }
+        }
+        returnEumling(_eumling) {
+            // remove from field
+            Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.ENTITY_REMOVED, target: _eumling });
+            // add to bench
+            const vis = Script.Provider.visualizer.getEntity(_eumling);
+            this.bench?.addEntity(vis);
+            this.placedEumlings.delete(_eumling);
+            // can we start?
+            if (this.placedEumlings.size <= 0) {
+                this.startButton.disabled = true;
+            }
+            // update visuals
+            if (vis === this.#highlightedEntity) {
+                this.showEntityInfo(vis);
+            }
+        }
+        moveEumlingToGrid(_eumling, _target) {
+            const posId = parseInt(_target.name);
+            const vis = Script.Provider.visualizer.getEntity(_eumling);
+            this.bench?.removeEntity(vis);
+            Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.ENTITY_ADDED, target: _eumling, detail: { side: "home", pos: [posId % 3, Math.floor(posId / 3)] } });
+            this.placedEumlings.add(_eumling);
+            this.startButton.disabled = false;
+            // update visuals
+            if (vis === this.#highlightedEntity) {
+                this.showEntityInfo(vis);
+            }
+        }
+        clickCanvas(_pos) {
+            this.hideEntityInfo();
+            const picks = Script.getPickableObjectsFromClientPos(_pos);
+            if (!picks || picks.length === 0)
+                return;
+            for (const pick of picks) {
+                if (!(pick.node instanceof Script.VisualizeEntity)) {
+                    continue;
+                }
+                this.showEntityInfo(pick.node);
+                break;
+            }
+        }
+        dragCanvas(_startPos, _endPos) {
+            // find which Eumling should be moved
+            const picksStart = Script.getPickableObjectsFromClientPos(_startPos);
+            if (!picksStart || picksStart.length === 0)
+                return;
+            let draggedEumling;
+            for (let pick of picksStart) {
+                if (!(pick.node instanceof Script.VisualizeEntity))
+                    continue;
+                if (!(pick.node.getEntity() instanceof Script.Eumling))
+                    continue;
+                draggedEumling = pick.node.getEntity();
+                break;
+            }
+            if (!draggedEumling)
+                return;
+            // find where to move it to
+            const picksEnd = Script.getPickableObjectsFromClientPos(_endPos);
+            if (!picksEnd || picksEnd.length === 0) {
+                // nowhere = back to the bench
+                return this.returnEumling(draggedEumling);
+            }
+            for (const pick of picksEnd) {
+                // one of the home fields
+                const num = Number(pick.node.name);
+                if (!isNaN(num)) {
+                    return this.moveEumlingToGrid(draggedEumling, pick.node);
+                }
+            }
+        }
+        #highlightedEntity;
+        showEntityInfo(_entity) {
+            this.hideEntityInfo();
+            this.infoElement.classList.remove("hidden");
+            this.infoElement.innerText = _entity.getEntity().info ?? "PLACEHOLDER TEXT";
+            if (this.highlightNode && !this.bench.hasEntity(_entity)) {
+                _entity.addChild(this.highlightNode);
+                this.highlightNode.mtxLocal.translation = ƒ.Vector3.ZERO();
+            }
+            this.#highlightedEntity = _entity;
+            const entity = _entity.getEntity();
+            const attacks = entity.select(entity.attacks, false);
+            for (let attack of attacks) {
+                const allies = entity instanceof Script.Eumling ? Script.Fight.activeFight.arena.home : Script.Fight.activeFight.arena.away;
+                const opponents = entity instanceof Script.Eumling ? Script.Fight.activeFight.arena.away : Script.Fight.activeFight.arena.home;
+                const detail = Script.getTargets(attack.target, allies, opponents, entity);
+                Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.SHOW_PREVIEW, cause: entity, target: entity, trigger: attack, detail });
+            }
+        }
+        hideEntityInfo() {
+            this.infoElement.classList.add("hidden");
+            this.highlightNode?.getParent()?.removeChild(this.highlightNode);
+            Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.HIDE_PREVIEW });
+            this.#highlightedEntity = undefined;
+        }
+        addEventListeners() {
+            const canvas = document.getElementById("GameCanvas");
+            canvas.addEventListener("pointerdown", this.pointerOnCanvas);
+            canvas.addEventListener("pointerup", this.pointerOnCanvas);
+            this.startButton.addEventListener("click", this.startFight);
+        }
+        removeEventListeners() {
+            const canvas = document.getElementById("GameCanvas");
+            canvas.removeEventListener("pointerdown", this.pointerOnCanvas);
+            canvas.removeEventListener("pointerup", this.pointerOnCanvas);
+            this.startButton.removeEventListener("click", this.startFight);
+        }
+        async moveCamera(_translate, _rotate, _timeMS) {
+            const camera = Script.viewport?.camera;
+            if (!camera)
+                return;
+            let elapsedTime = 0;
+            const translationStart = camera.mtxPivot.translation.clone;
+            const rotationStart = camera.mtxPivot.rotation.clone;
+            const translationGoal = ƒ.Vector3.SUM(translationStart, _translate);
+            const rotationGoal = ƒ.Vector3.SUM(rotationStart, _rotate);
+            return new Promise((resolve) => {
+                const mover = () => {
+                    const delta = ƒ.Loop.timeFrameGame;
+                    elapsedTime += delta;
+                    if (elapsedTime > _timeMS) {
+                        camera.mtxPivot.translation = translationGoal;
+                        camera.mtxPivot.rotation = rotationGoal;
+                        ƒ.Loop.removeEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, mover);
+                        resolve();
+                        return;
+                    }
+                    camera.mtxPivot.translation = ƒ.Vector3.LERP(translationStart, translationGoal, elapsedTime / _timeMS);
+                    camera.mtxPivot.rotation = ƒ.Vector3.LERP(rotationStart, rotationGoal, elapsedTime / _timeMS);
+                };
+                ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, mover);
+            });
+        }
+    }
+    Script.FightPrepUI = FightPrepUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class FightUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.updateRoundCounter = async (_ev) => {
+                let round = _ev.detail.round;
+                const roundCounters = document.querySelectorAll(".RoundCounter");
+                await Script.waitMS(500);
+                for (let roundCounter of roundCounters) {
+                    roundCounter.innerText = `Round: ${round + 1}`;
+                }
+                const overlay = document.getElementById("FightPhaseOverlay");
+                overlay.classList.add("active");
+                await Script.waitMS(1000);
+                overlay.classList.remove("active");
+                await Script.waitMS(500);
+            };
+            this.element = document.getElementById("Fight");
+            this.stoneWrapper = document.getElementById("FightStones");
+        }
+        async onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            this.initStones();
+        }
+        initStones() {
+            const stones = [];
+            for (let stone of Script.Run.currentRun.stones) {
+                stones.push(Script.StoneUIElement.getUIElement(stone).element);
+            }
+            this.stoneWrapper.replaceChildren(...stones);
+        }
+        addEventListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateRoundCounter);
+        }
+        removeEventListeners() {
+            Script.EventBus.removeEventListener(Script.EVENT.ROUND_START, this.updateRoundCounter);
+        }
+    }
+    Script.FightUI = FightUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class FightRewardUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.eumlings = new Map();
+            this.clickOnEumling = (_ev) => {
+                if (this.xp <= 0)
+                    return;
+                let target = _ev.target;
+                let eumling = this.eumlings.get(target);
+                eumling.addXP(1);
+                this.xp--;
+                this.updateXPText();
+                if (this.xp <= 0) {
+                    this.continueButton.disabled = false;
+                }
+            };
+            this.convert = () => {
+                Script.Run.currentRun.changeGold(this.xp);
+                this.gold += this.xp;
+                document.getElementById("FightRewardRewards").querySelector(".Gold").innerHTML = `+${this.gold} Gold`;
+                this.xp = 0;
+                this.continueButton.disabled = false;
+                this.updateXPText();
+            };
+            this.finishRewards = () => {
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.REWARDS_CLOSE });
+            };
+            this.element = document.getElementById("FightReward");
+            this.rewardsOverivew = document.getElementById("FightRewardRewards");
+            this.continueButton = document.getElementById("FightRewardContinue");
+            this.convertButton = document.getElementById("FightRewardConvert");
+        }
+        async onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            let { gold, xp, stones } = _ev.detail;
+            const rewardIcons = [];
+            if (gold) {
+                rewardIcons.push(Script.createElementAdvanced("div", {
+                    innerHTML: `+${gold} Gold`,
+                    classes: ["FightRewardIcon", "Gold"]
+                }));
+                this.gold = gold;
+            }
+            if (xp) {
+                rewardIcons.push(Script.createElementAdvanced("div", {
+                    innerHTML: `+${xp} XP`,
+                    classes: ["FightRewardIcon", "XP"]
+                }));
+                this.xp = xp;
+            }
+            if (stones) {
+                for (let stone of stones) {
+                    rewardIcons.push(Script.createElementAdvanced("div", {
+                        innerHTML: `${stone.id}`,
+                        classes: ["FightRewardIcon", "Stone"]
+                    }));
+                }
+            }
+            this.rewardsOverivew.replaceChildren(...rewardIcons);
+            for (let eumling of Script.Run.currentRun.eumlings) {
+                let uiElement = Script.EumlingUIElement.getUIElement(eumling);
+                this.eumlings.set(uiElement.element, uiElement.eumling);
+                uiElement.element.classList.remove("hidden");
+                uiElement.element.addEventListener("click", this.clickOnEumling);
+            }
+            document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
+            this.updateXPText();
+            this.continueButton.disabled = true;
+            this.convertButton.disabled = false;
+        }
+        async onShow() {
+            super.onShow();
+            this.addEventListeners();
+            for (let element of this.eumlings.keys()) {
+                element.addEventListener("click", this.clickOnEumling);
+            }
+            document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
+        }
+        async onHide() {
+            super.onHide();
+            this.removeEventListeners();
+        }
+        updateXPText() {
+            document.getElementById("FightRewardXPAmount").innerText = this.xp === 0 ?
+                `No more XP to distribute` :
+                `Distribute ${this.xp}XP`;
+            this.convertButton.disabled = this.xp === 0;
+        }
+        addEventListeners() {
+            this.continueButton.addEventListener("click", this.finishRewards);
+            this.convertButton.addEventListener("click", this.convert);
+        }
+        removeEventListeners() {
+            for (let element of this.eumlings.keys()) {
+                element.removeEventListener("click", this.clickOnEumling);
+            }
+            this.continueButton.removeEventListener("click", this.finishRewards);
+            this.convertButton.removeEventListener("click", this.convert);
+        }
+    }
+    Script.FightRewardUI = FightRewardUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class EumlingLevelupUI extends Script.UILayer {
+        static { this.orientationInfo = new Map([
+            ["R", "Realistisch"],
+            ["I", "Investigativ / Forschend"],
+            ["A", "Artistisch / Künstlerisch"],
+            ["S", "Sozial"],
+            ["E", "Enterprising / Unternehmerisch"],
+            ["C", "Conventional / Traditionell"],
+        ]); }
+        constructor() {
+            super();
+            this.selectOption = (_ev) => {
+                const element = _ev.currentTarget;
+                this.selectedOption = element.dataset.option;
+                this.confirmButton.disabled = false;
+                for (let element of document.querySelectorAll(".LevelupOption")) {
+                    element.classList.remove("selected");
+                }
+                element.classList.add("selected");
+            };
+            this.confirm = () => {
+                if (!this.selectedOption)
+                    return;
+                Script.Provider.GUI.removeTopmostUI();
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.EUMLING_LEVELUP_CHOSEN, detail: { type: this.selectedOption } });
+            };
+            this.element = document.getElementById("EumlingLevelup");
+            this.eumlingElement = document.getElementById("EumlingLevelupEumling");
+            this.optionsElement = document.getElementById("EumlingLevelupOptions");
+            this.infoElement = document.getElementById("EumlingLevelupInfo");
+            this.confirmButton = document.getElementById("EumlingLevelupConfirm");
+        }
+        async onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            this.confirmButton.disabled = true;
+            this.eumling = _ev.target;
+            let specialisationOptions = this.eumling.types.length === 1 ? ["A", "I"] : ["C", "E"];
+            this.eumlingElement.replaceChildren(Script.EumlingUIElement.getUIElement(this.eumling).element);
+            const optionElements = [];
+            for (let option of specialisationOptions) {
+                const elem = Script.createElementAdvanced("div", {
+                    classes: ["LevelupOption"],
+                    innerHTML: `<span>+ ${option}</span>
+                    <span>${EumlingLevelupUI.orientationInfo.get(option)}</span>`,
+                    attributes: [["data-option", option]],
+                });
+                optionElements.push(elem);
+                elem.addEventListener("click", (_ev) => {
+                    this.selectOption(_ev);
+                    const newEumlingType = this.eumling.types.join("") + option + "-Eumling";
+                    this.infoElement.innerText = Script.Provider.data.getEntity(newEumlingType).info;
+                });
+            }
+            this.optionsElement.replaceChildren(...optionElements);
+        }
+        addEventListeners() {
+            this.confirmButton.addEventListener("click", this.confirm);
+        }
+        removeEventListeners() {
+            this.confirmButton.removeEventListener("click", this.confirm);
+        }
+    }
+    Script.EumlingLevelupUI = EumlingLevelupUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    const COST = {
+        HEAL_EUMLING: 1,
+        BUY_LVL1: 2,
+        BUY_LVL2: 3,
+        UPGRADE_STONE: 2,
+        REFRESH: 1,
+    };
+    class ShopUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.stoneToHtmlElement = new Map();
+            this.buyStone = (_ev) => {
+                const stone = this.selectedStone;
+                if (!stone)
+                    return;
+                const cost = stone.level == 0 ? COST.BUY_LVL1 : COST.BUY_LVL2;
+                if (Script.Run.currentRun.gold < cost)
+                    return;
+                Script.Run.currentRun.changeGold(-cost);
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_STONE, detail: { stone } });
+                this.selectedStone = undefined;
+                this.stoneBuyButton.disabled = true;
+                this.stonesInfo.innerText = "";
+                this.stoneToHtmlElement.get(stone)?.remove();
+            };
+            this.upgradeStone = (_ev) => {
+                const stone = this.selectedStoneToUpgrade;
+                if (!stone)
+                    return;
+                const cost = COST.UPGRADE_STONE;
+                if (Script.Run.currentRun.gold < cost)
+                    return;
+                Script.Run.currentRun.changeGold(-cost);
+                stone.level++;
+                this.stoneUpgradeButton.disabled = true;
+                this.selectedStoneToUpgrade = undefined;
+                this.stoneUpgradeInfo.innerText = "";
+                this.stoneToHtmlElement.get(stone)?.remove();
+            };
+            this.close = () => {
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.SHOP_CLOSE });
+            };
+            this.refresh = () => {
+                if (Script.Run.currentRun.gold < COST.REFRESH)
+                    return;
+                Script.Run.currentRun.changeGold(-COST.REFRESH);
+                this.setupStonesToBuy();
+            };
+            this.element = document.getElementById("Shop");
+            this.closeButton = document.getElementById("ShopClose");
+            this.stonesWrapper = document.getElementById("ShopStones");
+            this.stonesInfo = document.getElementById("ShopStonesInfo");
+            this.stonesRefreshButton = document.getElementById("ShopStonesRefresh");
+            this.stoneBuyButton = document.getElementById("ShopStonesBuy");
+            this.stoneUpgradeButton = document.getElementById("ShopStonesUpgrade");
+            this.stoneUpgradeInfo = document.getElementById("ShopStonesUpgradeInfo");
+            this.stoneUpgradeWrapper = document.getElementById("ShopStoneUpgrades");
+            this.eumlingHealWrapper = document.getElementById("ShopEumlingHeal");
+        }
+        async onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            this.setupStonesToBuy();
+            this.setupStonesToUpgrade();
+            this.initEumlingHealing();
+        }
+        setupStonesToBuy() {
+            this.stoneBuyButton.disabled = true;
+            this.stonesInfo.innerText = "";
+            const existingStones = Script.Run.currentRun.stones.map((stone) => stone.data);
+            const newStones = Script.chooseRandomElementsFromArray(Script.Provider.data.stones, 2, existingStones);
+            if (newStones.length === 0) {
+                this.stonesWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No more stones available." }));
+                this.stonesRefreshButton.disabled = true;
+                return;
+            }
+            const newStoneElements = [];
+            for (let stoneData of newStones) {
+                let level = (Math.random() < 0.2) ? 1 : 0;
+                let cost = level == 0 ? COST.BUY_LVL1 : COST.BUY_LVL2;
+                let stone = new Script.Stone(stoneData, level);
+                let uiStoneElement = Script.StoneUIElement.getUIElement(stone);
+                let wrapper = Script.createElementAdvanced("div", {
+                    classes: ["BuyStone", "ShopOption"],
+                    attributes: [["data-level", level.toString()]],
+                });
+                wrapper.prepend(uiStoneElement.element);
+                newStoneElements.push(wrapper);
+                this.stoneToHtmlElement.set(stone, wrapper);
+                wrapper.addEventListener("click", () => {
+                    this.selectedStone = stone;
+                    this.stonesInfo.innerText = stone.data.abilityLevels[stone.level].info;
+                    this.stoneBuyButton.innerText = `${cost} Gold`;
+                    this.stoneBuyButton.disabled = Script.Run.currentRun.gold < cost;
+                    newStoneElements.forEach(el => el.classList.remove("selected"));
+                    wrapper.classList.add("selected");
+                });
+            }
+            this.stonesWrapper.replaceChildren(...newStoneElements);
+        }
+        setupStonesToUpgrade() {
+            this.stoneUpgradeButton.disabled = true;
+            const upgradeableStones = Script.chooseRandomElementsFromArray(Script.Run.currentRun.stones, Infinity, Script.Run.currentRun.stones.filter(stone => stone.level === 1));
+            if (upgradeableStones.length === 0) {
+                this.stoneUpgradeWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No more stones upgradeable." }));
+                return;
+            }
+            const upgradeStoneElements = [];
+            for (let stone of upgradeableStones) {
+                const element = Script.createElementAdvanced("div", {
+                    classes: ["ShopOption"],
+                });
+                element.prepend(Script.StoneUIElement.getUIElement(stone).element);
+                upgradeStoneElements.push(element);
+                element.addEventListener("click", () => {
+                    this.selectedStoneToUpgrade = stone;
+                    this.stoneUpgradeButton.disabled = Script.Run.currentRun.gold < COST.UPGRADE_STONE;
+                    this.stoneUpgradeInfo.innerText = stone.data.abilityLevels[stone.level + 1].info;
+                    upgradeStoneElements.forEach(el => el.classList.remove("selected"));
+                    element.classList.add("selected");
+                });
+                this.stoneToHtmlElement.set(stone, element);
+            }
+            this.stoneUpgradeWrapper.replaceChildren(...upgradeStoneElements);
+        }
+        initEumlingHealing() {
+            const healableEumlings = Script.Run.currentRun.eumlings.filter(eumling => eumling.currentHealth < eumling.health);
+            if (healableEumlings.length === 0) {
+                this.eumlingHealWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No Eumlings need healing." }));
+                return;
+            }
+            const elements = [];
+            for (let eumling of healableEumlings) {
+                const wrapper = Script.createElementAdvanced("div", {
+                    classes: ["ShopOption"],
+                    innerHTML: `<span>+♥️: ${COST.HEAL_EUMLING} Gold</span>`,
+                });
+                wrapper.prepend(Script.EumlingUIElement.getUIElement(eumling).element);
+                wrapper.addEventListener("click", () => {
+                    if (Script.Run.currentRun.gold < COST.HEAL_EUMLING)
+                        return;
+                    Script.Run.currentRun.changeGold(-COST.HEAL_EUMLING);
+                    eumling.affect({ type: Script.SPELL_TYPE.HEAL, level: 1, target: undefined });
+                    if (eumling.currentHealth >= eumling.health)
+                        wrapper.remove();
+                });
+            }
+            this.eumlingHealWrapper.replaceChildren(...elements);
+        }
+        addEventListeners() {
+            this.closeButton.addEventListener("click", this.close);
+            this.stonesRefreshButton.addEventListener("click", this.refresh);
+            this.stoneBuyButton.addEventListener("click", this.buyStone);
+            this.stoneUpgradeButton.addEventListener("click", this.upgradeStone);
+        }
+        removeEventListeners() {
+            this.closeButton.removeEventListener("click", this.close);
+            this.stonesRefreshButton.removeEventListener("click", this.refresh);
+            this.stoneBuyButton.removeEventListener("click", this.buyStone);
+            this.stoneUpgradeButton.removeEventListener("click", this.upgradeStone);
+        }
+    }
+    Script.ShopUI = ShopUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class RunEndUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.close = () => {
+                Script.Provider.GUI.removeAllLayers();
+                Script.Provider.GUI.addUI("mainMenu");
+            };
+            this.element = document.getElementById("RunEnd");
+            this.continueButton = document.getElementById("RunEndMainMenu");
+        }
+        async onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            document.getElementById("RunEndInner").innerHTML =
+                _ev.detail.success ?
+                    `<h2>Success!</h2>
+            <p>You won! :&gt;</p>` :
+                    `<h2>Defeat!</h2>
+            <p>You lost. :(;</p>`;
+        }
+        addEventListeners() {
+            this.continueButton.addEventListener("click", this.close);
+        }
+        removeEventListeners() {
+            this.continueButton.removeEventListener("click", this.close);
+        }
+    }
+    Script.RunEndUI = RunEndUI;
+})(Script || (Script = {}));
+/// <reference path="StartScreenUI.ts" />
+/// <reference path="LoadingScreenUI.ts" />
+/// <reference path="MainMenuUI.ts" />
+/// <reference path="OptionsUI.ts" />
 /// <reference path="ChooseEumlingUI.ts" />
 /// <reference path="ChooseStoneUI.ts" />
+/// <reference path="MapUI.ts" />
+/// <reference path="MapUI.ts" />
+/// <reference path="FightPrepUI.ts" />
+/// <reference path="FightUI.ts" />
+/// <reference path="FightRewardUI.ts" />
+/// <reference path="EumlingLevelupUI.ts" />
+/// <reference path="ShopUI.ts" />
+/// <reference path="RunEndUI.ts" />
+var Script;
+/// <reference path="StartScreenUI.ts" />
+/// <reference path="LoadingScreenUI.ts" />
+/// <reference path="MainMenuUI.ts" />
+/// <reference path="OptionsUI.ts" />
+/// <reference path="ChooseEumlingUI.ts" />
+/// <reference path="ChooseStoneUI.ts" />
+/// <reference path="MapUI.ts" />
+/// <reference path="MapUI.ts" />
+/// <reference path="FightPrepUI.ts" />
+/// <reference path="FightUI.ts" />
+/// <reference path="FightRewardUI.ts" />
+/// <reference path="EumlingLevelupUI.ts" />
+/// <reference path="ShopUI.ts" />
+/// <reference path="RunEndUI.ts" />
 (function (Script) {
     // TODO: add Provider to pass UI elements without hardcoding???
     class VisualizeGUI {
@@ -2642,12 +3712,12 @@ var Script;
     ƒ.Project.registerScriptNamespace(Script); // Register the namespace to FUDGE for serialization
     let visualizer;
     document.addEventListener("click", startLoading, { once: true });
+    Script.Provider.setVisualizer();
     async function startLoading() {
         if (ƒ.Project.mode === ƒ.MODE.EDITOR)
             return;
         new Script.MusicManager();
-        Script.Provider.setVisualizer();
-        Script.Provider.GUI.replaceUI("loading");
+        Script.Provider.GUI.addUI("loading");
         Script.viewport = await Script.loadResourcesAndInitViewport(document.getElementById("GameCanvas"));
         await initProvider();
         Script.Provider.GUI.replaceUI("mainMenu");
@@ -3146,181 +4216,6 @@ var Script;
         }
     }
     Script.MusicManager = MusicManager;
-})(Script || (Script = {}));
-var Script;
-(function (Script) {
-    var ƒ = FudgeCore;
-    let DataLink = (() => {
-        var _a;
-        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
-        let _classDescriptor;
-        let _classExtraInitializers = [];
-        let _classThis;
-        let _classSuper = ƒ.ComponentScript;
-        let _id_decorators;
-        let _id_initializers = [];
-        let _id_extraInitializers = [];
-        var DataLink = class extends _classSuper {
-            static { _classThis = this; }
-            static {
-                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
-                _id_decorators = [ƒ.serialize(String)];
-                __esDecorate(null, null, _id_decorators, { kind: "field", name: "id", static: false, private: false, access: { has: obj => "id" in obj, get: obj => obj.id, set: (obj, value) => { obj.id = value; } }, metadata: _metadata }, _id_initializers, _id_extraInitializers);
-                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
-                DataLink = _classThis = _classDescriptor.value;
-                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
-            }
-            static { this.linkedNodes = new Map(); }
-            constructor() {
-                super();
-                this.id = __runInitializers(this, _id_initializers, void 0);
-                __runInitializers(this, _id_extraInitializers);
-                if (ƒ.Project.mode === ƒ.MODE.EDITOR)
-                    return;
-                ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
-                    if (this.node instanceof ƒ.Graph)
-                        DataLink.linkedNodes.set(this.id, this.node);
-                });
-            }
-            static async getCopyOf(_id) {
-                let original = this.linkedNodes.get(_id);
-                if (!original)
-                    return undefined;
-                return Script.getDuplicateOfNode(original);
-            }
-            static {
-                __runInitializers(_classThis, _classExtraInitializers);
-            }
-        };
-        return DataLink = _classThis;
-    })();
-    Script.DataLink = DataLink;
-    let ANIMATION;
-    (function (ANIMATION) {
-        ANIMATION["IDLE"] = "idle";
-        ANIMATION["MOVE"] = "move";
-        ANIMATION["HURT"] = "hurt";
-        ANIMATION["AFFECTED"] = "affected";
-        ANIMATION["DIE"] = "die";
-        ANIMATION["ATTACK"] = "attack";
-        ANIMATION["SPELL"] = "spell";
-    })(ANIMATION = Script.ANIMATION || (Script.ANIMATION = {}));
-    let AnimationLink = (() => {
-        var _a;
-        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
-        let _classDescriptor;
-        let _classExtraInitializers = [];
-        let _classThis;
-        let _classSuper = ƒ.Component;
-        let _animation_decorators;
-        let _animation_initializers = [];
-        let _animation_extraInitializers = [];
-        let _animType_decorators;
-        let _animType_initializers = [];
-        let _animType_extraInitializers = [];
-        var AnimationLink = class extends _classSuper {
-            static { _classThis = this; }
-            static {
-                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
-                _animation_decorators = [ƒ.serialize(ƒ.Animation)];
-                _animType_decorators = [ƒ.serialize(ANIMATION)];
-                __esDecorate(null, null, _animation_decorators, { kind: "field", name: "animation", static: false, private: false, access: { has: obj => "animation" in obj, get: obj => obj.animation, set: (obj, value) => { obj.animation = value; } }, metadata: _metadata }, _animation_initializers, _animation_extraInitializers);
-                __esDecorate(null, null, _animType_decorators, { kind: "field", name: "animType", static: false, private: false, access: { has: obj => "animType" in obj, get: obj => obj.animType, set: (obj, value) => { obj.animType = value; } }, metadata: _metadata }, _animType_initializers, _animType_extraInitializers);
-                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
-                AnimationLink = _classThis = _classDescriptor.value;
-                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
-            }
-            static { this.linkedAnimations = new Map(); }
-            constructor() {
-                super();
-                this.singleton = false;
-                this.animation = __runInitializers(this, _animation_initializers, void 0);
-                this.animType = (__runInitializers(this, _animation_extraInitializers), __runInitializers(this, _animType_initializers, void 0));
-                __runInitializers(this, _animType_extraInitializers);
-                if (ƒ.Project.mode === ƒ.MODE.EDITOR)
-                    return;
-                ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
-                    if (this.node instanceof ƒ.Graph) {
-                        let link = this.node.getComponent(DataLink);
-                        if (!link)
-                            return;
-                        if (!AnimationLink.linkedAnimations.has(link.id)) {
-                            AnimationLink.linkedAnimations.set(link.id, new Map());
-                        }
-                        AnimationLink.linkedAnimations.get(link.id).set(this.animType, this.animation);
-                    }
-                });
-            }
-            static {
-                __runInitializers(_classThis, _classExtraInitializers);
-            }
-        };
-        return AnimationLink = _classThis;
-    })();
-    Script.AnimationLink = AnimationLink;
-    let VisualizationLink = (() => {
-        var _a;
-        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
-        let _classDescriptor;
-        let _classExtraInitializers = [];
-        let _classThis;
-        let _classSuper = ƒ.Component;
-        let _visualization_decorators;
-        let _visualization_initializers = [];
-        let _visualization_extraInitializers = [];
-        let _for_decorators;
-        let _for_initializers = [];
-        let _for_extraInitializers = [];
-        let _delay_decorators;
-        let _delay_initializers = [];
-        let _delay_extraInitializers = [];
-        var VisualizationLink = class extends _classSuper {
-            static { _classThis = this; }
-            static {
-                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
-                _visualization_decorators = [ƒ.serialize(String)];
-                _for_decorators = [ƒ.serialize(ANIMATION)];
-                _delay_decorators = [ƒ.serialize(Number)];
-                __esDecorate(null, null, _visualization_decorators, { kind: "field", name: "visualization", static: false, private: false, access: { has: obj => "visualization" in obj, get: obj => obj.visualization, set: (obj, value) => { obj.visualization = value; } }, metadata: _metadata }, _visualization_initializers, _visualization_extraInitializers);
-                __esDecorate(null, null, _for_decorators, { kind: "field", name: "for", static: false, private: false, access: { has: obj => "for" in obj, get: obj => obj.for, set: (obj, value) => { obj.for = value; } }, metadata: _metadata }, _for_initializers, _for_extraInitializers);
-                __esDecorate(null, null, _delay_decorators, { kind: "field", name: "delay", static: false, private: false, access: { has: obj => "delay" in obj, get: obj => obj.delay, set: (obj, value) => { obj.delay = value; } }, metadata: _metadata }, _delay_initializers, _delay_extraInitializers);
-                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
-                VisualizationLink = _classThis = _classDescriptor.value;
-                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
-            }
-            static { this.linkedVisuals = new Map(); }
-            get id() {
-                return this.visualization;
-            }
-            constructor() {
-                super();
-                this.singleton = false;
-                this.visualization = __runInitializers(this, _visualization_initializers, void 0);
-                // TODO: this is hacky, use its own thing for it to properly map it to the actual events
-                this.for = (__runInitializers(this, _visualization_extraInitializers), __runInitializers(this, _for_initializers, void 0));
-                this.delay = (__runInitializers(this, _for_extraInitializers), __runInitializers(this, _delay_initializers, void 0));
-                __runInitializers(this, _delay_extraInitializers);
-                if (ƒ.Project.mode === ƒ.MODE.EDITOR)
-                    return;
-                ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
-                    if (this.node instanceof ƒ.Graph) {
-                        let link = this.node.getComponent(DataLink);
-                        if (!link)
-                            return;
-                        if (!VisualizationLink.linkedVisuals.has(link.id)) {
-                            VisualizationLink.linkedVisuals.set(link.id, new Map());
-                        }
-                        VisualizationLink.linkedVisuals.get(link.id).set(this.for, this);
-                    }
-                });
-            }
-            static {
-                __runInitializers(_classThis, _classExtraInitializers);
-            }
-        };
-        return VisualizationLink = _classThis;
-    })();
-    Script.VisualizationLink = VisualizationLink;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -4980,124 +5875,6 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
-    // This whole VFX effect thing is convoluted and I'm unhappy with how it turned out.
-    // All those nested promises and shit... we should probably rewrite that at some point.
-    // But for now it seems to be doing its job decently.
-    class VisualizeTarget {
-        constructor() {
-            this.nodePool = new Map();
-            this.visibleNodes = [];
-            this.showAttack = async (_ev) => {
-                const nodes = this.getTargets(_ev);
-                const promises = [];
-                for (let node of nodes) {
-                    promises.push(this.addNodesTo(node, this.getAdditionalVisualizer(_ev.cause, _ev.type)));
-                }
-                return Promise.all(promises);
-            };
-            this.showPreview = async (_ev) => {
-                const nodes = this.getTargets(_ev);
-                for (let node of nodes) {
-                    this.addNodesTo(node);
-                }
-            };
-            this.hideTargets = async (_ev) => {
-                while (this.visibleNodes.length > 0) {
-                    this.returnNode(this.visibleNodes.pop());
-                }
-            };
-            this.addEventListeners();
-        }
-        addEventListeners() {
-            Script.EventBus.addEventListener(Script.EVENT.ENTITY_ATTACK, this.showAttack);
-            Script.EventBus.addEventListener(Script.EVENT.ENTITY_ATTACKED, this.hideTargets);
-            Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.showAttack);
-            Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL, this.hideTargets);
-            Script.EventBus.addEventListener(Script.EVENT.SHOW_PREVIEW, this.showPreview);
-            Script.EventBus.addEventListener(Script.EVENT.HIDE_PREVIEW, this.hideTargets);
-        }
-        getTargets(_ev) {
-            if (!_ev.detail)
-                return [];
-            const targets = [];
-            positions: if (_ev.detail.positions) {
-                if (!_ev.trigger || !("target" in _ev.trigger))
-                    break positions;
-                if (typeof _ev.trigger.target === "string")
-                    break positions;
-                const vis = Script.Provider.visualizer;
-                let allySide, opponentSide;
-                if (_ev.cause instanceof Script.Stone) {
-                    allySide = vis.activeFight.home;
-                    opponentSide = vis.activeFight.away;
-                }
-                else {
-                    const visGrid = vis.activeFight.whereIsEntity(vis.getEntity(_ev.cause));
-                    if (visGrid.side === "home") {
-                        allySide = vis.activeFight.home;
-                        opponentSide = vis.activeFight.away;
-                    }
-                    else {
-                        allySide = vis.activeFight.away;
-                        opponentSide = vis.activeFight.home;
-                    }
-                }
-                const targetSide = _ev.trigger.target.side === Script.TARGET_SIDE.ALLY ? allySide : opponentSide;
-                _ev.detail.positions.forEachElement(async (_el, _pos) => {
-                    const anchor = targetSide.getAnchor(_pos[0], _pos[1]);
-                    targets.push(anchor);
-                });
-                return targets;
-            }
-            if (!_ev.detail.targets)
-                return [];
-            for (let target of _ev.detail.targets) {
-                targets.push(Script.Provider.visualizer.getEntity(target));
-            }
-            return targets;
-        }
-        async addNodesTo(_parent, ..._nodes) {
-            const promises = [];
-            for (let node of _nodes) {
-                if (!node)
-                    continue;
-                promises.push((await this.getVFX(node)).addToAndActivate(_parent));
-            }
-            promises.push((await this.getVFX("TargetHighlightGeneric")).addToAndActivate(_parent));
-            return Promise.all(promises);
-        }
-        async getVFX(_v) {
-            let vfx;
-            const id = typeof _v === "string" ? _v : _v.id;
-            const delay = typeof _v === "string" ? 0 : _v.delay;
-            if (this.nodePool.get(id)?.length > 0)
-                vfx = this.nodePool.get(id).pop();
-            else
-                vfx = new Script.VisualizeVFX(await Script.DataLink.getCopyOf(id), id, delay);
-            this.visibleNodes.push(vfx);
-            return vfx;
-        }
-        getAdditionalVisualizer(_cause, _evtype) {
-            if (_cause instanceof Script.Stone) {
-                // TODO: add something so stones can define visuals, too.
-                return undefined;
-            }
-            const id = _cause.id;
-            if (!id)
-                return undefined;
-            return Script.VisualizationLink.linkedVisuals.get(id)?.get(_evtype === Script.EVENT.ENTITY_ATTACK ? Script.ANIMATION.ATTACK : Script.ANIMATION.SPELL);
-        }
-        returnNode(_node) {
-            _node.removeAndDeactivate();
-            if (!this.nodePool.has(_node.id))
-                this.nodePool.set(_node.id, []);
-            this.nodePool.get(_node.id).push(_node);
-        }
-    }
-    Script.VisualizeTarget = VisualizeTarget;
-})(Script || (Script = {}));
-var Script;
-(function (Script) {
     var ƒ = FudgeCore;
     class VisualizeVFX {
         constructor(_node, _id, _delay = 0) {
@@ -5301,749 +6078,6 @@ var Script;
         }
     }
     Script.VisualizeGrid = VisualizeGrid;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    class EumlingLevelupUI extends Script.UILayer {
-        static { this.orientationInfo = new Map([
-            ["R", "Realistisch"],
-            ["I", "Investigativ / Forschend"],
-            ["A", "Artistisch / Künstlerisch"],
-            ["S", "Sozial"],
-            ["E", "Enterprising / Unternehmerisch"],
-            ["C", "Conventional / Traditionell"],
-        ]); }
-        constructor() {
-            super();
-            this.selectOption = (_ev) => {
-                const element = _ev.currentTarget;
-                this.selectedOption = element.dataset.option;
-                this.confirmButton.disabled = false;
-                for (let element of document.querySelectorAll(".LevelupOption")) {
-                    element.classList.remove("selected");
-                }
-                element.classList.add("selected");
-            };
-            this.confirm = () => {
-                if (!this.selectedOption)
-                    return;
-                Script.Provider.GUI.removeTopmostUI();
-                Script.EventBus.dispatchEvent({ type: Script.EVENT.EUMLING_LEVELUP_CHOSEN, detail: { type: this.selectedOption } });
-            };
-            this.element = document.getElementById("EumlingLevelup");
-            this.eumlingElement = document.getElementById("EumlingLevelupEumling");
-            this.optionsElement = document.getElementById("EumlingLevelupOptions");
-            this.infoElement = document.getElementById("EumlingLevelupInfo");
-            this.confirmButton = document.getElementById("EumlingLevelupConfirm");
-        }
-        async onAdd(_zindex, _ev) {
-            super.onAdd(_zindex, _ev);
-            this.confirmButton.disabled = true;
-            this.eumling = _ev.target;
-            let specialisationOptions = this.eumling.types.length === 1 ? ["A", "I"] : ["C", "E"];
-            this.eumlingElement.replaceChildren(Script.EumlingUIElement.getUIElement(this.eumling).element);
-            const optionElements = [];
-            for (let option of specialisationOptions) {
-                const elem = Script.createElementAdvanced("div", {
-                    classes: ["LevelupOption"],
-                    innerHTML: `<span>+ ${option}</span>
-                    <span>${EumlingLevelupUI.orientationInfo.get(option)}</span>`,
-                    attributes: [["data-option", option]],
-                });
-                optionElements.push(elem);
-                elem.addEventListener("click", (_ev) => {
-                    this.selectOption(_ev);
-                    const newEumlingType = this.eumling.types.join("") + option + "-Eumling";
-                    this.infoElement.innerText = Script.Provider.data.getEntity(newEumlingType).info;
-                });
-            }
-            this.optionsElement.replaceChildren(...optionElements);
-        }
-        addEventListeners() {
-            this.confirmButton.addEventListener("click", this.confirm);
-        }
-        removeEventListeners() {
-            this.confirmButton.removeEventListener("click", this.confirm);
-        }
-    }
-    Script.EumlingLevelupUI = EumlingLevelupUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    var ƒ = FudgeCore;
-    class FightPrepUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.placedEumlings = new Set();
-            this.startFight = (_ev) => {
-                Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.FIGHT_PREPARE_COMPLETED });
-            };
-            this.pointerStartPosition = new ƒ.Vector2();
-            this.deadzone = 20;
-            this.pointerOnCanvas = (_ev) => {
-                if (_ev.type === "pointerdown") {
-                    this.pointerStartPosition.x = _ev.clientX;
-                    this.pointerStartPosition.y = _ev.clientY;
-                }
-                else if (_ev.type === "pointerup") {
-                    const pointerEndPosition = new ƒ.Vector2(_ev.clientX, _ev.clientY);
-                    const distance = pointerEndPosition.getDistance(this.pointerStartPosition);
-                    if (distance > this.deadzone) {
-                        // drag
-                        this.dragCanvas(this.pointerStartPosition, pointerEndPosition);
-                    }
-                    else {
-                        // click
-                        this.clickCanvas(pointerEndPosition);
-                    }
-                }
-            };
-            this.element = document.getElementById("FightPrep");
-            this.stoneWrapper = document.getElementById("FightPrepStones");
-            this.infoElement = document.getElementById("FightPrepInfo");
-            this.startButton = document.getElementById("FightStart");
-            Script.DataLink.getCopyOf("PreviewHighlight").then(node => this.highlightNode = node);
-        }
-        async onAdd(_zindex, _ev) {
-            super.onAdd(_zindex, _ev);
-            this.startButton.disabled = true;
-            this.initStones();
-            this.initEumlings();
-            this.placedEumlings.clear();
-            await this.moveCamera(ƒ.Vector3.Z(-3), ƒ.Vector3.X(10), 1000);
-        }
-        async onRemove() {
-            this.hideEntityInfo();
-            await this.moveCamera(ƒ.Vector3.Z(3), ƒ.Vector3.X(-10), 1000);
-        }
-        initStones() {
-            const stones = [];
-            for (let stone of Script.Run.currentRun.stones) {
-                const element = Script.createElementAdvanced("div");
-                stones.push(element);
-                element.appendChild(Script.StoneUIElement.getUIElement(stone).element);
-                element.addEventListener("click", () => {
-                    this.hideEntityInfo();
-                    this.infoElement.innerText = stone.data.abilityLevels[stone.level].info;
-                    this.infoElement.classList.remove("hidden");
-                });
-            }
-            this.stoneWrapper.replaceChildren(...stones);
-        }
-        initEumlings() {
-            const bench = Script.viewport.getBranch().getChildByName("Bench")?.getComponent(Script.VisualizeBench);
-            this.bench = bench;
-            if (!bench)
-                return;
-            bench.clear();
-            for (let eumling of Script.Run.currentRun.eumlings) {
-                bench.addEntity(Script.Provider.visualizer.getEntity(eumling));
-            }
-        }
-        returnEumling(_eumling) {
-            // remove from field
-            Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.ENTITY_REMOVED, target: _eumling });
-            // add to bench
-            const vis = Script.Provider.visualizer.getEntity(_eumling);
-            this.bench?.addEntity(vis);
-            this.placedEumlings.delete(_eumling);
-            // can we start?
-            if (this.placedEumlings.size <= 0) {
-                this.startButton.disabled = true;
-            }
-            // update visuals
-            if (vis === this.#highlightedEntity) {
-                this.showEntityInfo(vis);
-            }
-        }
-        moveEumlingToGrid(_eumling, _target) {
-            const posId = parseInt(_target.name);
-            const vis = Script.Provider.visualizer.getEntity(_eumling);
-            this.bench?.removeEntity(vis);
-            Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.ENTITY_ADDED, target: _eumling, detail: { side: "home", pos: [posId % 3, Math.floor(posId / 3)] } });
-            this.placedEumlings.add(_eumling);
-            this.startButton.disabled = false;
-            // update visuals
-            if (vis === this.#highlightedEntity) {
-                this.showEntityInfo(vis);
-            }
-        }
-        clickCanvas(_pos) {
-            this.hideEntityInfo();
-            const picks = Script.getPickableObjectsFromClientPos(_pos);
-            if (!picks || picks.length === 0)
-                return;
-            for (const pick of picks) {
-                if (!(pick.node instanceof Script.VisualizeEntity)) {
-                    continue;
-                }
-                this.showEntityInfo(pick.node);
-                break;
-            }
-        }
-        dragCanvas(_startPos, _endPos) {
-            // find which Eumling should be moved
-            const picksStart = Script.getPickableObjectsFromClientPos(_startPos);
-            if (!picksStart || picksStart.length === 0)
-                return;
-            let draggedEumling;
-            for (let pick of picksStart) {
-                if (!(pick.node instanceof Script.VisualizeEntity))
-                    continue;
-                if (!(pick.node.getEntity() instanceof Script.Eumling))
-                    continue;
-                draggedEumling = pick.node.getEntity();
-                break;
-            }
-            if (!draggedEumling)
-                return;
-            // find where to move it to
-            const picksEnd = Script.getPickableObjectsFromClientPos(_endPos);
-            if (!picksEnd || picksEnd.length === 0) {
-                // nowhere = back to the bench
-                return this.returnEumling(draggedEumling);
-            }
-            for (const pick of picksEnd) {
-                // one of the home fields
-                const num = Number(pick.node.name);
-                if (!isNaN(num)) {
-                    return this.moveEumlingToGrid(draggedEumling, pick.node);
-                }
-            }
-        }
-        #highlightedEntity;
-        showEntityInfo(_entity) {
-            this.hideEntityInfo();
-            this.infoElement.classList.remove("hidden");
-            this.infoElement.innerText = _entity.getEntity().info ?? "PLACEHOLDER TEXT";
-            if (this.highlightNode && !this.bench.hasEntity(_entity)) {
-                _entity.addChild(this.highlightNode);
-                this.highlightNode.mtxLocal.translation = ƒ.Vector3.ZERO();
-            }
-            this.#highlightedEntity = _entity;
-            const entity = _entity.getEntity();
-            const attacks = entity.select(entity.attacks, false);
-            for (let attack of attacks) {
-                const allies = entity instanceof Script.Eumling ? Script.Fight.activeFight.arena.home : Script.Fight.activeFight.arena.away;
-                const opponents = entity instanceof Script.Eumling ? Script.Fight.activeFight.arena.away : Script.Fight.activeFight.arena.home;
-                const detail = Script.getTargets(attack.target, allies, opponents, entity);
-                Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.SHOW_PREVIEW, cause: entity, target: entity, trigger: attack, detail });
-            }
-        }
-        hideEntityInfo() {
-            this.infoElement.classList.add("hidden");
-            this.highlightNode?.getParent()?.removeChild(this.highlightNode);
-            Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.HIDE_PREVIEW });
-            this.#highlightedEntity = undefined;
-        }
-        addEventListeners() {
-            const canvas = document.getElementById("GameCanvas");
-            canvas.addEventListener("pointerdown", this.pointerOnCanvas);
-            canvas.addEventListener("pointerup", this.pointerOnCanvas);
-            this.startButton.addEventListener("click", this.startFight);
-        }
-        removeEventListeners() {
-            const canvas = document.getElementById("GameCanvas");
-            canvas.removeEventListener("pointerdown", this.pointerOnCanvas);
-            canvas.removeEventListener("pointerup", this.pointerOnCanvas);
-            this.startButton.removeEventListener("click", this.startFight);
-        }
-        async moveCamera(_translate, _rotate, _timeMS) {
-            const camera = Script.viewport?.camera;
-            if (!camera)
-                return;
-            let elapsedTime = 0;
-            const translationStart = camera.mtxPivot.translation.clone;
-            const rotationStart = camera.mtxPivot.rotation.clone;
-            const translationGoal = ƒ.Vector3.SUM(translationStart, _translate);
-            const rotationGoal = ƒ.Vector3.SUM(rotationStart, _rotate);
-            return new Promise((resolve) => {
-                const mover = () => {
-                    const delta = ƒ.Loop.timeFrameGame;
-                    elapsedTime += delta;
-                    if (elapsedTime > _timeMS) {
-                        camera.mtxPivot.translation = translationGoal;
-                        camera.mtxPivot.rotation = rotationGoal;
-                        ƒ.Loop.removeEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, mover);
-                        resolve();
-                        return;
-                    }
-                    camera.mtxPivot.translation = ƒ.Vector3.LERP(translationStart, translationGoal, elapsedTime / _timeMS);
-                    camera.mtxPivot.rotation = ƒ.Vector3.LERP(rotationStart, rotationGoal, elapsedTime / _timeMS);
-                };
-                ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, mover);
-            });
-        }
-    }
-    Script.FightPrepUI = FightPrepUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    class FightRewardUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.eumlings = new Map();
-            this.clickOnEumling = (_ev) => {
-                if (this.xp <= 0)
-                    return;
-                let target = _ev.target;
-                let eumling = this.eumlings.get(target);
-                eumling.addXP(1);
-                this.xp--;
-                this.updateXPText();
-                if (this.xp <= 0) {
-                    this.continueButton.disabled = false;
-                }
-            };
-            this.convert = () => {
-                Script.Run.currentRun.changeGold(this.xp);
-                this.gold += this.xp;
-                document.getElementById("FightRewardRewards").querySelector(".Gold").innerHTML = `+${this.gold} Gold`;
-                this.xp = 0;
-                this.continueButton.disabled = false;
-                this.updateXPText();
-            };
-            this.finishRewards = () => {
-                Script.EventBus.dispatchEvent({ type: Script.EVENT.REWARDS_CLOSE });
-            };
-            this.element = document.getElementById("FightReward");
-            this.rewardsOverivew = document.getElementById("FightRewardRewards");
-            this.continueButton = document.getElementById("FightRewardContinue");
-            this.convertButton = document.getElementById("FightRewardConvert");
-        }
-        async onAdd(_zindex, _ev) {
-            super.onAdd(_zindex, _ev);
-            let { gold, xp, stones } = _ev.detail;
-            const rewardIcons = [];
-            if (gold) {
-                rewardIcons.push(Script.createElementAdvanced("div", {
-                    innerHTML: `+${gold} Gold`,
-                    classes: ["FightRewardIcon", "Gold"]
-                }));
-                this.gold = gold;
-            }
-            if (xp) {
-                rewardIcons.push(Script.createElementAdvanced("div", {
-                    innerHTML: `+${xp} XP`,
-                    classes: ["FightRewardIcon", "XP"]
-                }));
-                this.xp = xp;
-            }
-            if (stones) {
-                for (let stone of stones) {
-                    rewardIcons.push(Script.createElementAdvanced("div", {
-                        innerHTML: `${stone.id}`,
-                        classes: ["FightRewardIcon", "Stone"]
-                    }));
-                }
-            }
-            this.rewardsOverivew.replaceChildren(...rewardIcons);
-            for (let eumling of Script.Run.currentRun.eumlings) {
-                let uiElement = Script.EumlingUIElement.getUIElement(eumling);
-                this.eumlings.set(uiElement.element, uiElement.eumling);
-                uiElement.element.classList.remove("hidden");
-                uiElement.element.addEventListener("click", this.clickOnEumling);
-            }
-            document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
-            this.updateXPText();
-            this.continueButton.disabled = true;
-            this.convertButton.disabled = false;
-        }
-        async onShow() {
-            super.onShow();
-            this.addEventListeners();
-            for (let element of this.eumlings.keys()) {
-                element.addEventListener("click", this.clickOnEumling);
-            }
-            document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
-        }
-        async onHide() {
-            super.onHide();
-            this.removeEventListeners();
-        }
-        updateXPText() {
-            document.getElementById("FightRewardXPAmount").innerText = this.xp === 0 ?
-                `No more XP to distribute` :
-                `Distribute ${this.xp}XP`;
-            this.convertButton.disabled = this.xp === 0;
-        }
-        addEventListeners() {
-            this.continueButton.addEventListener("click", this.finishRewards);
-            this.convertButton.addEventListener("click", this.convert);
-        }
-        removeEventListeners() {
-            for (let element of this.eumlings.keys()) {
-                element.removeEventListener("click", this.clickOnEumling);
-            }
-            this.continueButton.removeEventListener("click", this.finishRewards);
-            this.convertButton.removeEventListener("click", this.convert);
-        }
-    }
-    Script.FightRewardUI = FightRewardUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    class LoadingScreenUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.element = document.getElementById("LoadingScreen");
-        }
-        startLoad() {
-        }
-        addEventListeners() {
-            this.element.addEventListener("click", this.startLoad);
-        }
-        removeEventListeners() {
-            this.element.removeEventListener("click", this.startLoad);
-        }
-    }
-    Script.LoadingScreenUI = LoadingScreenUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    class MainMenuUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.start = () => {
-                Script.run();
-                Script.Provider.GUI.removeTopmostUI();
-            };
-            this.openOptions = () => {
-                Script.Provider.GUI.addUI("options");
-            };
-            this.element = document.getElementById("MainMenu");
-            this.startButton = document.getElementById("MainStart");
-            this.optionsButton = document.getElementById("MainOptions");
-        }
-        addEventListeners() {
-            this.startButton.addEventListener("click", this.start);
-            this.optionsButton.addEventListener("click", this.openOptions);
-        }
-        removeEventListeners() {
-            this.startButton.removeEventListener("click", this.start);
-            this.optionsButton.removeEventListener("click", this.openOptions);
-        }
-    }
-    Script.MainMenuUI = MainMenuUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    class MapUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.selectionDone = async () => {
-                this.submitBtn.disabled = true;
-                for (let opt of this.optionElements) {
-                    if (opt.classList.contains("selected")) {
-                        opt.classList.add("center");
-                    }
-                    else {
-                        opt.classList.add("remove");
-                    }
-                }
-                this.optionElements.find((el) => el.classList.contains("selected"));
-                this.element.classList.add("no-interact");
-                await Script.waitMS(1000);
-                Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_ENCOUNTER, detail: { encounter: this.selectedEncounter } });
-            };
-            this.element = document.getElementById("Map");
-            this.submitBtn = document.getElementById("MapActionButton");
-        }
-        async onAdd(_zindex, _ev) {
-            super.onAdd(_zindex);
-            this.updateProgress();
-            this.displayEncounters(_ev);
-            this.element.classList.remove("no-interact");
-        }
-        updateProgress() {
-            const inner = document.getElementById("MapProgressBarCurrent");
-            const progress = Script.Run.currentRun.progress / Script.Run.currentRun.encountersUntilBoss;
-            inner.style.height = progress * 100 + "";
-        }
-        displayEncounters(_ev) {
-            let options = _ev.detail.options;
-            this.optionElements = [];
-            for (let option of options) {
-                const elem = Script.createElementAdvanced("div", { classes: ["MapOption"] });
-                if (option < 0) {
-                    // shop
-                    elem.innerText = "Shop";
-                }
-                else {
-                    elem.innerText = `Fight lvl ${option + 1}`;
-                }
-                elem.addEventListener("click", () => {
-                    for (let opt of this.optionElements) {
-                        opt.classList.remove("selected");
-                    }
-                    elem.classList.add("selected");
-                    this.selectedEncounter = option;
-                    this.submitBtn.disabled = false;
-                });
-                this.optionElements.push(elem);
-            }
-            document.getElementById("MapOptions").replaceChildren(...this.optionElements);
-            this.submitBtn.disabled = true;
-        }
-        addEventListeners() {
-            this.submitBtn.addEventListener("click", this.selectionDone);
-        }
-        removeEventListeners() {
-        }
-    }
-    Script.MapUI = MapUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    class OptionsUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.close = () => {
-                Script.Provider.GUI.removeTopmostUI();
-            };
-            this.element = document.getElementById("Options");
-            this.closeButton = document.getElementById("OptionsClose");
-        }
-        async onAdd(_zindex, _ev) {
-            await super.onAdd(_zindex, _ev);
-            document.getElementById("OptionsWrapper").replaceChildren(Script.Settings.generateHTML());
-        }
-        addEventListeners() {
-            this.closeButton.addEventListener("click", this.close);
-        }
-        removeEventListeners() {
-            this.closeButton.removeEventListener("click", this.close);
-        }
-    }
-    Script.OptionsUI = OptionsUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    class RunEndUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.close = () => {
-                Script.Provider.GUI.removeAllLayers();
-                Script.Provider.GUI.addUI("mainMenu");
-            };
-            this.element = document.getElementById("RunEnd");
-            this.continueButton = document.getElementById("RunEndMainMenu");
-        }
-        async onAdd(_zindex, _ev) {
-            super.onAdd(_zindex, _ev);
-            document.getElementById("RunEndInner").innerHTML =
-                _ev.detail.success ?
-                    `<h2>Success!</h2>
-            <p>You won! :&gt;</p>` :
-                    `<h2>Defeat!</h2>
-            <p>You lost. :(;</p>`;
-        }
-        addEventListeners() {
-            this.continueButton.addEventListener("click", this.close);
-        }
-        removeEventListeners() {
-            this.continueButton.removeEventListener("click", this.close);
-        }
-    }
-    Script.RunEndUI = RunEndUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    const COST = {
-        HEAL_EUMLING: 1,
-        BUY_LVL1: 2,
-        BUY_LVL2: 3,
-        UPGRADE_STONE: 2,
-        REFRESH: 1,
-    };
-    class ShopUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.stoneToHtmlElement = new Map();
-            this.buyStone = (_ev) => {
-                const stone = this.selectedStone;
-                if (!stone)
-                    return;
-                const cost = stone.level == 0 ? COST.BUY_LVL1 : COST.BUY_LVL2;
-                if (Script.Run.currentRun.gold < cost)
-                    return;
-                Script.Run.currentRun.changeGold(-cost);
-                Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_STONE, detail: { stone } });
-                this.selectedStone = undefined;
-                this.stoneBuyButton.disabled = true;
-                this.stonesInfo.innerText = "";
-                this.stoneToHtmlElement.get(stone)?.remove();
-            };
-            this.upgradeStone = (_ev) => {
-                const stone = this.selectedStoneToUpgrade;
-                if (!stone)
-                    return;
-                const cost = COST.UPGRADE_STONE;
-                if (Script.Run.currentRun.gold < cost)
-                    return;
-                Script.Run.currentRun.changeGold(-cost);
-                stone.level++;
-                this.stoneUpgradeButton.disabled = true;
-                this.selectedStoneToUpgrade = undefined;
-                this.stoneUpgradeInfo.innerText = "";
-                this.stoneToHtmlElement.get(stone)?.remove();
-            };
-            this.close = () => {
-                Script.EventBus.dispatchEvent({ type: Script.EVENT.SHOP_CLOSE });
-            };
-            this.refresh = () => {
-                if (Script.Run.currentRun.gold < COST.REFRESH)
-                    return;
-                Script.Run.currentRun.changeGold(-COST.REFRESH);
-                this.setupStonesToBuy();
-            };
-            this.element = document.getElementById("Shop");
-            this.closeButton = document.getElementById("ShopClose");
-            this.stonesWrapper = document.getElementById("ShopStones");
-            this.stonesInfo = document.getElementById("ShopStonesInfo");
-            this.stonesRefreshButton = document.getElementById("ShopStonesRefresh");
-            this.stoneBuyButton = document.getElementById("ShopStonesBuy");
-            this.stoneUpgradeButton = document.getElementById("ShopStonesUpgrade");
-            this.stoneUpgradeInfo = document.getElementById("ShopStonesUpgradeInfo");
-            this.stoneUpgradeWrapper = document.getElementById("ShopStoneUpgrades");
-            this.eumlingHealWrapper = document.getElementById("ShopEumlingHeal");
-        }
-        async onAdd(_zindex, _ev) {
-            super.onAdd(_zindex, _ev);
-            this.setupStonesToBuy();
-            this.setupStonesToUpgrade();
-            this.initEumlingHealing();
-        }
-        setupStonesToBuy() {
-            this.stoneBuyButton.disabled = true;
-            this.stonesInfo.innerText = "";
-            const existingStones = Script.Run.currentRun.stones.map((stone) => stone.data);
-            const newStones = Script.chooseRandomElementsFromArray(Script.Provider.data.stones, 2, existingStones);
-            if (newStones.length === 0) {
-                this.stonesWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No more stones available." }));
-                return;
-            }
-            const newStoneElements = [];
-            for (let stoneData of newStones) {
-                let level = (Math.random() < 0.2) ? 1 : 0;
-                let cost = level == 0 ? COST.BUY_LVL1 : COST.BUY_LVL2;
-                let stone = new Script.Stone(stoneData, level);
-                let uiStoneElement = Script.StoneUIElement.getUIElement(stone);
-                let wrapper = Script.createElementAdvanced("div", {
-                    classes: ["BuyStone", "ShopOption"],
-                    attributes: [["data-level", level.toString()]],
-                });
-                wrapper.prepend(uiStoneElement.element);
-                newStoneElements.push(wrapper);
-                this.stoneToHtmlElement.set(stone, wrapper);
-                wrapper.addEventListener("click", () => {
-                    this.selectedStone = stone;
-                    this.stonesInfo.innerText = stone.data.abilityLevels[stone.level].info;
-                    this.stoneBuyButton.innerText = `${cost} Gold`;
-                    this.stoneBuyButton.disabled = Script.Run.currentRun.gold < cost;
-                    newStoneElements.forEach(el => el.classList.remove("selected"));
-                    wrapper.classList.add("selected");
-                });
-            }
-            this.stonesWrapper.replaceChildren(...newStoneElements);
-        }
-        setupStonesToUpgrade() {
-            this.stoneUpgradeButton.disabled = true;
-            const upgradeableStones = Script.chooseRandomElementsFromArray(Script.Run.currentRun.stones, Infinity, Script.Run.currentRun.stones.filter(stone => stone.level === 1));
-            if (upgradeableStones.length === 0) {
-                this.stoneUpgradeWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No more stones upgradeable." }));
-                return;
-            }
-            const upgradeStoneElements = [];
-            for (let stone of upgradeableStones) {
-                const element = Script.createElementAdvanced("div", {
-                    classes: ["ShopOption"],
-                });
-                element.prepend(Script.StoneUIElement.getUIElement(stone).element);
-                upgradeStoneElements.push(element);
-                element.addEventListener("click", () => {
-                    this.selectedStoneToUpgrade = stone;
-                    this.stoneUpgradeButton.disabled = Script.Run.currentRun.gold < COST.UPGRADE_STONE;
-                    this.stoneUpgradeInfo.innerText = stone.data.abilityLevels[stone.level + 1].info;
-                    upgradeStoneElements.forEach(el => el.classList.remove("selected"));
-                    element.classList.add("selected");
-                });
-                this.stoneToHtmlElement.set(stone, element);
-            }
-            this.stoneUpgradeWrapper.replaceChildren(...upgradeStoneElements);
-        }
-        initEumlingHealing() {
-            const healableEumlings = Script.Run.currentRun.eumlings.filter(eumling => eumling.currentHealth < eumling.health);
-            if (healableEumlings.length === 0) {
-                this.eumlingHealWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No Eumlings need healing." }));
-                return;
-            }
-            const elements = [];
-            for (let eumling of healableEumlings) {
-                const wrapper = Script.createElementAdvanced("div", {
-                    classes: ["ShopOption"],
-                    innerHTML: `<span>+♥️: ${COST.HEAL_EUMLING} Gold</span>`,
-                });
-                wrapper.prepend(Script.EumlingUIElement.getUIElement(eumling).element);
-                wrapper.addEventListener("click", () => {
-                    if (Script.Run.currentRun.gold < COST.HEAL_EUMLING)
-                        return;
-                    Script.Run.currentRun.changeGold(-COST.HEAL_EUMLING);
-                    eumling.affect({ type: Script.SPELL_TYPE.HEAL, level: 1, target: undefined });
-                    if (eumling.currentHealth >= eumling.health)
-                        wrapper.remove();
-                });
-            }
-            this.eumlingHealWrapper.replaceChildren(...elements);
-        }
-        addEventListeners() {
-            this.closeButton.addEventListener("click", this.close);
-            this.stonesRefreshButton.addEventListener("click", this.refresh);
-            this.stoneBuyButton.addEventListener("click", this.buyStone);
-            this.stoneUpgradeButton.addEventListener("click", this.upgradeStone);
-        }
-        removeEventListeners() {
-            this.closeButton.removeEventListener("click", this.close);
-            this.stonesRefreshButton.removeEventListener("click", this.refresh);
-            this.stoneBuyButton.removeEventListener("click", this.buyStone);
-            this.stoneUpgradeButton.removeEventListener("click", this.upgradeStone);
-        }
-    }
-    Script.ShopUI = ShopUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    class StartScreenUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.element = document.getElementById("StartScreen");
-        }
-        addEventListeners() {
-        }
-        removeEventListeners() {
-        }
-    }
-    Script.StartScreenUI = StartScreenUI;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {

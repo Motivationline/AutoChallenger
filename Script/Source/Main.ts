@@ -11,13 +11,13 @@ namespace Script {
   export let viewport: ƒ.Viewport;
 
   document.addEventListener("click", startLoading, { once: true })
+  Provider.setVisualizer();
 
   export async function startLoading() {
     if (ƒ.Project.mode === ƒ.MODE.EDITOR) return;
     new MusicManager();
 
-    Provider.setVisualizer();
-    Provider.GUI.replaceUI("loading");
+    Provider.GUI.addUI("loading");
 
     viewport = await loadResourcesAndInitViewport(document.getElementById("GameCanvas") as HTMLCanvasElement);
 
