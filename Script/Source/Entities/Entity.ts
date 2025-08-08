@@ -235,6 +235,7 @@ namespace Script {
 
         async tryToMove(_grid: Grid<Entity>, maxAlternatives: number): Promise<boolean> {
             //let grid: Grid<Entity> = _grid;
+            let grid: Grid<Entity> = new Grid<Entity>;
             //check if the Entity has move data
             let moveData: MoveData;
             moveData = this.select(this.moves, true)[0];//TODO: funktioniert das???? // @Björn das sucht dir alle moves raus die es machen soll - du nimmst aber nur den ersten. Im Moment geht das weil da immer nur einer zurück kommt.
@@ -260,6 +261,7 @@ namespace Script {
                         // ✓
                         //TODO: Fix entities being undefined.
                         _grid.set(nextPosition, this, true);
+                        grid.set(nextPosition, this, true);
                         let oldPos = this.position;
                         this.position = nextPosition;
                         this.currentDirection = nextDirection;
@@ -274,6 +276,8 @@ namespace Script {
                         return true;
                     }
                 }
+                console.log("New entity Grid: ");
+                console.log(grid);
                 console.log("entity Grid: ");
                 console.log(_grid);
             } else {// if the entity has no move data we just pretend it already moved

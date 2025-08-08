@@ -2849,6 +2849,7 @@ var Script;
                     else if (_grid.get(nextPosition) == undefined) { //spot is free
                         // @Björn hier noch den optionalen dritten parameter auf true setzen damit die entity nicht zweimal im grid ist
                         // ✓
+                        //TODO: Fix entities being undefined.
                         _grid.set(nextPosition, this, true);
                         grid.set(nextPosition, this, true);
                         let oldPos = this.position;
