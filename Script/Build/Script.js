@@ -2826,7 +2826,6 @@ var Script;
         }
         async tryToMove(_grid, maxAlternatives) {
             //let grid: Grid<Entity> = _grid;
-            let grid = new Script.Grid;
             //check if the Entity has move data
             let moveData;
             moveData = this.select(this.moves, true)[0]; //TODO: funktioniert das???? // @Björn das sucht dir alle moves raus die es machen soll - du nimmst aber nur den ersten. Im Moment geht das weil da immer nur einer zurück kommt.
@@ -2851,7 +2850,6 @@ var Script;
                         // ✓
                         //TODO: Fix entities being undefined.
                         _grid.set(nextPosition, this, true);
-                        grid.set(nextPosition, this, true);
                         let oldPos = this.position;
                         this.position = nextPosition;
                         this.currentDirection = nextDirection;
@@ -2866,8 +2864,6 @@ var Script;
                         return true;
                     }
                 }
-                console.log("New entity Grid: ");
-                console.log(grid);
                 console.log("entity Grid: ");
                 console.log(_grid);
             }
@@ -4136,11 +4132,18 @@ var Script;
             else {
                 throw new Error("Use home or away for the side parameter");
             }
+            if (this.side === "away") {
+                this.sideNode = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
+            }
+            else if (this.side === "home") {
+                this.sideNode = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
+            }
             this.addComponent(new ƒ.ComponentTransform());
             //set the positions of the entities in the grid
             this.grid.forEachElement((element, pos) => {
                 this.addEntityToGrid(element, pos, false);
             });
+            this.addEventListeners;
         }
         addEntityToGrid(_entity, _pos, _removeExisting = true, _anchor) {
             if (Script.Grid.outOfBounds(_pos))
@@ -4153,25 +4156,12 @@ var Script;
                 if (entity === _entity)
                     this.removeEntityFromGrid(pos);
             });
-            if (!_anchor) {
-                let visSide;
-                //get Anchors from scene
-                // TODO: @Björn das machst du an mehreren Stellen - wäre besser wenn du das einmal im Konstruktor machst und dir die richtige Seite direkt als Node abspeicherst.
-                // auf dem main branch hab ich das schon gemacht, schau mal hier: https://github.com/Motivationline/AutoChallenger/blob/main/Script/Source/Visualisation/Grid/visualizeGrid.ts#L13
-                // beachte auch die Änderungen an den anderen Funktionen wie getAnchor.
-                if (this.side === "away") {
-                    visSide = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
-                }
-                else if (this.side === "home") {
-                    visSide = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
-                }
-                //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
-                /**Anchors are named from 0-8 */
-                _anchor = this.getAnchor(visSide, _pos[0], _pos[1]);
-            }
+            // if (!_anchor) {
+            //     /**Anchors are named from 0-8 */
+            //     _anchor = this.getAnchor(_pos[0], _pos[1]);
+            // }
             //get the Positions from the placeholders and translate the entities to it
-            let position = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
-            _entity.mtxLocal.translation = position.clone;
+            this.moveEntityToAnchor(_entity, _pos);
             this.addChild(_entity);
             this.grid.set(_pos, _entity, true);
         }
@@ -4185,11 +4175,17 @@ var Script;
             this.removeChild(elementToRemove);
             // elementToRemove.removeEventListeners();
         }
-        getAnchor(_side, _x, _z) {
+        moveEntityToAnchor(_entity, position) {
+            let _anchor = this.getAnchor(position[0], position[1]);
+            //get the Positions from the placeholders and translate the entity to it
+            let pos3 = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
+            _entity.mtxLocal.translation = pos3.clone;
+        }
+        getAnchor(_x, _z) {
             let anchor;
             let pointer = _z * 3 + _x;
             console.log("pointer: " + pointer);
-            anchor = _side.getChildByName(pointer.toString());
+            anchor = this.sideNode.getChildByName(pointer.toString());
             return anchor;
         }
         nuke() {
@@ -4200,31 +4196,8 @@ var Script;
         // @Björn auch hier das problem dass du den Bezug zu "this" verlierst. 
         // Lambda Funktionsschreibweise (s. VisualizeEntity.updatePosition Kommentar) ist der Weg das zu reparieren.
         move(_ev) {
-            //let _entity: VisualizeEntity;
-            let position;
-            // @Björn vllt ist es sinnvoller nur die entity zu bewegen die sich auch bewegt hat statt alle auf einmal. Geht aber fürs erste auch.
-            //_ev.detail.entity.position
-            //TODO: Über die entity den richtigen Visualizer Finden
-            //read entity Positions and move the model to the fitting ancor in the Scene
-            this.grid.forEachElement((entity, pos) => {
-                position = pos;
-                //_entity = entity
-                let visSide;
-                //get Anchors from scene
-                if (this.side === "away") {
-                    visSide = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("away");
-                }
-                else if (this.side === "home") {
-                    visSide = Script.Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
-                }
-                //let away: ƒ.Node = Provider.visualizer.getGraph().getChildrenByName("away")[0];
-                // @Björn eine Entity an einen anderen Anchor zu verschieben wird mehr als einmal benötigt -> eigene Funktion draus machen, von den unterschiedlichen Stellen aufrufen
-                /**Anchors are named from 0-8 */
-                let _anchor = this.getAnchor(visSide, position[0], position[1]);
-                //get the Positions from the placeholders and translate the entity to it
-                let pos3 = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
-                entity.mtxLocal.translation = pos3.clone;
-            });
+            //gets the moving entity and moves it
+            this.moveEntityToAnchor(this.grid.get(_ev.detail.oldPosition), _ev.detail.position);
         }
         addEventListeners() {
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVED, this.updatePosition);

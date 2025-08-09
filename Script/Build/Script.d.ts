@@ -839,10 +839,12 @@ declare namespace Script {
     class VisualizeGrid extends ƒ.Node {
         grid: Grid<VisualizeEntity>;
         side: string;
+        sideNode: ƒ.Node;
         constructor(_grid: Grid<VisualizeEntity>, _side: string);
         addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting?: boolean, _anchor?: ƒ.Node): void;
         removeEntityFromGrid(_pos: Position): void;
-        getAnchor(_side: ƒ.Node, _x: number, _z: number): ƒ.Node;
+        moveEntityToAnchor(_entity: VisualizeEntity, position: Position): void;
+        getAnchor(_x: number, _z: number): ƒ.Node;
         nuke(): void;
         move(_ev: FightEvent): void;
         private updatePosition;
