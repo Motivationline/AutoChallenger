@@ -63,7 +63,7 @@ namespace Script {
             if (!elementToRemove) return;
             this.grid.remove(_pos);
             this.removeChild(elementToRemove);
-            // elementToRemove.removeEventListeners();
+            elementToRemove.removeEventListeners();
         }
 
         moveEntityToAnchor(_entity: VisualizeEntity, position: Position) {
@@ -91,19 +91,44 @@ namespace Script {
         // @Björn auch hier das problem dass du den Bezug zu "this" verlierst. 
         // Lambda Funktionsschreibweise (s. VisualizeEntity.updatePosition Kommentar) ist der Weg das zu reparieren.
         //TODO: check why move is not being called
-        move(_ev: FightEvent) {
+        async move(_ev: FightEvent) {
+            console.log("CALLED MOVE FUNCTION");
             //gets the moving entity and moves it
             this.moveEntityToAnchor(this.grid.get(_ev.detail.oldPosition), _ev.detail.position);
         }
 
-        private updatePosition = (_ev: FightEvent) => { this.move(_ev) }
+        // updatePosition = async (_ev: FightEvent) => {
+        //     console.log("RECIEVD MOVE EVENT!!!");
+        //     await this.move(_ev);
+        // }
 
         registerEventListeners(): void {
-            EventBus.addEventListener(EVENT.ENTITY_MOVED, this.updatePosition);
+            EventBus.addEventListener(EVENT.ENTITY_MOVED, this.eventListener);
+            EventBus.addEventListener(EVENT.RUN_END, this.eventListener);
         }
 
         removeEventListeners(): void {
-            EventBus.removeEventListener(EVENT.ENTITY_MOVED, this.updatePosition);
+            EventBus.removeEventListener(EVENT.ENTITY_MOVED, this.eventListener);
+            EventBus.removeEventListener(EVENT.RUN_END, this.eventListener);
+        }
+
+        eventListener = async (_ev: FightEvent) => {
+            await this.handleEvent(_ev);
+        }
+
+        async handleEvent(_ev: FightEvent) {
+
+            // this entity is doing something
+            switch (_ev.type) {
+                case EVENT.ENTITY_MOVED: {
+                    console.log("RECIEVD MOVE EVENT!!!");
+                    await this.move(_ev);
+                    break;
+                }
+                case EVENT.RUN_END: {
+                    this.removeEventListeners;
+                }
+            }
         }
 
     }

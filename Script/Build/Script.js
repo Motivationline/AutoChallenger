@@ -2860,6 +2860,7 @@ var Script;
                         // ✓
                         await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVE, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
                         await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVED, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
+                        console.log("SEND MOVED EVENT!!!");
                         this.moved = true;
                         return true;
                     }
@@ -4124,7 +4125,9 @@ var Script;
     class VisualizeGrid extends ƒ.Node {
         constructor(_grid, _side) {
             super("VisualizeGrid");
-            this.updatePosition = (_ev) => { this.move(_ev); };
+            this.eventListener = async (_ev) => {
+                await this.handleEvent(_ev);
+            };
             this.grid = _grid;
             if (_side === "home" || "away") {
                 this.side = _side;
@@ -4143,7 +4146,7 @@ var Script;
             this.grid.forEachElement((element, pos) => {
                 this.addEntityToGrid(element, pos, false);
             });
-            this.addEventListeners;
+            this.registerEventListeners;
         }
         addEntityToGrid(_entity, _pos, _removeExisting = true, _anchor) {
             if (Script.Grid.outOfBounds(_pos))
@@ -4173,7 +4176,7 @@ var Script;
                 return;
             this.grid.remove(_pos);
             this.removeChild(elementToRemove);
-            // elementToRemove.removeEventListeners();
+            elementToRemove.removeEventListeners();
         }
         moveEntityToAnchor(_entity, position) {
             let _anchor = this.getAnchor(position[0], position[1]);
@@ -4195,15 +4198,31 @@ var Script;
         }
         // @Björn auch hier das problem dass du den Bezug zu "this" verlierst. 
         // Lambda Funktionsschreibweise (s. VisualizeEntity.updatePosition Kommentar) ist der Weg das zu reparieren.
-        move(_ev) {
+        //TODO: check why move is not being called
+        async move(_ev) {
+            console.log("CALLED MOVE FUNCTION");
             //gets the moving entity and moves it
             this.moveEntityToAnchor(this.grid.get(_ev.detail.oldPosition), _ev.detail.position);
         }
-        addEventListeners() {
-            Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVED, this.updatePosition);
+        // updatePosition = async (_ev: FightEvent) => {
+        //     console.log("RECIEVD MOVE EVENT!!!");
+        //     await this.move(_ev);
+        // }
+        registerEventListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVED, this.eventListener);
         }
         removeEventListeners() {
-            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_MOVED, this.updatePosition);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_MOVED, this.eventListener);
+        }
+        async handleEvent(_ev) {
+            // this entity is doing something
+            switch (_ev.type) {
+                case Script.EVENT.ENTITY_MOVED: {
+                    console.log("RECIEVD MOVE EVENT!!!");
+                    await this.move(_ev);
+                    break;
+                }
+            }
         }
     }
     Script.VisualizeGrid = VisualizeGrid;

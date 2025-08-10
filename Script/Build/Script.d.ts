@@ -846,10 +846,11 @@ declare namespace Script {
         moveEntityToAnchor(_entity: VisualizeEntity, position: Position): void;
         getAnchor(_x: number, _z: number): ƒ.Node;
         nuke(): void;
-        move(_ev: FightEvent): void;
-        private updatePosition;
-        addEventListeners(): void;
+        move(_ev: FightEvent): Promise<void>;
+        registerEventListeners(): void;
         removeEventListeners(): void;
+        eventListener: (_ev: FightEvent) => Promise<void>;
+        handleEvent(_ev: FightEvent): Promise<void>;
     }
 }
 declare namespace Script {

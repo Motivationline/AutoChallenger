@@ -174,6 +174,7 @@ namespace Script {
                 await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIES, target: this, cause: _cause, detail: { amount } });
 
                 await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIED, target: this, cause: _cause, detail: { amount } });
+                
             }
             return this.currentHealth;
         }
@@ -270,6 +271,7 @@ namespace Script {
                         // ✓
                         await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVE, cause: this, detail: {entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance}});
                         await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVED, cause: this, detail: {entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance}});
+                        console.log("SEND MOVED EVENT!!!");
                         this.moved = true;
                         return true;
                     }
