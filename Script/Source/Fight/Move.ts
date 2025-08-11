@@ -42,8 +42,6 @@ namespace Script {
     // ✓
     // @Björn hier sollten noch ein paar asyncs und awaits rein
     export async function move(_grid: Grid<Entity>) {
-        console.log("start Grid: ");
-        console.log(_grid);
         //let grid: Grid<Entity> = _grid;
         let maxAlternatives: number = 0;
         let movedEntites: number = 0;
@@ -69,8 +67,6 @@ namespace Script {
             }
         }
         //all entities moved
-        console.log("moved Away Grid: ");
-        console.log(_grid);
     }
 
     export function getNextDirection(_rotateBy: number, _direction: Position): Position {
@@ -95,10 +91,10 @@ namespace Script {
 
     // calculate the next position based on the current position, the entities rotation and the step size
     export function getPositionBasedOnMove(_pos: Position, _direction: Position, _step: number, _rotateBy: number): Position {
-        console.log("direction: " + _direction + ", step: " + _step + ", position: " + _pos + ", rotateBy: " + _rotateBy);
+        //console.log("direction: " + _direction + ", step: " + _step + ", position: " + _pos + ", rotateBy: " + _rotateBy);
         let dir: Position = getNextDirection(_rotateBy, _direction);
         let pos: Position = [_step * dir[0] + _pos[0] , _step * dir[1] + _pos[1]];
-        console.log(" New direction: " + dir + ", New position: " + pos);
+        //console.log(" New direction: " + dir + ", New position: " + pos);
         return pos;
     }
 }

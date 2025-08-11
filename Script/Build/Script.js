@@ -154,8 +154,6 @@ var Script;
     // ✓
     // @Björn hier sollten noch ein paar asyncs und awaits rein
     async function move(_grid) {
-        console.log("start Grid: ");
-        console.log(_grid);
         //let grid: Grid<Entity> = _grid;
         let maxAlternatives = 0;
         let movedEntites = 0;
@@ -181,8 +179,6 @@ var Script;
             }
         }
         //all entities moved
-        console.log("moved Away Grid: ");
-        console.log(_grid);
     }
     Script.move = move;
     function getNextDirection(_rotateBy, _direction) {
@@ -206,10 +202,10 @@ var Script;
     Script.getNextDirection = getNextDirection;
     // calculate the next position based on the current position, the entities rotation and the step size
     function getPositionBasedOnMove(_pos, _direction, _step, _rotateBy) {
-        console.log("direction: " + _direction + ", step: " + _step + ", position: " + _pos + ", rotateBy: " + _rotateBy);
+        //console.log("direction: " + _direction + ", step: " + _step + ", position: " + _pos + ", rotateBy: " + _rotateBy);
         let dir = getNextDirection(_rotateBy, _direction);
         let pos = [_step * dir[0] + _pos[0], _step * dir[1] + _pos[1]];
-        console.log(" New direction: " + dir + ", New position: " + pos);
+        //console.log(" New direction: " + dir + ", New position: " + pos);
         return pos;
     }
     Script.getPositionBasedOnMove = getPositionBasedOnMove;
@@ -2859,14 +2855,11 @@ var Script;
                         // dann sollte das mit den abilities auch keine Fehler mehr schmeißen.
                         // ✓
                         await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVE, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
-                        console.log("SEND MOVED EVENT!!!");
                         await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVED, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
                         this.moved = true;
                         return true;
                     }
                 }
-                console.log("entity Grid: ");
-                console.log(_grid);
             }
             else { // if the entity has no move data we just pretend it already moved
                 this.moved = true;
@@ -4191,7 +4184,7 @@ var Script;
         getAnchor(_x, _z) {
             let anchor;
             let pointer = _z * 3 + _x;
-            console.log("pointer: " + pointer);
+            //console.log("pointer: " + pointer);
             anchor = this.sideNode.getChildByName(pointer.toString());
             return anchor;
         }
@@ -4204,16 +4197,9 @@ var Script;
         // Lambda Funktionsschreibweise (s. VisualizeEntity.updatePosition Kommentar) ist der Weg das zu reparieren.
         //TODO: check why move is not being called
         async move(_ev) {
-            console.log("CALLED MOVE FUNCTION");
             //gets the moving entity and moves it
-            console.log("Vis Grid: ", this);
-            console.log("try to get moved Entity at Position: ", _ev.detail.oldPosition, ", moving to: ", _ev.detail.position);
             this.moveEntityToAnchor(this.grid.get(_ev.detail.oldPosition), _ev.detail.position);
         }
-        // updatePosition = async (_ev: FightEvent) => {
-        //     console.log("RECIEVD MOVE EVENT!!!");
-        //     await this.move(_ev);
-        // }
         registerEventListeners() {
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVED, this.eventListener);
             Script.EventBus.addEventListener(Script.EVENT.RUN_END, this.eventListener);
@@ -4226,7 +4212,6 @@ var Script;
             // this entity is doing something
             switch (_ev.type) {
                 case Script.EVENT.ENTITY_MOVED: {
-                    console.log("RECIEVD MOVE EVENT!!!");
                     await this.move(_ev);
                     break;
                 }

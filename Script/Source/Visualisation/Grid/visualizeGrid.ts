@@ -80,7 +80,7 @@ namespace Script {
         getAnchor(_x: number, _z: number): ƒ.Node {
             let anchor: ƒ.Node;
             let pointer: number = _z * 3 + _x;
-            console.log("pointer: " + pointer);
+            //console.log("pointer: " + pointer);
             anchor = this.sideNode.getChildByName(pointer.toString());
             return anchor;
         }
@@ -95,17 +95,9 @@ namespace Script {
         // Lambda Funktionsschreibweise (s. VisualizeEntity.updatePosition Kommentar) ist der Weg das zu reparieren.
         //TODO: check why move is not being called
         async move(_ev: FightEvent) {
-            console.log("CALLED MOVE FUNCTION");
             //gets the moving entity and moves it
-            console.log("Vis Grid: ", this);
-            console.log("try to get moved Entity at Position: ",  _ev.detail.oldPosition, ", moving to: ", _ev.detail.position)
             this.moveEntityToAnchor(this.grid.get(_ev.detail.oldPosition), _ev.detail.position);
         }
-
-        // updatePosition = async (_ev: FightEvent) => {
-        //     console.log("RECIEVD MOVE EVENT!!!");
-        //     await this.move(_ev);
-        // }
 
         registerEventListeners(): void {
             EventBus.addEventListener(EVENT.ENTITY_MOVED, this.eventListener);
@@ -126,7 +118,6 @@ namespace Script {
             // this entity is doing something
             switch (_ev.type) {
                 case EVENT.ENTITY_MOVED: {
-                    console.log("RECIEVD MOVE EVENT!!!");
                     await this.move(_ev);
                     break;
                 }

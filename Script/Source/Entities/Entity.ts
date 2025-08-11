@@ -270,15 +270,11 @@ namespace Script {
                         // dann sollte das mit den abilities auch keine Fehler mehr schmeißen.
                         // ✓
                         await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVE, cause: this, detail: {entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance}});
-                        console.log("SEND MOVED EVENT!!!");
                         await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVED, cause: this, detail: {entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance}});
                         this.moved = true;
                         return true;
                     }
                 }
-
-                console.log("entity Grid: ");
-                console.log(_grid);
             } else {// if the entity has no move data we just pretend it already moved
                 this.moved = true;
                 return true;
