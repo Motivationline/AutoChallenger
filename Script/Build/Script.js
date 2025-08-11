@@ -4559,9 +4559,7 @@ var Script;
             switch (_spell.type) {
                 case Script.SPELL_TYPE.HEAL: {
                     await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HEAL, detail: { level: amount }, trigger: _spell, target: this, cause: _cause });
-                    // TODO: call Visualizer
-                    // TODO: prevent overheal?
-                    this.currentHealth += amount;
+                    this.currentHealth = Math.min(this.health, this.currentHealth + amount);
                     await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HEALED, detail: { level: amount }, trigger: _spell, target: this, cause: _cause });
                     await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_AFFECTED, detail: { level: amount }, trigger: _spell, target: this, cause: _cause });
                     break;
