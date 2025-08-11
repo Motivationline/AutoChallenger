@@ -3869,6 +3869,7 @@ var Script;
             //this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
             console.log("entity visualizer: move", { entity: _ev.detail.entity, oldPosition: _ev.detail.oldPosition, position: _ev.detail.position, direction: _ev.detail.direction, step: _ev.detail.step });
             await this.playAnimationIfPossible(Script.ANIMATION.MOVE);
+            //await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVED, cause: this.entity, detail: {entity: this.entity, position: this.entity.position, oldPosition: _ev.detail.oldPosition, direction: _ev.detail.currentDirection, step: _ev.detail.step}});
         }
         async useSpell(_ev) {
             console.log("entity visualizer: spell", { caster: this.entity, spell: _ev.trigger, targets: _ev.detail?.targets });
@@ -4210,9 +4211,11 @@ var Script;
         // }
         registerEventListeners() {
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVED, this.eventListener);
+            Script.EventBus.addEventListener(Script.EVENT.RUN_END, this.eventListener);
         }
         removeEventListeners() {
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_MOVED, this.eventListener);
+            Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.eventListener);
         }
         async handleEvent(_ev) {
             // this entity is doing something
@@ -4221,6 +4224,9 @@ var Script;
                     console.log("RECIEVD MOVE EVENT!!!");
                     await this.move(_ev);
                     break;
+                }
+                case Script.EVENT.RUN_END: {
+                    this.removeEventListeners;
                 }
             }
         }

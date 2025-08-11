@@ -56,6 +56,7 @@ namespace Script {
             //this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
             console.log("entity visualizer: move", {entity: _ev.detail.entity, oldPosition: _ev.detail.oldPosition, position: _ev.detail.position, direction: _ev.detail.direction, step: _ev.detail.step});
             await this.playAnimationIfPossible(ANIMATION.MOVE);
+            //await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVED, cause: this.entity, detail: {entity: this.entity, position: this.entity.position, oldPosition: _ev.detail.oldPosition, direction: _ev.detail.currentDirection, step: _ev.detail.step}});
         }
 
         async useSpell(_ev: FightEvent): Promise<void> {
