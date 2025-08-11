@@ -269,7 +269,8 @@ namespace Script {
         switch (_target.area.position) {
             case AREA_POSITION.RELATIVE_FIRST_IN_ROW: {
                 for (let i: number = 0; i < 3; i++) {
-                    if (_side.get([i, _self.position[1]])) {
+                    const entity = _side.get([i, _self.position[1]]);
+                    if (entity && !entity.untargetable) {
                         pos = [i, _self.position[1]]
                         break;
                     }
@@ -278,7 +279,8 @@ namespace Script {
             }
             case AREA_POSITION.RELATIVE_LAST_IN_ROW: {
                 for (let i: number = 2; i >= 0; i--) {
-                    if (_side.get([i, _self.position[1]])) {
+                    const entity = _side.get([i, _self.position[1]]);
+                    if (entity && !entity.untargetable) {
                         pos = [i, _self.position[1]]
                         break;
                     }

@@ -307,7 +307,8 @@ var Script;
         switch (_target.area.position) {
             case Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW: {
                 for (let i = 0; i < 3; i++) {
-                    if (_side.get([i, _self.position[1]])) {
+                    const entity = _side.get([i, _self.position[1]]);
+                    if (entity && !entity.untargetable) {
                         pos = [i, _self.position[1]];
                         break;
                     }
@@ -316,7 +317,8 @@ var Script;
             }
             case Script.AREA_POSITION.RELATIVE_LAST_IN_ROW: {
                 for (let i = 2; i >= 0; i--) {
-                    if (_side.get([i, _self.position[1]])) {
+                    const entity = _side.get([i, _self.position[1]]);
+                    if (entity && !entity.untargetable) {
                         pos = [i, _self.position[1]];
                         break;
                     }
@@ -5823,6 +5825,7 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_AFFECTED, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ROUND_END, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateTmpText);
+            Script.EventBus.addEventListener(Script.EVENT.EUMLING_LEVELUP, this.updateTmpText);
             this.addEventListener("nodeActivate" /* ƒ.EVENT.NODE_ACTIVATE */, this.addText);
             this.addEventListener("nodeDeactivate" /* ƒ.EVENT.NODE_DEACTIVATE */, this.removeText);
         }
@@ -5833,6 +5836,11 @@ var Script;
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_AFFECTED, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_DIES, this.eventListener);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_HURT, this.updateTmpText);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_AFFECTED, this.updateTmpText);
+            Script.EventBus.removeEventListener(Script.EVENT.ROUND_END, this.updateTmpText);
+            Script.EventBus.removeEventListener(Script.EVENT.ROUND_START, this.updateTmpText);
+            Script.EventBus.removeEventListener(Script.EVENT.EUMLING_LEVELUP, this.updateTmpText);
             this.removeEventListener("nodeActivate" /* ƒ.EVENT.NODE_ACTIVATE */, this.addText);
             this.removeEventListener("nodeDeactivate" /* ƒ.EVENT.NODE_DEACTIVATE */, this.removeText);
         }

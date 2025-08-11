@@ -194,11 +194,12 @@ namespace Script {
             EventBus.addEventListener(EVENT.ENTITY_AFFECTED, this.updateTmpText);
             EventBus.addEventListener(EVENT.ROUND_END, this.updateTmpText);
             EventBus.addEventListener(EVENT.ROUND_START, this.updateTmpText);
-
+            EventBus.addEventListener(EVENT.EUMLING_LEVELUP, this.updateTmpText);
+            
             this.addEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
             this.addEventListener(ƒ.EVENT.NODE_DEACTIVATE, this.removeText);
         }
-
+        
         removeEventListeners() {
             EventBus.removeEventListener(EVENT.RUN_END, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_ATTACK, this.eventListener);
@@ -207,6 +208,12 @@ namespace Script {
             EventBus.removeEventListener(EVENT.ENTITY_AFFECTED, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_DIES, this.eventListener);
 
+            EventBus.removeEventListener(EVENT.ENTITY_HURT, this.updateTmpText);
+            EventBus.removeEventListener(EVENT.ENTITY_AFFECTED, this.updateTmpText);
+            EventBus.removeEventListener(EVENT.ROUND_END, this.updateTmpText);
+            EventBus.removeEventListener(EVENT.ROUND_START, this.updateTmpText);
+            EventBus.removeEventListener(EVENT.EUMLING_LEVELUP, this.updateTmpText);
+            
             this.removeEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
             this.removeEventListener(ƒ.EVENT.NODE_DEACTIVATE, this.removeText);
         }
