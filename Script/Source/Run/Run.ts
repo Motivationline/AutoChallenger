@@ -24,7 +24,7 @@ namespace Script {
         ]
         #shopChance: number[] =
             [
-                1,
+                0,
                 0,
                 1,
                 0,
@@ -86,15 +86,18 @@ namespace Script {
 
         //#region Run
 
+        #lastStepWasShop: boolean = false;
         private async runStep(): Promise<boolean> {
             let encounter = await this.chooseNextEncounter();
             if (encounter < 0) { //shop
                 EventBus.dispatchEvent({ type: EVENT.SHOP_OPEN });
                 await EventBus.awaitSpecificEvent(EVENT.SHOP_CLOSE);
+                this.#lastStepWasShop = true;
                 return true;
             }
-
+            
             let nextFight = await this.nextEncounter(encounter);
+            this.#lastStepWasShop = false;
             await this.prepareFight(nextFight);
             let result = await this.runFight();
             if (result === FIGHT_RESULT.DEFEAT) {
@@ -108,8 +111,9 @@ namespace Script {
 
         //#region >  Prepare Fight
 
+
         private async chooseNextEncounter() {
-            const shopChance = this.#shopChance[this.progress];
+            const shopChance = this.#lastStepWasShop ? 0 : this.#shopChance[this.progress];
             const levelChances = this.#levelDifficultyChances[this.progress];
             const options: number[] = [];
             if (Math.random() < shopChance) {

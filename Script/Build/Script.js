@@ -3394,6 +3394,7 @@ var Script;
         }
         setupStonesToBuy() {
             this.stoneBuyButton.disabled = true;
+            this.stonesRefreshButton.disabled = Script.Run.currentRun.gold < COST.REFRESH;
             this.stonesInfo.innerText = "";
             const existingStones = Script.Run.currentRun.stones.map((stone) => stone.data);
             const newStones = Script.chooseRandomElementsFromArray(Script.Provider.data.stones, 2, existingStones);
@@ -5265,7 +5266,7 @@ var Script;
                 [0, 0, 1],
             ];
             this.#shopChance = [
-                1,
+                0,
                 0,
                 1,
                 0,
@@ -5276,6 +5277,9 @@ var Script;
                 1,
                 0,
             ];
+            //#endregion
+            //#region Run
+            this.#lastStepWasShop = false;
             //#region Eventlisteners
             this.handleGoldAbility = async (_ev) => {
                 if (!_ev.trigger)
@@ -5330,14 +5334,17 @@ var Script;
         }
         //#endregion
         //#region Run
+        #lastStepWasShop;
         async runStep() {
             let encounter = await this.chooseNextEncounter();
             if (encounter < 0) { //shop
                 Script.EventBus.dispatchEvent({ type: Script.EVENT.SHOP_OPEN });
                 await Script.EventBus.awaitSpecificEvent(Script.EVENT.SHOP_CLOSE);
+                this.#lastStepWasShop = true;
                 return true;
             }
             let nextFight = await this.nextEncounter(encounter);
+            this.#lastStepWasShop = false;
             await this.prepareFight(nextFight);
             let result = await this.runFight();
             if (result === Script.FIGHT_RESULT.DEFEAT) {
@@ -5348,7 +5355,7 @@ var Script;
         }
         //#region >  Prepare Fight
         async chooseNextEncounter() {
-            const shopChance = this.#shopChance[this.progress];
+            const shopChance = this.#lastStepWasShop ? 0 : this.#shopChance[this.progress];
             const levelChances = this.#levelDifficultyChances[this.progress];
             const options = [];
             if (Math.random() < shopChance) {

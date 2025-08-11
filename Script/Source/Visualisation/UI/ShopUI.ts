@@ -44,9 +44,11 @@ namespace Script {
         selectedStone: Stone;
         private setupStonesToBuy() {
             this.stoneBuyButton.disabled = true;
+            this.stonesRefreshButton.disabled = Run.currentRun.gold < COST.REFRESH;
             this.stonesInfo.innerText = "";
             const existingStones = Run.currentRun.stones.map((stone) => stone.data);
             const newStones = chooseRandomElementsFromArray(Provider.data.stones, 2, existingStones);
+            
             if (newStones.length === 0) {
                 this.stonesWrapper.replaceChildren(createElementAdvanced("p", { innerHTML: "No more stones available." }));
                 this.stonesRefreshButton.disabled = true;
