@@ -94,7 +94,7 @@ namespace Script {
             // TODO: moves
             // @Björn hier die move mit dem aktiven grid aufrufen (und abwarten)
             // ✓
-            await move(_active as Grid<Entity>); //TODO: move benutzt Grid<Entity>, weil manche veriablen nicht in IEntity vorhanden sind
+            await move(_active as Grid<Entity>);
             // spells
             await _active.forEachElementAsync(async (el) => {
                 await el.useSpell(_active, _passive);

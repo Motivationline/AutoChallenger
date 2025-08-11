@@ -1858,7 +1858,7 @@ var Script;
             // TODO: moves
             // @Björn hier die move mit dem aktiven grid aufrufen (und abwarten)
             // ✓
-            await Script.move(_active); //TODO: move benutzt Grid<Entity>, weil manche veriablen nicht in IEntity vorhanden sind
+            await Script.move(_active);
             // spells
             await _active.forEachElementAsync(async (el) => {
                 await el.useSpell(_active, _passive);
@@ -2859,8 +2859,8 @@ var Script;
                         // dann sollte das mit den abilities auch keine Fehler mehr schmeißen.
                         // ✓
                         await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVE, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
-                        await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVED, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
                         console.log("SEND MOVED EVENT!!!");
+                        await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVED, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
                         this.moved = true;
                         return true;
                     }
@@ -4184,7 +4184,9 @@ var Script;
             let _anchor = this.getAnchor(position[0], position[1]);
             //get the Positions from the placeholders and translate the entity to it
             let pos3 = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
+            console.log(_entity);
             _entity.mtxLocal.translation = pos3.clone;
+            this.grid.set(position, _entity, true);
         }
         getAnchor(_x, _z) {
             let anchor;
@@ -4204,6 +4206,8 @@ var Script;
         async move(_ev) {
             console.log("CALLED MOVE FUNCTION");
             //gets the moving entity and moves it
+            console.log("Vis Grid: ", this);
+            console.log("try to get moved Entity at Position: ", _ev.detail.oldPosition, ", moving to: ", _ev.detail.position);
             this.moveEntityToAnchor(this.grid.get(_ev.detail.oldPosition), _ev.detail.position);
         }
         // updatePosition = async (_ev: FightEvent) => {

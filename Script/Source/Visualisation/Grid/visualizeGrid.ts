@@ -72,7 +72,9 @@ namespace Script {
 
             //get the Positions from the placeholders and translate the entity to it
             let pos3: ƒ.Vector3 = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
+            console.log(_entity);
             _entity.mtxLocal.translation = pos3.clone;
+            this.grid.set(position, _entity, true);
         }
 
         getAnchor(_x: number, _z: number): ƒ.Node {
@@ -95,6 +97,8 @@ namespace Script {
         async move(_ev: FightEvent) {
             console.log("CALLED MOVE FUNCTION");
             //gets the moving entity and moves it
+            console.log("Vis Grid: ", this);
+            console.log("try to get moved Entity at Position: ",  _ev.detail.oldPosition, ", moving to: ", _ev.detail.position)
             this.moveEntityToAnchor(this.grid.get(_ev.detail.oldPosition), _ev.detail.position);
         }
 
