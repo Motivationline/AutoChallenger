@@ -17,6 +17,7 @@ namespace Script {
 
         private entity: IEntity;
         private cmpAnimation: ƒ.ComponentAnimation;
+        private cmpAudio: ComponentAudioMixed;
         public defaultAnimation: ƒ.Animation;
         //private grid: VisualizeGridNull;
         // TODO: remove this again when it's not needed anymore.
@@ -42,6 +43,9 @@ namespace Script {
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
             this.addEventListeners();
+
+            this.cmpAudio = new ComponentAudioMixed(undefined, false, false, undefined, AUDIO_CHANNEL.SOUNDS);
+            this.addComponent(this.cmpAudio);
         }
 
         // async idle(): Promise<void> {
@@ -131,20 +135,35 @@ namespace Script {
 
         public async playAnimationIfPossible(_anim: ANIMATION | ƒ.Animation) {
             let animation: ƒ.Animation;
+            let audio: ƒ.Audio;
             if (typeof _anim === "string") {
                 if (!this.cmpAnimation) return this.showFallbackText(_anim);
                 animation = AnimationLink.linkedAnimations.get(this.entity.id)?.get(_anim);
                 if (!animation && this.entity.id.includes("Eumling")) animation = AnimationLink.linkedAnimations.get("defaultEumling")?.get(_anim);
                 if (!animation) return this.showFallbackText(_anim);
+                audio = AnimationLink.linkedAudio.get(this.entity.id)?.get(_anim);
+                if (!audio && this.entity.id.includes("Eumling")) audio = AnimationLink.linkedAudio.get("defaultEumling")?.get(_anim);
             } else {
                 animation = _anim;
             }
             this.cmpAnimation.animation = animation;
             this.cmpAnimation.time = 0;
+            if (audio) {
+                this.cmpAudio.setAudio(audio);
+                this.cmpAudio.play(true);
+                this.cmpAudio.loop = false;
+            }
             // console.log({ totalTime: animation.totalTime });
             await waitMS(animation.totalTime);
+            this.cmpAudio.play(false);
             this.cmpAnimation.animation = this.defaultAnimation; // TODO: check if we should instead default back to idle or nothing at all
-
+            audio = AnimationLink.linkedAudio.get(this.entity.id)?.get(ANIMATION.IDLE);
+            if (!audio && this.entity.id.includes("Eumling")) audio = AnimationLink.linkedAudio.get("defaultEumling")?.get(ANIMATION.IDLE);
+            if (audio) {
+                this.cmpAudio.setAudio(audio);
+                this.cmpAudio.play(true);
+                this.cmpAudio.loop = true;
+            }
         }
         private async showFallbackText(_text: string) {
             let node = await getCloneNodeFromRegistry(_text);
@@ -195,11 +214,11 @@ namespace Script {
             EventBus.addEventListener(EVENT.ROUND_END, this.updateTmpText);
             EventBus.addEventListener(EVENT.ROUND_START, this.updateTmpText);
             EventBus.addEventListener(EVENT.EUMLING_LEVELUP, this.updateTmpText);
-            
+
             this.addEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
             this.addEventListener(ƒ.EVENT.NODE_DEACTIVATE, this.removeText);
         }
-        
+
         removeEventListeners() {
             EventBus.removeEventListener(EVENT.RUN_END, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_ATTACK, this.eventListener);
@@ -213,7 +232,7 @@ namespace Script {
             EventBus.removeEventListener(EVENT.ROUND_END, this.updateTmpText);
             EventBus.removeEventListener(EVENT.ROUND_START, this.updateTmpText);
             EventBus.removeEventListener(EVENT.EUMLING_LEVELUP, this.updateTmpText);
-            
+
             this.removeEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
             this.removeEventListener(ƒ.EVENT.NODE_DEACTIVATE, this.removeText);
         }

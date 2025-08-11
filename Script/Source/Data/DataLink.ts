@@ -37,11 +37,14 @@ namespace Script {
     @ƒ.serialize
     export class AnimationLink extends ƒ.Component {
         public static linkedAnimations: Map<string, Map<ANIMATION, ƒ.Animation>> = new Map();
+        public static linkedAudio: Map<string, Map<ANIMATION, ƒ.Audio>> = new Map();
 
         protected singleton: boolean = false;
 
         @ƒ.serialize(ƒ.Animation)
         animation: ƒ.Animation;
+        @ƒ.serialize(ƒ.Audio)
+        audio: ƒ.Audio;
 
         @ƒ.serialize(ANIMATION)
         animType: ANIMATION;
@@ -56,8 +59,10 @@ namespace Script {
                     if (!link) return;
                     if (!AnimationLink.linkedAnimations.has(link.id)) {
                         AnimationLink.linkedAnimations.set(link.id, new Map());
+                        AnimationLink.linkedAudio.set(link.id, new Map());
                     }
                     AnimationLink.linkedAnimations.get(link.id).set(this.animType, this.animation);
+                    AnimationLink.linkedAudio.get(link.id).set(this.animType, this.audio);
                 }
             });
         }

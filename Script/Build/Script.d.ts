@@ -539,8 +539,10 @@ declare namespace Script {
     }
     class AnimationLink extends ƒ.Component {
         static linkedAnimations: Map<string, Map<ANIMATION, ƒ.Animation>>;
+        static linkedAudio: Map<string, Map<ANIMATION, ƒ.Audio>>;
         protected singleton: boolean;
         animation: ƒ.Animation;
+        audio: ƒ.Audio;
         animType: ANIMATION;
         constructor();
     }
@@ -698,6 +700,7 @@ declare namespace Script {
     let viewport: ƒ.Viewport;
     function startLoading(): Promise<void>;
     function run(): Promise<void>;
+    function setupSounds(camera: ƒ.Node): void;
 }
 declare namespace Script {
     import ƒ = FudgeCore;
@@ -1131,6 +1134,7 @@ declare namespace Script {
     class VisualizeEntity extends ƒ.Node {
         private entity;
         private cmpAnimation;
+        private cmpAudio;
         defaultAnimation: ƒ.Animation;
         private tmpText;
         constructor(_entity: IEntity);

@@ -15,6 +15,7 @@ namespace Script {
 
   export async function startLoading() {
     if (ƒ.Project.mode === ƒ.MODE.EDITOR) return;
+
     new MusicManager();
 
     Provider.GUI.addUI("loading");
@@ -44,5 +45,10 @@ namespace Script {
   export async function run() {
     const run = new Run();
     run.start();
+  }
+
+  export function setupSounds(camera: ƒ.Node){
+    ƒ.AudioManager.default.listenTo(viewport.getBranch());
+    ƒ.AudioManager.default.listenWith(camera.getComponent(ƒ.ComponentAudioListener));
   }
 }

@@ -48,6 +48,8 @@ namespace Script {
 
             _viewport.initialize("Viewport", fightScene, this.camera, document.querySelector("canvas"));
             _viewport.draw();
+
+            setupSounds(this.camera.node);
         }
         addToScene(_el: ƒ.Node): void {
             this.root.addChild(_el);

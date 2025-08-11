@@ -2384,6 +2384,7 @@ var Script;
             fightScene.addChild(this.root);
             _viewport.initialize("Viewport", fightScene, this.camera, document.querySelector("canvas"));
             _viewport.draw();
+            Script.setupSounds(this.camera.node);
         }
         addToScene(_el) {
             this.root.addChild(_el);
@@ -2787,6 +2788,9 @@ var Script;
         let _animation_decorators;
         let _animation_initializers = [];
         let _animation_extraInitializers = [];
+        let _audio_decorators;
+        let _audio_initializers = [];
+        let _audio_extraInitializers = [];
         let _animType_decorators;
         let _animType_initializers = [];
         let _animType_extraInitializers = [];
@@ -2795,19 +2799,23 @@ var Script;
             static {
                 const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
                 _animation_decorators = [ƒ.serialize(ƒ.Animation)];
+                _audio_decorators = [ƒ.serialize(ƒ.Audio)];
                 _animType_decorators = [ƒ.serialize(ANIMATION)];
                 __esDecorate(null, null, _animation_decorators, { kind: "field", name: "animation", static: false, private: false, access: { has: obj => "animation" in obj, get: obj => obj.animation, set: (obj, value) => { obj.animation = value; } }, metadata: _metadata }, _animation_initializers, _animation_extraInitializers);
+                __esDecorate(null, null, _audio_decorators, { kind: "field", name: "audio", static: false, private: false, access: { has: obj => "audio" in obj, get: obj => obj.audio, set: (obj, value) => { obj.audio = value; } }, metadata: _metadata }, _audio_initializers, _audio_extraInitializers);
                 __esDecorate(null, null, _animType_decorators, { kind: "field", name: "animType", static: false, private: false, access: { has: obj => "animType" in obj, get: obj => obj.animType, set: (obj, value) => { obj.animType = value; } }, metadata: _metadata }, _animType_initializers, _animType_extraInitializers);
                 __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
                 AnimationLink = _classThis = _classDescriptor.value;
                 if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
             }
             static { this.linkedAnimations = new Map(); }
+            static { this.linkedAudio = new Map(); }
             constructor() {
                 super();
                 this.singleton = false;
                 this.animation = __runInitializers(this, _animation_initializers, void 0);
-                this.animType = (__runInitializers(this, _animation_extraInitializers), __runInitializers(this, _animType_initializers, void 0));
+                this.audio = (__runInitializers(this, _animation_extraInitializers), __runInitializers(this, _audio_initializers, void 0));
+                this.animType = (__runInitializers(this, _audio_extraInitializers), __runInitializers(this, _animType_initializers, void 0));
                 __runInitializers(this, _animType_extraInitializers);
                 if (ƒ.Project.mode === ƒ.MODE.EDITOR)
                     return;
@@ -2818,8 +2826,10 @@ var Script;
                             return;
                         if (!AnimationLink.linkedAnimations.has(link.id)) {
                             AnimationLink.linkedAnimations.set(link.id, new Map());
+                            AnimationLink.linkedAudio.set(link.id, new Map());
                         }
                         AnimationLink.linkedAnimations.get(link.id).set(this.animType, this.animation);
+                        AnimationLink.linkedAudio.get(link.id).set(this.animType, this.audio);
                     }
                 });
             }
@@ -3743,6 +3753,11 @@ var Script;
         run.start();
     }
     Script.run = run;
+    function setupSounds(camera) {
+        ƒ.AudioManager.default.listenTo(Script.viewport.getBranch());
+        ƒ.AudioManager.default.listenWith(camera.getComponent(ƒ.ComponentAudioListener));
+    }
+    Script.setupSounds = setupSounds;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -5704,6 +5719,8 @@ var Script;
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
             this.addEventListeners();
+            this.cmpAudio = new Script.ComponentAudioMixed(undefined, false, false, undefined, Script.AUDIO_CHANNEL.SOUNDS);
+            this.addComponent(this.cmpAudio);
         }
         // async idle(): Promise<void> {
         //     // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
@@ -5783,6 +5800,7 @@ var Script;
         }
         async playAnimationIfPossible(_anim) {
             let animation;
+            let audio;
             if (typeof _anim === "string") {
                 if (!this.cmpAnimation)
                     return this.showFallbackText(_anim);
@@ -5791,15 +5809,32 @@ var Script;
                     animation = Script.AnimationLink.linkedAnimations.get("defaultEumling")?.get(_anim);
                 if (!animation)
                     return this.showFallbackText(_anim);
+                audio = Script.AnimationLink.linkedAudio.get(this.entity.id)?.get(_anim);
+                if (!audio && this.entity.id.includes("Eumling"))
+                    audio = Script.AnimationLink.linkedAudio.get("defaultEumling")?.get(_anim);
             }
             else {
                 animation = _anim;
             }
             this.cmpAnimation.animation = animation;
             this.cmpAnimation.time = 0;
+            if (audio) {
+                this.cmpAudio.setAudio(audio);
+                this.cmpAudio.play(true);
+                this.cmpAudio.loop = false;
+            }
             // console.log({ totalTime: animation.totalTime });
             await Script.waitMS(animation.totalTime);
+            this.cmpAudio.play(false);
             this.cmpAnimation.animation = this.defaultAnimation; // TODO: check if we should instead default back to idle or nothing at all
+            audio = Script.AnimationLink.linkedAudio.get(this.entity.id)?.get(Script.ANIMATION.IDLE);
+            if (!audio && this.entity.id.includes("Eumling"))
+                audio = Script.AnimationLink.linkedAudio.get("defaultEumling")?.get(Script.ANIMATION.IDLE);
+            if (audio) {
+                this.cmpAudio.setAudio(audio);
+                this.cmpAudio.play(true);
+                this.cmpAudio.loop = true;
+            }
         }
         async showFallbackText(_text) {
             let node = await Script.getCloneNodeFromRegistry(_text);
