@@ -3796,10 +3796,10 @@ var Script;
             let entityVis = Script.Provider.visualizer.getEntity(entity);
             let pos = this.home.grid.findElementPosition(entityVis);
             if (pos)
-                this.home.removeEntityFromGrid(pos);
+                this.home.removeEntityFromGrid(pos, true);
             pos = this.away.grid.findElementPosition(entityVis);
             if (pos)
-                this.away.removeEntityFromGrid(pos);
+                this.away.removeEntityFromGrid(pos, true);
         }
         addEventListeners() {
             this.#listeners.set(Script.EVENT.FIGHT_START, this.fightStart);
@@ -4153,12 +4153,12 @@ var Script;
             if (Script.Grid.outOfBounds(_pos))
                 return;
             if (_removeExisting) {
-                this.removeEntityFromGrid(_pos);
+                this.removeEntityFromGrid(_pos, false);
             }
             // remove this entity if it's already somewhere in the grid
             this.grid.forEachElement((entity, pos) => {
                 if (entity === _entity)
-                    this.removeEntityFromGrid(pos);
+                    this.removeEntityFromGrid(pos, false);
             });
             // if (!_anchor) {
             //     /**Anchors are named from 0-8 */
@@ -4169,7 +4169,7 @@ var Script;
             this.addChild(_entity);
             this.grid.set(_pos, _entity, true);
         }
-        removeEntityFromGrid(_pos) {
+        removeEntityFromGrid(_pos, _removeListeners) {
             if (Script.Grid.outOfBounds(_pos))
                 return;
             let elementToRemove = this.grid.get(_pos);
@@ -4177,7 +4177,8 @@ var Script;
                 return;
             this.grid.remove(_pos);
             this.removeChild(elementToRemove);
-            elementToRemove.removeEventListeners();
+            if (_removeListeners)
+                elementToRemove.removeEventListeners();
         }
         moveEntityToAnchor(_entity, position) {
             let _anchor = this.getAnchor(position[0], position[1]);
@@ -4194,7 +4195,7 @@ var Script;
         }
         nuke() {
             this.grid.forEachElement((_el, pos) => {
-                this.removeEntityFromGrid(pos);
+                this.removeEntityFromGrid(pos, true);
             });
         }
         // @Björn auch hier das problem dass du den Bezug zu "this" verlierst. 

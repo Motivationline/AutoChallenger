@@ -842,7 +842,7 @@ declare namespace Script {
         sideNode: ƒ.Node;
         constructor(_grid: Grid<VisualizeEntity>, _side: string);
         addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting?: boolean, _anchor?: ƒ.Node): void;
-        removeEntityFromGrid(_pos: Position): void;
+        removeEntityFromGrid(_pos: Position, _removeListeners: boolean): void;
         moveEntityToAnchor(_entity: VisualizeEntity, position: Position): void;
         getAnchor(_x: number, _z: number): ƒ.Node;
         nuke(): void;

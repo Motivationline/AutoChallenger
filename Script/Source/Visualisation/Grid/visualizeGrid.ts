@@ -39,11 +39,11 @@ namespace Script {
         addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting: boolean = true, _anchor?: ƒ.Node) {
             if (Grid.outOfBounds(_pos)) return;
             if (_removeExisting) {
-                this.removeEntityFromGrid(_pos);
+                this.removeEntityFromGrid(_pos, false);
             }
             // remove this entity if it's already somewhere in the grid
             this.grid.forEachElement((entity, pos) => {
-                if (entity === _entity) this.removeEntityFromGrid(pos);
+                if (entity === _entity) this.removeEntityFromGrid(pos, false);
             });
 
             // if (!_anchor) {
@@ -57,13 +57,14 @@ namespace Script {
             this.grid.set(_pos, _entity, true);
         }
 
-        removeEntityFromGrid(_pos: Position) {
+        removeEntityFromGrid(_pos: Position, _removeListeners: boolean) {
             if (Grid.outOfBounds(_pos)) return;
             let elementToRemove = this.grid.get(_pos);
             if (!elementToRemove) return;
             this.grid.remove(_pos);
             this.removeChild(elementToRemove);
-            elementToRemove.removeEventListeners();
+            if (_removeListeners)
+                elementToRemove.removeEventListeners();
         }
 
         moveEntityToAnchor(_entity: VisualizeEntity, position: Position) {
@@ -84,7 +85,7 @@ namespace Script {
 
         nuke() {
             this.grid.forEachElement((_el, pos) => {
-                this.removeEntityFromGrid(pos);
+                this.removeEntityFromGrid(pos, true);
             })
         }
 
