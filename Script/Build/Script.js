@@ -4147,7 +4147,7 @@ var Script;
             this.grid.forEachElement((element, pos) => {
                 this.addEntityToGrid(element, pos, false);
             });
-            this.registerEventListeners;
+            this.registerEventListeners();
         }
         addEntityToGrid(_entity, _pos, _removeExisting = true, _anchor) {
             if (Script.Grid.outOfBounds(_pos))

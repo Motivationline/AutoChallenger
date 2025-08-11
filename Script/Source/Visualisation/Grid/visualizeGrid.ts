@@ -32,8 +32,7 @@ namespace Script {
             this.grid.forEachElement((element, pos) => {
                 this.addEntityToGrid(element, pos, false);
             });
-
-            this.registerEventListeners;
+            this.registerEventListeners();
         }
 
         addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting: boolean = true, _anchor?: ƒ.Node) {
@@ -55,6 +54,7 @@ namespace Script {
             this.moveEntityToAnchor(_entity, _pos);
             this.addChild(_entity);
             this.grid.set(_pos, _entity, true);
+            
         }
 
         removeEntityFromGrid(_pos: Position, _removeListeners: boolean) {
