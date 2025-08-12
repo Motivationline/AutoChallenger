@@ -2390,6 +2390,24 @@
       "type": "Graph"
     }
   },
+  "AnimationGLTF|2025-08-07T14:07:16.752Z|05018": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-08-07T14:07:16.752Z|05018",
+      "name": "cc_hurt",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\CactusCrawler\\CactusCrawler.glb",
+      "events": {}
+    }
+  },
+  "AnimationGLTF|2025-08-07T14:07:16.746Z|17360": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-08-07T14:07:16.746Z|17360",
+      "name": "cc_die",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\CactusCrawler\\CactusCrawler.glb",
+      "events": {}
+    }
+  },
   "Graph|2025-06-27T09:55:25.933Z|86643": {
     "ƒ.Graph": {
       "name": "CactusCrawler",
@@ -3693,6 +3711,15 @@
       "events": {}
     }
   },
+  "AnimationGLTF|2025-08-07T14:09:09.279Z|95645": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-08-07T14:09:09.279Z|95645",
+      "name": "SandSitter_hurt",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\SandSitter\\SandSitter.glb",
+      "events": {}
+    }
+  },
   "Graph|2025-07-04T10:21:05.334Z|07945": {
     "ƒ.Graph": {
       "name": "SandSitter",
@@ -4619,31 +4646,111 @@
       "type": "Graph"
     }
   },
-  "AnimationGLTF|2025-08-07T14:07:16.746Z|17360": {
+  "GraphGLTF|2025-08-12T07:52:35.306Z|04450": {
+    "ƒ.GraphGLTF": {
+      "name": "Scene",
+      "active": true,
+      "components": {
+        "ComponentAnimation": [
+          {
+            "ƒ.ComponentAnimation": {
+              "Component": {
+                "active": true
+              },
+              "idAnimation": "AnimationGLTF|2025-08-12T07:52:35.307Z|72746",
+              "playmode": "loop",
+              "quantization": "continous",
+              "scale": 1,
+              "scaleWithGameTime": true,
+              "animateInEditor": true
+            }
+          }
+        ]
+      },
+      "idResource": "GraphGLTF|2025-08-12T07:52:35.306Z|04450",
+      "type": "GraphGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\FloppyFish\\FloppyFish.glb"
+    }
+  },
+  "AnimationGLTF|2025-08-12T07:52:35.307Z|72746": {
     "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-08-07T14:07:16.746Z|17360",
-      "name": "cc_die",
+      "idResource": "AnimationGLTF|2025-08-12T07:52:35.307Z|72746",
+      "name": "FF_idle",
       "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Enemies\\CactusCrawler\\CactusCrawler.glb",
+      "url": "Assets\\GLTFs\\Enemies\\FloppyFish\\FloppyFish.glb",
       "events": {}
     }
   },
-  "AnimationGLTF|2025-08-07T14:07:16.752Z|05018": {
+  "AnimationGLTF|2025-08-12T07:52:35.308Z|28479": {
     "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-08-07T14:07:16.752Z|05018",
-      "name": "cc_hurt",
+      "idResource": "AnimationGLTF|2025-08-12T07:52:35.308Z|28479",
+      "name": "MouthOpen",
       "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Enemies\\CactusCrawler\\CactusCrawler.glb",
+      "url": "Assets\\GLTFs\\Enemies\\FloppyFish\\FloppyFish.glb",
       "events": {}
     }
   },
-  "AnimationGLTF|2025-08-07T14:09:09.279Z|95645": {
-    "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-08-07T14:09:09.279Z|95645",
-      "name": "SandSitter_hurt",
-      "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Enemies\\SandSitter\\SandSitter.glb",
-      "events": {}
+  "Graph|2025-08-12T07:53:00.240Z|80834": {
+    "ƒ.Graph": {
+      "name": "FloppyFish",
+      "active": true,
+      "components": {
+        "DataLink": [
+          {
+            "Script.DataLink": {
+              "active": true,
+              "id": "floppyFish"
+            }
+          }
+        ],
+        "AnimationLink": [
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-08-12T07:52:35.307Z|72746",
+              "animType": "idle"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-08-12T07:52:35.307Z|72746",
+              "animType": "hurt"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-08-12T07:52:35.307Z|72746",
+              "animType": "attack"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-08-12T07:52:35.307Z|72746",
+              "animType": "move"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-08-12T07:52:35.307Z|72746",
+              "animType": "die"
+            }
+          }
+        ]
+      },
+      "children": [
+        {
+          "ƒ.GraphInstance": {
+            "deserializeFromSource": true,
+            "idSource": "GraphGLTF|2025-08-12T07:52:35.306Z|04450"
+          }
+        }
+      ],
+      "idResource": "Graph|2025-08-12T07:53:00.240Z|80834",
+      "type": "Graph"
     }
   }
 }

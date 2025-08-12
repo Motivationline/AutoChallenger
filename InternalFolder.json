@@ -341,6 +341,38 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "FloppyFish",
+                "entries": [
+                  {
+                    "name": "Model",
+                    "entries": [
+                      {
+                        "idResource": "GraphGLTF|2025-08-12T07:52:35.306Z|04450"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Prefab",
+                    "entries": [
+                      {
+                        "idResource": "Graph|2025-08-12T07:53:00.240Z|80834"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Animation",
+                    "entries": [
+                      {
+                        "idResource": "AnimationGLTF|2025-08-12T07:52:35.307Z|72746"
+                      },
+                      {
+                        "idResource": "AnimationGLTF|2025-08-12T07:52:35.308Z|28479"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           },
