@@ -91,9 +91,6 @@ namespace Script {
             })
         }
 
-        // @Björn auch hier das problem dass du den Bezug zu "this" verlierst. 
-        // Lambda Funktionsschreibweise (s. VisualizeEntity.updatePosition Kommentar) ist der Weg das zu reparieren.
-        //TODO: check why move is not being called
         async move(_ev: FightEvent) {
             //gets the moving entity and moves it
             this.moveEntityToAnchor(this.grid.get(_ev.detail.oldPosition), _ev.detail.position);

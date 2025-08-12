@@ -53,10 +53,8 @@ namespace Script {
         }
 
         async move(_ev: FightEvent): Promise<void> {
-            //this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
             console.log("entity visualizer: move", {entity: _ev.detail.entity, oldPosition: _ev.detail.oldPosition, position: _ev.detail.position, direction: _ev.detail.direction, step: _ev.detail.step});
             await this.playAnimationIfPossible(ANIMATION.MOVE);
-            //await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVED, cause: this.entity, detail: {entity: this.entity, position: this.entity.position, oldPosition: _ev.detail.oldPosition, direction: _ev.detail.currentDirection, step: _ev.detail.step}});
         }
 
         async useSpell(_ev: FightEvent): Promise<void> {
@@ -166,11 +164,6 @@ namespace Script {
             this.tmpText.texture.text = effectText;
         }
 
-        // @Björn das Problem ist, dass wenn du es so aufrufst, du `this` verlierst.
-        // um das zu fixen musst du eine lambda funktion benutzen, also private updatePosition = () => { this.move() }
-        // wie es auch bei eventListener unten gemacht ist. Und der bekommt aktuell ja auch noch jedes Event mit, nicht nur das von der eigenen Entity.
-        // In dem Fall kannst du es aber auch einfach in die eventListener/handleEvent Systematik unten mit einbauen, da wird das alles schon behandelt.
-
         getEntity(): Readonly<IEntity> {
             return this.entity;
         }
@@ -187,8 +180,6 @@ namespace Script {
             EventBus.addEventListener(EVENT.ENTITY_AFFECTED, this.updateTmpText);
             EventBus.addEventListener(EVENT.ROUND_END, this.updateTmpText);
             EventBus.addEventListener(EVENT.ROUND_START, this.updateTmpText);
-
-            // @Björn besser EntityMove (ohne d) für die visuelle Darstellung nutzen. denk auch dran den wieder zu entfernen
             EventBus.addEventListener(EVENT.ENTITY_MOVE, this.eventListener);
         }
 
@@ -218,7 +209,6 @@ namespace Script {
                         await this.useSpell(_ev);
                         break;
                     }
-                    // @Björn hier könntest du die move einbauen
                     case EVENT.ENTITY_MOVE:{
                         await this.move(_ev)
                         break;

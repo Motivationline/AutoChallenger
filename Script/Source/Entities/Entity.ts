@@ -224,51 +224,30 @@ namespace Script {
         }
 
         async move(): Promise<void> {
-            //this.moves?; //move data of the entity
-
-            //let occupiedSpots: Position[];
-            //newGrid.forEachElement((el) => (occupiedSpots.push(el.position)));//get the positions from entities in the Grid
-
-            //let newPos: Position = this.moveMePls(move, this.position, occupiedSpots);
-            //this.position = newPos;
-
         }
 
         async tryToMove(_grid: Grid<Entity>, maxAlternatives: number): Promise<boolean> {
-            //let grid: Grid<Entity> = _grid;
             //check if the Entity has move data
             let moveData: MoveData;
-            moveData = this.select(this.moves, true)[0];//TODO: funktioniert das???? // @Björn das sucht dir alle moves raus die es machen soll - du nimmst aber nur den ersten. Im Moment geht das weil da immer nur einer zurück kommt.
-            if (moveData) { // @Björn hier ggf besser auf moveData testen
-                // ✓
+            //TODO: get all moves
+            moveData = this.select(this.moves, true)[0];// @Björn das sucht dir alle moves raus die es machen soll - du nimmst aber nur den ersten. Im Moment geht das weil da immer nur einer zurück kommt.
+            if (moveData) {
                 for (let i = 0; i <= maxAlternatives && i <= moveData.blocked.attempts; i++) {
-                    // @Björn hier fehlt noch die aktuelle rotation - die wird aktuell noch in nextPositionBasedOnThisRotation einberechnet, aber siehe meinen Kommentar dort
-                    // Außerdem solltest du nicht mit blocked.attempts multiplizieren sondern blocked.rotateBy
-                    // ✓
                     let rotateBy: number = moveData.rotateBy + i * moveData.blocked.rotateBy;
-
+                    //get the new position
                     let nextPosition: Position = getPositionBasedOnMove(this.position, this.currentDirection, moveData.distance, rotateBy);
-
+                    //get the new direction
                     let nextDirection: Position =  getNextDirection(rotateBy, this.currentDirection);
                     //check if the position is occupied or out of bounds
                     if (_grid.get(nextPosition) || Grid.outOfBounds(nextPosition)) {
-                        // @Björn hier nicht komplett abbrechen, nur zur for schleife zurück springen ("continue")
-                        // sonst wird immer nur die standard variante getestet, nie die alternativen.
-                        // ✓
                         continue;
                     } else if (_grid.get(nextPosition) == undefined) { //spot is free
-                        // @Björn hier noch den optionalen dritten parameter auf true setzen damit die entity nicht zweimal im grid ist
-                        // ✓
-                        //TODO: Fix entities being undefined.
+                        //set the entity at the new position in the grid and remove the old one
                         _grid.set(nextPosition, this, true);
                         let oldPos = this.position;
                         this.position = nextPosition;
                         this.currentDirection = nextDirection;
-                        // @Björn hier wäre der richtige Zeitpunkt für das EntityMove Event
-                        // und auch das EntityMoved event, eines nach dem anderen. Ähnlich wie bei EntityDies / -Died
-                        // denk daran die entsprechenden infos dem Event mitzugeben, also welche Entity sich bewegt und von wo nach wo usw.
-                        // dann sollte das mit den abilities auch keine Fehler mehr schmeißen.
-                        // ✓
+                        //call move events
                         await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVE, cause: this, detail: {entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance}});
                         await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVED, cause: this, detail: {entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance}});
                         this.moved = true;
@@ -279,20 +258,8 @@ namespace Script {
                 this.moved = true;
                 return true;
             }
-            // @Björn denk an default return
             return false;
         }
-
-        /* @Björn okay, ich glaube ich verstehe wo du damit hin wolltest, ich glaube aber dass es sinnvoller
-        wäre das wie folgt aufzuteilen:
-
-        - eine Funktion um auf Basis einer Rotation die richtige direction zu bekommen
-        - eine Funktion um auf Basis einer (aktuellen) position, rotation und Schrittlänge die nächste Position zurück zu geben, welche die erste Funktion nutzt
-
-        Dann ist es auch nicht mehr Entity spezifisch und kann allgemeiner angewandt werden.
-        Man könnte das in die Move.ts machen und dann hier aufrufen wo man es braucht.
-        Außerdem sollte das so deutlich lesbarer und nachvollziehbarer werden denke ich.
-        */
 
         async useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells: SpellData[] = this.select(this.spells, true), _targetsOverride?: IEntity[]): Promise<void> {
             if (!_spells) return;
