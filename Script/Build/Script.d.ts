@@ -509,13 +509,17 @@ declare namespace Script {
 declare namespace Script {
     class MapUI extends UILayer {
         submitBtn: HTMLButtonElement;
+        optionButton: HTMLElement;
         optionElements: HTMLElement[];
         selectedEncounter: number;
+        hill: HTMLElement;
         constructor();
         onAdd(_zindex: number, _ev: FightEvent): Promise<void>;
         private updateProgress;
         private displayEncounters;
         private selectionDone;
+        private click;
+        private openOptions;
         addEventListeners(): void;
         removeEventListeners(): void;
     }
@@ -1201,6 +1205,16 @@ declare namespace Script {
         static getUIElement(_obj: Eumling): EumlingUIElement;
         get element(): HTMLElement;
         get eumling(): Eumling;
+        private update;
+        addEventListeners(): void;
+    }
+}
+declare namespace Script {
+    class GoldDisplayElement extends UIElement {
+        #private;
+        static instance: GoldDisplayElement;
+        private constructor();
+        static get element(): HTMLElement;
         private update;
         addEventListeners(): void;
     }

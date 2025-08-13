@@ -2673,14 +2673,35 @@ var Script;
                 await Script.waitMS(1000);
                 Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_ENCOUNTER, detail: { encounter: this.selectedEncounter } });
             };
+            this.click = (_ev) => {
+                if (this.optionElements.includes(_ev.target))
+                    return;
+                if (_ev.target === this.submitBtn)
+                    return;
+                this.submitBtn.disabled = true;
+                this.submitBtn.classList.add("hidden");
+                this.hill.dataset.selected = "";
+                for (let opt of this.optionElements) {
+                    opt.classList.remove("selected");
+                }
+                this.selectedEncounter = undefined;
+            };
+            this.openOptions = (_ev) => {
+                Script.Provider.GUI.addUI("options");
+            };
             this.element = document.getElementById("Map");
             this.submitBtn = document.getElementById("MapActionButton");
+            this.optionButton = document.getElementById("MapOptionButton");
+            this.hill = document.getElementById("MapHill");
         }
         async onAdd(_zindex, _ev) {
             super.onAdd(_zindex);
             this.updateProgress();
             this.displayEncounters(_ev);
             this.element.classList.remove("no-interact");
+            this.hill.dataset.selected = "";
+            this.submitBtn.classList.add("hidden");
+            document.getElementById("MapHeader").appendChild(Script.GoldDisplayElement.element);
         }
         updateProgress() {
             const inner = document.getElementById("MapProgressBarCurrent");
@@ -2692,13 +2713,7 @@ var Script;
             this.optionElements = [];
             for (let option of options) {
                 const elem = Script.createElementAdvanced("div", { classes: ["MapOption"] });
-                if (option < 0) {
-                    // shop
-                    elem.innerText = "Shop";
-                }
-                else {
-                    elem.innerText = `Fight lvl ${option + 1}`;
-                }
+                elem.dataset.type = option.toString();
                 elem.addEventListener("click", () => {
                     for (let opt of this.optionElements) {
                         opt.classList.remove("selected");
@@ -2706,6 +2721,15 @@ var Script;
                     elem.classList.add("selected");
                     this.selectedEncounter = option;
                     this.submitBtn.disabled = false;
+                    this.submitBtn.classList.remove("hidden");
+                    this.hill.dataset.selected = this.optionElements.indexOf(elem).toString();
+                    if (option < 0) {
+                        // shop
+                        this.submitBtn.innerText = "Shop";
+                    }
+                    else {
+                        this.submitBtn.innerText = "Battle";
+                    }
                 });
                 this.optionElements.push(elem);
             }
@@ -2714,8 +2738,13 @@ var Script;
         }
         addEventListeners() {
             this.submitBtn.addEventListener("click", this.selectionDone);
+            this.optionButton.addEventListener("click", this.openOptions);
+            document.getElementById("Map").addEventListener("click", this.click);
         }
         removeEventListeners() {
+            this.submitBtn.removeEventListener("click", this.selectionDone);
+            this.optionButton.removeEventListener("click", this.openOptions);
+            document.getElementById("Map").removeEventListener("click", this.click);
         }
     }
     Script.MapUI = MapUI;
@@ -6178,6 +6207,33 @@ var Script;
         }
     }
     Script.EumlingUIElement = EumlingUIElement;
+})(Script || (Script = {}));
+/// <reference path="UIElement.ts" />
+var Script;
+/// <reference path="UIElement.ts" />
+(function (Script) {
+    class GoldDisplayElement extends Script.UIElement {
+        static #element = Script.createElementAdvanced("div", {
+            classes: ["GoldDisplay"],
+            innerHTML: "0",
+        });
+        static { this.instance = new GoldDisplayElement(); }
+        constructor() {
+            super();
+            this.update = (_ev) => {
+                GoldDisplayElement.#element.innerText = Script.Run.currentRun.gold.toString();
+            };
+            this.addEventListeners();
+        }
+        static get element() {
+            return this.#element;
+        }
+        addEventListeners() {
+            // TODO: when to remove these listeners?
+            Script.EventBus.addEventListener(Script.EVENT.GOLD_CHANGE, this.update);
+        }
+    }
+    Script.GoldDisplayElement = GoldDisplayElement;
 })(Script || (Script = {}));
 /// <reference path="UIElement.ts" />
 var Script;

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>AutoChallenger</title>
+    <title>Die Eumlinge³</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="styles.css" />
@@ -44,10 +44,10 @@
         <div>Loading...</div>
     </div>
 
-    <div id="MainMenu" class="UI hidden blur">
+    <div id="MainMenu" class="UI hidden">
         <!--Menu UI-->
-        Main Menu
-        <button id="MainStart">Start</button>
+        <img src="./Assets/Pics/Logo_white.png" alt="Die Eumlinge">
+        <button id="MainStart" class="green">Start</button>
         <button id="MainOptions">Options</button>
     </div>
 
@@ -79,15 +79,19 @@
         </div>
     </div>
 
-    <div id="Map" class="UI blur hidden">
-        <h2>Map</h2>
+    <div id="Map" class="UI hidden">
         <!--Map UI-->
+        <div id="MapHeader">
+            <div id="LogoShieldWithSettings">
+                <img id="MapOptionButton" src="./Assets/UIElemente/IconEinstellungen.PNG" alt="Settings" class="clickable">
+            </div>
+        </div>
         <div id="MapOptions">
         </div>
-        <div id="MapCharacter">
-        </div>
-        <div id="MapActionButtonWrapper">
-            <button id="MapActionButton">Select</button>
+        <div id="MapHill">
+            <div id="MapActionButtonWrapper">
+                <button id="MapActionButton" class="green">Select</button>
+            </div>
         </div>
         <div id="MapProgressBarWrapper">
             <div id="MapProgressBar">
