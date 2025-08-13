@@ -141,8 +141,8 @@ namespace Script {
                 animation = AnimationLink.linkedAnimations.get(this.entity.id)?.get(_anim);
                 if (!animation && this.entity.id.includes("Eumling")) animation = AnimationLink.linkedAnimations.get("defaultEumling")?.get(_anim);
                 if (!animation) return this.showFallbackText(_anim);
-                audio = AnimationLink.linkedAudio.get(this.entity.id)?.get(_anim);
-                if (!audio && this.entity.id.includes("Eumling")) audio = AnimationLink.linkedAudio.get("defaultEumling")?.get(_anim);
+                audio = chooseRandomElementsFromArray(AnimationLink.linkedAudio.get(this.entity.id)?.get(_anim), 1)[0];
+                if (!audio && this.entity.id.includes("Eumling")) audio = chooseRandomElementsFromArray(AnimationLink.linkedAudio.get("defaultEumling")?.get(_anim), 1)[0];
             } else {
                 animation = _anim;
             }
@@ -157,8 +157,8 @@ namespace Script {
             await waitMS(animation.totalTime);
             this.cmpAudio.play(false);
             this.cmpAnimation.animation = this.defaultAnimation; // TODO: check if we should instead default back to idle or nothing at all
-            audio = AnimationLink.linkedAudio.get(this.entity.id)?.get(ANIMATION.IDLE);
-            if (!audio && this.entity.id.includes("Eumling")) audio = AnimationLink.linkedAudio.get("defaultEumling")?.get(ANIMATION.IDLE);
+            audio = chooseRandomElementsFromArray(AnimationLink.linkedAudio.get(this.entity.id)?.get(ANIMATION.IDLE), 1)[0];
+            if (!audio && this.entity.id.includes("Eumling")) audio = chooseRandomElementsFromArray(AnimationLink.linkedAudio.get("defaultEumling")?.get(ANIMATION.IDLE), 1)[0];
             if (audio) {
                 this.cmpAudio.setAudio(audio);
                 this.cmpAudio.play(true);

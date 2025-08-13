@@ -543,10 +543,13 @@ declare namespace Script {
     }
     class AnimationLink extends ƒ.Component {
         static linkedAnimations: Map<string, Map<ANIMATION, ƒ.Animation>>;
-        static linkedAudio: Map<string, Map<ANIMATION, ƒ.Audio>>;
+        static linkedAudio: Map<string, Map<ANIMATION, ƒ.Audio[]>>;
         protected singleton: boolean;
         animation: ƒ.Animation;
-        audio: ƒ.Audio;
+        audio1: ƒ.Audio;
+        audio2: ƒ.Audio;
+        audio3: ƒ.Audio;
+        audio4: ƒ.Audio;
         animType: ANIMATION;
         constructor();
     }

@@ -37,14 +37,20 @@ namespace Script {
     @ƒ.serialize
     export class AnimationLink extends ƒ.Component {
         public static linkedAnimations: Map<string, Map<ANIMATION, ƒ.Animation>> = new Map();
-        public static linkedAudio: Map<string, Map<ANIMATION, ƒ.Audio>> = new Map();
+        public static linkedAudio: Map<string, Map<ANIMATION, ƒ.Audio[]>> = new Map();
 
         protected singleton: boolean = false;
 
         @ƒ.serialize(ƒ.Animation)
         animation: ƒ.Animation;
         @ƒ.serialize(ƒ.Audio)
-        audio: ƒ.Audio;
+        audio1: ƒ.Audio;
+        @ƒ.serialize(ƒ.Audio)
+        audio2: ƒ.Audio;
+        @ƒ.serialize(ƒ.Audio)
+        audio3: ƒ.Audio;
+        @ƒ.serialize(ƒ.Audio)
+        audio4: ƒ.Audio;
 
         @ƒ.serialize(ANIMATION)
         animType: ANIMATION;
@@ -62,7 +68,11 @@ namespace Script {
                         AnimationLink.linkedAudio.set(link.id, new Map());
                     }
                     AnimationLink.linkedAnimations.get(link.id).set(this.animType, this.animation);
-                    AnimationLink.linkedAudio.get(link.id).set(this.animType, this.audio);
+                    AnimationLink.linkedAudio.get(link.id).set(this.animType, []);
+                    if(this.audio1) AnimationLink.linkedAudio.get(link.id).get(this.animType).push(this.audio1);
+                    if(this.audio2) AnimationLink.linkedAudio.get(link.id).get(this.animType).push(this.audio2);
+                    if(this.audio3) AnimationLink.linkedAudio.get(link.id).get(this.animType).push(this.audio3);
+                    if(this.audio4) AnimationLink.linkedAudio.get(link.id).get(this.animType).push(this.audio4);
                 }
             });
         }

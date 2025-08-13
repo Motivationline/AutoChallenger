@@ -2817,9 +2817,18 @@ var Script;
         let _animation_decorators;
         let _animation_initializers = [];
         let _animation_extraInitializers = [];
-        let _audio_decorators;
-        let _audio_initializers = [];
-        let _audio_extraInitializers = [];
+        let _audio1_decorators;
+        let _audio1_initializers = [];
+        let _audio1_extraInitializers = [];
+        let _audio2_decorators;
+        let _audio2_initializers = [];
+        let _audio2_extraInitializers = [];
+        let _audio3_decorators;
+        let _audio3_initializers = [];
+        let _audio3_extraInitializers = [];
+        let _audio4_decorators;
+        let _audio4_initializers = [];
+        let _audio4_extraInitializers = [];
         let _animType_decorators;
         let _animType_initializers = [];
         let _animType_extraInitializers = [];
@@ -2828,10 +2837,16 @@ var Script;
             static {
                 const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
                 _animation_decorators = [ƒ.serialize(ƒ.Animation)];
-                _audio_decorators = [ƒ.serialize(ƒ.Audio)];
+                _audio1_decorators = [ƒ.serialize(ƒ.Audio)];
+                _audio2_decorators = [ƒ.serialize(ƒ.Audio)];
+                _audio3_decorators = [ƒ.serialize(ƒ.Audio)];
+                _audio4_decorators = [ƒ.serialize(ƒ.Audio)];
                 _animType_decorators = [ƒ.serialize(ANIMATION)];
                 __esDecorate(null, null, _animation_decorators, { kind: "field", name: "animation", static: false, private: false, access: { has: obj => "animation" in obj, get: obj => obj.animation, set: (obj, value) => { obj.animation = value; } }, metadata: _metadata }, _animation_initializers, _animation_extraInitializers);
-                __esDecorate(null, null, _audio_decorators, { kind: "field", name: "audio", static: false, private: false, access: { has: obj => "audio" in obj, get: obj => obj.audio, set: (obj, value) => { obj.audio = value; } }, metadata: _metadata }, _audio_initializers, _audio_extraInitializers);
+                __esDecorate(null, null, _audio1_decorators, { kind: "field", name: "audio1", static: false, private: false, access: { has: obj => "audio1" in obj, get: obj => obj.audio1, set: (obj, value) => { obj.audio1 = value; } }, metadata: _metadata }, _audio1_initializers, _audio1_extraInitializers);
+                __esDecorate(null, null, _audio2_decorators, { kind: "field", name: "audio2", static: false, private: false, access: { has: obj => "audio2" in obj, get: obj => obj.audio2, set: (obj, value) => { obj.audio2 = value; } }, metadata: _metadata }, _audio2_initializers, _audio2_extraInitializers);
+                __esDecorate(null, null, _audio3_decorators, { kind: "field", name: "audio3", static: false, private: false, access: { has: obj => "audio3" in obj, get: obj => obj.audio3, set: (obj, value) => { obj.audio3 = value; } }, metadata: _metadata }, _audio3_initializers, _audio3_extraInitializers);
+                __esDecorate(null, null, _audio4_decorators, { kind: "field", name: "audio4", static: false, private: false, access: { has: obj => "audio4" in obj, get: obj => obj.audio4, set: (obj, value) => { obj.audio4 = value; } }, metadata: _metadata }, _audio4_initializers, _audio4_extraInitializers);
                 __esDecorate(null, null, _animType_decorators, { kind: "field", name: "animType", static: false, private: false, access: { has: obj => "animType" in obj, get: obj => obj.animType, set: (obj, value) => { obj.animType = value; } }, metadata: _metadata }, _animType_initializers, _animType_extraInitializers);
                 __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
                 AnimationLink = _classThis = _classDescriptor.value;
@@ -2843,8 +2858,11 @@ var Script;
                 super();
                 this.singleton = false;
                 this.animation = __runInitializers(this, _animation_initializers, void 0);
-                this.audio = (__runInitializers(this, _animation_extraInitializers), __runInitializers(this, _audio_initializers, void 0));
-                this.animType = (__runInitializers(this, _audio_extraInitializers), __runInitializers(this, _animType_initializers, void 0));
+                this.audio1 = (__runInitializers(this, _animation_extraInitializers), __runInitializers(this, _audio1_initializers, void 0));
+                this.audio2 = (__runInitializers(this, _audio1_extraInitializers), __runInitializers(this, _audio2_initializers, void 0));
+                this.audio3 = (__runInitializers(this, _audio2_extraInitializers), __runInitializers(this, _audio3_initializers, void 0));
+                this.audio4 = (__runInitializers(this, _audio3_extraInitializers), __runInitializers(this, _audio4_initializers, void 0));
+                this.animType = (__runInitializers(this, _audio4_extraInitializers), __runInitializers(this, _animType_initializers, void 0));
                 __runInitializers(this, _animType_extraInitializers);
                 if (ƒ.Project.mode === ƒ.MODE.EDITOR)
                     return;
@@ -2858,7 +2876,15 @@ var Script;
                             AnimationLink.linkedAudio.set(link.id, new Map());
                         }
                         AnimationLink.linkedAnimations.get(link.id).set(this.animType, this.animation);
-                        AnimationLink.linkedAudio.get(link.id).set(this.animType, this.audio);
+                        AnimationLink.linkedAudio.get(link.id).set(this.animType, []);
+                        if (this.audio1)
+                            AnimationLink.linkedAudio.get(link.id).get(this.animType).push(this.audio1);
+                        if (this.audio2)
+                            AnimationLink.linkedAudio.get(link.id).get(this.animType).push(this.audio2);
+                        if (this.audio3)
+                            AnimationLink.linkedAudio.get(link.id).get(this.animType).push(this.audio3);
+                        if (this.audio4)
+                            AnimationLink.linkedAudio.get(link.id).get(this.animType).push(this.audio4);
                     }
                 });
             }
@@ -5838,9 +5864,9 @@ var Script;
                     animation = Script.AnimationLink.linkedAnimations.get("defaultEumling")?.get(_anim);
                 if (!animation)
                     return this.showFallbackText(_anim);
-                audio = Script.AnimationLink.linkedAudio.get(this.entity.id)?.get(_anim);
+                audio = Script.chooseRandomElementsFromArray(Script.AnimationLink.linkedAudio.get(this.entity.id)?.get(_anim), 1)[0];
                 if (!audio && this.entity.id.includes("Eumling"))
-                    audio = Script.AnimationLink.linkedAudio.get("defaultEumling")?.get(_anim);
+                    audio = Script.chooseRandomElementsFromArray(Script.AnimationLink.linkedAudio.get("defaultEumling")?.get(_anim), 1)[0];
             }
             else {
                 animation = _anim;
@@ -5856,9 +5882,9 @@ var Script;
             await Script.waitMS(animation.totalTime);
             this.cmpAudio.play(false);
             this.cmpAnimation.animation = this.defaultAnimation; // TODO: check if we should instead default back to idle or nothing at all
-            audio = Script.AnimationLink.linkedAudio.get(this.entity.id)?.get(Script.ANIMATION.IDLE);
+            audio = Script.chooseRandomElementsFromArray(Script.AnimationLink.linkedAudio.get(this.entity.id)?.get(Script.ANIMATION.IDLE), 1)[0];
             if (!audio && this.entity.id.includes("Eumling"))
-                audio = Script.AnimationLink.linkedAudio.get("defaultEumling")?.get(Script.ANIMATION.IDLE);
+                audio = Script.chooseRandomElementsFromArray(Script.AnimationLink.linkedAudio.get("defaultEumling")?.get(Script.ANIMATION.IDLE), 1)[0];
             if (audio) {
                 this.cmpAudio.setAudio(audio);
                 this.cmpAudio.play(true);
