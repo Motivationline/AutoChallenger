@@ -138,23 +138,8 @@ var Script;
         DIRECTION_RELATIVE["LEFT"] = "left";
         DIRECTION_RELATIVE["RIGHT"] = "right";
     })(DIRECTION_RELATIVE = Script.DIRECTION_RELATIVE || (Script.DIRECTION_RELATIVE = {}));
-    // function move(_fight: Fight) {
-    //     //create a new Grid, calls entity[].move(), add them to the grid
-    //     let newGrid = new Grid<Entity>();
-    //     //move the entities in the grid
-    //     _fight.arena.away.forEachElement((entity, pos) => {
-    //         entity.move()
-    //         newGrid.set(pos, new Entity(entity));
-    //     });
-    //     //replace old Grid
-    //     _fight.arena.away = newGrid;
-    // }
-    // @Björn die Verrenkung brauchst du nicht machen, du kannst move() einfach direkt in der Fight runOneSide aufrufen
-    // außerdem ist das EntityMove Event dazu gedacht dass eine Entity das auslöst, wenn sie sich bewegt
-    // ✓
-    // @Björn hier sollten noch ein paar asyncs und awaits rein
+    //iterates through the grid and executes every entities move
     async function move(_grid) {
-        //let grid: Grid<Entity> = _grid;
         let maxAlternatives = 0;
         let movedEntites = 0;
         _grid.forEachElement((el) => {
@@ -181,6 +166,7 @@ var Script;
         //all entities moved
     }
     Script.move = move;
+    // returns the new direction, the entity will move in
     function getNextDirection(_rotateBy, _direction) {
         let directions = [
             [1, 0], // East
@@ -200,7 +186,7 @@ var Script;
         return dir;
     }
     Script.getNextDirection = getNextDirection;
-    // calculate the next position based on the current position, the entities rotation and the step size
+    // returns the next position based on the current position, the entities rotation and the step size
     function getPositionBasedOnMove(_pos, _direction, _step, _rotateBy) {
         //console.log("direction: " + _direction + ", step: " + _step + ", position: " + _pos + ", rotateBy: " + _rotateBy);
         let dir = getNextDirection(_rotateBy, _direction);
@@ -1691,11 +1677,110 @@ var Script;
                 difficulty: 0,
                 rounds: 3,
                 entities: [
+                    ["boxingBush", , ,],
+                    [, "boxingBush", ,],
+                    [, , "boxingBush",]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, , ,],
+                    [, "flameFlinger", "punchingPalmtree",],
+                    [, , ,]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    ["flameFlinger", , ,],
+                    [, "sandSitter", "boxingBush",],
+                    ["flameFlinger", , ,]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, "flameFlinger", ,],
+                    ["flameFlinger", "punchingPalmtree", "flameFlinger",],
+                    [, "flameFlinger", ,]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, , "flameFlinger",],
+                    [, "sandSitter", ,],
+                    ["boxingBush", , "flameFlinger",]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, "punchingPalmtree", ,],
+                    ["boxingBush", , ,],
+                    [, "punchingPalmtree", ,]
+                ],
+            },
+            {
+                difficulty: 1,
+                rounds: 3,
+                entities: [
+                    [, , "punchingPalmtree",],
+                    ["worriedWall", "countdownCoconut", ,],
+                    [, , ,]
+                ],
+            },
+            {
+                difficulty: 1,
+                rounds: 3,
+                entities: [
+                    ["worriedWall", , "cactusCrawler",],
+                    [, "cactusCrawler", ,],
+                    ["cactusCrawler", "worriedWall", ,]
+                ],
+            },
+            {
+                difficulty: 1,
+                rounds: 3,
+                entities: [
                     ["cactusCrawler", , "sandSitter",],
                     [, , ,],
                     [, "cactusCrawler", "sandSitter",]
                 ],
-            }
+            },
+            {
+                difficulty: 2,
+                rounds: 3,
+                entities: [
+                    ["worriedWall", "boxingBush", "sandSitter",],
+                    ["worriedWall", "cactusCrawler", "countdownCoconut",],
+                    [, , ,]
+                ],
+            },
+            {
+                difficulty: 2,
+                rounds: 3,
+                entities: [
+                    ["boxingBush", , "flameFlinger",],
+                    ["cactusCrawler", "sandSitter", ,],
+                    ["flameFlinger", , "boxingBush",]
+                ],
+            },
+            {
+                difficulty: 2,
+                rounds: 3,
+                entities: [
+                    ["cactusCrawler", "countdownCoconut", "cactusCrawler",],
+                    [, "cactusCrawler", ,],
+                    ["cactusCrawler", , "countdownCoconut",]
+                ],
+            },
         ];
     })(DataContent = Script.DataContent || (Script.DataContent = {}));
 })(Script || (Script = {}));
@@ -1851,9 +1936,7 @@ var Script;
             return _result;
         }
         async runOneSide(_active, _passive) {
-            // TODO: moves
-            // @Björn hier die move mit dem aktiven grid aufrufen (und abwarten)
-            // ✓
+            // moves
             await Script.move(_active);
             // spells
             await _active.forEachElementAsync(async (el) => {
@@ -2814,46 +2897,30 @@ var Script;
             }
         }
         async move() {
-            //this.moves?; //move data of the entity
-            //let occupiedSpots: Position[];
-            //newGrid.forEachElement((el) => (occupiedSpots.push(el.position)));//get the positions from entities in the Grid
-            //let newPos: Position = this.moveMePls(move, this.position, occupiedSpots);
-            //this.position = newPos;
         }
         async tryToMove(_grid, maxAlternatives) {
-            //let grid: Grid<Entity> = _grid;
             //check if the Entity has move data
             let moveData;
-            moveData = this.select(this.moves, true)[0]; //TODO: funktioniert das???? // @Björn das sucht dir alle moves raus die es machen soll - du nimmst aber nur den ersten. Im Moment geht das weil da immer nur einer zurück kommt.
-            if (moveData) { // @Björn hier ggf besser auf moveData testen
-                // ✓
+            //TODO: get all moves
+            moveData = this.select(this.moves, true)[0]; // @Björn das sucht dir alle moves raus die es machen soll - du nimmst aber nur den ersten. Im Moment geht das weil da immer nur einer zurück kommt.
+            if (moveData) {
                 for (let i = 0; i <= maxAlternatives && i <= moveData.blocked.attempts; i++) {
-                    // @Björn hier fehlt noch die aktuelle rotation - die wird aktuell noch in nextPositionBasedOnThisRotation einberechnet, aber siehe meinen Kommentar dort
-                    // Außerdem solltest du nicht mit blocked.attempts multiplizieren sondern blocked.rotateBy
-                    // ✓
                     let rotateBy = moveData.rotateBy + i * moveData.blocked.rotateBy;
+                    //get the new position
                     let nextPosition = Script.getPositionBasedOnMove(this.position, this.currentDirection, moveData.distance, rotateBy);
+                    //get the new direction
                     let nextDirection = Script.getNextDirection(rotateBy, this.currentDirection);
                     //check if the position is occupied or out of bounds
                     if (_grid.get(nextPosition) || Script.Grid.outOfBounds(nextPosition)) {
-                        // @Björn hier nicht komplett abbrechen, nur zur for schleife zurück springen ("continue")
-                        // sonst wird immer nur die standard variante getestet, nie die alternativen.
-                        // ✓
                         continue;
                     }
                     else if (_grid.get(nextPosition) == undefined) { //spot is free
-                        // @Björn hier noch den optionalen dritten parameter auf true setzen damit die entity nicht zweimal im grid ist
-                        // ✓
-                        //TODO: Fix entities being undefined.
+                        //set the entity at the new position in the grid and remove the old one
                         _grid.set(nextPosition, this, true);
                         let oldPos = this.position;
                         this.position = nextPosition;
                         this.currentDirection = nextDirection;
-                        // @Björn hier wäre der richtige Zeitpunkt für das EntityMove Event
-                        // und auch das EntityMoved event, eines nach dem anderen. Ähnlich wie bei EntityDies / -Died
-                        // denk daran die entsprechenden infos dem Event mitzugeben, also welche Entity sich bewegt und von wo nach wo usw.
-                        // dann sollte das mit den abilities auch keine Fehler mehr schmeißen.
-                        // ✓
+                        //call move events
                         await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVE, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
                         await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVED, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
                         this.moved = true;
@@ -2865,19 +2932,8 @@ var Script;
                 this.moved = true;
                 return true;
             }
-            // @Björn denk an default return
             return false;
         }
-        /* @Björn okay, ich glaube ich verstehe wo du damit hin wolltest, ich glaube aber dass es sinnvoller
-        wäre das wie folgt aufzuteilen:
-
-        - eine Funktion um auf Basis einer Rotation die richtige direction zu bekommen
-        - eine Funktion um auf Basis einer (aktuellen) position, rotation und Schrittlänge die nächste Position zurück zu geben, welche die erste Funktion nutzt
-
-        Dann ist es auch nicht mehr Entity spezifisch und kann allgemeiner angewandt werden.
-        Man könnte das in die Move.ts machen und dann hier aufrufen wo man es braucht.
-        Außerdem sollte das so deutlich lesbarer und nachvollziehbarer werden denke ich.
-        */
         async useSpell(_friendly, _opponent, _spells = this.select(this.spells, true), _targetsOverride) {
             if (!_spells)
                 return;
@@ -3859,10 +3915,8 @@ var Script;
             await this.playAnimationIfPossible(Script.ANIMATION.ATTACK);
         }
         async move(_ev) {
-            //this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
             console.log("entity visualizer: move", { entity: _ev.detail.entity, oldPosition: _ev.detail.oldPosition, position: _ev.detail.position, direction: _ev.detail.direction, step: _ev.detail.step });
             await this.playAnimationIfPossible(Script.ANIMATION.MOVE);
-            //await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVED, cause: this.entity, detail: {entity: this.entity, position: this.entity.position, oldPosition: _ev.detail.oldPosition, direction: _ev.detail.currentDirection, step: _ev.detail.step}});
         }
         async useSpell(_ev) {
             console.log("entity visualizer: spell", { caster: this.entity, spell: _ev.trigger, targets: _ev.detail?.targets });
@@ -3956,10 +4010,6 @@ var Script;
             if (node)
                 this.removeChild(node);
         }
-        // @Björn das Problem ist, dass wenn du es so aufrufst, du `this` verlierst.
-        // um das zu fixen musst du eine lambda funktion benutzen, also private updatePosition = () => { this.move() }
-        // wie es auch bei eventListener unten gemacht ist. Und der bekommt aktuell ja auch noch jedes Event mit, nicht nur das von der eigenen Entity.
-        // In dem Fall kannst du es aber auch einfach in die eventListener/handleEvent Systematik unten mit einbauen, da wird das alles schon behandelt.
         getEntity() {
             return this.entity;
         }
@@ -3974,7 +4024,6 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_AFFECTED, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ROUND_END, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateTmpText);
-            // @Björn besser EntityMove (ohne d) für die visuelle Darstellung nutzen. denk auch dran den wieder zu entfernen
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVE, this.eventListener);
         }
         removeEventListeners() {
@@ -3998,7 +4047,6 @@ var Script;
                         await this.useSpell(_ev);
                         break;
                     }
-                    // @Björn hier könntest du die move einbauen
                     case Script.EVENT.ENTITY_MOVE: {
                         await this.move(_ev);
                         break;
@@ -4193,9 +4241,6 @@ var Script;
                 this.removeEntityFromGrid(pos, true);
             });
         }
-        // @Björn auch hier das problem dass du den Bezug zu "this" verlierst. 
-        // Lambda Funktionsschreibweise (s. VisualizeEntity.updatePosition Kommentar) ist der Weg das zu reparieren.
-        //TODO: check why move is not being called
         async move(_ev) {
             //gets the moving entity and moves it
             this.moveEntityToAnchor(this.grid.get(_ev.detail.oldPosition), _ev.detail.position);
