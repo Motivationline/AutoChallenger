@@ -6245,10 +6245,7 @@ var Script;
         constructor(_stone) {
             super();
             this.update = () => {
-                this.#element.innerHTML = `
-            <span class="">${this.#stone.id}</span>
-            <span class="">Level ${this.#stone.level + 1}</span>
-            `;
+                this.#element.dataset.level = this.#stone.level.toString();
             };
             this.animate = async (_ev) => {
                 if (_ev.cause !== this.#stone)
@@ -6260,6 +6257,7 @@ var Script;
             this.#stone = _stone;
             this.#element = Script.createElementAdvanced("div", {
                 classes: ["StoneUIElement"],
+                attributes: [["style", `--stone-url: url("./Assets/UIElemente/Stones/${this.#stone.id}.png")`]]
             });
             this.update();
             this.addEventListeners();
