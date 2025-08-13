@@ -64,6 +64,7 @@ canvas.fullscreen {
   font-size: 5vh;
   align-items: center;
   justify-content: center;
+  gap: 3vh;
 }
 
 /* Map but not really */
@@ -71,17 +72,18 @@ canvas.fullscreen {
   width: 50vw;
   position: relative;
   background-position: center center;
-  background-size: 65%, contain;
+  background-size: 80%, contain;
   background-image: url(./Assets/Pics/Logo_black.png), url(./Assets/UIElemente/HolzSchild.png);
   background-repeat: no-repeat;
   rotate: -15deg;
+  scale: 0.8;
 }
 #MapOptionButton {
   position: absolute;
   bottom: -3vh;
-  right: 2vh;
-  width: 10vh;
-  height: 10vh;
+  right: 3vh;
+  width: 7vh;
+  height: 7vh;
   object-fit: contain;
 }
 
@@ -107,7 +109,7 @@ canvas.fullscreen {
 }
 
 .MapOption {
-  width: 50vw;
+  width: 25vw;
   height: 25vw;
   cursor: pointer;
   text-align: center;
@@ -181,7 +183,7 @@ canvas.fullscreen {
   align-items: center;
   padding-bottom: 5vh;
   font-size: 6vh;
-  margin-top: -10vh;
+  margin-top: -5vh;
   z-index: 5;
   pointer-events: none;
 }
@@ -301,19 +303,36 @@ canvas.fullscreen {
 }
 
 .StoneUIElement {
+  --size: 20vw;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  background-color: lightgray;
-  padding: 10px;
+  background-image: url("./Assets/UIElemente/ItemBackdrop.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: var(--size);
+  height: var(--size);
   cursor: pointer;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.StoneUIElement::after {
+  content: '';
+  background-image: var(--stone-url);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: 80%;
+  height: 80%;
 }
 
 .StoneUIElement.animate {
   animation: stone-animate 1s linear;
 }
 .StoneUIElement.selected {
-  background-color: lightblue;
+  filter: drop-shadow(2px 2px 0 green) drop-shadow(-2px 2px 0 green) drop-shadow(2px -2px 0 green) drop-shadow(-2px -2px 0 green);
 }
 
 @keyframes stone-animate {
@@ -358,7 +377,7 @@ canvas.fullscreen {
 button {
   background: none;
   border: none;
-  padding: 0.75em 1em;
+  padding: 0.5em 0.75em;
   background-image: url("./Assets/UIElemente/ButtonGr.png");
   background-size: 100% 100%;
   color: white;
@@ -374,8 +393,8 @@ button,
   cursor: pointer;
 }
 
-.clickable:hover,
-button:hover {
+.clickable:not(:disabled):hover,
+button:not(:disabled):hover {
   scale: 1.05;
 }
 
@@ -385,7 +404,8 @@ button:active {
   translate: 0.1em 0.1em;
 }
 
-button:disabled {
+button:disabled,
+.clickable:disabled {
   cursor: default;
 }
 
