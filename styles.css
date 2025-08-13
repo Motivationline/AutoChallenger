@@ -41,16 +41,16 @@ canvas.fullscreen {
 }
 
 #StartScreen1 {
-  background-image: url("/Assets/Pics/BackGround_TitleScreen.png");
+  background-image: url("./Assets/Pics/BackGround_TitleScreen.png");
 }
 #StartScreen2 {
   --depth: 50%;
-  background-image: url("/Assets/Pics/MiddleGround_TitleScreen.png");
+  background-image: url("./Assets/Pics/MiddleGround_TitleScreen.png");
   background-position: calc(50% + (var(--x) - 0.5) * var(--depth)) calc(50% + (var(--y) - 0.5) * var(--depth));
 }
 #StartScreen3 {
   --depth: 100%;
-  background-image: url("/Assets/Pics/ForeGround_TitleScreen.png");
+  background-image: url("./Assets/Pics/ForeGround_TitleScreen.png");
   background-position: calc(50% + (var(--x) - 0.5) * var(--depth)) calc(50% + (var(--y) - 0.5) * var(--depth));
 }
 
