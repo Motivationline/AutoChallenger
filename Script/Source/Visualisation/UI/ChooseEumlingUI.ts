@@ -18,16 +18,18 @@ namespace Script {
             this.removeEventListeners();
             super.onAdd(_zindex);
             this.confirmButton.disabled = true;
+            this.confirmButton.classList.add("hidden");
 
             const optionElement = document.getElementById("ChooseEumlingOptions");
             const options = ["R", "S"];
             this.optionElements.clear();
             for (let opt of options) {
                 let eumling = new Eumling(opt);
-                let uiElement = EumlingUIElement.getUIElement(eumling);
-                uiElement.element.addEventListener("click", this.clickedEumling);
-                this.optionElements.set(uiElement.element, eumling);
-                optionElement.appendChild(uiElement.element);
+                let uiElement = createElementAdvanced("div", {classes: ["clickable", "selectable"]}); 
+                uiElement.addEventListener("click", this.clickedEumling);
+                this.optionElements.set(uiElement, eumling);
+                optionElement.appendChild(uiElement);
+                uiElement.appendChild(EumlingUIElement.getUIElement(eumling).element);
             }
             optionElement.replaceChildren(...this.optionElements.keys());
         }
@@ -41,7 +43,11 @@ namespace Script {
             element.classList.add("selected");
             this.selectedEumling = eumling;
             this.confirmButton.disabled = false;
-            this.infoElement.innerText = eumling.info;
+            this.confirmButton.classList.remove("hidden");
+            this.infoElement.innerHTML = `
+            <span class="ChooseEumlingType">${eumling.type}</span>
+            <span class="ChooseEumlingHealth">${eumling.health}♥️</span>
+            <span class="ChooseEumlingInfo">${eumling.info}</span>`;
         }
 
         private confirm = () => {

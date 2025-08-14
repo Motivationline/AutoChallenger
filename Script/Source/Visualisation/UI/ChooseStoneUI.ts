@@ -18,16 +18,18 @@ namespace Script {
             this.removeEventListeners();
             super.onAdd(_zindex);
             this.confirmButton.disabled = true;
+            this.confirmButton.classList.add("hidden");
 
             const optionElement = document.getElementById("ChooseStoneOptions");
             this.optionElements.clear();
             const options = chooseRandomElementsFromArray(Provider.data.stones, 3);
             for (let opt of options) {
                 let stone = new Stone(opt);
-                let uiElement = StoneUIElement.getUIElement(stone);
-                uiElement.element.addEventListener("click", this.clickedStone);
-                this.optionElements.set(uiElement.element, stone);
-                optionElement.appendChild(uiElement.element);
+                let uiElement = createElementAdvanced("div", {classes:["clickable", "selectable"]});
+                uiElement.addEventListener("click", this.clickedStone);
+                this.optionElements.set(uiElement, stone);
+                optionElement.appendChild(uiElement);
+                uiElement.appendChild(StoneUIElement.getUIElement(stone).element);
             }
             optionElement.replaceChildren(...this.optionElements.keys());
         }
@@ -41,6 +43,7 @@ namespace Script {
             element.classList.add("selected");
             this.selectedStone = stone;
             this.confirmButton.disabled = false;
+            this.confirmButton.classList.remove("hidden");
             this.infoElement.innerText = stone.data.abilityLevels[stone.level].info;
         }
 

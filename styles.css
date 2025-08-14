@@ -9,6 +9,12 @@ body {
   user-select: none;
 }
 
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 dialog {
   text-align: center;
 }
@@ -284,6 +290,36 @@ canvas.fullscreen {
   position: absolute;
 }
 
+/* Other */
+#ChooseStoneInner,
+#ChooseEumlingInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3vh;
+}
+
+#ChooseEumlingInfo,
+#ChooseStoneInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-size: 3vh;
+  gap: 1vh;
+}
+
+.ChooseEumlingType {
+  font-size: 1.2em;
+  font-weight: 700;
+}
+
+#ChooseStoneConfirm,
+#ChooseEumlingConfirm {
+  font-size: 3vh;
+}
+
 /* Reusables */
 
 .EumlingUIElement {
@@ -291,7 +327,7 @@ canvas.fullscreen {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: wheat;
+  /* background-color: wheat; */
 }
 
 .EumlingUIElement > * {
@@ -299,7 +335,7 @@ canvas.fullscreen {
 }
 
 .EumlingUIElement.selected {
-  background-color: lightblue;
+  /* background-color: lightblue; */
 }
 
 .StoneUIElement {
@@ -364,6 +400,10 @@ canvas.fullscreen {
 .hidden {
   display: none !important;
 }
+button.hidden {
+  display: block !important;
+  visibility: hidden;
+}
 
 .blur {
   backdrop-filter: blur(40px);
@@ -388,13 +428,13 @@ button {
 
 button,
 .clickable {
-  transition: filter 0.1s, translate 0.1s;
+  transition: filter 0.1s, translate 0.1s, scale 0.2s;
   filter: drop-shadow(0.1em 0.1em 0 #3e2e1d);
   cursor: pointer;
 }
 
-.clickable:not(:disabled):hover,
-button:not(:disabled):hover {
+.clickable:not(:disabled):not(.selected):hover,
+button:not(:disabled):not(.selected):hover {
   scale: 1.05;
 }
 
@@ -407,6 +447,17 @@ button:active {
 button:disabled,
 .clickable:disabled {
   cursor: default;
+}
+
+.clickable.selected {
+  scale: 1.2;
+}
+
+.selectable {
+  background-color: #f7f7f9;
+  border: 1px solid black;
+  border-radius: 1em;
+  padding: 1em;
 }
 
 button.green {
@@ -439,4 +490,44 @@ button.red {
   background-size: contain;
   position: absolute;
   left: -50%;
+}
+
+.ChoiceScreen {
+  width: 80vw;
+  height: 30vh;
+  display: flex;
+  flex-direction: column;
+  /* background: url("./Assets/UIElemente/HolzSchild.png") center no-repeat; */
+  background-size: contain;
+  justify-content: center;
+  align-items: center;
+  margin: auto;
+}
+
+.ChoiceScreen > span {
+  display: block;
+  background: url("./Assets/UIElemente/ButtonKl.png") center no-repeat;
+  background-size: 100% 100%;
+  height: 6vh;
+  color: white;
+  display: grid;
+  place-items: center;
+  padding: 1em 3em;
+  font-weight: 700;
+  margin-bottom: 3vh;
+}
+
+.ChoiceScreen > div {
+  display: flex;
+  flex-direction: row;
+  gap: 1em;
+}
+
+.InfoScreen {
+  background: url("./Assets/UIElemente/HolzRahmen.png") center no-repeat;
+  background-size: 100% 100%;
+  color: white;
+  width: 80vw;
+  height: 65vw;
+  padding: 10vw;
 }

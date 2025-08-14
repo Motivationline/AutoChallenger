@@ -2603,7 +2603,11 @@ var Script;
                 element.classList.add("selected");
                 this.selectedEumling = eumling;
                 this.confirmButton.disabled = false;
-                this.infoElement.innerText = eumling.info;
+                this.confirmButton.classList.remove("hidden");
+                this.infoElement.innerHTML = `
+            <span class="ChooseEumlingType">${eumling.type}</span>
+            <span class="ChooseEumlingHealth">${eumling.health}♥️</span>
+            <span class="ChooseEumlingInfo">${eumling.info}</span>`;
             };
             this.confirm = () => {
                 if (!this.selectedEumling)
@@ -2622,15 +2626,17 @@ var Script;
             this.removeEventListeners();
             super.onAdd(_zindex);
             this.confirmButton.disabled = true;
+            this.confirmButton.classList.add("hidden");
             const optionElement = document.getElementById("ChooseEumlingOptions");
             const options = ["R", "S"];
             this.optionElements.clear();
             for (let opt of options) {
                 let eumling = new Script.Eumling(opt);
-                let uiElement = Script.EumlingUIElement.getUIElement(eumling);
-                uiElement.element.addEventListener("click", this.clickedEumling);
-                this.optionElements.set(uiElement.element, eumling);
-                optionElement.appendChild(uiElement.element);
+                let uiElement = Script.createElementAdvanced("div", { classes: ["clickable", "selectable"] });
+                uiElement.addEventListener("click", this.clickedEumling);
+                this.optionElements.set(uiElement, eumling);
+                optionElement.appendChild(uiElement);
+                uiElement.appendChild(Script.EumlingUIElement.getUIElement(eumling).element);
             }
             optionElement.replaceChildren(...this.optionElements.keys());
         }
@@ -2663,6 +2669,7 @@ var Script;
                 element.classList.add("selected");
                 this.selectedStone = stone;
                 this.confirmButton.disabled = false;
+                this.confirmButton.classList.remove("hidden");
                 this.infoElement.innerText = stone.data.abilityLevels[stone.level].info;
             };
             this.confirm = () => {
@@ -2682,15 +2689,17 @@ var Script;
             this.removeEventListeners();
             super.onAdd(_zindex);
             this.confirmButton.disabled = true;
+            this.confirmButton.classList.add("hidden");
             const optionElement = document.getElementById("ChooseStoneOptions");
             this.optionElements.clear();
             const options = Script.chooseRandomElementsFromArray(Script.Provider.data.stones, 3);
             for (let opt of options) {
                 let stone = new Script.Stone(opt);
-                let uiElement = Script.StoneUIElement.getUIElement(stone);
-                uiElement.element.addEventListener("click", this.clickedStone);
-                this.optionElements.set(uiElement.element, stone);
-                optionElement.appendChild(uiElement.element);
+                let uiElement = Script.createElementAdvanced("div", { classes: ["clickable", "selectable"] });
+                uiElement.addEventListener("click", this.clickedStone);
+                this.optionElements.set(uiElement, stone);
+                optionElement.appendChild(uiElement);
+                uiElement.appendChild(Script.StoneUIElement.getUIElement(stone).element);
             }
             optionElement.replaceChildren(...this.optionElements.keys());
         }
