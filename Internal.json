@@ -2567,6 +2567,102 @@
       "events": {}
     }
   },
+  "Audio|2025-08-14T13:17:29.102Z|74998": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_hurt_1.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.102Z|74998",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_hurt_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:17:29.102Z|89725": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_hurt_2.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.102Z|89725",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_hurt_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:17:29.102Z|45612": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_hurt_3.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.102Z|45612",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_hurt_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:17:29.102Z|96270": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_hurt_4.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.102Z|96270",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_hurt_4.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:17:29.101Z|70769": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_attack_1.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.101Z|70769",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_attack_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:17:29.101Z|33106": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_attack_2.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.101Z|33106",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_attack_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:17:29.101Z|75254": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_attack_3.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.101Z|75254",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_attack_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:17:29.101Z|43311": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_attack_4.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.101Z|43311",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_attack_4.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:17:29.101Z|45760": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_die_1.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.101Z|45760",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_die_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:17:29.101Z|33384": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_die_2.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.101Z|33384",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_die_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:17:29.102Z|31102": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_die_3.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.102Z|31102",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_die_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:17:29.102Z|70352": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_die_4.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.102Z|70352",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_die_4.mp3",
+      "type": "Audio"
+    }
+  },
   "Graph|2025-06-27T09:58:39.961Z|68260": {
     "ƒ.Graph": {
       "name": "FlameFlinger",
@@ -2592,6 +2688,10 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-22T10:40:59.716Z|36781",
+              "audio1": "Audio|2025-08-14T13:17:29.102Z|74998",
+              "audio2": "Audio|2025-08-14T13:17:29.102Z|89725",
+              "audio3": "Audio|2025-08-14T13:17:29.102Z|45612",
+              "audio4": "Audio|2025-08-14T13:17:29.102Z|96270",
               "animType": "hurt"
             }
           },
@@ -2599,6 +2699,10 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-22T10:40:59.707Z|62117",
+              "audio1": "Audio|2025-08-14T13:17:29.101Z|70769",
+              "audio2": "Audio|2025-08-14T13:17:29.101Z|33106",
+              "audio3": "Audio|2025-08-14T13:17:29.101Z|75254",
+              "audio4": "Audio|2025-08-14T13:17:29.101Z|43311",
               "animType": "attack"
             }
           },
@@ -2606,6 +2710,10 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-22T10:40:59.711Z|03752",
+              "audio1": "Audio|2025-08-14T13:17:29.101Z|45760",
+              "audio2": "Audio|2025-08-14T13:17:29.101Z|33384",
+              "audio3": "Audio|2025-08-14T13:17:29.102Z|31102",
+              "audio4": "Audio|2025-08-14T13:17:29.102Z|70352",
               "animType": "die"
             }
           }
@@ -2696,6 +2804,30 @@
       "events": {}
     }
   },
+  "Audio|2025-08-14T13:18:21.047Z|55082": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Palmtree\\palmtree_die_1.mp3",
+      "idResource": "Audio|2025-08-14T13:18:21.047Z|55082",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Palmtree\\palmtree_die_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:21.047Z|89400": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Palmtree\\palmtree_hurt_1.mp3",
+      "idResource": "Audio|2025-08-14T13:18:21.047Z|89400",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Palmtree\\palmtree_hurt_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:21.047Z|00070": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Palmtree\\palmtreel_attack_1.mp3",
+      "idResource": "Audio|2025-08-14T13:18:21.047Z|00070",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Palmtree\\palmtreel_attack_1.mp3",
+      "type": "Audio"
+    }
+  },
   "Graph|2025-07-02T13:09:42.912Z|28000": {
     "ƒ.Graph": {
       "name": "PunchingPalmTree",
@@ -2721,6 +2853,7 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-02T13:14:08.502Z|10408",
+              "audio1": "Audio|2025-08-14T13:18:21.047Z|55082",
               "animType": "die"
             }
           },
@@ -2728,6 +2861,7 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-02T13:14:08.504Z|43081",
+              "audio1": "Audio|2025-08-14T13:18:21.047Z|89400",
               "animType": "hurt"
             }
           },
@@ -2735,6 +2869,7 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-02T13:14:08.501Z|98547",
+              "audio1": "Audio|2025-08-14T13:18:21.047Z|00070",
               "animType": "attack"
             }
           }
@@ -2769,6 +2904,14 @@
       "events": {}
     }
   },
+  "Audio|2025-08-14T13:05:06.149Z|11412": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Coconut\\coconut_idle.mp3",
+      "idResource": "Audio|2025-08-14T13:05:06.149Z|11412",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Coconut\\coconut_idle.mp3",
+      "type": "Audio"
+    }
+  },
   "Graph|2025-07-02T13:09:51.312Z|23018": {
     "ƒ.Graph": {
       "name": "CountdownCoconut",
@@ -2787,7 +2930,16 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-02T13:10:50.478Z|01270",
+              "audio1": "Audio|2025-08-14T13:05:06.149Z|11412",
               "animType": "idle"
+            }
+          },
+          {
+            "Script.AnimationLink": {
+              "active": true,
+              "animation": "AnimationGLTF|2025-08-14T13:53:42.165Z|24822",
+              "audio1": "Audio|2025-08-14T13:04:52.735Z|49597",
+              "animType": "spell"
             }
           }
         ],
@@ -3720,6 +3872,134 @@
       "events": {}
     }
   },
+  "Audio|2025-08-14T13:18:42.347Z|36195": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_reveal_1.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.347Z|36195",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_reveal_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:42.347Z|80024": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_reveal_2.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.347Z|80024",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_reveal_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:42.348Z|61019": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_reveal_3.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.348Z|61019",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_reveal_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:42.348Z|10133": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_reveal_4.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.348Z|10133",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_reveal_4.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:42.345Z|23142": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_death_1.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.345Z|23142",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_death_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:42.346Z|48401": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_death_2.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.346Z|48401",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_death_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:42.346Z|35742": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_death_3.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.346Z|35742",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_death_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:42.346Z|57811": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_death_4.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.346Z|57811",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_death_4.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:42.345Z|72357": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_attack_1.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.345Z|72357",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_attack_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:42.345Z|17828": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_attack_2.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.345Z|17828",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_attack_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:42.345Z|28026": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_attack_3.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.345Z|28026",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_attack_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:42.345Z|52139": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_attack_4.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.345Z|52139",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_attack_4.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:42.346Z|01135": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_hurt_1.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.346Z|01135",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_hurt_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:42.346Z|60220": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_hurt_2.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.346Z|60220",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_hurt_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:42.347Z|36818": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_hurt_3.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.347Z|36818",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_hurt_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:42.347Z|64608": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_hurt_4.mp3",
+      "idResource": "Audio|2025-08-14T13:18:42.347Z|64608",
+      "name": "Assets\\Sounds\\Enemies_mp3\\SandSitter\\SandSitter_hurt_4.mp3",
+      "type": "Audio"
+    }
+  },
   "Graph|2025-07-04T10:21:05.334Z|07945": {
     "ƒ.Graph": {
       "name": "SandSitter",
@@ -3745,6 +4025,10 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-04T10:20:56.777Z|14422",
+              "audio1": "Audio|2025-08-14T13:18:42.345Z|23142",
+              "audio2": "Audio|2025-08-14T13:18:42.346Z|48401",
+              "audio3": "Audio|2025-08-14T13:18:42.346Z|35742",
+              "audio4": "Audio|2025-08-14T13:18:42.346Z|57811",
               "animType": "die"
             }
           },
@@ -3752,6 +4036,10 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-04T10:20:56.775Z|95217",
+              "audio1": "Audio|2025-08-14T13:18:42.345Z|72357",
+              "audio2": "Audio|2025-08-14T13:18:42.345Z|17828",
+              "audio3": "Audio|2025-08-14T13:18:42.345Z|28026",
+              "audio4": "Audio|2025-08-14T13:18:42.345Z|52139",
               "animType": "attack"
             }
           },
@@ -3759,6 +4047,10 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-08-07T14:09:09.279Z|95645",
+              "audio1": "Audio|2025-08-14T13:18:42.346Z|01135",
+              "audio2": "Audio|2025-08-14T13:18:42.346Z|60220",
+              "audio3": "Audio|2025-08-14T13:18:42.347Z|36818",
+              "audio4": "Audio|2025-08-14T13:18:42.347Z|64608",
               "animType": "hurt"
             }
           }
@@ -3935,6 +4227,102 @@
       "events": {}
     }
   },
+  "Audio|2025-08-14T13:18:02.746Z|41900": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_attack_1.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.746Z|41900",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_attack_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:02.746Z|11982": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_attack_2.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.746Z|11982",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_attack_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:02.746Z|51703": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_attack_3.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.746Z|51703",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_attack_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:02.746Z|39924": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_attack_4.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.746Z|39924",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_attack_4.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:02.747Z|32179": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_hurt_1.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.747Z|32179",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_hurt_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:02.747Z|36106": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_hurt_2.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.747Z|36106",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_hurt_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:02.747Z|48863": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_hurt_3.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.747Z|48863",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_hurt_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:02.747Z|61567": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_hurt_4.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.747Z|61567",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_hurt_4.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:02.747Z|93178": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_death_1.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.747Z|93178",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_death_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:02.747Z|21824": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_death_2.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.747Z|21824",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_death_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:02.747Z|46124": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_death_3.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.747Z|46124",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_death_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:02.747Z|99095": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_death_4.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.747Z|99095",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_death_4.mp3",
+      "type": "Audio"
+    }
+  },
   "Graph|2025-07-17T13:12:11.670Z|82788": {
     "ƒ.Graph": {
       "name": "IdioticIcicle",
@@ -3960,6 +4348,10 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-17T13:12:00.879Z|41842",
+              "audio1": "Audio|2025-08-14T13:18:02.746Z|41900",
+              "audio2": "Audio|2025-08-14T13:18:02.746Z|11982",
+              "audio3": "Audio|2025-08-14T13:18:02.746Z|51703",
+              "audio4": "Audio|2025-08-14T13:18:02.746Z|39924",
               "animType": "attack"
             }
           },
@@ -3967,6 +4359,10 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-17T13:12:00.892Z|43880",
+              "audio1": "Audio|2025-08-14T13:18:02.747Z|32179",
+              "audio2": "Audio|2025-08-14T13:18:02.747Z|36106",
+              "audio3": "Audio|2025-08-14T13:18:02.747Z|48863",
+              "audio4": "Audio|2025-08-14T13:18:02.747Z|61567",
               "animType": "hurt"
             }
           },
@@ -3974,6 +4370,10 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-17T13:12:00.886Z|71680",
+              "audio1": "Audio|2025-08-14T13:18:02.747Z|93178",
+              "audio2": "Audio|2025-08-14T13:18:02.747Z|21824",
+              "audio3": "Audio|2025-08-14T13:18:02.747Z|46124",
+              "audio4": "Audio|2025-08-14T13:18:02.747Z|99095",
               "animType": "die"
             }
           }
@@ -4099,6 +4499,7 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-23T10:19:21.939Z|09911",
+              "audio1": "Audio|2025-08-14T13:19:27.726Z|29166",
               "animType": "hurt"
             }
           },
@@ -4106,6 +4507,7 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-23T10:19:21.933Z|45996",
+              "audio1": "Audio|2025-08-14T13:19:27.726Z|20057",
               "animType": "die"
             }
           }
@@ -4751,6 +5153,351 @@
       ],
       "idResource": "Graph|2025-08-12T07:53:00.240Z|80834",
       "type": "Graph"
+    }
+  },
+  "Audio|2025-08-14T13:04:52.735Z|49597": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Coconut\\coconut_die.mp3",
+      "idResource": "Audio|2025-08-14T13:04:52.735Z|49597",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Coconut\\coconut_die.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:17:29.103Z|12584": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_idle_1.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.103Z|12584",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_idle_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:17:29.103Z|31394": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_idle_2.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.103Z|31394",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_idle_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:17:29.103Z|03408": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_idle_3.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.103Z|03408",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_idle_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:17:29.103Z|62947": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_idle_4.mp3",
+      "idResource": "Audio|2025-08-14T13:17:29.103Z|62947",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_idle_4.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:02.747Z|86686": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_idle_1.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.747Z|86686",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_idle_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:02.747Z|51070": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_idle_2.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.747Z|51070",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_idle_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:02.747Z|09879": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_idle_3.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.747Z|09879",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_idle_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:02.747Z|58184": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_idle_4.mp3",
+      "idResource": "Audio|2025-08-14T13:18:02.747Z|58184",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Icicle\\icicle_idle_4.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:18:21.047Z|41554": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Palmtree\\palmtree_idle_1.mp3",
+      "idResource": "Audio|2025-08-14T13:18:21.047Z|41554",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Palmtree\\palmtree_idle_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:19:27.726Z|20057": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\WorriedWall\\wall_die_1.mp3",
+      "idResource": "Audio|2025-08-14T13:19:27.726Z|20057",
+      "name": "Assets\\Sounds\\Enemies_mp3\\WorriedWall\\wall_die_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:19:27.726Z|29166": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\WorriedWall\\wall_hurt_1.mp3",
+      "idResource": "Audio|2025-08-14T13:19:27.726Z|29166",
+      "name": "Assets\\Sounds\\Enemies_mp3\\WorriedWall\\wall_hurt_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:19:27.726Z|49373": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\WorriedWall\\wall_idle_1.mp3",
+      "idResource": "Audio|2025-08-14T13:19:27.726Z|49373",
+      "name": "Assets\\Sounds\\Enemies_mp3\\WorriedWall\\wall_idle_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.619Z|86452": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_1.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.619Z|86452",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.619Z|25212": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_2.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.619Z|25212",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.620Z|16215": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_3.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.620Z|16215",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.620Z|83783": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_4.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.620Z|83783",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_4.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.620Z|32073": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_5.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.620Z|32073",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_5.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.620Z|22228": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_6.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.620Z|22228",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_6.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.620Z|09088": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_7.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.620Z|09088",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_7.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.620Z|37034": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_1.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.620Z|37034",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.620Z|86725": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_2.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.620Z|86725",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.621Z|33656": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_3.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.621Z|33656",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.621Z|23201": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_4.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.621Z|23201",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_4.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.621Z|93959": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_5.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.621Z|93959",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_5.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.621Z|93855": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_6.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.621Z|93855",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_6.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.621Z|33930": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_death_1.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.621Z|33930",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_death_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.621Z|95738": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_death_2.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.621Z|95738",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_death_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.621Z|55324": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_death_3.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.621Z|55324",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_death_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.621Z|23658": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_death_4.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.621Z|23658",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_death_4.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.621Z|78759": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_death_5.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.621Z|78759",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_death_5.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.622Z|35952": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_death_6.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.622Z|35952",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_death_6.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.622Z|67333": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_1.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.622Z|67333",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.622Z|10892": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_10.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.622Z|10892",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_10.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.622Z|86466": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_2.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.622Z|86466",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.622Z|56115": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_3.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.622Z|56115",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.622Z|13509": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_4.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.622Z|13509",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_4.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.622Z|33464": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_5.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.622Z|33464",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_5.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.622Z|84672": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_6.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.622Z|84672",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_6.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.622Z|22331": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_7.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.622Z|22331",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_7.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.622Z|25382": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_8.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.622Z|25382",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_8.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.623Z|93203": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_9.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.623Z|93203",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_9.mp3",
+      "type": "Audio"
+    }
+  },
+  "AnimationGLTF|2025-08-14T13:53:42.165Z|24822": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-08-14T13:53:42.165Z|24822",
+      "name": "CountdownCoconut_die",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\CountdownCoconut\\CountdownCoconut.glb",
+      "events": {}
     }
   }
 }
