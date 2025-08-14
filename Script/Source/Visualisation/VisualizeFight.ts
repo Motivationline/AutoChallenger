@@ -89,9 +89,9 @@ namespace Script {
             if (!entity) return;
             let entityVis = Provider.visualizer.getEntity(entity);
             let pos = this.home.grid.findElementPosition(entityVis);
-            if (pos) this.home.removeEntityFromGrid(pos);
+            if (pos) this.home.removeEntityFromGrid(pos, true);
             pos = this.away.grid.findElementPosition(entityVis);
-            if (pos) this.away.removeEntityFromGrid(pos);
+            if (pos) this.away.removeEntityFromGrid(pos, true);
         }
         whereIsEntity(_entity: VisualizeEntity): VisualizeGrid {
             let found = false;

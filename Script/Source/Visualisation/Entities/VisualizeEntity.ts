@@ -59,9 +59,8 @@ namespace Script {
             await this.playAnimationIfPossible(ANIMATION.ATTACK);
         }
 
-        async move(_move: MoveData): Promise<void> {
-            this.getComponent(ƒ.ComponentTransform).mtxLocal.translate(new ƒ.Vector3());
-            console.log("entity visualizer: move", _move);
+        async move(_ev: FightEvent): Promise<void> {
+            console.log("entity visualizer: move", {entity: _ev.detail.entity, oldPosition: _ev.detail.oldPosition, position: _ev.detail.position, direction: _ev.detail.direction, step: _ev.detail.step});
             await this.playAnimationIfPossible(ANIMATION.MOVE);
         }
 
@@ -213,6 +212,7 @@ namespace Script {
             EventBus.addEventListener(EVENT.ENTITY_AFFECTED, this.updateTmpText);
             EventBus.addEventListener(EVENT.ROUND_END, this.updateTmpText);
             EventBus.addEventListener(EVENT.ROUND_START, this.updateTmpText);
+            EventBus.addEventListener(EVENT.ENTITY_MOVE, this.eventListener);
             EventBus.addEventListener(EVENT.EUMLING_LEVELUP, this.updateTmpText);
 
             this.addEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
@@ -226,6 +226,7 @@ namespace Script {
             EventBus.removeEventListener(EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_AFFECTED, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_DIES, this.eventListener);
+            EventBus.removeEventListener(EVENT.ENTITY_MOVE, this.eventListener);
 
             EventBus.removeEventListener(EVENT.ENTITY_HURT, this.updateTmpText);
             EventBus.removeEventListener(EVENT.ENTITY_AFFECTED, this.updateTmpText);
@@ -251,6 +252,10 @@ namespace Script {
                     }
                     case EVENT.ENTITY_SPELL_BEFORE: {
                         await this.useSpell(_ev);
+                        break;
+                    }
+                    case EVENT.ENTITY_MOVE:{
+                        await this.move(_ev)
                         break;
                     }
                 }

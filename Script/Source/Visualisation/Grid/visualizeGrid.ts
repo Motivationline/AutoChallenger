@@ -33,17 +33,17 @@ namespace Script {
             this.grid.forEachElement((element, pos) => {
                 this.addEntityToGrid(element, pos, false);
             });
-
+            this.registerEventListeners();
         }
 
         addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting: boolean = true, _anchor?: ƒ.Node) {
             if (Grid.outOfBounds(_pos)) return;
             if (_removeExisting) {
-                this.removeEntityFromGrid(_pos);
+                this.removeEntityFromGrid(_pos, false);
             }
             // remove this entity if it's already somewhere in the grid
             this.grid.forEachElement((entity, pos) => {
-                if (entity === _entity) this.removeEntityFromGrid(pos);
+                if (entity === _entity) this.removeEntityFromGrid(pos, false);
             });
 
             if (!_anchor) {
@@ -51,37 +51,78 @@ namespace Script {
                 _anchor = this.getAnchor(_pos[0], _pos[1]);
             }
             //get the Positions from the placeholders and translate the entities to it
-            let position: ƒ.Vector3 = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
-
-            _entity.mtxLocal.translation = position.clone;
+            this.moveEntityToAnchor(_entity, _pos);
             this.addChild(_entity);
             this.grid.set(_pos, _entity, true);
             _entity.activate(true);
+            
         }
-        
-        removeEntityFromGrid(_pos: Position) {
+
+        removeEntityFromGrid(_pos: Position, _removeListeners: boolean) {
             if (Grid.outOfBounds(_pos)) return;
             let elementToRemove = this.grid.get(_pos);
             if (!elementToRemove) return;
             this.grid.remove(_pos);
             this.removeChild(elementToRemove);
             elementToRemove.activate(false);
-            // elementToRemove.removeEventListeners();
+            if (_removeListeners)
+                elementToRemove.removeEventListeners();
         }
 
+        moveEntityToAnchor(_entity: VisualizeEntity, position: Position) {
+            let _anchor = this.getAnchor(position[0], position[1]);
+
+            //get the Positions from the placeholders and translate the entity to it
+            let pos3: ƒ.Vector3 = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
+            //console.log(_entity);
+            _entity.mtxLocal.translation = pos3.clone;
+            this.grid.set(position, _entity, true);
+        }
 
         getAnchor(_x: number, _z: number): ƒ.Node {
             let anchor: ƒ.Node;
             let pointer: number = _z * 3 + _x;
-            console.log("pointer: " + pointer);
+            //console.log("pointer: " + pointer);
             anchor = this.sideNode.getChildByName(pointer.toString());
             return anchor;
         }
 
         nuke() {
             this.grid.forEachElement((_el, pos) => {
-                this.removeEntityFromGrid(pos);
+                this.removeEntityFromGrid(pos, true);
             })
+        }
+
+        async move(_ev: FightEvent) {
+            //gets the moving entity and moves it
+            this.moveEntityToAnchor(this.grid.get(_ev.detail.oldPosition), _ev.detail.position);
+        }
+
+        registerEventListeners(): void {
+            EventBus.addEventListener(EVENT.ENTITY_MOVED, this.eventListener);
+            EventBus.addEventListener(EVENT.RUN_END, this.eventListener);
+        }
+
+        removeEventListeners(): void {
+            EventBus.removeEventListener(EVENT.ENTITY_MOVED, this.eventListener);
+            EventBus.removeEventListener(EVENT.RUN_END, this.eventListener);
+        }
+
+        eventListener = async (_ev: FightEvent) => {
+            await this.handleEvent(_ev);
+        }
+
+        async handleEvent(_ev: FightEvent) {
+
+            switch (_ev.type) {
+                case EVENT.ENTITY_MOVED: {
+                    await this.move(_ev);
+                    break;
+                }
+                case EVENT.RUN_END: {
+                    this.removeEventListeners();
+                }
+            }
         }
 
     }

@@ -90,6 +90,7 @@ declare namespace Script {
          */
         rotateBy?: number;
         direction: DIRECTION_RELATIVE;
+        currentDirection: Position;
         distance: number;
         /** If this unit is blocked from moving in the desired direction, what should it do? */
         blocked?: {
@@ -99,9 +100,9 @@ declare namespace Script {
             attempts?: number;
         };
     }
-    /**Move the Entity based of the Grid Data then map the position to the empty nodes in the Graph with a mapping function
-     * this could also be done in the Visualizer with a function like mapPositionToNode(_pos: Position)
-    */
+    function move(_grid: Grid<Entity>): Promise<void>;
+    function getNextDirection(_rotateBy: number, _direction: Position): Position;
+    function getPositionBasedOnMove(_pos: Position, _direction: Position, _step: number, _rotateBy: number): Position;
 }
 declare namespace Script {
     export enum SELECTION_ORDER {
@@ -842,6 +843,7 @@ declare namespace Script {
          */
         startDirection?: number;
         moves?: Selectable<MoveData>;
+        currentDirection?: Position;
         spells?: Selectable<SpellData>;
         attacks?: Selectable<AttackData>;
         /** If it's in this list, this kind of spell is ignored by the entity.*/
@@ -853,7 +855,8 @@ declare namespace Script {
         currentHealth: number;
         position: Position;
         untargetable: boolean;
-        move(_friendly: Grid<IEntity>): Promise<void>;
+        currentDirection: Position;
+        tryToMove(_grid: Grid<Entity>, maxAlternatives: number): Promise<boolean>;
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
         damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
@@ -877,6 +880,8 @@ declare namespace Script {
         resistancesSet?: Set<SPELL_TYPE>;
         startDirection?: number;
         activeEffects: Map<SPELL_TYPE, number>;
+        moved: boolean;
+        currentDirection: Position;
         info?: string;
         constructor(_entity: EntityData, _pos?: Position);
         get untargetable(): boolean;
@@ -885,7 +890,7 @@ declare namespace Script {
         damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
         affect(_spell: SpellData, _cause?: IEntity): Promise<number>;
         setEffectLevel(_spell: SPELL_TYPE, value: number): Promise<void>;
-        move(): Promise<void>;
+        tryToMove(_grid: Grid<Entity>, maxAlternatives: number): Promise<boolean>;
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells?: SpellData[], _targetsOverride?: IEntity[]): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks?: AttackData[], _targetsOverride?: IEntity[]): Promise<void>;
         getOwnDamage(): number;
@@ -1146,7 +1151,7 @@ declare namespace Script {
         private tmpText;
         constructor(_entity: IEntity);
         attack(_ev: FightEvent): Promise<void>;
-        move(_move: MoveData): Promise<void>;
+        move(_ev: FightEvent): Promise<void>;
         useSpell(_ev: FightEvent): Promise<void>;
         getHurt(_ev: FightEvent): Promise<void>;
         getAffected(_ev: FightEvent): Promise<void>;
@@ -1192,9 +1197,15 @@ declare namespace Script {
         sideNode: ƒ.Node;
         constructor(_grid: Grid<VisualizeEntity>, _side: string);
         addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting?: boolean, _anchor?: ƒ.Node): void;
-        removeEntityFromGrid(_pos: Position): void;
+        removeEntityFromGrid(_pos: Position, _removeListeners: boolean): void;
+        moveEntityToAnchor(_entity: VisualizeEntity, position: Position): void;
         getAnchor(_x: number, _z: number): ƒ.Node;
         nuke(): void;
+        move(_ev: FightEvent): Promise<void>;
+        registerEventListeners(): void;
+        removeEventListeners(): void;
+        eventListener: (_ev: FightEvent) => Promise<void>;
+        handleEvent(_ev: FightEvent): Promise<void>;
     }
 }
 declare namespace Script {

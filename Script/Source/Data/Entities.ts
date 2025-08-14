@@ -90,15 +90,15 @@ namespace Script {
             {
                 id: "moveSingle",
                 parent: "parent",
-                moves: { direction: DIRECTION_RELATIVE.FORWARD, distance: 1 }
+                moves: { direction: DIRECTION_RELATIVE.FORWARD, rotateBy: 4, currentDirection: [1, 0], distance: 1, blocked: { attempts: 8, rotateBy: 4 } }
             },
             {
                 id: "moveMultiple",
                 health: 5,
                 moves: {
                     options: [
-                        { direction: DIRECTION_RELATIVE.FORWARD, distance: 1 },
-                        { rotateBy: 2, direction: DIRECTION_RELATIVE.FORWARD, distance: 1 },
+                        { direction: DIRECTION_RELATIVE.FORWARD, currentDirection: [1, 0], distance: 1 },
+                        { rotateBy: 2, direction: DIRECTION_RELATIVE.FORWARD, currentDirection: [1, 0], distance: 1 },
                     ],
                     selection: {
                         order: SELECTION_ORDER.ALL,
@@ -500,9 +500,9 @@ namespace Script {
                 id: "S-Eumling",
                 health: 4,
                 spells: {
-                        target: TARGET.SELF,
-                        type: SPELL_TYPE.HEAL,
-                        level: 1,
+                    target: TARGET.SELF,
+                    type: SPELL_TYPE.HEAL,
+                    level: 1,
                 },
                 info: "Heals itself for 1 health every round."
             },
@@ -1057,8 +1057,8 @@ namespace Script {
             {
                 id: "cactusCrawler", // doesn't attack but gets thorns after moving
                 health: 1,
-                moves: { direction: DIRECTION_RELATIVE.FORWARD, distance: 1 },
-                startDirection: 6, // down
+                moves: { direction: DIRECTION_RELATIVE.FORWARD, rotateBy: 4, currentDirection: [1, 0], distance: 1, blocked: { attempts: 8, rotateBy: 4 } },
+                //startDirection: 6, // down
                 abilities: [
                     {   // gain thorns 1 after moving
                         on: EVENT.ENTITY_MOVED,

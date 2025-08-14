@@ -15,6 +15,7 @@ namespace Script {
          */
         startDirection?: number,
         moves?: Selectable<MoveData>,
+        currentDirection?: Position,
         spells?: Selectable<SpellData>,
         attacks?: Selectable<AttackData>,
         /** If it's in this list, this kind of spell is ignored by the entity.*/
@@ -27,7 +28,9 @@ namespace Script {
         currentHealth: number,
         position: Position,
         untargetable: boolean,
-        move(_friendly: Grid<IEntity>): Promise<void>,
+        currentDirection: Position,
+        tryToMove(_grid: Grid<Entity>, maxAlternatives: number): Promise<boolean>
+        //move(_friendly: Grid<IEntity>): Promise<void>,
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>,
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>,
         damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
@@ -51,6 +54,8 @@ namespace Script {
         resistancesSet? = new Set<SPELL_TYPE>();
         startDirection?: number;
         activeEffects = new Map<SPELL_TYPE, number>();
+        moved: boolean;
+        currentDirection: Position;
         info?: string;
 
         #arena: Arena;
@@ -61,6 +66,17 @@ namespace Script {
             this.health = _entity.health ?? 1;
             this.currentHealth = this.health;
             this.position = _pos;
+
+            //move stuff
+            this.moved = false;
+            let moveData: MoveData;
+            moveData = this.select(this.moves, false)[0];
+            if (moveData) {
+                this.currentDirection = moveData.currentDirection;
+            }else{
+                this.currentDirection = [-1,0];
+            }
+            //this.currentDirection = [-1,0]; //facing towards player Side
 
             this.updateEntityData(_entity);
 
@@ -168,6 +184,7 @@ namespace Script {
                 await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIES, target: this, cause: _cause, detail: { amount } });
 
                 await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIED, target: this, cause: _cause, detail: { amount } });
+
             }
             return this.currentHealth;
         }
@@ -214,10 +231,41 @@ namespace Script {
             }
         }
 
-        async move(): Promise<void> {
-            //TODO: add movement logic here
-            ;
+        async tryToMove(_grid: Grid<Entity>, maxAlternatives: number): Promise<boolean> {
+            let moveData: MoveData;
+            //TODO: get all moves
+            moveData = this.select(this.moves, false)[0];
+            //check if the Entity has move data
+            if (moveData) {
+                for (let i = 0; i <= maxAlternatives && i <= moveData.blocked.attempts; i++) {
+                    let rotateBy: number = moveData.rotateBy + i * moveData.blocked.rotateBy;
+                    //get the new position
+                    let nextPosition: Position = getPositionBasedOnMove(this.position, this.currentDirection, moveData.distance, rotateBy);
+                    //get the new direction
+                    let nextDirection: Position = getNextDirection(rotateBy, this.currentDirection);
+                    //check if the position is occupied or out of bounds
+                    if (_grid.get(nextPosition) || Grid.outOfBounds(nextPosition)) {
+                        continue;
+                    } else if (_grid.get(nextPosition) == undefined) { //spot is free
+                        //set the entity at the new position in the grid and remove the old one
+                        _grid.set(nextPosition, this, true);
+                        let oldPos = this.position;
+                        this.position = nextPosition;
+                        this.currentDirection = nextDirection;
+                        //call move events
+                        await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVE, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
+                        await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVED, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
+                        this.moved = true;
+                        return true;
+                    }
+                }
+            } else {// if the entity has no move data we just pretend it already moved
+                this.moved = true;
+                return true;
+            }
+            return false;
         }
+
         async useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells: SpellData[] = this.select(this.spells, true), _targetsOverride?: IEntity[]): Promise<void> {
             if (!_spells) return;
             if (this.stunned) {
