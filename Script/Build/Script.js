@@ -4477,13 +4477,13 @@ var Script;
                 abilityLevels: [
                     {
                         on: Script.EVENT.FIGHT_START,
-                        target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1 } },
+                        target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1, sortBy: Script.TARGET_SORT.RANDOM }, },
                         attack: { baseDamage: 1 },
                         info: "Deals 1 damage to a random enemy at the start of the fight."
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
-                        target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 2 } },
+                        target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 2, sortBy: Script.TARGET_SORT.RANDOM }, },
                         attack: { baseDamage: 1 },
                         info: "Deals 1 damage to two random enemies at the start of the fight."
                     }

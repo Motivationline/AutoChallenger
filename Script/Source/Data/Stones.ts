@@ -94,13 +94,13 @@ namespace Script {
                 abilityLevels: [
                     {
                         on: EVENT.FIGHT_START,
-                        target: { side: TARGET_SIDE.OPPONENT, entity: {maxNumTargets: 1} },
+                        target: { side: TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1, sortBy: TARGET_SORT.RANDOM }, },
                         attack: { baseDamage: 1 },
                         info: "Deals 1 damage to a random enemy at the start of the fight."
                     },
                     {
                         on: EVENT.FIGHT_START,
-                        target: { side: TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 2 } },
+                        target: { side: TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 2, sortBy: TARGET_SORT.RANDOM }, },
                         attack: { baseDamage: 1 },
                         info: "Deals 1 damage to two random enemies at the start of the fight."
                     }
