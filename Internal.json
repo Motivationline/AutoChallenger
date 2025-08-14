@@ -2500,6 +2500,10 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
+              "audio1": "Audio|2025-08-14T13:20:02.622Z|67333",
+              "audio2": "Audio|2025-08-14T13:20:02.622Z|10892",
+              "audio3": "Audio|2025-08-14T13:20:02.622Z|86466",
+              "audio4": "Audio|2025-08-14T13:20:02.622Z|56115",
               "animType": "hurt"
             }
           },
@@ -2507,6 +2511,10 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
+              "audio1": "Audio|2025-08-14T13:20:02.620Z|37034",
+              "audio2": "Audio|2025-08-14T13:20:02.620Z|86725",
+              "audio3": "Audio|2025-08-14T13:20:02.621Z|33656",
+              "audio4": "Audio|2025-08-14T13:20:02.621Z|23201",
               "animType": "affected"
             }
           },
@@ -2514,6 +2522,10 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
+              "audio1": "Audio|2025-08-14T13:20:02.619Z|86452",
+              "audio2": "Audio|2025-08-14T13:20:02.619Z|25212",
+              "audio3": "Audio|2025-08-14T13:20:02.620Z|16215",
+              "audio4": "Audio|2025-08-14T13:20:02.620Z|83783",
               "animType": "attack"
             }
           }
@@ -2909,6 +2921,23 @@
       "url": "Assets\\Sounds\\Enemies_mp3\\Coconut\\coconut_idle.mp3",
       "idResource": "Audio|2025-08-14T13:05:06.149Z|11412",
       "name": "Assets\\Sounds\\Enemies_mp3\\Coconut\\coconut_idle.mp3",
+      "type": "Audio"
+    }
+  },
+  "AnimationGLTF|2025-08-14T13:53:42.165Z|24822": {
+    "ƒ.AnimationGLTF": {
+      "idResource": "AnimationGLTF|2025-08-14T13:53:42.165Z|24822",
+      "name": "CountdownCoconut_die",
+      "type": "AnimationGLTF",
+      "url": "Assets\\GLTFs\\Enemies\\CountdownCoconut\\CountdownCoconut.glb",
+      "events": {}
+    }
+  },
+  "Audio|2025-08-14T13:04:52.735Z|49597": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\Coconut\\coconut_die.mp3",
+      "idResource": "Audio|2025-08-14T13:04:52.735Z|49597",
+      "name": "Assets\\Sounds\\Enemies_mp3\\Coconut\\coconut_die.mp3",
       "type": "Audio"
     }
   },
@@ -4474,6 +4503,22 @@
       "events": {}
     }
   },
+  "Audio|2025-08-14T13:19:27.726Z|29166": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\WorriedWall\\wall_hurt_1.mp3",
+      "idResource": "Audio|2025-08-14T13:19:27.726Z|29166",
+      "name": "Assets\\Sounds\\Enemies_mp3\\WorriedWall\\wall_hurt_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:19:27.726Z|20057": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Enemies_mp3\\WorriedWall\\wall_die_1.mp3",
+      "idResource": "Audio|2025-08-14T13:19:27.726Z|20057",
+      "name": "Assets\\Sounds\\Enemies_mp3\\WorriedWall\\wall_die_1.mp3",
+      "type": "Audio"
+    }
+  },
   "Graph|2025-07-18T09:09:19.357Z|40707": {
     "ƒ.Graph": {
       "name": "WorriedWall",
@@ -5155,14 +5200,6 @@
       "type": "Graph"
     }
   },
-  "Audio|2025-08-14T13:04:52.735Z|49597": {
-    "ƒ.Audio": {
-      "url": "Assets\\Sounds\\Enemies_mp3\\Coconut\\coconut_die.mp3",
-      "idResource": "Audio|2025-08-14T13:04:52.735Z|49597",
-      "name": "Assets\\Sounds\\Enemies_mp3\\Coconut\\coconut_die.mp3",
-      "type": "Audio"
-    }
-  },
   "Audio|2025-08-14T13:17:29.103Z|12584": {
     "ƒ.Audio": {
       "url": "Assets\\Sounds\\Enemies_mp3\\Flinger\\Flinger_idle_1.mp3",
@@ -5232,22 +5269,6 @@
       "url": "Assets\\Sounds\\Enemies_mp3\\Palmtree\\palmtree_idle_1.mp3",
       "idResource": "Audio|2025-08-14T13:18:21.047Z|41554",
       "name": "Assets\\Sounds\\Enemies_mp3\\Palmtree\\palmtree_idle_1.mp3",
-      "type": "Audio"
-    }
-  },
-  "Audio|2025-08-14T13:19:27.726Z|20057": {
-    "ƒ.Audio": {
-      "url": "Assets\\Sounds\\Enemies_mp3\\WorriedWall\\wall_die_1.mp3",
-      "idResource": "Audio|2025-08-14T13:19:27.726Z|20057",
-      "name": "Assets\\Sounds\\Enemies_mp3\\WorriedWall\\wall_die_1.mp3",
-      "type": "Audio"
-    }
-  },
-  "Audio|2025-08-14T13:19:27.726Z|29166": {
-    "ƒ.Audio": {
-      "url": "Assets\\Sounds\\Enemies_mp3\\WorriedWall\\wall_hurt_1.mp3",
-      "idResource": "Audio|2025-08-14T13:19:27.726Z|29166",
-      "name": "Assets\\Sounds\\Enemies_mp3\\WorriedWall\\wall_hurt_1.mp3",
       "type": "Audio"
     }
   },
@@ -5489,15 +5510,6 @@
       "idResource": "Audio|2025-08-14T13:20:02.623Z|93203",
       "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_9.mp3",
       "type": "Audio"
-    }
-  },
-  "AnimationGLTF|2025-08-14T13:53:42.165Z|24822": {
-    "ƒ.AnimationGLTF": {
-      "idResource": "AnimationGLTF|2025-08-14T13:53:42.165Z|24822",
-      "name": "CountdownCoconut_die",
-      "type": "AnimationGLTF",
-      "url": "Assets\\GLTFs\\Enemies\\CountdownCoconut\\CountdownCoconut.glb",
-      "events": {}
     }
   }
 }
