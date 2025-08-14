@@ -67,8 +67,10 @@ namespace Script {
 
             //move stuff
             this.moved = false;
-            if (this.select(this.moves, true)[0]) {
-                this.currentDirection = this.select(this.moves, true)[0].currentDirection;
+            let moveData: MoveData;
+            moveData = this.select(this.moves, false)[0];
+            if (moveData) {
+                this.currentDirection = moveData.currentDirection;
             }else{
                 this.currentDirection = [-1,0];
             }
@@ -228,10 +230,10 @@ namespace Script {
         }
 
         async tryToMove(_grid: Grid<Entity>, maxAlternatives: number): Promise<boolean> {
-            //check if the Entity has move data
             let moveData: MoveData;
             //TODO: get all moves
-            moveData = this.select(this.moves, true)[0];// @Björn das sucht dir alle moves raus die es machen soll - du nimmst aber nur den ersten. Im Moment geht das weil da immer nur einer zurück kommt.
+            moveData = this.select(this.moves, false)[0];
+            //check if the Entity has move data
             if (moveData) {
                 for (let i = 0; i <= maxAlternatives && i <= moveData.blocked.attempts; i++) {
                     let rotateBy: number = moveData.rotateBy + i * moveData.blocked.rotateBy;
