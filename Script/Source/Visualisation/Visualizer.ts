@@ -1,3 +1,6 @@
+/// <reference path="Entities/VisualizeTarget.ts" />
+
+
 namespace Script {
     import ƒ = FudgeCore;
 
@@ -5,12 +8,15 @@ namespace Script {
         root: ƒ.Node;
         camera: ƒ.ComponentCamera;
         viewport: ƒ.Viewport;
+        activeFight: VisualizeFight;
         #gui: VisualizeGUI;
         private entities: Map<IEntity, VisualizeEntity> = new Map();
         private fights: Map<Fight, VisualizeFight> = new Map();
 
         constructor() {
             this.root = new ƒ.Node("Root");
+            new VisualizeTarget();
+            this.getGUI();
             this.addEventListeners();
         }
         getEntity(_entity: IEntity): VisualizeEntity {
@@ -42,6 +48,8 @@ namespace Script {
 
             _viewport.initialize("Viewport", fightScene, this.camera, document.querySelector("canvas"));
             _viewport.draw();
+
+            setupSounds(this.camera.node);
         }
         addToScene(_el: ƒ.Node): void {
             this.root.addChild(_el);
@@ -55,9 +63,6 @@ namespace Script {
         }
         getGraph(): ƒ.Graph {
             return this.viewport.getBranch() as ƒ.Graph;
-        }
-        drawScene(): void {
-            this.viewport.draw();
         }
 
         private createEntity(_entity: IEntity) {
@@ -74,7 +79,8 @@ namespace Script {
         private fightPrepHandler = (_ev: FightEvent) => {
             const fight = _ev.detail.fight;
             if (!fight) return;
-            this.getFight(fight);
+            let fightVis = this.getFight(fight);
+            this.activeFight = fightVis;
         }
 
         addEventListeners() {

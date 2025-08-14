@@ -11,6 +11,7 @@ namespace Script {
             this.#stone = _stone;
             this.#element = createElementAdvanced("div", {
                 classes: ["StoneUIElement"],
+                attributes: [["style", `--stone-url: url("./Assets/UIElemente/Stones/${this.#stone.id}.png")`]]
             });
             this.update();
             this.addEventListeners();
@@ -32,10 +33,7 @@ namespace Script {
         }
 
         private update = () => {
-            this.#element.innerHTML = `
-            <span class="">${this.#stone.id}</span>
-            <span class="">Level ${this.#stone.level + 1}</span>
-            `;
+            this.#element.dataset.level = this.#stone.level.toString();
         }
 
         private animate = async (_ev: FightEvent) => {

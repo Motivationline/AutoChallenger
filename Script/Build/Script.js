@@ -82,6 +82,8 @@ var Script;
         EVENT["EUMLING_LEVELUP_CHOOSE"] = "eumlingLevelupChoose";
         EVENT["EUMLING_LEVELUP_CHOSEN"] = "eumlingLevelupChosen";
         EVENT["EUMLING_LEVELUP"] = "eumlingLevelup";
+        EVENT["SHOW_PREVIEW"] = "showPreview";
+        EVENT["HIDE_PREVIEW"] = "hidePreview";
     })(EVENT = Script.EVENT || (Script.EVENT = {}));
     class EventBus {
         static { this.listeners = new Map(); }
@@ -116,6 +118,21 @@ var Script;
                     console.error(error);
                 }
             }
+        }
+        static dispatchEventWithoutWaiting(_ev) {
+            if (!this.listeners.has(_ev.type))
+                return [];
+            const listeners = [...this.listeners.get(_ev.type)]; // copying this so removing listeners doesn't skip any
+            const promises = [];
+            for (let listener of listeners) {
+                try {
+                    promises.push(new Promise(async (resolve) => { await listener(_ev); resolve(); }));
+                }
+                catch (error) {
+                    console.error(error);
+                }
+            }
+            return promises;
         }
         static async awaitSpecificEvent(_type) {
             return new Promise((resolve) => {
@@ -281,14 +298,19 @@ var Script;
     //#region Implementation
     function getTargets(_target, _allies, _opponents, _self) {
         if (!_target)
-            return [];
+            return { targets: [] };
         const targets = [];
         const side = _target.side === TARGET_SIDE.ALLY ? _allies : _opponents;
         // entity selector
         if ("entity" in _target) {
             side.forEachElement((entity) => {
-                if (entity && !entity.untargetable)
-                    targets.push(entity);
+                if (!entity)
+                    return;
+                if (entity.untargetable)
+                    return;
+                if (_target.excludeSelf && entity === _self)
+                    return;
+                targets.push(entity);
             });
             switch (_target.entity.sortBy) {
                 case "random": {
@@ -314,114 +336,121 @@ var Script;
             if (_target.entity.maxNumTargets !== undefined && targets.length > _target.entity.maxNumTargets) {
                 targets.length = _target.entity.maxNumTargets;
             }
-            return targets;
+            return { targets, side: _target.side };
         }
         // area selector
         else if ("area" in _target) {
-            let pos;
-            if (_target.area.position !== AREA_POSITION_ABSOLUTE.ABSOLUTE && !_self)
-                return [];
-            switch (_target.area.position) {
-                case Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW: {
-                    for (let i = 0; i < 3; i++) {
-                        if (side.get([i, _self.position[1]])) {
-                            pos = [i, _self.position[1]];
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case Script.AREA_POSITION.RELATIVE_LAST_IN_ROW: {
-                    for (let i = 2; i >= 0; i--) {
-                        if (side.get([i, _self.position[1]])) {
-                            pos = [i, _self.position[1]];
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case Script.AREA_POSITION.RELATIVE_SAME: {
-                    // intuitively for the designer "same" means "the same spot on the opposite side".
-                    // But because the own side is mirrored internally, "SAME" internally means mirrored and vice versa
-                    pos = [2 - _self.position[0], _self.position[1]];
-                    break;
-                }
-                case Script.AREA_POSITION.RELATIVE_MIRRORED: {
-                    pos = [_self.position[0], _self.position[1]];
-                    break;
-                }
-                case Script.AREA_POSITION.ABSOLUTE: {
-                    pos = _target.area.absolutePosition;
-                    break;
-                }
-            }
-            if (!pos)
-                return [];
-            let pattern = new Script.Grid();
-            let patternIsRelative = true;
-            switch (_target.area.shape) {
-                case Script.AREA_SHAPE.SINGLE:
-                    pattern.set(pos, true);
-                    patternIsRelative = false;
-                    break;
-                case Script.AREA_SHAPE.ROW:
-                    pattern.set([0, pos[1]], true);
-                    pattern.set([1, pos[1]], true);
-                    pattern.set([2, pos[1]], true);
-                    patternIsRelative = false;
-                    break;
-                case Script.AREA_SHAPE.COLUMN:
-                    pattern.set([pos[0], 0], true);
-                    pattern.set([pos[0], 1], true);
-                    pattern.set([pos[0], 2], true);
-                    patternIsRelative = false;
-                    break;
-                case Script.AREA_SHAPE.PLUS:
-                    pattern.set([1, 0], true);
-                    pattern.set([0, 1], true);
-                    pattern.set([1, 1], true);
-                    pattern.set([2, 1], true);
-                    pattern.set([1, 2], true);
-                    break;
-                case Script.AREA_SHAPE.DIAGONALS:
-                    pattern.set([0, 0], true);
-                    pattern.set([2, 0], true);
-                    pattern.set([0, 2], true);
-                    pattern.set([2, 2], true);
-                    break;
-                case Script.AREA_SHAPE.SQUARE:
-                    pattern = new Script.Grid([[true, true, true], [true, false, true], [true, true, true]]);
-                    break;
-                case Script.AREA_SHAPE.PATTERN: {
-                    if (_target.area.shape === Script.AREA_SHAPE.PATTERN) { // only so that TS doesn't complain.
-                        new Script.Grid(_target.area.pattern).forEachPosition((element, pos) => {
-                            pattern.set(pos, !!element);
-                        });
-                    }
-                }
-            }
-            if (patternIsRelative && (pos[0] !== 1 || pos[1] !== 1)) {
-                // 1, 1 is the center, so the difference to that is how much the pattern is supposed to be moved
-                let delta = [pos[0] - 1, pos[1] - 1];
-                let movedPattern = new Script.Grid();
-                pattern.forEachPosition((el, pos) => {
-                    let newPos = [pos[0] + delta[0], pos[1] + delta[1]];
-                    movedPattern.set(newPos, !!el);
-                });
-                pattern = movedPattern;
-            }
-            // final pattern achieved, get the actual entities in these areas now
+            const pattern = getTargetPositions(_target, _self, side);
+            // get the actual entities in these areas now
             side.forEachElement((el, pos) => {
                 if (el.untargetable)
                     return;
                 if (pattern.get(pos))
                     targets.push(el);
             });
-            return targets;
+            return { targets, side: _target.side, positions: pattern };
         }
-        return targets;
+        return { targets };
     }
     Script.getTargets = getTargets;
+    function getTargetPositions(_target, _self, _side) {
+        let pattern = new Script.Grid();
+        let pos;
+        if (_target.area.position !== AREA_POSITION_ABSOLUTE.ABSOLUTE && !_self)
+            return pattern;
+        switch (_target.area.position) {
+            case Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW: {
+                for (let i = 0; i < 3; i++) {
+                    const entity = _side.get([i, _self.position[1]]);
+                    if (entity && !entity.untargetable) {
+                        pos = [i, _self.position[1]];
+                        break;
+                    }
+                }
+                break;
+            }
+            case Script.AREA_POSITION.RELATIVE_LAST_IN_ROW: {
+                for (let i = 2; i >= 0; i--) {
+                    const entity = _side.get([i, _self.position[1]]);
+                    if (entity && !entity.untargetable) {
+                        pos = [i, _self.position[1]];
+                        break;
+                    }
+                }
+                break;
+            }
+            case Script.AREA_POSITION.RELATIVE_SAME: {
+                // intuitively for the designer "same" means "the same spot on the opposite side".
+                // But because the own side is mirrored internally, "SAME" internally means mirrored and vice versa
+                pos = [2 - _self.position[0], _self.position[1]];
+                break;
+            }
+            case Script.AREA_POSITION.RELATIVE_MIRRORED: {
+                pos = [_self.position[0], _self.position[1]];
+                break;
+            }
+            case Script.AREA_POSITION.ABSOLUTE: {
+                pos = _target.area.absolutePosition;
+                break;
+            }
+        }
+        if (!pos)
+            return pattern;
+        let patternIsRelative = true;
+        switch (_target.area.shape) {
+            case Script.AREA_SHAPE.SINGLE:
+                pattern.set(pos, true);
+                patternIsRelative = false;
+                break;
+            case Script.AREA_SHAPE.ROW:
+                pattern.set([0, pos[1]], true);
+                pattern.set([1, pos[1]], true);
+                pattern.set([2, pos[1]], true);
+                patternIsRelative = false;
+                break;
+            case Script.AREA_SHAPE.COLUMN:
+                pattern.set([pos[0], 0], true);
+                pattern.set([pos[0], 1], true);
+                pattern.set([pos[0], 2], true);
+                patternIsRelative = false;
+                break;
+            case Script.AREA_SHAPE.PLUS:
+                pattern.set([1, 0], true);
+                pattern.set([0, 1], true);
+                pattern.set([1, 1], true);
+                pattern.set([2, 1], true);
+                pattern.set([1, 2], true);
+                break;
+            case Script.AREA_SHAPE.DIAGONALS:
+                pattern.set([0, 0], true);
+                pattern.set([2, 0], true);
+                pattern.set([0, 2], true);
+                pattern.set([2, 2], true);
+                break;
+            case Script.AREA_SHAPE.SQUARE:
+                pattern = new Script.Grid([[true, true, true], [true, false, true], [true, true, true]]);
+                break;
+            case Script.AREA_SHAPE.PATTERN: {
+                if (_target.area.shape === Script.AREA_SHAPE.PATTERN) { // only so that TS doesn't complain.
+                    new Script.Grid(_target.area.pattern).forEachPosition((element, pos) => {
+                        pattern.set(pos, !!element);
+                    });
+                }
+            }
+        }
+        if (patternIsRelative && (pos[0] !== 1 || pos[1] !== 1)) {
+            // 1, 1 is the center, so the difference to that is how much the pattern is supposed to be moved
+            let delta = [pos[0] - 1, pos[1] - 1];
+            let movedPattern = new Script.Grid();
+            pattern.forEachPosition((el, pos) => {
+                let newPos = [pos[0] + delta[0], pos[1] + delta[1]];
+                movedPattern.set(newPos, !!el);
+            });
+            pattern = movedPattern;
+        }
+        return pattern;
+    }
+    Script.getTargetPositions = getTargetPositions;
     //#endregion
 })(Script || (Script = {}));
 var Script;
@@ -522,7 +551,7 @@ var Script;
                 health: 10,
             },
             {
-                id: "defaultSkin",
+                id: "defaultEumling",
                 attacks: {
                     options: [
                         {
@@ -755,7 +784,8 @@ var Script;
                             shape: Script.AREA_SHAPE.SINGLE,
                         },
                     }
-                }
+                },
+                info: "Attacks the first opponent in the opposite column for 1 damage."
             },
             {
                 id: "RA-Eumling",
@@ -797,64 +827,67 @@ var Script;
                         order: Script.SELECTION_ORDER.RANDOM_EACH_FIGHT,
                         amount: 1,
                     }
-                }
+                },
+                info: "Attacks the opposite column, row or in a cross for 1 damage. Picks one at random each new fight."
             },
             {
                 id: "RI-Eumling",
                 health: 4,
                 attacks: {
                     baseDamage: 1,
-                    baseCritChance: 25,
+                    baseCritChance: 50,
                     target: {
                         side: Script.TARGET_SIDE.OPPONENT,
                         area: {
-                            position: Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW, // TODO: NEEDS TO ATTACK NEXT ROW IF NO ENEMY
-                            shape: Script.AREA_SHAPE.SINGLE,
+                            position: Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW,
+                            shape: Script.AREA_SHAPE.SINGLE
                         },
-                    }
-                }
+                    },
+                },
+                info: "Attacks the first opponent in the opposite column for 1 damage. Has a 50% crit-chance."
             },
             {
                 id: "RAC-Eumling",
                 health: 5,
-                spells: {
+                attacks: {
                     options: [
                         {
+                            baseDamage: 1,
                             target: {
-                                side: Script.TARGET_SIDE.ALLY,
+                                side: Script.TARGET_SIDE.OPPONENT,
                                 area: {
-                                    position: Script.AREA_POSITION.RELATIVE_SAME,
+                                    position: Script.AREA_POSITION.RELATIVE_MIRRORED,
                                     shape: Script.AREA_SHAPE.ROW,
                                 },
                             },
-                            type: Script.SPELL_TYPE.STRENGTH,
                         },
                         {
+                            baseDamage: 1,
                             target: {
-                                side: Script.TARGET_SIDE.ALLY,
+                                side: Script.TARGET_SIDE.OPPONENT,
                                 area: {
-                                    position: Script.AREA_POSITION.RELATIVE_SAME,
+                                    position: Script.AREA_POSITION.RELATIVE_MIRRORED,
                                     shape: Script.AREA_SHAPE.COLUMN,
                                 },
                             },
-                            type: Script.SPELL_TYPE.STRENGTH,
                         },
                         {
+                            baseDamage: 1,
                             target: {
-                                side: Script.TARGET_SIDE.ALLY,
+                                side: Script.TARGET_SIDE.OPPONENT,
                                 area: {
-                                    position: Script.AREA_POSITION.RELATIVE_SAME,
+                                    position: Script.AREA_POSITION.RELATIVE_MIRRORED,
                                     shape: Script.AREA_SHAPE.DIAGONALS,
                                 },
                             },
-                            type: Script.SPELL_TYPE.STRENGTH,
                         },
                     ],
                     selection: {
                         order: Script.SELECTION_ORDER.RANDOM_EACH_FIGHT,
-                        amount: 1,
+                        amount: 2,
                     }
-                }
+                },
+                info: "Attacks the opposite column, row or in a cross for 1 damage. Picks two at random each new fight."
             },
             {
                 id: "RAE-Eumling",
@@ -897,40 +930,65 @@ var Script;
                         amount: 1,
                     }
                 },
-                abilities: [ // TODO: Needs to earn +1 gold for each damage dealt
-                ]
+                abilities: [
+                    {
+                        on: Script.EVENT.ENTITY_ATTACK,
+                        target: "target",
+                        conditions: {
+                            cause: Script.TARGET.SELF
+                        },
+                        spell: {
+                            type: Script.SPELL_TYPE.GOLD,
+                            level: 1,
+                        }
+                    }
+                ],
+                info: "Attacks the opposite column, row or in a cross for 1 damage. Picks one at random each new fight. Gains 1 gold on each attack."
             },
             {
                 id: "RIC-Eumling",
                 health: 5,
                 attacks: {
                     baseDamage: 1,
-                    baseCritChance: 25,
+                    baseCritChance: 75,
                     target: {
                         side: Script.TARGET_SIDE.OPPONENT,
                         area: {
-                            position: Script.AREA_POSITION.RELATIVE_MIRRORED, // TODO: NEEDS TO ATTACK NEXT ROW IF NO ENEMY
+                            position: Script.AREA_POSITION.RELATIVE_MIRRORED,
                             shape: Script.AREA_SHAPE.ROW,
                         },
                     }
-                }
+                },
+                info: "Attacks the entire opposite column for 1 damage. Has a 75% crit-chance."
             },
             {
                 id: "RIE-Eumling",
                 health: 5,
                 attacks: {
-                    baseDamage: 1,
+                    baseDamage: 2,
                     baseCritChance: 50,
                     target: {
                         side: Script.TARGET_SIDE.OPPONENT,
                         area: {
-                            position: Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW, // TODO: NEEDS TO ATTACK NEXT ROW IF NO ENEMY
+                            position: Script.AREA_POSITION.RELATIVE_FIRST_IN_ROW,
                             shape: Script.AREA_SHAPE.SINGLE,
                         },
                     }
                 },
-                abilities: [ // TODO: Needs to earn +2 gold every time it crits
-                ]
+                abilities: [
+                    {
+                        on: Script.EVENT.ENTITY_ATTACK,
+                        target: "target",
+                        conditions: {
+                            cause: Script.TARGET.SELF
+                        },
+                        spell: {
+                            type: Script.SPELL_TYPE.GOLD,
+                            level: 2,
+                        }
+                    }
+                ],
+                info: "Attacks the first opponent in the opposite column for 2 damage. Has a 50% crit-chance. Gains 2 gold on each attack."
             },
             {
                 id: "S-Eumling",
@@ -940,6 +998,7 @@ var Script;
                     type: Script.SPELL_TYPE.HEAL,
                     level: 1,
                 },
+                info: "Heals itself for 1 health every round."
             },
             {
                 id: "SA-Eumling",
@@ -1070,7 +1129,8 @@ var Script;
                             type: Script.SPELL_TYPE.SHIELD,
                             level: 1,
                         }
-                    }]
+                    }],
+                info: "Selects three random fields every combat and heals them for 1 health every round. Gives healed allies 1 shield."
             },
             {
                 id: "SI-Eumling",
@@ -1080,6 +1140,7 @@ var Script;
                     type: Script.SPELL_TYPE.HEAL,
                     level: 2,
                 },
+                info: "Heals a random ally for 2 health every round."
             },
             {
                 id: "SAC-Eumling",
@@ -1210,7 +1271,8 @@ var Script;
                             type: Script.SPELL_TYPE.SHIELD,
                             level: 2,
                         }
-                    }]
+                    }],
+                info: "Selects three random fields every combat and heals them for 1 health every round. Gives healed allies 2 shield."
             },
             {
                 id: "SAE-Eumling",
@@ -1328,7 +1390,7 @@ var Script;
                     ],
                     selection: {
                         order: Script.SELECTION_ORDER.RANDOM_EACH_FIGHT,
-                        amount: 3,
+                        amount: 5,
                     }
                 },
                 abilities: [{
@@ -1338,10 +1400,11 @@ var Script;
                             }],
                         target: "target",
                         spell: {
-                            type: Script.SPELL_TYPE.SHIELD,
+                            type: Script.SPELL_TYPE.GOLD,
                             level: 1,
                         }
-                    }]
+                    }],
+                info: "Selects five random fields every combat and heals them for 1 health every round. Gains 1 gold when healing allies."
             },
             {
                 id: "SIC-Eumling",
@@ -1358,7 +1421,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1370,7 +1433,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1382,7 +1445,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1394,7 +1457,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1406,7 +1469,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1418,7 +1481,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1430,7 +1493,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1442,7 +1505,7 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                         {
                             target: {
@@ -1454,14 +1517,15 @@ var Script;
                                 },
                             },
                             type: Script.SPELL_TYPE.HEAL,
-                            level: 1,
+                            level: 2,
                         },
                     ],
                     selection: {
                         order: Script.SELECTION_ORDER.RANDOM_EACH_FIGHT,
-                        amount: 6,
+                        amount: 4,
                     }
-                }
+                },
+                info: "Selects four random fields every combat and heals them for 2 health every round."
             },
             {
                 id: "SIE-Eumling", // TODO: +1 Gold per heart that is healed
@@ -1469,8 +1533,20 @@ var Script;
                 spells: {
                     target: Script.TARGET.RANDOM_ALLY,
                     type: Script.SPELL_TYPE.HEAL,
-                    level: 2,
+                    level: 3,
                 },
+                abilities: [{
+                        on: Script.EVENT.ENTITY_HEALED,
+                        conditions: [{
+                                target: { side: Script.TARGET_SIDE.ALLY, entity: {}, excludeSelf: false }
+                            }],
+                        target: "target",
+                        spell: {
+                            type: Script.SPELL_TYPE.GOLD,
+                            level: 1,
+                        }
+                    }],
+                info: "Heals a random ally for 3 health every round. Gains 1 gold when healing allies."
             },
             {
                 id: "cactusCrawler", // doesn't attack but gets thorns after moving
@@ -1494,7 +1570,8 @@ var Script;
                             level: 1,
                         }
                     }
-                ]
+                ],
+                info: "Moves left and right, and gains 1 Thorns after moving."
             },
             {
                 id: "flameFlinger", // low hp but massive single target damage
@@ -1508,17 +1585,18 @@ var Script;
                             shape: Script.AREA_SHAPE.SINGLE,
                         },
                     }
-                }
+                },
+                info: "Attacks the opposite field for 2 damage."
             },
             {
-                id: "boxingBush", // enemy that attacks the entire mirrored column for 1
+                id: "boxingBush", // enemy that attacks the entire mirrored row for 1
                 health: 2,
                 attacks: {
                     options: [
                         {
                             target: {
                                 area: {
-                                    shape: Script.AREA_SHAPE.COLUMN,
+                                    shape: Script.AREA_SHAPE.ROW,
                                     position: Script.AREA_POSITION.RELATIVE_MIRRORED,
                                 },
                                 side: Script.TARGET_SIDE.OPPONENT,
@@ -1529,7 +1607,8 @@ var Script;
                     selection: {
                         order: Script.SELECTION_ORDER.ALL,
                     }
-                }
+                },
+                info: "Attacks the entire opposite row for 1 damage."
             },
             {
                 id: "punchingPalmtree", // enemy that attacks everywhere but the center
@@ -1551,11 +1630,28 @@ var Script;
                     selection: {
                         order: Script.SELECTION_ORDER.ALL,
                     }
-                }
+                },
+                info: "Attacks all opposite fields except for the center for 1 damage."
             },
             {
                 id: "sandSitter", // enemy that attacks a plus, but spawns in round 2 (not implemented yet)
                 health: 1,
+                abilities: [
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: Script.TARGET.SELF,
+                        spell: {
+                            type: Script.SPELL_TYPE.STUN,
+                        }
+                    },
+                    {
+                        on: Script.EVENT.FIGHT_START,
+                        target: Script.TARGET.SELF,
+                        spell: {
+                            type: Script.SPELL_TYPE.UNTARGETABLE,
+                        }
+                    }
+                ],
                 attacks: {
                     options: [
                         {
@@ -1573,7 +1669,8 @@ var Script;
                     selection: {
                         order: Script.SELECTION_ORDER.ALL,
                     }
-                }
+                },
+                info: "Appears after the first round and attacks in a plus pattern for 1 damage."
             },
             {
                 id: "worriedWall", // very strong wall, which dies when others die
@@ -1586,17 +1683,18 @@ var Script;
                             }],
                         target: Script.TARGET.SELF,
                         attack: {
-                            baseDamage: Infinity,
+                            baseDamage: 20,
                         }
                     },
-                ]
+                ],
+                info: "Doesn't attack and disappears when another enemy is defeated."
             },
             {
                 id: "countdownCoconut", // coconut that blows up on the final turn
                 health: 2,
                 abilities: [
                     {
-                        on: Script.EVENT.ROUND_END,
+                        on: Script.EVENT.FIGHT_END,
                         target: {
                             area: {
                                 position: Script.AREA_POSITION.ABSOLUTE,
@@ -1612,13 +1710,152 @@ var Script;
                         },
                         attack: {
                             baseDamage: 2,
-                        }, // NEEDS TO BLOW UP ITSELF ASWELL
+                        },
                     },
-                ]
+                    {
+                        on: Script.EVENT.FIGHT_END,
+                        target: Script.TARGET.SELF,
+                        attack: {
+                            baseDamage: 10,
+                        }
+                    },
+                ],
+                info: "Blows itself up at the end of the fight, dealing 2 damage on all opposite fields."
+            },
+            {
+                id: "floppyFish", // attacks random position and then moves randomly TODO
+                health: 1,
+                attacks: {
+                    options: [
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 0],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 0],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 0],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 1],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 1],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 1],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [0, 2],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [1, 2],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                        {
+                            target: {
+                                side: Script.TARGET_SIDE.OPPONENT,
+                                area: {
+                                    position: Script.AREA_POSITION.ABSOLUTE,
+                                    absolutePosition: [2, 2],
+                                    shape: Script.AREA_SHAPE.SINGLE,
+                                },
+                            },
+                            baseDamage: 1,
+                        },
+                    ],
+                    selection: {
+                        order: Script.SELECTION_ORDER.RANDOM_EACH_ROUND,
+                        amount: 1,
+                    }
+                },
+                info: "Attacks a random opposite field for 1 damage each round."
+            },
+            {
+                id: "okayOyster", // shields others upon taking damage
+                health: 3,
+                abilities: [
+                    {
+                        on: Script.EVENT.ENTITY_HURT,
+                        conditions: [{
+                                target: Script.TARGET.SELF,
+                            }],
+                        target: Script.TARGET.RANDOM_ALLY,
+                        spell: {
+                            type: Script.SPELL_TYPE.SHIELD,
+                            level: 1,
+                        }
+                    },
+                ],
+                info: "Doesn't attack but gives other enemies 1 shield upon taking damage."
             },
             {
                 id: "Björn", // Björn's entity for testing
-                health: 100000000
+                health: 100000000,
+                info: "This is Björn. Björn has a lot of health."
             },
             {
                 id: "pushover",
@@ -1642,7 +1879,7 @@ var Script;
                 // remember, opponents are usually to the left of this, so the eumling grid is mirrored internally.
                 // But for your convenience right now during the test it's the way you'd see it ingame.
                 entities: [
-                    ["defaultSkin", , ,],
+                    ["defaultEumling", , ,],
                     [, , ,],
                     [, , ,]
                 ],
@@ -1677,51 +1914,83 @@ var Script;
                 difficulty: 0,
                 rounds: 3,
                 entities: [
-                    ["boxingBush", , "cactusCrawler",],
+                    ["boxingBush", , ,],
                     [, "boxingBush", ,],
                     [, , "boxingBush",]
                 ],
             },
-            // {
-            //     difficulty: 0,
-            //     rounds: 3,
-            //     entities: [
-            //         [, , ,],
-            //         [, "flameFlinger", "punchingPalmtree",],
-            //         [, , ,]],
-            // },
-            // {
-            //     difficulty: 0,
-            //     rounds: 3,
-            //     entities: [
-            //         ["flameFlinger", , ,],
-            //         [, "sandSitter", "boxingBush",],
-            //         ["flameFlinger", , ,]],
-            // },
-            // {
-            //     difficulty: 0,
-            //     rounds: 3,
-            //     entities: [
-            //         [, "flameFlinger", ,],
-            //         ["flameFlinger", "punchingPalmtree", "flameFlinger",],
-            //         [, "flameFlinger", ,]],
-            // },
-            // {
-            //     difficulty: 0,
-            //     rounds: 3,
-            //     entities: [
-            //         [, , "flameFlinger",],
-            //         [, "sandSitter", ,],
-            //         ["boxingBush", , "flameFlinger",]],
-            // },
-            // {
-            //     difficulty: 0,
-            //     rounds: 3,
-            //     entities: [
-            //         [, "punchingPalmtree", ,],
-            //         ["boxingBush", , ,],
-            //         [, "punchingPalmtree", ,]],
-            // },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, , ,],
+                    [, "flameFlinger", "punchingPalmtree",],
+                    [, , ,]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    ["flameFlinger", , ,],
+                    [, "sandSitter", "boxingBush",],
+                    ["flameFlinger", , ,]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, "flameFlinger", ,],
+                    ["flameFlinger", "punchingPalmtree", "flameFlinger",],
+                    [, "flameFlinger", ,]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, , "flameFlinger",],
+                    [, "sandSitter", ,],
+                    ["boxingBush", , "flameFlinger",]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, "punchingPalmtree", ,],
+                    ["boxingBush", , ,],
+                    [, "punchingPalmtree", ,]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, , "floppyFish",],
+                    ["floppyFish", , ,],
+                    [, "floppyFish", ,]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, "floppyFish", ,],
+                    [, , "boxingBush",],
+                    ["floppyFish", , ,]
+                ],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    ["floppyFish", "punchingPalmtree", ,],
+                    [, , ,],
+                    [, , "floppyFish",]
+                ],
+            },
             {
                 difficulty: 1,
                 rounds: 3,
@@ -1750,6 +2019,33 @@ var Script;
                 ],
             },
             {
+                difficulty: 1,
+                rounds: 3,
+                entities: [
+                    [, "floppyFish", "floppyFish",],
+                    [, "floppyFish", "floppyFish",],
+                    [, "floppyFish", "floppyFish",]
+                ],
+            },
+            {
+                difficulty: 1,
+                rounds: 3,
+                entities: [
+                    [, , ,],
+                    [, , ,],
+                    ["okayOyster", , "countdownCoconut",]
+                ],
+            },
+            {
+                difficulty: 1,
+                rounds: 3,
+                entities: [
+                    [, "okayOyster", "sandSitter",],
+                    [, , ,],
+                    [, "okayOyster", "punchingPalmtree",]
+                ],
+            },
+            {
                 difficulty: 2,
                 rounds: 3,
                 entities: [
@@ -1774,6 +2070,24 @@ var Script;
                     ["cactusCrawler", "countdownCoconut", "cactusCrawler",],
                     [, "cactusCrawler", ,],
                     ["cactusCrawler", , "countdownCoconut",]
+                ],
+            },
+            {
+                difficulty: 2,
+                rounds: 3,
+                entities: [
+                    ["floppyFish", "punchingPalmtree", "flameFlinger",],
+                    ["floppyFish", , "boxingBush",],
+                    ["floppyFish", "sandSitter", "flameFlinger",]
+                ],
+            },
+            {
+                difficulty: 2,
+                rounds: 3,
+                entities: [
+                    ["okayOyster", "worriedWall", "countdownCoconut",],
+                    ["okayOyster", "worriedWall", ,],
+                    ["okayOyster", "worriedWall", "countdownCoconut",]
                 ],
             },
         ];
@@ -1954,6 +2268,126 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
+    // This whole VFX effect thing is convoluted and I'm unhappy with how it turned out.
+    // All those nested promises and shit... we should probably rewrite that at some point.
+    // But for now it seems to be doing its job decently.
+    class VisualizeTarget {
+        constructor() {
+            this.nodePool = new Map();
+            this.visibleNodes = [];
+            this.showAttack = async (_ev) => {
+                const nodes = this.getTargets(_ev);
+                const promises = [];
+                for (let node of nodes) {
+                    promises.push(this.addNodesTo(node, this.getAdditionalVisualizer(_ev.cause, _ev.type)));
+                }
+                return Promise.all(promises);
+            };
+            this.showPreview = async (_ev) => {
+                const nodes = this.getTargets(_ev);
+                for (let node of nodes) {
+                    this.addNodesTo(node);
+                }
+            };
+            this.hideTargets = async (_ev) => {
+                while (this.visibleNodes.length > 0) {
+                    this.returnNode(this.visibleNodes.pop());
+                }
+            };
+            this.addEventListeners();
+        }
+        addEventListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_ATTACK, this.showAttack);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_ATTACKED, this.hideTargets);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.showAttack);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL, this.hideTargets);
+            Script.EventBus.addEventListener(Script.EVENT.SHOW_PREVIEW, this.showPreview);
+            Script.EventBus.addEventListener(Script.EVENT.HIDE_PREVIEW, this.hideTargets);
+        }
+        getTargets(_ev) {
+            if (!_ev.detail)
+                return [];
+            const targets = [];
+            positions: if (_ev.detail.positions) {
+                if (!_ev.trigger || !("target" in _ev.trigger))
+                    break positions;
+                if (typeof _ev.trigger.target === "string")
+                    break positions;
+                const vis = Script.Provider.visualizer;
+                let allySide, opponentSide;
+                if (_ev.cause instanceof Script.Stone) {
+                    allySide = vis.activeFight.home;
+                    opponentSide = vis.activeFight.away;
+                }
+                else {
+                    const visGrid = vis.activeFight.whereIsEntity(vis.getEntity(_ev.cause));
+                    if (visGrid.side === "home") {
+                        allySide = vis.activeFight.home;
+                        opponentSide = vis.activeFight.away;
+                    }
+                    else {
+                        allySide = vis.activeFight.away;
+                        opponentSide = vis.activeFight.home;
+                    }
+                }
+                const targetSide = _ev.trigger.target.side === Script.TARGET_SIDE.ALLY ? allySide : opponentSide;
+                _ev.detail.positions.forEachElement(async (_el, _pos) => {
+                    const anchor = targetSide.getAnchor(_pos[0], _pos[1]);
+                    targets.push(anchor);
+                });
+                return targets;
+            }
+            if (!_ev.detail.targets)
+                return [];
+            for (let target of _ev.detail.targets) {
+                targets.push(Script.Provider.visualizer.getEntity(target));
+            }
+            return targets;
+        }
+        async addNodesTo(_parent, ..._nodes) {
+            const promises = [];
+            for (let node of _nodes) {
+                if (!node)
+                    continue;
+                promises.push((await this.getVFX(node)).addToAndActivate(_parent));
+            }
+            promises.push((await this.getVFX("TargetHighlightGeneric")).addToAndActivate(_parent));
+            return Promise.all(promises);
+        }
+        async getVFX(_v) {
+            let vfx;
+            const id = typeof _v === "string" ? _v : _v.id;
+            const delay = typeof _v === "string" ? 0 : _v.delay;
+            if (this.nodePool.get(id)?.length > 0)
+                vfx = this.nodePool.get(id).pop();
+            else
+                vfx = new Script.VisualizeVFX(await Script.DataLink.getCopyOf(id), id, delay);
+            this.visibleNodes.push(vfx);
+            return vfx;
+        }
+        getAdditionalVisualizer(_cause, _evtype) {
+            if (_cause instanceof Script.Stone) {
+                // TODO: add something so stones can define visuals, too.
+                return undefined;
+            }
+            const id = _cause.id;
+            if (!id)
+                return undefined;
+            return Script.VisualizationLink.linkedVisuals.get(id)?.get(_evtype === Script.EVENT.ENTITY_ATTACK ? Script.ANIMATION.ATTACK : Script.ANIMATION.SPELL);
+        }
+        returnNode(_node) {
+            _node.removeAndDeactivate();
+            if (!this.nodePool.has(_node.id))
+                this.nodePool.set(_node.id, []);
+            this.nodePool.get(_node.id).push(_node);
+        }
+    }
+    Script.VisualizeTarget = VisualizeTarget;
+})(Script || (Script = {}));
+/// <reference path="Entities/VisualizeTarget.ts" />
+var Script;
+/// <reference path="Entities/VisualizeTarget.ts" />
+(function (Script) {
     var ƒ = FudgeCore;
     class Visualizer {
         #gui;
@@ -1970,9 +2404,12 @@ var Script;
                 const fight = _ev.detail.fight;
                 if (!fight)
                     return;
-                this.getFight(fight);
+                let fightVis = this.getFight(fight);
+                this.activeFight = fightVis;
             };
             this.root = new ƒ.Node("Root");
+            new Script.VisualizeTarget();
+            this.getGUI();
             this.addEventListeners();
         }
         getEntity(_entity) {
@@ -2002,6 +2439,7 @@ var Script;
             fightScene.addChild(this.root);
             _viewport.initialize("Viewport", fightScene, this.camera, document.querySelector("canvas"));
             _viewport.draw();
+            Script.setupSounds(this.camera.node);
         }
         addToScene(_el) {
             this.root.addChild(_el);
@@ -2015,9 +2453,6 @@ var Script;
         }
         getGraph() {
             return this.viewport.getBranch();
-        }
-        drawScene() {
-            this.viewport.draw();
         }
         createEntity(_entity) {
             const entityVis = new Script.VisualizeEntity(_entity);
@@ -2036,18 +2471,18 @@ var Script;
 var Script;
 (function (Script) {
     class UILayer {
-        onAdd(_zindex, _ev) {
+        async onAdd(_zindex, _ev) {
             this.element.classList.remove("hidden");
             this.element.style.zIndex = _zindex.toString();
             this.addEventListeners();
         }
-        onShow() {
+        async onShow() {
             this.element.classList.remove("hidden");
         }
-        onHide() {
-            this.element.classList.add("hidden"); // TODO should it really get hidden? or just disabled?
+        async onHide() {
+            // this.element.classList.add("hidden"); // TODO should it really get hidden? or just disabled?
         }
-        onRemove() {
+        async onRemove() {
             this.element.classList.add("hidden");
             this.removeEventListeners();
         }
@@ -2058,44 +2493,98 @@ var Script;
 var Script;
 /// <reference path="UILayer.ts" />
 (function (Script) {
-    class FightUI extends Script.UILayer {
+    class StartScreenUI extends Script.UILayer {
         constructor() {
             super();
-            this.updateRoundCounter = async (_ev) => {
-                let round = _ev.detail.round;
-                const roundCounters = document.querySelectorAll(".RoundCounter");
-                await Script.waitMS(500);
-                for (let roundCounter of roundCounters) {
-                    roundCounter.innerText = `Round: ${round + 1}`;
-                }
-                const overlay = document.getElementById("FightPhaseOverlay");
-                overlay.classList.add("active");
-                await Script.waitMS(1000);
-                overlay.classList.remove("active");
-                await Script.waitMS(500);
+            this.parallax = (_ev) => {
+                this.element.style.setProperty("--x", (_ev.clientX / window.innerWidth).toString());
+                this.element.style.setProperty("--y", (_ev.clientY / window.innerHeight).toString());
             };
-            this.element = document.getElementById("Fight");
-            this.stoneWrapper = document.getElementById("FightStones");
-        }
-        onAdd(_zindex, _ev) {
-            super.onAdd(_zindex, _ev);
-            this.initStones();
-        }
-        initStones() {
-            const stones = [];
-            for (let stone of Script.Run.currentRun.stones) {
-                stones.push(Script.StoneUIElement.getUIElement(stone).element);
-            }
-            this.stoneWrapper.replaceChildren(...stones);
+            this.element = document.getElementById("StartScreen");
         }
         addEventListeners() {
-            Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateRoundCounter);
+            document.addEventListener("mousemove", this.parallax);
         }
         removeEventListeners() {
-            Script.EventBus.removeEventListener(Script.EVENT.ROUND_START, this.updateRoundCounter);
+            document.removeEventListener("mousemove", this.parallax);
         }
     }
-    Script.FightUI = FightUI;
+    Script.StartScreenUI = StartScreenUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class LoadingScreenUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.element = document.getElementById("LoadingScreen");
+        }
+        startLoad() {
+        }
+        addEventListeners() {
+            this.element.addEventListener("click", this.startLoad);
+        }
+        removeEventListeners() {
+            this.element.removeEventListener("click", this.startLoad);
+        }
+    }
+    Script.LoadingScreenUI = LoadingScreenUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class MainMenuUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.start = () => {
+                Script.run();
+                Script.Provider.GUI.removeTopmostUI();
+            };
+            this.openOptions = () => {
+                Script.Provider.GUI.addUI("options");
+            };
+            this.element = document.getElementById("MainMenu");
+            this.startButton = document.getElementById("MainStart");
+            this.optionsButton = document.getElementById("MainOptions");
+        }
+        addEventListeners() {
+            this.startButton.addEventListener("click", this.start);
+            this.optionsButton.addEventListener("click", this.openOptions);
+        }
+        removeEventListeners() {
+            this.startButton.removeEventListener("click", this.start);
+            this.optionsButton.removeEventListener("click", this.openOptions);
+        }
+    }
+    Script.MainMenuUI = MainMenuUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class OptionsUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.close = () => {
+                Script.Provider.GUI.removeTopmostUI();
+            };
+            this.element = document.getElementById("Options");
+            this.closeButton = document.getElementById("OptionsClose");
+        }
+        async onAdd(_zindex, _ev) {
+            await super.onAdd(_zindex, _ev);
+            document.getElementById("OptionsWrapper").replaceChildren(Script.Settings.generateHTML());
+        }
+        addEventListeners() {
+            this.closeButton.addEventListener("click", this.close);
+        }
+        removeEventListeners() {
+            this.closeButton.removeEventListener("click", this.close);
+        }
+    }
+    Script.OptionsUI = OptionsUI;
 })(Script || (Script = {}));
 /// <reference path="UILayer.ts" />
 var Script;
@@ -2114,6 +2603,7 @@ var Script;
                 element.classList.add("selected");
                 this.selectedEumling = eumling;
                 this.confirmButton.disabled = false;
+                this.infoElement.innerText = eumling.info;
             };
             this.confirm = () => {
                 if (!this.selectedEumling)
@@ -2125,9 +2615,10 @@ var Script;
                 Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_EUMLING, detail: { eumling: this.selectedEumling } });
             };
             this.element = document.getElementById("ChooseEumling");
+            this.infoElement = document.getElementById("ChooseEumlingInfo");
             this.confirmButton = document.getElementById("ChooseEumlingConfirm");
         }
-        onAdd(_zindex) {
+        async onAdd(_zindex) {
             this.removeEventListeners();
             super.onAdd(_zindex);
             this.confirmButton.disabled = true;
@@ -2172,6 +2663,7 @@ var Script;
                 element.classList.add("selected");
                 this.selectedStone = stone;
                 this.confirmButton.disabled = false;
+                this.infoElement.innerText = stone.data.abilityLevels[stone.level].info;
             };
             this.confirm = () => {
                 if (!this.selectedStone)
@@ -2183,9 +2675,10 @@ var Script;
                 Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_STONE, detail: { stone: this.selectedStone } });
             };
             this.element = document.getElementById("ChooseStone");
+            this.infoElement = document.getElementById("ChooseStoneInfo");
             this.confirmButton = document.getElementById("ChooseStoneConfirm");
         }
-        onAdd(_zindex) {
+        async onAdd(_zindex) {
             this.removeEventListeners();
             super.onAdd(_zindex);
             this.confirmButton.disabled = true;
@@ -2213,60 +2706,1025 @@ var Script;
     }
     Script.ChooseStoneUI = ChooseStoneUI;
 })(Script || (Script = {}));
-/// <reference path="FightUI.ts" />
-/// <reference path="ChooseEumlingUI.ts" />
-/// <reference path="ChooseStoneUI.ts" />
+/// <reference path="UILayer.ts" />
 var Script;
-/// <reference path="FightUI.ts" />
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class MapUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.selectionDone = async () => {
+                this.submitBtn.disabled = true;
+                for (let opt of this.optionElements) {
+                    if (opt.classList.contains("selected")) {
+                        opt.classList.add("center");
+                    }
+                    else {
+                        opt.classList.add("remove");
+                    }
+                }
+                this.optionElements.find((el) => el.classList.contains("selected"));
+                this.element.classList.add("no-interact");
+                await Script.waitMS(1000);
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_ENCOUNTER, detail: { encounter: this.selectedEncounter } });
+            };
+            this.click = (_ev) => {
+                if (this.optionElements.includes(_ev.target))
+                    return;
+                if (_ev.target === this.submitBtn)
+                    return;
+                this.submitBtn.disabled = true;
+                this.submitBtn.classList.add("hidden");
+                this.hill.dataset.selected = "";
+                for (let opt of this.optionElements) {
+                    opt.classList.remove("selected");
+                }
+                this.selectedEncounter = undefined;
+            };
+            this.openOptions = (_ev) => {
+                Script.Provider.GUI.addUI("options");
+            };
+            this.element = document.getElementById("Map");
+            this.submitBtn = document.getElementById("MapActionButton");
+            this.optionButton = document.getElementById("MapOptionButton");
+            this.hill = document.getElementById("MapHill");
+        }
+        async onAdd(_zindex, _ev) {
+            super.onAdd(_zindex);
+            this.updateProgress();
+            this.displayEncounters(_ev);
+            this.element.classList.remove("no-interact");
+            this.hill.dataset.selected = "";
+            this.submitBtn.classList.add("hidden");
+            document.getElementById("MapHeader").appendChild(Script.GoldDisplayElement.element);
+        }
+        updateProgress() {
+            const inner = document.getElementById("MapProgressBarCurrent");
+            const progress = Script.Run.currentRun.progress / Script.Run.currentRun.encountersUntilBoss;
+            inner.style.height = progress * 100 + "";
+        }
+        displayEncounters(_ev) {
+            let options = _ev.detail.options;
+            this.optionElements = [];
+            for (let option of options) {
+                const elem = Script.createElementAdvanced("div", { classes: ["MapOption"] });
+                elem.dataset.type = option.toString();
+                elem.addEventListener("click", () => {
+                    for (let opt of this.optionElements) {
+                        opt.classList.remove("selected");
+                    }
+                    elem.classList.add("selected");
+                    this.selectedEncounter = option;
+                    this.submitBtn.disabled = false;
+                    this.submitBtn.classList.remove("hidden");
+                    this.hill.dataset.selected = this.optionElements.indexOf(elem).toString();
+                    if (option < 0) {
+                        // shop
+                        this.submitBtn.innerText = "Shop";
+                    }
+                    else {
+                        this.submitBtn.innerText = "Battle";
+                    }
+                });
+                this.optionElements.push(elem);
+            }
+            document.getElementById("MapOptions").replaceChildren(...this.optionElements);
+            this.submitBtn.disabled = true;
+        }
+        addEventListeners() {
+            this.submitBtn.addEventListener("click", this.selectionDone);
+            this.optionButton.addEventListener("click", this.openOptions);
+            document.getElementById("Map").addEventListener("click", this.click);
+        }
+        removeEventListeners() {
+            this.submitBtn.removeEventListener("click", this.selectionDone);
+            this.optionButton.removeEventListener("click", this.openOptions);
+            document.getElementById("Map").removeEventListener("click", this.click);
+        }
+    }
+    Script.MapUI = MapUI;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    let DataLink = (() => {
+        var _a;
+        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _classSuper = ƒ.ComponentScript;
+        let _id_decorators;
+        let _id_initializers = [];
+        let _id_extraInitializers = [];
+        var DataLink = class extends _classSuper {
+            static { _classThis = this; }
+            static {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                _id_decorators = [ƒ.serialize(String)];
+                __esDecorate(null, null, _id_decorators, { kind: "field", name: "id", static: false, private: false, access: { has: obj => "id" in obj, get: obj => obj.id, set: (obj, value) => { obj.id = value; } }, metadata: _metadata }, _id_initializers, _id_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                DataLink = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            }
+            static { this.linkedNodes = new Map(); }
+            constructor() {
+                super();
+                this.id = __runInitializers(this, _id_initializers, void 0);
+                __runInitializers(this, _id_extraInitializers);
+                if (ƒ.Project.mode === ƒ.MODE.EDITOR)
+                    return;
+                ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
+                    if (this.node instanceof ƒ.Graph)
+                        DataLink.linkedNodes.set(this.id, this.node);
+                });
+            }
+            static async getCopyOf(_id) {
+                let original = this.linkedNodes.get(_id);
+                if (!original)
+                    return undefined;
+                return Script.getDuplicateOfNode(original);
+            }
+            static {
+                __runInitializers(_classThis, _classExtraInitializers);
+            }
+        };
+        return DataLink = _classThis;
+    })();
+    Script.DataLink = DataLink;
+    let ANIMATION;
+    (function (ANIMATION) {
+        ANIMATION["IDLE"] = "idle";
+        ANIMATION["MOVE"] = "move";
+        ANIMATION["HURT"] = "hurt";
+        ANIMATION["AFFECTED"] = "affected";
+        ANIMATION["DIE"] = "die";
+        ANIMATION["ATTACK"] = "attack";
+        ANIMATION["SPELL"] = "spell";
+    })(ANIMATION = Script.ANIMATION || (Script.ANIMATION = {}));
+    let AnimationLink = (() => {
+        var _a;
+        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _classSuper = ƒ.Component;
+        let _animation_decorators;
+        let _animation_initializers = [];
+        let _animation_extraInitializers = [];
+        let _audio1_decorators;
+        let _audio1_initializers = [];
+        let _audio1_extraInitializers = [];
+        let _audio2_decorators;
+        let _audio2_initializers = [];
+        let _audio2_extraInitializers = [];
+        let _audio3_decorators;
+        let _audio3_initializers = [];
+        let _audio3_extraInitializers = [];
+        let _audio4_decorators;
+        let _audio4_initializers = [];
+        let _audio4_extraInitializers = [];
+        let _animType_decorators;
+        let _animType_initializers = [];
+        let _animType_extraInitializers = [];
+        var AnimationLink = class extends _classSuper {
+            static { _classThis = this; }
+            static {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                _animation_decorators = [ƒ.serialize(ƒ.Animation)];
+                _audio1_decorators = [ƒ.serialize(ƒ.Audio)];
+                _audio2_decorators = [ƒ.serialize(ƒ.Audio)];
+                _audio3_decorators = [ƒ.serialize(ƒ.Audio)];
+                _audio4_decorators = [ƒ.serialize(ƒ.Audio)];
+                _animType_decorators = [ƒ.serialize(ANIMATION)];
+                __esDecorate(null, null, _animation_decorators, { kind: "field", name: "animation", static: false, private: false, access: { has: obj => "animation" in obj, get: obj => obj.animation, set: (obj, value) => { obj.animation = value; } }, metadata: _metadata }, _animation_initializers, _animation_extraInitializers);
+                __esDecorate(null, null, _audio1_decorators, { kind: "field", name: "audio1", static: false, private: false, access: { has: obj => "audio1" in obj, get: obj => obj.audio1, set: (obj, value) => { obj.audio1 = value; } }, metadata: _metadata }, _audio1_initializers, _audio1_extraInitializers);
+                __esDecorate(null, null, _audio2_decorators, { kind: "field", name: "audio2", static: false, private: false, access: { has: obj => "audio2" in obj, get: obj => obj.audio2, set: (obj, value) => { obj.audio2 = value; } }, metadata: _metadata }, _audio2_initializers, _audio2_extraInitializers);
+                __esDecorate(null, null, _audio3_decorators, { kind: "field", name: "audio3", static: false, private: false, access: { has: obj => "audio3" in obj, get: obj => obj.audio3, set: (obj, value) => { obj.audio3 = value; } }, metadata: _metadata }, _audio3_initializers, _audio3_extraInitializers);
+                __esDecorate(null, null, _audio4_decorators, { kind: "field", name: "audio4", static: false, private: false, access: { has: obj => "audio4" in obj, get: obj => obj.audio4, set: (obj, value) => { obj.audio4 = value; } }, metadata: _metadata }, _audio4_initializers, _audio4_extraInitializers);
+                __esDecorate(null, null, _animType_decorators, { kind: "field", name: "animType", static: false, private: false, access: { has: obj => "animType" in obj, get: obj => obj.animType, set: (obj, value) => { obj.animType = value; } }, metadata: _metadata }, _animType_initializers, _animType_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                AnimationLink = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            }
+            static { this.linkedAnimations = new Map(); }
+            static { this.linkedAudio = new Map(); }
+            constructor() {
+                super();
+                this.singleton = false;
+                this.animation = __runInitializers(this, _animation_initializers, void 0);
+                this.audio1 = (__runInitializers(this, _animation_extraInitializers), __runInitializers(this, _audio1_initializers, void 0));
+                this.audio2 = (__runInitializers(this, _audio1_extraInitializers), __runInitializers(this, _audio2_initializers, void 0));
+                this.audio3 = (__runInitializers(this, _audio2_extraInitializers), __runInitializers(this, _audio3_initializers, void 0));
+                this.audio4 = (__runInitializers(this, _audio3_extraInitializers), __runInitializers(this, _audio4_initializers, void 0));
+                this.animType = (__runInitializers(this, _audio4_extraInitializers), __runInitializers(this, _animType_initializers, void 0));
+                __runInitializers(this, _animType_extraInitializers);
+                if (ƒ.Project.mode === ƒ.MODE.EDITOR)
+                    return;
+                ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
+                    if (this.node instanceof ƒ.Graph) {
+                        let link = this.node.getComponent(DataLink);
+                        if (!link)
+                            return;
+                        if (!AnimationLink.linkedAnimations.has(link.id)) {
+                            AnimationLink.linkedAnimations.set(link.id, new Map());
+                            AnimationLink.linkedAudio.set(link.id, new Map());
+                        }
+                        AnimationLink.linkedAnimations.get(link.id).set(this.animType, this.animation);
+                        AnimationLink.linkedAudio.get(link.id).set(this.animType, []);
+                        if (this.audio1)
+                            AnimationLink.linkedAudio.get(link.id).get(this.animType).push(this.audio1);
+                        if (this.audio2)
+                            AnimationLink.linkedAudio.get(link.id).get(this.animType).push(this.audio2);
+                        if (this.audio3)
+                            AnimationLink.linkedAudio.get(link.id).get(this.animType).push(this.audio3);
+                        if (this.audio4)
+                            AnimationLink.linkedAudio.get(link.id).get(this.animType).push(this.audio4);
+                    }
+                });
+            }
+            static {
+                __runInitializers(_classThis, _classExtraInitializers);
+            }
+        };
+        return AnimationLink = _classThis;
+    })();
+    Script.AnimationLink = AnimationLink;
+    let VisualizationLink = (() => {
+        var _a;
+        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _classSuper = ƒ.Component;
+        let _visualization_decorators;
+        let _visualization_initializers = [];
+        let _visualization_extraInitializers = [];
+        let _for_decorators;
+        let _for_initializers = [];
+        let _for_extraInitializers = [];
+        let _delay_decorators;
+        let _delay_initializers = [];
+        let _delay_extraInitializers = [];
+        var VisualizationLink = class extends _classSuper {
+            static { _classThis = this; }
+            static {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                _visualization_decorators = [ƒ.serialize(String)];
+                _for_decorators = [ƒ.serialize(ANIMATION)];
+                _delay_decorators = [ƒ.serialize(Number)];
+                __esDecorate(null, null, _visualization_decorators, { kind: "field", name: "visualization", static: false, private: false, access: { has: obj => "visualization" in obj, get: obj => obj.visualization, set: (obj, value) => { obj.visualization = value; } }, metadata: _metadata }, _visualization_initializers, _visualization_extraInitializers);
+                __esDecorate(null, null, _for_decorators, { kind: "field", name: "for", static: false, private: false, access: { has: obj => "for" in obj, get: obj => obj.for, set: (obj, value) => { obj.for = value; } }, metadata: _metadata }, _for_initializers, _for_extraInitializers);
+                __esDecorate(null, null, _delay_decorators, { kind: "field", name: "delay", static: false, private: false, access: { has: obj => "delay" in obj, get: obj => obj.delay, set: (obj, value) => { obj.delay = value; } }, metadata: _metadata }, _delay_initializers, _delay_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                VisualizationLink = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            }
+            static { this.linkedVisuals = new Map(); }
+            get id() {
+                return this.visualization;
+            }
+            constructor() {
+                super();
+                this.singleton = false;
+                this.visualization = __runInitializers(this, _visualization_initializers, void 0);
+                // TODO: this is hacky, use its own thing for it to properly map it to the actual events
+                this.for = (__runInitializers(this, _visualization_extraInitializers), __runInitializers(this, _for_initializers, void 0));
+                this.delay = (__runInitializers(this, _for_extraInitializers), __runInitializers(this, _delay_initializers, void 0));
+                __runInitializers(this, _delay_extraInitializers);
+                if (ƒ.Project.mode === ƒ.MODE.EDITOR)
+                    return;
+                ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
+                    if (this.node instanceof ƒ.Graph) {
+                        let link = this.node.getComponent(DataLink);
+                        if (!link)
+                            return;
+                        if (!VisualizationLink.linkedVisuals.has(link.id)) {
+                            VisualizationLink.linkedVisuals.set(link.id, new Map());
+                        }
+                        VisualizationLink.linkedVisuals.get(link.id).set(this.for, this);
+                    }
+                });
+            }
+            static {
+                __runInitializers(_classThis, _classExtraInitializers);
+            }
+        };
+        return VisualizationLink = _classThis;
+    })();
+    Script.VisualizationLink = VisualizationLink;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+/// <reference path="../../Data/DataLink.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+/// <reference path="../../Data/DataLink.ts" />
+(function (Script) {
+    var ƒ = FudgeCore;
+    class FightPrepUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.placedEumlings = new Set();
+            this.startFight = (_ev) => {
+                Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.FIGHT_PREPARE_COMPLETED });
+            };
+            this.pointerStartPosition = new ƒ.Vector2();
+            this.deadzone = 20;
+            this.pointerOnCanvas = (_ev) => {
+                if (_ev.type === "pointerdown") {
+                    this.pointerStartPosition.x = _ev.clientX;
+                    this.pointerStartPosition.y = _ev.clientY;
+                }
+                else if (_ev.type === "pointerup") {
+                    const pointerEndPosition = new ƒ.Vector2(_ev.clientX, _ev.clientY);
+                    const distance = pointerEndPosition.getDistance(this.pointerStartPosition);
+                    if (distance > this.deadzone) {
+                        // drag
+                        this.dragCanvas(this.pointerStartPosition, pointerEndPosition);
+                    }
+                    else {
+                        // click
+                        this.clickCanvas(pointerEndPosition);
+                    }
+                }
+            };
+            this.element = document.getElementById("FightPrep");
+            this.stoneWrapper = document.getElementById("FightPrepStones");
+            this.infoElement = document.getElementById("FightPrepInfo");
+            this.startButton = document.getElementById("FightStart");
+            Script.DataLink.getCopyOf("PreviewHighlight").then(node => this.highlightNode = node);
+        }
+        async onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            this.startButton.disabled = true;
+            this.initStones();
+            this.initEumlings();
+            this.placedEumlings.clear();
+            await this.moveCamera(ƒ.Vector3.Z(-3), ƒ.Vector3.X(10), 1000);
+        }
+        async onRemove() {
+            super.onRemove();
+            this.hideEntityInfo();
+            await this.moveCamera(ƒ.Vector3.Z(3), ƒ.Vector3.X(-10), 1000);
+        }
+        initStones() {
+            const stones = [];
+            for (let stone of Script.Run.currentRun.stones) {
+                const element = Script.createElementAdvanced("div");
+                stones.push(element);
+                element.appendChild(Script.StoneUIElement.getUIElement(stone).element);
+                element.addEventListener("click", () => {
+                    this.hideEntityInfo();
+                    this.infoElement.innerText = stone.data.abilityLevels[stone.level].info;
+                    this.infoElement.classList.remove("hidden");
+                });
+            }
+            this.stoneWrapper.replaceChildren(...stones);
+        }
+        initEumlings() {
+            const bench = Script.viewport.getBranch().getChildByName("Bench")?.getComponent(Script.VisualizeBench);
+            this.bench = bench;
+            if (!bench)
+                return;
+            bench.clear();
+            for (let eumling of Script.Run.currentRun.eumlings) {
+                bench.addEntity(Script.Provider.visualizer.getEntity(eumling));
+            }
+        }
+        returnEumling(_eumling) {
+            // remove from field
+            Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.ENTITY_REMOVED, target: _eumling });
+            // add to bench
+            const vis = Script.Provider.visualizer.getEntity(_eumling);
+            this.bench?.addEntity(vis);
+            this.placedEumlings.delete(_eumling);
+            // can we start?
+            if (this.placedEumlings.size <= 0) {
+                this.startButton.disabled = true;
+            }
+            // update visuals
+            if (vis === this.#highlightedEntity) {
+                this.showEntityInfo(vis);
+            }
+        }
+        moveEumlingToGrid(_eumling, _target) {
+            const posId = parseInt(_target.name);
+            const vis = Script.Provider.visualizer.getEntity(_eumling);
+            this.bench?.removeEntity(vis);
+            Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.ENTITY_ADDED, target: _eumling, detail: { side: "home", pos: [posId % 3, Math.floor(posId / 3)] } });
+            this.placedEumlings.add(_eumling);
+            this.startButton.disabled = false;
+            // update visuals
+            if (vis === this.#highlightedEntity) {
+                this.showEntityInfo(vis);
+            }
+        }
+        clickCanvas(_pos) {
+            this.hideEntityInfo();
+            const picks = Script.getPickableObjectsFromClientPos(_pos);
+            if (!picks || picks.length === 0)
+                return;
+            for (const pick of picks) {
+                if (!(pick.node instanceof Script.VisualizeEntity)) {
+                    continue;
+                }
+                this.showEntityInfo(pick.node);
+                break;
+            }
+        }
+        dragCanvas(_startPos, _endPos) {
+            // find which Eumling should be moved
+            const picksStart = Script.getPickableObjectsFromClientPos(_startPos);
+            if (!picksStart || picksStart.length === 0)
+                return;
+            let draggedEumling;
+            for (let pick of picksStart) {
+                if (!(pick.node instanceof Script.VisualizeEntity))
+                    continue;
+                if (!(pick.node.getEntity() instanceof Script.Eumling))
+                    continue;
+                draggedEumling = pick.node.getEntity();
+                break;
+            }
+            if (!draggedEumling)
+                return;
+            // find where to move it to
+            const picksEnd = Script.getPickableObjectsFromClientPos(_endPos);
+            if (!picksEnd || picksEnd.length === 0) {
+                // nowhere = back to the bench
+                return this.returnEumling(draggedEumling);
+            }
+            for (const pick of picksEnd) {
+                // one of the home fields
+                const num = Number(pick.node.name);
+                if (!isNaN(num)) {
+                    return this.moveEumlingToGrid(draggedEumling, pick.node);
+                }
+            }
+        }
+        #highlightedEntity;
+        showEntityInfo(_entity) {
+            this.hideEntityInfo();
+            this.infoElement.classList.remove("hidden");
+            this.infoElement.innerText = _entity.getEntity().info ?? "PLACEHOLDER TEXT";
+            if (this.highlightNode && !this.bench.hasEntity(_entity)) {
+                _entity.addChild(this.highlightNode);
+                this.highlightNode.mtxLocal.translation = ƒ.Vector3.ZERO();
+            }
+            this.#highlightedEntity = _entity;
+            const entity = _entity.getEntity();
+            const attacks = entity.select(entity.attacks, false);
+            for (let attack of attacks) {
+                const allies = entity instanceof Script.Eumling ? Script.Fight.activeFight.arena.home : Script.Fight.activeFight.arena.away;
+                const opponents = entity instanceof Script.Eumling ? Script.Fight.activeFight.arena.away : Script.Fight.activeFight.arena.home;
+                const detail = Script.getTargets(attack.target, allies, opponents, entity);
+                Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.SHOW_PREVIEW, cause: entity, target: entity, trigger: attack, detail });
+            }
+        }
+        hideEntityInfo() {
+            this.infoElement.classList.add("hidden");
+            this.highlightNode?.getParent()?.removeChild(this.highlightNode);
+            Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.HIDE_PREVIEW });
+            this.#highlightedEntity = undefined;
+        }
+        addEventListeners() {
+            const canvas = document.getElementById("GameCanvas");
+            canvas.addEventListener("pointerdown", this.pointerOnCanvas);
+            canvas.addEventListener("pointerup", this.pointerOnCanvas);
+            this.startButton.addEventListener("click", this.startFight);
+        }
+        removeEventListeners() {
+            const canvas = document.getElementById("GameCanvas");
+            canvas.removeEventListener("pointerdown", this.pointerOnCanvas);
+            canvas.removeEventListener("pointerup", this.pointerOnCanvas);
+            this.startButton.removeEventListener("click", this.startFight);
+        }
+        async moveCamera(_translate, _rotate, _timeMS) {
+            const camera = Script.viewport?.camera;
+            if (!camera)
+                return;
+            let elapsedTime = 0;
+            const translationStart = camera.mtxPivot.translation.clone;
+            const rotationStart = camera.mtxPivot.rotation.clone;
+            const translationGoal = ƒ.Vector3.SUM(translationStart, _translate);
+            const rotationGoal = ƒ.Vector3.SUM(rotationStart, _rotate);
+            return new Promise((resolve) => {
+                const mover = () => {
+                    const delta = ƒ.Loop.timeFrameGame;
+                    elapsedTime += delta;
+                    if (elapsedTime > _timeMS) {
+                        camera.mtxPivot.translation = translationGoal;
+                        camera.mtxPivot.rotation = rotationGoal;
+                        ƒ.Loop.removeEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, mover);
+                        resolve();
+                        return;
+                    }
+                    camera.mtxPivot.translation = ƒ.Vector3.LERP(translationStart, translationGoal, elapsedTime / _timeMS);
+                    camera.mtxPivot.rotation = ƒ.Vector3.LERP(rotationStart, rotationGoal, elapsedTime / _timeMS);
+                };
+                ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, mover);
+            });
+        }
+    }
+    Script.FightPrepUI = FightPrepUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class FightUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.updateRoundCounter = async (_ev) => {
+                let round = _ev.detail.round;
+                const roundCounters = document.querySelectorAll(".RoundCounter");
+                await Script.waitMS(500);
+                for (let roundCounter of roundCounters) {
+                    roundCounter.innerText = `Round: ${round + 1}`;
+                }
+                const overlay = document.getElementById("FightPhaseOverlay");
+                overlay.classList.add("active");
+                await Script.waitMS(1000);
+                overlay.classList.remove("active");
+                await Script.waitMS(500);
+            };
+            this.element = document.getElementById("Fight");
+            this.stoneWrapper = document.getElementById("FightStones");
+        }
+        async onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            this.initStones();
+        }
+        initStones() {
+            const stones = [];
+            for (let stone of Script.Run.currentRun.stones) {
+                stones.push(Script.StoneUIElement.getUIElement(stone).element);
+            }
+            this.stoneWrapper.replaceChildren(...stones);
+        }
+        addEventListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateRoundCounter);
+        }
+        removeEventListeners() {
+            Script.EventBus.removeEventListener(Script.EVENT.ROUND_START, this.updateRoundCounter);
+        }
+    }
+    Script.FightUI = FightUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class FightRewardUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.eumlings = new Map();
+            this.clickOnEumling = (_ev) => {
+                if (this.xp <= 0)
+                    return;
+                let target = _ev.target;
+                let eumling = this.eumlings.get(target);
+                eumling.addXP(1);
+                this.xp--;
+                this.updateXPText();
+                if (this.xp <= 0) {
+                    this.continueButton.disabled = false;
+                }
+            };
+            this.convert = () => {
+                Script.Run.currentRun.changeGold(this.xp);
+                this.gold += this.xp;
+                document.getElementById("FightRewardRewards").querySelector(".Gold").innerHTML = `+${this.gold} Gold`;
+                this.xp = 0;
+                this.continueButton.disabled = false;
+                this.updateXPText();
+            };
+            this.finishRewards = () => {
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.REWARDS_CLOSE });
+            };
+            this.element = document.getElementById("FightReward");
+            this.rewardsOverivew = document.getElementById("FightRewardRewards");
+            this.continueButton = document.getElementById("FightRewardContinue");
+            this.convertButton = document.getElementById("FightRewardConvert");
+        }
+        async onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            let { gold, xp, stones } = _ev.detail;
+            const rewardIcons = [];
+            if (gold) {
+                rewardIcons.push(Script.createElementAdvanced("div", {
+                    innerHTML: `+${gold} Gold`,
+                    classes: ["FightRewardIcon", "Gold"]
+                }));
+                this.gold = gold;
+            }
+            if (xp) {
+                rewardIcons.push(Script.createElementAdvanced("div", {
+                    innerHTML: `+${xp} XP`,
+                    classes: ["FightRewardIcon", "XP"]
+                }));
+                this.xp = xp;
+            }
+            if (stones) {
+                for (let stone of stones) {
+                    rewardIcons.push(Script.createElementAdvanced("div", {
+                        innerHTML: `${stone.id}`,
+                        classes: ["FightRewardIcon", "Stone"]
+                    }));
+                }
+            }
+            this.rewardsOverivew.replaceChildren(...rewardIcons);
+            for (let eumling of Script.Run.currentRun.eumlings) {
+                let uiElement = Script.EumlingUIElement.getUIElement(eumling);
+                this.eumlings.set(uiElement.element, uiElement.eumling);
+                uiElement.element.classList.remove("hidden");
+                uiElement.element.addEventListener("click", this.clickOnEumling);
+            }
+            document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
+            this.updateXPText();
+            this.continueButton.disabled = true;
+            this.convertButton.disabled = false;
+        }
+        async onShow() {
+            super.onShow();
+            this.addEventListeners();
+            for (let element of this.eumlings.keys()) {
+                element.addEventListener("click", this.clickOnEumling);
+            }
+            document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
+        }
+        async onHide() {
+            super.onHide();
+            this.removeEventListeners();
+        }
+        updateXPText() {
+            document.getElementById("FightRewardXPAmount").innerText = this.xp === 0 ?
+                `No more XP to distribute` :
+                `Distribute ${this.xp}XP`;
+            this.convertButton.disabled = this.xp === 0;
+        }
+        addEventListeners() {
+            this.continueButton.addEventListener("click", this.finishRewards);
+            this.convertButton.addEventListener("click", this.convert);
+        }
+        removeEventListeners() {
+            for (let element of this.eumlings.keys()) {
+                element.removeEventListener("click", this.clickOnEumling);
+            }
+            this.continueButton.removeEventListener("click", this.finishRewards);
+            this.convertButton.removeEventListener("click", this.convert);
+        }
+    }
+    Script.FightRewardUI = FightRewardUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class EumlingLevelupUI extends Script.UILayer {
+        static { this.orientationInfo = new Map([
+            ["R", "Realistisch"],
+            ["I", "Investigativ / Forschend"],
+            ["A", "Artistisch / Künstlerisch"],
+            ["S", "Sozial"],
+            ["E", "Enterprising / Unternehmerisch"],
+            ["C", "Conventional / Traditionell"],
+        ]); }
+        constructor() {
+            super();
+            this.selectOption = (_ev) => {
+                const element = _ev.currentTarget;
+                this.selectedOption = element.dataset.option;
+                this.confirmButton.disabled = false;
+                for (let element of document.querySelectorAll(".LevelupOption")) {
+                    element.classList.remove("selected");
+                }
+                element.classList.add("selected");
+            };
+            this.confirm = () => {
+                if (!this.selectedOption)
+                    return;
+                Script.Provider.GUI.removeTopmostUI();
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.EUMLING_LEVELUP_CHOSEN, detail: { type: this.selectedOption } });
+            };
+            this.element = document.getElementById("EumlingLevelup");
+            this.eumlingElement = document.getElementById("EumlingLevelupEumling");
+            this.optionsElement = document.getElementById("EumlingLevelupOptions");
+            this.infoElement = document.getElementById("EumlingLevelupInfo");
+            this.confirmButton = document.getElementById("EumlingLevelupConfirm");
+        }
+        async onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            this.confirmButton.disabled = true;
+            this.eumling = _ev.target;
+            let specialisationOptions = this.eumling.types.length === 1 ? ["A", "I"] : ["C", "E"];
+            this.eumlingElement.replaceChildren(Script.EumlingUIElement.getUIElement(this.eumling).element);
+            const optionElements = [];
+            for (let option of specialisationOptions) {
+                const elem = Script.createElementAdvanced("div", {
+                    classes: ["LevelupOption"],
+                    innerHTML: `<span>+ ${option}</span>
+                    <span>${EumlingLevelupUI.orientationInfo.get(option)}</span>`,
+                    attributes: [["data-option", option]],
+                });
+                optionElements.push(elem);
+                elem.addEventListener("click", (_ev) => {
+                    this.selectOption(_ev);
+                    const newEumlingType = this.eumling.types.join("") + option + "-Eumling";
+                    this.infoElement.innerText = Script.Provider.data.getEntity(newEumlingType).info;
+                });
+            }
+            this.optionsElement.replaceChildren(...optionElements);
+        }
+        addEventListeners() {
+            this.confirmButton.addEventListener("click", this.confirm);
+        }
+        removeEventListeners() {
+            this.confirmButton.removeEventListener("click", this.confirm);
+        }
+    }
+    Script.EumlingLevelupUI = EumlingLevelupUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    const COST = {
+        HEAL_EUMLING: 1,
+        BUY_LVL1: 2,
+        BUY_LVL2: 3,
+        UPGRADE_STONE: 2,
+        REFRESH: 1,
+    };
+    class ShopUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.stoneToHtmlElement = new Map();
+            this.buyStone = (_ev) => {
+                const stone = this.selectedStone;
+                if (!stone)
+                    return;
+                const cost = stone.level == 0 ? COST.BUY_LVL1 : COST.BUY_LVL2;
+                if (Script.Run.currentRun.gold < cost)
+                    return;
+                Script.Run.currentRun.changeGold(-cost);
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_STONE, detail: { stone } });
+                this.selectedStone = undefined;
+                this.stoneBuyButton.disabled = true;
+                this.stonesInfo.innerText = "";
+                this.stoneToHtmlElement.get(stone)?.remove();
+            };
+            this.upgradeStone = (_ev) => {
+                const stone = this.selectedStoneToUpgrade;
+                if (!stone)
+                    return;
+                const cost = COST.UPGRADE_STONE;
+                if (Script.Run.currentRun.gold < cost)
+                    return;
+                Script.Run.currentRun.changeGold(-cost);
+                stone.level++;
+                this.stoneUpgradeButton.disabled = true;
+                this.selectedStoneToUpgrade = undefined;
+                this.stoneUpgradeInfo.innerText = "";
+                this.stoneToHtmlElement.get(stone)?.remove();
+            };
+            this.close = () => {
+                Script.EventBus.dispatchEvent({ type: Script.EVENT.SHOP_CLOSE });
+            };
+            this.refresh = () => {
+                if (Script.Run.currentRun.gold < COST.REFRESH)
+                    return;
+                Script.Run.currentRun.changeGold(-COST.REFRESH);
+                this.setupStonesToBuy();
+            };
+            this.element = document.getElementById("Shop");
+            this.closeButton = document.getElementById("ShopClose");
+            this.stonesWrapper = document.getElementById("ShopStones");
+            this.stonesInfo = document.getElementById("ShopStonesInfo");
+            this.stonesRefreshButton = document.getElementById("ShopStonesRefresh");
+            this.stoneBuyButton = document.getElementById("ShopStonesBuy");
+            this.stoneUpgradeButton = document.getElementById("ShopStonesUpgrade");
+            this.stoneUpgradeInfo = document.getElementById("ShopStonesUpgradeInfo");
+            this.stoneUpgradeWrapper = document.getElementById("ShopStoneUpgrades");
+            this.eumlingHealWrapper = document.getElementById("ShopEumlingHeal");
+        }
+        async onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            this.setupStonesToBuy();
+            this.setupStonesToUpgrade();
+            this.initEumlingHealing();
+        }
+        setupStonesToBuy() {
+            this.stoneBuyButton.disabled = true;
+            this.stonesRefreshButton.disabled = Script.Run.currentRun.gold < COST.REFRESH;
+            this.stonesInfo.innerText = "";
+            const existingStones = Script.Run.currentRun.stones.map((stone) => stone.data);
+            const newStones = Script.chooseRandomElementsFromArray(Script.Provider.data.stones, 2, existingStones);
+            if (newStones.length === 0) {
+                this.stonesWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No more stones available." }));
+                this.stonesRefreshButton.disabled = true;
+                return;
+            }
+            const newStoneElements = [];
+            for (let stoneData of newStones) {
+                let level = (Math.random() < 0.2) ? 1 : 0;
+                let cost = level == 0 ? COST.BUY_LVL1 : COST.BUY_LVL2;
+                let stone = new Script.Stone(stoneData, level);
+                let uiStoneElement = Script.StoneUIElement.getUIElement(stone);
+                let wrapper = Script.createElementAdvanced("div", {
+                    classes: ["BuyStone", "ShopOption"],
+                    attributes: [["data-level", level.toString()]],
+                });
+                wrapper.prepend(uiStoneElement.element);
+                newStoneElements.push(wrapper);
+                this.stoneToHtmlElement.set(stone, wrapper);
+                wrapper.addEventListener("click", () => {
+                    this.selectedStone = stone;
+                    this.stonesInfo.innerText = stone.data.abilityLevels[stone.level].info;
+                    this.stoneBuyButton.innerText = `${cost} Gold`;
+                    this.stoneBuyButton.disabled = Script.Run.currentRun.gold < cost;
+                    newStoneElements.forEach(el => el.classList.remove("selected"));
+                    wrapper.classList.add("selected");
+                });
+            }
+            this.stonesWrapper.replaceChildren(...newStoneElements);
+        }
+        setupStonesToUpgrade() {
+            this.stoneUpgradeButton.disabled = true;
+            const upgradeableStones = Script.chooseRandomElementsFromArray(Script.Run.currentRun.stones, Infinity, Script.Run.currentRun.stones.filter(stone => stone.level === 1));
+            if (upgradeableStones.length === 0) {
+                this.stoneUpgradeWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No more stones upgradeable." }));
+                return;
+            }
+            const upgradeStoneElements = [];
+            for (let stone of upgradeableStones) {
+                const element = Script.createElementAdvanced("div", {
+                    classes: ["ShopOption"],
+                });
+                element.prepend(Script.StoneUIElement.getUIElement(stone).element);
+                upgradeStoneElements.push(element);
+                element.addEventListener("click", () => {
+                    this.selectedStoneToUpgrade = stone;
+                    this.stoneUpgradeButton.disabled = Script.Run.currentRun.gold < COST.UPGRADE_STONE;
+                    this.stoneUpgradeInfo.innerText = stone.data.abilityLevels[stone.level + 1].info;
+                    upgradeStoneElements.forEach(el => el.classList.remove("selected"));
+                    element.classList.add("selected");
+                });
+                this.stoneToHtmlElement.set(stone, element);
+            }
+            this.stoneUpgradeWrapper.replaceChildren(...upgradeStoneElements);
+        }
+        initEumlingHealing() {
+            const healableEumlings = Script.Run.currentRun.eumlings.filter(eumling => eumling.currentHealth < eumling.health);
+            if (healableEumlings.length === 0) {
+                this.eumlingHealWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No Eumlings need healing." }));
+                return;
+            }
+            const elements = [];
+            for (let eumling of healableEumlings) {
+                const wrapper = Script.createElementAdvanced("div", {
+                    classes: ["ShopOption"],
+                    innerHTML: `<span>+♥️: ${COST.HEAL_EUMLING} Gold</span>`,
+                });
+                wrapper.prepend(Script.EumlingUIElement.getUIElement(eumling).element);
+                wrapper.addEventListener("click", () => {
+                    if (Script.Run.currentRun.gold < COST.HEAL_EUMLING)
+                        return;
+                    Script.Run.currentRun.changeGold(-COST.HEAL_EUMLING);
+                    eumling.affect({ type: Script.SPELL_TYPE.HEAL, level: 1, target: undefined });
+                    if (eumling.currentHealth >= eumling.health)
+                        wrapper.remove();
+                });
+            }
+            this.eumlingHealWrapper.replaceChildren(...elements);
+        }
+        addEventListeners() {
+            this.closeButton.addEventListener("click", this.close);
+            this.stonesRefreshButton.addEventListener("click", this.refresh);
+            this.stoneBuyButton.addEventListener("click", this.buyStone);
+            this.stoneUpgradeButton.addEventListener("click", this.upgradeStone);
+        }
+        removeEventListeners() {
+            this.closeButton.removeEventListener("click", this.close);
+            this.stonesRefreshButton.removeEventListener("click", this.refresh);
+            this.stoneBuyButton.removeEventListener("click", this.buyStone);
+            this.stoneUpgradeButton.removeEventListener("click", this.upgradeStone);
+        }
+    }
+    Script.ShopUI = ShopUI;
+})(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class RunEndUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.close = () => {
+                Script.Provider.GUI.removeAllLayers();
+                Script.Provider.GUI.addUI("mainMenu");
+            };
+            this.element = document.getElementById("RunEnd");
+            this.continueButton = document.getElementById("RunEndMainMenu");
+        }
+        async onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            document.getElementById("RunEndInner").innerHTML =
+                _ev.detail.success ?
+                    `<h2>Success!</h2>
+            <p>You won! :&gt;</p>` :
+                    `<h2>Defeat!</h2>
+            <p>You lost. :(;</p>`;
+        }
+        addEventListeners() {
+            this.continueButton.addEventListener("click", this.close);
+        }
+        removeEventListeners() {
+            this.continueButton.removeEventListener("click", this.close);
+        }
+    }
+    Script.RunEndUI = RunEndUI;
+})(Script || (Script = {}));
+/// <reference path="StartScreenUI.ts" />
+/// <reference path="LoadingScreenUI.ts" />
+/// <reference path="MainMenuUI.ts" />
+/// <reference path="OptionsUI.ts" />
 /// <reference path="ChooseEumlingUI.ts" />
 /// <reference path="ChooseStoneUI.ts" />
+/// <reference path="MapUI.ts" />
+/// <reference path="MapUI.ts" />
+/// <reference path="FightPrepUI.ts" />
+/// <reference path="FightUI.ts" />
+/// <reference path="FightRewardUI.ts" />
+/// <reference path="EumlingLevelupUI.ts" />
+/// <reference path="ShopUI.ts" />
+/// <reference path="RunEndUI.ts" />
+var Script;
+/// <reference path="StartScreenUI.ts" />
+/// <reference path="LoadingScreenUI.ts" />
+/// <reference path="MainMenuUI.ts" />
+/// <reference path="OptionsUI.ts" />
+/// <reference path="ChooseEumlingUI.ts" />
+/// <reference path="ChooseStoneUI.ts" />
+/// <reference path="MapUI.ts" />
+/// <reference path="MapUI.ts" />
+/// <reference path="FightPrepUI.ts" />
+/// <reference path="FightUI.ts" />
+/// <reference path="FightRewardUI.ts" />
+/// <reference path="EumlingLevelupUI.ts" />
+/// <reference path="ShopUI.ts" />
+/// <reference path="RunEndUI.ts" />
 (function (Script) {
     // TODO: add Provider to pass UI elements without hardcoding???
     class VisualizeGUI {
         constructor() {
             this.uis = new Map();
             this.activeLayers = [];
-            this.switchUI = (_ev) => {
+            this.switchUI = async (_ev) => {
                 switch (_ev.type) {
                     case Script.EVENT.FIGHT_START: {
-                        this.replaceUI("fight", _ev);
+                        await this.replaceUI("fight", _ev);
                         break;
                     }
                     case Script.EVENT.CHOOSE_STONE: {
-                        this.replaceUI("chooseStone", _ev);
+                        await this.replaceUI("chooseStone", _ev);
                         break;
                     }
                     case Script.EVENT.CHOOSE_EUMLING: {
-                        this.replaceUI("chooseEumling", _ev);
+                        await this.replaceUI("chooseEumling", _ev);
                         break;
                     }
                     case Script.EVENT.CHOOSE_ENCOUNTER: {
-                        this.replaceUI("chooseEncounter", _ev);
+                        await this.replaceUI("chooseEncounter", _ev);
                         break;
                     }
                     case Script.EVENT.FIGHT_PREPARE: {
-                        this.replaceUI("fightPrepare", _ev);
+                        await this.replaceUI("fightPrepare", _ev);
                         break;
                     }
                     case Script.EVENT.REWARDS_OPEN: {
-                        this.replaceUI("fightReward", _ev);
+                        await this.replaceUI("fightReward", _ev);
                         break;
                     }
                     case Script.EVENT.EUMLING_LEVELUP_CHOOSE: {
-                        this.addUI("eumlingLevelup", _ev);
+                        await this.addUI("eumlingLevelup", _ev);
                         break;
                     }
                     case Script.EVENT.SHOP_OPEN: {
-                        this.replaceUI("shop", _ev);
+                        await this.replaceUI("shop", _ev);
                         break;
                     }
                     case Script.EVENT.RUN_END: {
-                        this.replaceUI("runEnd", _ev);
+                        await this.replaceUI("runEnd", _ev);
                         break;
                     }
                 }
             };
             this.uis.clear();
+            this.uis.set("start", new Script.StartScreenUI());
+            this.uis.set("loading", new Script.LoadingScreenUI());
+            this.uis.set("mainMenu", new Script.MainMenuUI());
+            this.uis.set("options", new Script.OptionsUI());
             this.uis.set("chooseEumling", new Script.ChooseEumlingUI());
             this.uis.set("chooseStone", new Script.ChooseStoneUI());
             this.uis.set("chooseEncounter", new Script.MapUI());
@@ -2281,33 +3739,34 @@ var Script;
             for (let ui of this.uis.values()) {
                 ui.onRemove();
             }
+            this.replaceUI("start");
         }
         get topmostLevel() {
             if (this.activeLayers.length === 0)
                 return undefined;
             return this.activeLayers[this.activeLayers.length - 1];
         }
-        addUI(_id, _ev) {
+        async addUI(_id, _ev) {
             let ui = this.uis.get(_id);
             if (!ui)
                 return;
             let prevTop = this.topmostLevel;
             if (prevTop)
-                prevTop.onHide();
+                await prevTop.onHide();
             this.activeLayers.push(ui);
-            ui.onAdd(1000 + this.activeLayers.length, _ev);
+            await ui.onAdd(1000 + this.activeLayers.length, _ev);
         }
-        replaceUI(_id, _ev) {
-            this.removeTopmostUI();
-            this.addUI(_id, _ev);
+        async replaceUI(_id, _ev) {
+            await this.removeTopmostUI();
+            await this.addUI(_id, _ev);
         }
-        removeTopmostUI() {
+        async removeTopmostUI() {
             let last = this.activeLayers.pop();
-            last?.onHide();
-            last?.onRemove();
+            await last?.onHide();
+            await last?.onRemove();
             let newTop = this.topmostLevel;
             if (newTop)
-                newTop.onShow();
+                await newTop.onShow();
         }
         removeAllLayers() {
             while (this.activeLayers.length > 0) {
@@ -2354,7 +3813,7 @@ var Script;
         }
         static setVisualizer(_vis) {
             if (!_vis) {
-                this.#visualizer = new Script.Visualizer;
+                this.#visualizer = new Script.Visualizer();
                 return;
             }
             this.#visualizer = _vis;
@@ -2374,168 +3833,519 @@ var Script;
 (function (Script) {
     var ƒ = FudgeCore;
     ƒ.Project.registerScriptNamespace(Script); // Register the namespace to FUDGE for serialization
-    ƒ.Debug.info("Main Program Template running!");
     let visualizer;
-    document.addEventListener("interactiveViewportStarted", start);
-    async function initProvider() {
+    document.addEventListener("click", startLoading, { once: true });
+    Script.Provider.setVisualizer();
+    async function startLoading() {
         if (ƒ.Project.mode === ƒ.MODE.EDITOR)
             return;
-        await Script.Provider.data.load();
-        //TODO load correct visualizer here
-        Script.Provider.setVisualizer();
-        visualizer = Script.Provider.visualizer;
-        visualizer.initializeScene(Script.viewport);
-        visualizer.drawScene();
-        run();
-    }
-    function start(_event) {
-        Script.viewport = _event.detail;
-        initProvider();
+        new Script.MusicManager();
+        Script.Provider.GUI.addUI("loading");
+        Script.viewport = await Script.loadResourcesAndInitViewport(document.getElementById("GameCanvas"));
+        await initProvider();
+        Script.Provider.GUI.replaceUI("mainMenu");
         ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
         ƒ.Loop.start(); // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
+    }
+    Script.startLoading = startLoading;
+    async function initProvider() {
+        await Script.Provider.data.load();
+        visualizer = Script.Provider.visualizer;
+        visualizer.initializeScene(Script.viewport);
     }
     function update(_event) {
         // ƒ.Physics.simulate();  // if physics is included and used
         Script.viewport.draw();
-        ƒ.AudioManager.default.update();
+        // ƒ.AudioManager.default.update();
     }
     async function run() {
-        // const eumlingData = Provider.data.fights[0].entities;
-        // rotate entities in first fight around because they're meant to be testing eumlings for now
-        // TODO: remove this once this sort of testing is obsolete.
-        // [eumlingData[0][0], eumlingData[0][2]] = [eumlingData[0][2], eumlingData[0][0]];
-        // [eumlingData[1][0], eumlingData[1][2]] = [eumlingData[1][2], eumlingData[1][0]];
-        // [eumlingData[2][0], eumlingData[2][2]] = [eumlingData[2][2], eumlingData[2][0]];
-        // let eumlings: Grid<IEntity> = initEntitiesInGrid(eumlingData, Entity);
-        // eumlings.forEachElement((eumling) => {
-        //   let visualizer = new VisualizeEntity(eumling);
-        //   root.addChild(visualizer);
-        // });
-        // console.log("Root: ", root);
-        // viewport.draw();
-        // let tmp = eumlings.get([0, 0]);
-        // eumlings.set([0, 0], eumlings.get([2, 0]));
-        // eumlings.set([2, 0], tmp);
-        // tmp = eumlings.get([0, 0]);
-        // eumlings.set([0, 0], eumlings.get([2, 0]));
-        // eumlings.set([2, 0], tmp);
-        // tmp = eumlings.get([0, 0]);
-        // eumlings.set([0, 0], eumlings.get([2, 0]));
-        // eumlings.set([2, 0], tmp);
-        // visualizer.drawScene();
-        // let fightData = Provider.data.fights[3];
-        // let fight = new Fight(fightData, eumlings);
-        // console.log("Rounds: " + fight.getRounds());
-        // await fight.run();
         const run = new Script.Run();
         run.start();
     }
+    Script.run = run;
+    function setupSounds(camera) {
+        ƒ.AudioManager.default.listenTo(Script.viewport.getBranch());
+        ƒ.AudioManager.default.listenWith(camera.getComponent(ƒ.ComponentAudioListener));
+    }
+    Script.setupSounds = setupSounds;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
     var ƒ = FudgeCore;
-    let DataLink = (() => {
-        var _a;
-        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
-        let _classDescriptor;
-        let _classExtraInitializers = [];
-        let _classThis;
-        let _classSuper = ƒ.ComponentScript;
-        let _id_decorators;
-        let _id_initializers = [];
-        let _id_extraInitializers = [];
-        var DataLink = class extends _classSuper {
-            static { _classThis = this; }
-            static {
-                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
-                _id_decorators = [ƒ.serialize(String)];
-                __esDecorate(null, null, _id_decorators, { kind: "field", name: "id", static: false, private: false, access: { has: obj => "id" in obj, get: obj => obj.id, set: (obj, value) => { obj.id = value; } }, metadata: _metadata }, _id_initializers, _id_extraInitializers);
-                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
-                DataLink = _classThis = _classDescriptor.value;
-                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+    function initEntitiesInGrid(_grid, _entity) {
+        const grid = new Script.Grid(_grid);
+        const newGrid = new Script.Grid();
+        const data = Script.Provider.data;
+        //const visualizer = Provider.visualizer;
+        grid.forEachElement((entityId, pos) => {
+            let entityData = data.getEntity(entityId);
+            if (!entityData)
+                throw new Error(`Entity ${entityId} not found.`);
+            newGrid.set(pos, new _entity(entityData, pos));
+        });
+        console.log("init Grid: " + newGrid);
+        return newGrid;
+    }
+    Script.initEntitiesInGrid = initEntitiesInGrid;
+    // TODO: replace this with a fudge timeout so it scales with gametime
+    // Alternatively, make a second one that does that and replace where reasonable
+    async function waitMS(_ms) {
+        return new Promise((resolve) => {
+            setTimeout(resolve, _ms);
+        });
+    }
+    Script.waitMS = waitMS;
+    async function getCloneNodeFromRegistry(id) {
+        let node = Script.DataLink.linkedNodes.get(id);
+        if (!node)
+            return undefined;
+        const newNode = new ƒ.Node("");
+        await newNode.deserialize(node.serialize());
+        return newNode;
+    }
+    Script.getCloneNodeFromRegistry = getCloneNodeFromRegistry;
+    function randomRange(min = 0, max = 1) {
+        const range = max - min;
+        return Math.random() * range + min;
+    }
+    Script.randomRange = randomRange;
+    function chooseRandomElementsFromArray(_array, _max, _exclude = []) {
+        if (!_array)
+            return [];
+        let filteredOptions = _array.filter((element) => !_exclude.includes(element));
+        if (filteredOptions.length < _max) {
+            return filteredOptions;
+        }
+        let result = [];
+        for (let i = 0; i < _max; i++) {
+            const index = Math.floor(Math.random() * filteredOptions.length);
+            result.push(...filteredOptions.splice(index, 1));
+        }
+        return result;
+    }
+    Script.chooseRandomElementsFromArray = chooseRandomElementsFromArray;
+    function createElementAdvanced(_type, _options = {}) {
+        let el = document.createElement(_type);
+        if (_options.id) {
+            el.id = _options.id;
+        }
+        if (_options.classes) {
+            el.classList.add(..._options.classes);
+        }
+        if (_options.innerHTML) {
+            el.innerHTML = _options.innerHTML;
+        }
+        if (_options.attributes) {
+            for (let attribute of _options.attributes) {
+                el.setAttribute(attribute[0], attribute[1]);
             }
-            static { this.linkedNodes = new Map(); }
-            constructor() {
-                super();
-                this.id = __runInitializers(this, _id_initializers, void 0);
-                __runInitializers(this, _id_extraInitializers);
-                if (ƒ.Project.mode === ƒ.MODE.EDITOR)
-                    return;
-                ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
-                    if (this.node instanceof ƒ.Graph)
-                        DataLink.linkedNodes.set(this.id, this.node);
-                });
+        }
+        return el;
+    }
+    Script.createElementAdvanced = createElementAdvanced;
+    async function getDuplicateOfNode(_node) {
+        let newNode = new ƒ.Node(_node.name);
+        await newNode.deserialize(_node.serialize());
+        return newNode;
+    }
+    Script.getDuplicateOfNode = getDuplicateOfNode;
+    function getPickableObjectsFromClientPos(_pos) {
+        const ray = Script.viewport.getRayFromClient(_pos);
+        const picks = Script.PickSphere.pick(ray, { sortBy: "distanceToRay" });
+        return picks;
+    }
+    Script.getPickableObjectsFromClientPos = getPickableObjectsFromClientPos;
+    function randomString(length) {
+        let result = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const charactersLength = characters.length;
+        for (let counter = 0; counter < length; counter++) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
+    }
+    Script.randomString = randomString;
+    function enumToArray(anEnum) {
+        return Object.keys(anEnum)
+            .map(n => Number.parseInt(n))
+            .filter(n => !Number.isNaN(n));
+    }
+    Script.enumToArray = enumToArray;
+    function findFirstComponentInGraph(_graph, _cmp) {
+        let foundCmp = _graph.getComponent(_cmp);
+        if (foundCmp)
+            return foundCmp;
+        for (let child of _graph.getChildren()) {
+            foundCmp = findFirstComponentInGraph(child, _cmp);
+            if (foundCmp)
+                return foundCmp;
+        }
+        return undefined;
+    }
+    Script.findFirstComponentInGraph = findFirstComponentInGraph;
+    async function loadResourcesAndInitViewport(canvas) {
+        await ƒ.Project.loadResourcesFromHTML();
+        let graphId /* : string */ = document.head.querySelector("meta[autoView]").getAttribute("autoView");
+        let graph = ƒ.Project.resources[graphId];
+        let viewport = new ƒ.Viewport();
+        let camera = findFirstComponentInGraph(graph, ƒ.ComponentCamera);
+        viewport.initialize("game", graph, camera, canvas);
+        return viewport;
+    }
+    Script.loadResourcesAndInitViewport = loadResourcesAndInitViewport;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    class Settings {
+        static { this.settings = []; }
+        static proxySetting(_setting, onValueChange) {
+            return new Proxy(_setting, {
+                set(target, prop, newValue, receiver) {
+                    if (prop === "value")
+                        onValueChange(target[prop], newValue);
+                    return Reflect.set(target, prop, newValue, receiver);
+                },
+            });
+        }
+        static addSettings(..._settings) {
+            _settings.forEach(setting => this.settings.push(setting));
+        }
+        static generateHTML(_settings = this.settings) {
+            const wrapper = Script.createElementAdvanced("div", { classes: ["settings-wrapper"], innerHTML: "<h2 class='h'><span>Settings</span></h2>" });
+            for (let setting of _settings) {
+                wrapper.appendChild(this.generateSingleHTML(setting));
             }
-            static {
-                __runInitializers(_classThis, _classExtraInitializers);
-            }
-        };
-        return DataLink = _classThis;
-    })();
-    Script.DataLink = DataLink;
-    let ANIMATION;
-    (function (ANIMATION) {
-        ANIMATION["IDLE"] = "idle";
-        ANIMATION["MOVE"] = "move";
-        ANIMATION["HURT"] = "hurt";
-        ANIMATION["AFFECTED"] = "affected";
-        ANIMATION["DIE"] = "die";
-        ANIMATION["ATTACK"] = "attack";
-        ANIMATION["SPELL"] = "spell";
-    })(ANIMATION = Script.ANIMATION || (Script.ANIMATION = {}));
-    let AnimationLink = (() => {
-        var _a;
-        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
-        let _classDescriptor;
-        let _classExtraInitializers = [];
-        let _classThis;
-        let _classSuper = ƒ.Component;
-        let _animation_decorators;
-        let _animation_initializers = [];
-        let _animation_extraInitializers = [];
-        let _animType_decorators;
-        let _animType_initializers = [];
-        let _animType_extraInitializers = [];
-        var AnimationLink = class extends _classSuper {
-            static { _classThis = this; }
-            static {
-                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
-                _animation_decorators = [ƒ.serialize(ƒ.Animation)];
-                _animType_decorators = [ƒ.serialize(ANIMATION)];
-                __esDecorate(null, null, _animation_decorators, { kind: "field", name: "animation", static: false, private: false, access: { has: obj => "animation" in obj, get: obj => obj.animation, set: (obj, value) => { obj.animation = value; } }, metadata: _metadata }, _animation_initializers, _animation_extraInitializers);
-                __esDecorate(null, null, _animType_decorators, { kind: "field", name: "animType", static: false, private: false, access: { has: obj => "animType" in obj, get: obj => obj.animType, set: (obj, value) => { obj.animType = value; } }, metadata: _metadata }, _animType_initializers, _animType_extraInitializers);
-                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
-                AnimationLink = _classThis = _classDescriptor.value;
-                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
-            }
-            static { this.linkedAnimations = new Map(); }
-            constructor() {
-                super();
-                this.singleton = false;
-                this.animation = __runInitializers(this, _animation_initializers, void 0);
-                this.animType = (__runInitializers(this, _animation_extraInitializers), __runInitializers(this, _animType_initializers, void 0));
-                __runInitializers(this, _animType_extraInitializers);
-                if (ƒ.Project.mode === ƒ.MODE.EDITOR)
-                    return;
-                ƒ.Project.addEventListener("resourcesLoaded" /* ƒ.EVENT.RESOURCES_LOADED */, () => {
-                    if (this.node instanceof ƒ.Graph) {
-                        let link = this.node.getComponent(DataLink);
-                        if (!link)
-                            return;
-                        if (!AnimationLink.linkedAnimations.has(link.id)) {
-                            AnimationLink.linkedAnimations.set(link.id, new Map());
-                        }
-                        AnimationLink.linkedAnimations.get(link.id).set(this.animType, this.animation);
+            return wrapper;
+        }
+        static generateSingleHTML(_setting) {
+            let element;
+            switch (_setting.type) {
+                case "string": {
+                    element = this.generateStringInput(_setting);
+                    break;
+                }
+                case "number": {
+                    element = this.generateNumberInput(_setting);
+                    break;
+                }
+                case "category": {
+                    element = Script.createElementAdvanced("div", { classes: ["settings-category"], innerHTML: `<span class="settings-category-name">${_setting.name}</span>` });
+                    for (let setting of _setting.settings) {
+                        element.appendChild(this.generateSingleHTML(setting));
                     }
+                    break;
+                }
+                default: {
+                    element = Script.createElementAdvanced("div", { innerHTML: "Unknown Setting Type", classes: ["settings-unknown"] });
+                }
+            }
+            return element;
+        }
+        static generateStringInput(_setting) {
+            const id = Script.randomString(10);
+            const element = Script.createElementAdvanced("label", { classes: ["settings-string-wrapper", "settings-label"], innerHTML: `<span class="settings-string-label settings-label-text">${_setting.name}</span>`, attributes: [["for", id]] });
+            const input = Script.createElementAdvanced("input", { classes: ["settings-string-input", "settings-input"], attributes: [["type", "string"], ["value", _setting.value], ["name", id]], id });
+            element.appendChild(input);
+            input.addEventListener("change", () => {
+                _setting.value = input.value;
+            });
+            return element;
+        }
+        static generateNumberInput(_setting) {
+            const id = Script.randomString(10);
+            const element = Script.createElementAdvanced("label", { classes: ["settings-number-wrapper", "settings-label", _setting.name.toLowerCase()], innerHTML: `<span class="settings-number-label settings-label-text">${_setting.name}</span>`, attributes: [["for", id]] });
+            switch (_setting.variant) {
+                case "percent": {
+                    const buttonMinus = Script.createElementAdvanced("button", {
+                        classes: ["settings-number-input-button", "minus", "settings-input"],
+                        innerHTML: "-"
+                    });
+                    const input = Script.createElementAdvanced("input", {
+                        classes: ["settings-number-input", "settings-input", "number-input"],
+                        attributes: [["type", "number"], ["value", (_setting.value * 100).toString()], ["name", id], ["min", (_setting.min * 100).toString()], ["max", (_setting.max * 100).toString()], ["step", (_setting.step * 100).toString()]],
+                        id
+                    });
+                    const buttonPlus = Script.createElementAdvanced("button", {
+                        classes: ["settings-number-input-button", "plus", "settings-input"],
+                        innerHTML: "+"
+                    });
+                    element.append(buttonMinus, input, buttonPlus);
+                    input.addEventListener("change", () => {
+                        let value = Math.min(_setting.max, Math.max(_setting.min, Number(input.value) / 100));
+                        _setting.value = value;
+                        input.value = Math.round(value * 100).toString();
+                    });
+                    buttonMinus.addEventListener("click", () => { input.stepDown(); input.dispatchEvent(new InputEvent("change")); });
+                    buttonPlus.addEventListener("click", () => { input.stepUp(); input.dispatchEvent(new InputEvent("change")); });
+                    break;
+                }
+                case "range": {
+                    const input = Script.createElementAdvanced("input", {
+                        classes: ["settings-number-input", "settings-input", "slider"],
+                        attributes: [["type", "range"], ["value", _setting.value.toString()], ["name", id], ["min", _setting.min.toString()], ["max", _setting.max.toString()], ["step", _setting.step.toString()]],
+                        id
+                    });
+                    input.addEventListener("input", () => {
+                        _setting.value = Number(input.value);
+                        const percent = _setting.value / (_setting.max - _setting.min) * 100;
+                        input.style.setProperty("--percent", `${percent}%`);
+                    });
+                    break;
+                }
+            }
+            return element;
+        }
+    }
+    Script.Settings = Settings;
+})(Script || (Script = {}));
+/// <reference path="../Misc/Utils.ts" />
+/// <reference path="../Plugins/Settings.ts" />
+var Script;
+/// <reference path="../Misc/Utils.ts" />
+/// <reference path="../Plugins/Settings.ts" />
+(function (Script) {
+    var ƒ = FudgeCore;
+    let AUDIO_CHANNEL;
+    (function (AUDIO_CHANNEL) {
+        AUDIO_CHANNEL[AUDIO_CHANNEL["MASTER"] = 0] = "MASTER";
+        AUDIO_CHANNEL[AUDIO_CHANNEL["SOUNDS"] = 1] = "SOUNDS";
+        AUDIO_CHANNEL[AUDIO_CHANNEL["MUSIC"] = 2] = "MUSIC";
+    })(AUDIO_CHANNEL = Script.AUDIO_CHANNEL || (Script.AUDIO_CHANNEL = {}));
+    const enumToName = new Map([
+        [AUDIO_CHANNEL.MASTER, "Master"],
+        [AUDIO_CHANNEL.MUSIC, "Music"],
+        [AUDIO_CHANNEL.SOUNDS, "Sounds"],
+    ]);
+    class AudioManager {
+        static { this.Instance = new AudioManager(); }
+        constructor() {
+            this.gainNodes = {};
+            if (ƒ.Project.mode == ƒ.MODE.EDITOR)
+                return;
+            if (AudioManager.Instance)
+                return AudioManager.Instance;
+            const settingCategory = { name: "Sound", settings: [], type: "category" };
+            for (let channel of Script.enumToArray(AUDIO_CHANNEL)) {
+                this.gainNodes[channel] = ƒ.AudioManager.default.createGain();
+                if (channel === AUDIO_CHANNEL.MASTER) {
+                    this.gainNodes[channel].connect(ƒ.AudioManager.default.gain);
+                }
+                else {
+                    this.gainNodes[channel].connect(this.gainNodes[AUDIO_CHANNEL.MASTER]);
+                }
+                let setting = { type: "number", max: 1, min: 0, name: enumToName.get(channel), step: 0.2, value: 1, variant: "percent" };
+                setting = Script.Settings.proxySetting(setting, (_old, _new) => { AudioManager.setChannelVolume(channel, _new); });
+                settingCategory.settings.push(setting);
+            }
+            Script.Settings.addSettings(settingCategory);
+        }
+        static addAudioCmpToChannel(_cmpAudio, _channel) {
+            _cmpAudio.setGainTarget(AudioManager.Instance.gainNodes[_channel]);
+        }
+        static setChannelVolume(_channel, _volume) {
+            let channel = AudioManager.Instance.gainNodes[_channel];
+            if (!channel)
+                return;
+            channel.gain.value = _volume;
+        }
+    }
+    Script.AudioManager = AudioManager;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    let ComponentAudioMixed = (() => {
+        var _a;
+        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _classSuper = ƒ.ComponentAudio;
+        let _instanceExtraInitializers = [];
+        let _get_channel_decorators;
+        var ComponentAudioMixed = class extends _classSuper {
+            static { _classThis = this; }
+            static {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                _get_channel_decorators = [ƒ.serialize(Script.AUDIO_CHANNEL)];
+                __esDecorate(this, null, _get_channel_decorators, { kind: "getter", name: "channel", static: false, private: false, access: { has: obj => "channel" in obj, get: obj => obj.channel }, metadata: _metadata }, null, _instanceExtraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                ComponentAudioMixed = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            }
+            static { this.iSubclass = ƒ.Component.registerSubclass(ComponentAudioMixed); }
+            #channel = (__runInitializers(this, _instanceExtraInitializers), Script.AUDIO_CHANNEL.MASTER);
+            constructor(_audio, _loop, _start, _audioManager = ƒ.AudioManager.default, _channel = Script.AUDIO_CHANNEL.MASTER) {
+                super(_audio, _loop, _start, _audioManager);
+                this.gainTarget = _audioManager.gain;
+                if (ƒ.Project.mode == ƒ.MODE.EDITOR)
+                    return;
+                this.channel = _channel;
+            }
+            get channel() {
+                return this.#channel;
+            }
+            set channel(_channel) {
+                this.#channel = _channel;
+                Script.AudioManager.addAudioCmpToChannel(this, this.#channel);
+            }
+            setGainTarget(node) {
+                if (this.isConnected) {
+                    this.gain.disconnect(this.gainTarget);
+                }
+                this.gainTarget = node;
+                if (this.isConnected) {
+                    this.gain.connect(this.gainTarget);
+                }
+            }
+            connect(_on) {
+                if (_on)
+                    this.gain.connect(this.gainTarget ?? this.audioManager.gain);
+                else
+                    this.gain.disconnect(this.gainTarget ?? this.audioManager.gain);
+                this.isConnected = _on;
+            }
+            fadeTo(_volume, _duration) {
+                // (<GainNode>this.gain).gain.linearRampToValueAtTime(_volume, ƒ.AudioManager.default.currentTime + _duration);
+                this.gain.gain.setValueCurveAtTime([this.volume, _volume], ƒ.AudioManager.default.currentTime, _duration);
+            }
+            drawGizmos() {
+                if (this.isPlaying)
+                    super.drawGizmos();
+            }
+            play(_on) {
+                super.play(_on);
+                // Hacky bullshit because super.play creates a new source every time and the ƒ.EVENT_AUDIO.ENDED isn't fired at all
+                this.source.addEventListener("ended", () => {
+                    this.dispatchEvent(new CustomEvent("ended" /* ƒ.EVENT_AUDIO.ENDED */));
                 });
             }
             static {
                 __runInitializers(_classThis, _classExtraInitializers);
             }
         };
-        return AnimationLink = _classThis;
+        return ComponentAudioMixed = _classThis;
     })();
-    Script.AnimationLink = AnimationLink;
+    Script.ComponentAudioMixed = ComponentAudioMixed;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    let MUSIC_TITLE;
+    (function (MUSIC_TITLE) {
+        MUSIC_TITLE[MUSIC_TITLE["COMBAT_INTRO"] = 0] = "COMBAT_INTRO";
+        MUSIC_TITLE[MUSIC_TITLE["COMBAT_PICKUP"] = 1] = "COMBAT_PICKUP";
+        MUSIC_TITLE[MUSIC_TITLE["COMBAT_LOOP"] = 2] = "COMBAT_LOOP";
+        MUSIC_TITLE[MUSIC_TITLE["SHOP_LOOP"] = 3] = "SHOP_LOOP";
+        MUSIC_TITLE[MUSIC_TITLE["TITLE_INTRO"] = 4] = "TITLE_INTRO";
+        MUSIC_TITLE[MUSIC_TITLE["TITLE_LOOP"] = 5] = "TITLE_LOOP";
+    })(MUSIC_TITLE || (MUSIC_TITLE = {}));
+    let MUSIC;
+    (function (MUSIC) {
+        MUSIC[MUSIC["COMBAT"] = 0] = "COMBAT";
+        MUSIC[MUSIC["SHOP"] = 1] = "SHOP";
+        MUSIC[MUSIC["TITLE"] = 2] = "TITLE";
+    })(MUSIC || (MUSIC = {}));
+    class MusicManager {
+        constructor() {
+            this.sounds = new Map([
+                [MUSIC_TITLE.COMBAT_INTRO, new Script.ComponentAudioMixed(new ƒ.Audio("Assets/Music/Combat/Combat_Intro.opus"), false, false, undefined, Script.AUDIO_CHANNEL.MUSIC)],
+                [MUSIC_TITLE.COMBAT_LOOP, new Script.ComponentAudioMixed(new ƒ.Audio("Assets/Music/Combat/Combat_Loop.opus"), true, false, undefined, Script.AUDIO_CHANNEL.MUSIC)],
+                [MUSIC_TITLE.COMBAT_PICKUP, new Script.ComponentAudioMixed(new ƒ.Audio("Assets/Music/Combat/Combat_Pickup.opus"), false, false, undefined, Script.AUDIO_CHANNEL.MUSIC)],
+                [MUSIC_TITLE.SHOP_LOOP, new Script.ComponentAudioMixed(new ƒ.Audio("Assets/Music/Shop/Shop_Loop.opus"), true, false, undefined, Script.AUDIO_CHANNEL.MUSIC)],
+                [MUSIC_TITLE.TITLE_INTRO, new Script.ComponentAudioMixed(new ƒ.Audio("Assets/Music/Title/TitleMenu_Intro.opus"), false, false, undefined, Script.AUDIO_CHANNEL.MUSIC)],
+                [MUSIC_TITLE.TITLE_LOOP, new Script.ComponentAudioMixed(new ƒ.Audio("Assets/Music/Title/TitleMenu_Loop.opus"), true, false, undefined, Script.AUDIO_CHANNEL.MUSIC)],
+            ]);
+            for (let cmp of this.sounds.values())
+                [
+                    cmp.connect(true)
+                ];
+            this.addEventListeners();
+            this.setupIntros();
+            this.changeMusic(MUSIC.TITLE);
+        }
+        setupIntros() {
+            this.sounds.get(MUSIC_TITLE.TITLE_INTRO).addEventListener("ended" /* ƒ.EVENT_AUDIO.ENDED */, () => {
+                if (this.activeMusic === MUSIC.TITLE) {
+                    this.playTitle(MUSIC_TITLE.TITLE_LOOP);
+                }
+            });
+            this.sounds.get(MUSIC_TITLE.COMBAT_INTRO).addEventListener("ended" /* ƒ.EVENT_AUDIO.ENDED */, () => {
+                if (this.activeMusic === MUSIC.COMBAT) {
+                    this.playTitle(MUSIC_TITLE.COMBAT_LOOP);
+                    this.sounds.get(MUSIC_TITLE.SHOP_LOOP).play(true);
+                    this.sounds.get(MUSIC_TITLE.SHOP_LOOP).volume = 0;
+                }
+            });
+            // this.sounds.get(MUSIC_TITLE.COMBAT_PICKUP).addEventListener(ƒ.EVENT_AUDIO.ENDED, () => {
+            //     if (this.activeMusic === MUSIC.COMBAT) {
+            //         this.playTitle(MUSIC_TITLE.COMBAT_LOOP);
+            //     }
+            // });
+        }
+        changeMusic(_music) {
+            if (this.activeMusic === _music)
+                return;
+            switch (_music) {
+                case MUSIC.COMBAT: {
+                    if (this.activeMusic === MUSIC.TITLE) {
+                        this.playTitle(MUSIC_TITLE.COMBAT_INTRO, 1);
+                    }
+                    else if (this.activeMusic === MUSIC.SHOP) {
+                        this.sounds.get(MUSIC_TITLE.SHOP_LOOP).fadeTo(0, 0.01);
+                        this.sounds.get(MUSIC_TITLE.COMBAT_PICKUP).play(true);
+                        this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).volume = 0;
+                        this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).play(true);
+                        setTimeout(() => {
+                            this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).fadeTo(1, 0.01);
+                            this.sounds.get(MUSIC_TITLE.COMBAT_PICKUP).fadeTo(0, 3);
+                        }, 4750);
+                    }
+                    break;
+                }
+                case MUSIC.SHOP: {
+                    if (this.activeMusic !== MUSIC.COMBAT)
+                        return;
+                    // make sure the sound is actually playing
+                    if (!this.sounds.get(MUSIC_TITLE.SHOP_LOOP).isPlaying) {
+                        this.playTitle(MUSIC_TITLE.COMBAT_LOOP);
+                        this.sounds.get(MUSIC_TITLE.SHOP_LOOP).play(true);
+                        setTimeout(() => {
+                            this.sounds.get(MUSIC_TITLE.COMBAT_LOOP).volume = 0;
+                        }, 100);
+                    }
+                    else {
+                        this.activeComponent.fadeTo(0, 2);
+                        this.sounds.get(MUSIC_TITLE.SHOP_LOOP).fadeTo(1, 2);
+                    }
+                    break;
+                }
+                case MUSIC.TITLE: {
+                    this.playTitle(MUSIC_TITLE.TITLE_INTRO, 1);
+                    break;
+                }
+            }
+            this.activeMusic = _music;
+        }
+        playTitle(_title, _fadeTime = 0.01) {
+            console.log("play title", _title, this.activeComponent, _fadeTime);
+            const cmp = this.sounds.get(_title);
+            if (!cmp)
+                return;
+            cmp.play(true);
+            this.activeComponent?.fadeTo(0, _fadeTime);
+            cmp.volume = 0;
+            cmp.fadeTo(1, _fadeTime);
+            this.activeComponent = cmp;
+        }
+        addEventListeners() {
+            Script.EventBus.addEventListener(Script.EVENT.RUN_START, () => { this.changeMusic(MUSIC.COMBAT); });
+            Script.EventBus.addEventListener(Script.EVENT.SHOP_OPEN, () => { this.changeMusic(MUSIC.SHOP); });
+            Script.EventBus.addEventListener(Script.EVENT.SHOP_CLOSE, () => { this.changeMusic(MUSIC.COMBAT); });
+            Script.EventBus.addEventListener(Script.EVENT.RUN_END, () => { this.changeMusic(MUSIC.TITLE); });
+        }
+    }
+    Script.MusicManager = MusicManager;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -2548,12 +4358,14 @@ var Script;
                     {
                         on: Script.EVENT.FIGHT_END,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
-                        spell: { type: Script.SPELL_TYPE.HEAL, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.HEAL, level: 1 },
+                        info: "Heals a random ally for 1 health at the end of the fight."
                     },
                     {
                         on: Script.EVENT.FIGHT_END,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2 } },
-                        spell: { type: Script.SPELL_TYPE.HEAL, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.HEAL, level: 1 },
+                        info: "Heals two random allies for 1 health at the end of the fight."
                     }
                 ]
             },
@@ -2563,12 +4375,14 @@ var Script;
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1, sortBy: Script.TARGET_SORT.HEALTHIEST, reverse: true } },
-                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 1 },
+                        info: "Gives 1 shield to the ally with the lowest health at the start of the fight."
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1, sortBy: Script.TARGET_SORT.HEALTHIEST, reverse: true } },
-                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 2 }
+                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 2 },
+                        info: "Gives 2 shield to the ally with the lowest health at the start of the fight."
                     }
                 ]
             },
@@ -2578,12 +4392,14 @@ var Script;
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [0, 0], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 1 },
+                        info: "Gives 1 shield to each ally in the first row at the start of the fight."
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [0, 0], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 2 }
+                        spell: { type: Script.SPELL_TYPE.SHIELD, level: 2 },
+                        info: "Gives 2 shield to each ally in the first row at the start of the fight."
                     }
                 ]
             },
@@ -2593,12 +4409,14 @@ var Script;
                     {
                         on: Script.EVENT.FIGHT_END,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
-                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 },
+                        info: "SHOULD give 1 xp at the end of the fight. CURRENTLY JUST 1 GOLD"
                     },
                     {
                         on: Script.EVENT.FIGHT_END,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2 } },
-                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 },
+                        info: "SHOULD give 2 xp at the end of the fight. CURRENTLY JUST 1 GOLD"
                     }
                 ]
             },
@@ -2611,11 +4429,13 @@ var Script;
                         spell: {
                             type: Script.SPELL_TYPE.SHIELD, level: 1
                         },
+                        info: "SHOULD give a random buff to a random ally at the start of the fight. CURRENTLY JUST SHIELD 1"
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2 } },
-                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 },
+                        info: "SHOULD give a random buff to two random allies at the start of the fight. CURRENTLY JUST 1 GOLD?"
                     }
                 ]
             },
@@ -2626,11 +4446,13 @@ var Script;
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1 } },
                         attack: { baseDamage: 1 },
+                        info: "Deals 1 damage to a random enemy at the start of the fight."
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 2 } },
                         attack: { baseDamage: 1 },
+                        info: "Deals 1 damage to two random enemies at the start of the fight."
                     }
                 ]
             },
@@ -2640,12 +4462,14 @@ var Script;
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1 } },
-                        spell: { type: Script.SPELL_TYPE.WEAKNESS, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.WEAKNESS, level: 1 },
+                        info: "Gives 1 weakness to a random enemy at the start of the fight."
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1, sortBy: Script.TARGET_SORT.STRONGEST } },
-                        spell: { type: Script.SPELL_TYPE.WEAKNESS, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.WEAKNESS, level: 1 },
+                        info: "Gives 1 weakness to the strongest enemy at the start of the fight."
                     }
                 ]
             },
@@ -2655,12 +4479,14 @@ var Script;
                     {
                         on: Script.EVENT.FIGHT_END,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
-                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 },
+                        info: "Gives 1 gold at the end of combat."
                     },
                     {
                         on: Script.EVENT.FIGHT_END,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
-                        spell: { type: Script.SPELL_TYPE.GOLD, level: 2 }
+                        spell: { type: Script.SPELL_TYPE.GOLD, level: 2 },
+                        info: "Gives 2 gold at the end of combat."
                     }
                 ]
             },
@@ -2670,12 +4496,14 @@ var Script;
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.THORNS, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.THORNS, level: 1 },
+                        info: "Gives 1 thorns to all allies in the last row."
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.THORNS, level: 2 }
+                        spell: { type: Script.SPELL_TYPE.THORNS, level: 2 },
+                        info: "Gives 2 thorns to all allies in the last row."
                     }
                 ]
             },
@@ -2685,27 +4513,14 @@ var Script;
                     {
                         on: Script.EVENT.CHOOSE_STONE,
                         target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.THORNS, level: 1 }
+                        spell: { type: Script.SPELL_TYPE.THORNS, level: 1 },
+                        info: "SHOULD Double the chance for rare stones to appear in the shop. CURRENTLY BROKEN",
                     },
                     {
                         on: Script.EVENT.CHOOSE_STONE,
                         target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.THORNS, level: 2 }
-                    }
-                ]
-            },
-            {
-                id: "luckystone", // TODO - doubles the chance for rare stones
-                abilityLevels: [
-                    {
-                        on: Script.EVENT.CHOOSE_STONE,
-                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.THORNS, level: 1 }
-                    },
-                    {
-                        on: Script.EVENT.CHOOSE_STONE,
-                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.THORNS, level: 2 }
+                        spell: { type: Script.SPELL_TYPE.THORNS, level: 2 },
+                        info: "SHOULD Triple the chance for rare stones to appear in the shop. CURRENTLY BROKEN",
                     }
                 ]
             },
@@ -2715,12 +4530,14 @@ var Script;
                     {
                         on: Script.EVENT.ENTITY_MOVE,
                         target: "target",
-                        attack: { baseDamage: 1 }
+                        attack: { baseDamage: 1 },
+                        info: "Deals 1 damage to enemies whenever they move. CURRENTLY 1 TO EVERY ENEMY"
                     },
                     {
                         on: Script.EVENT.ENTITY_MOVE,
                         target: "target",
-                        attack: { baseDamage: 2 }
+                        attack: { baseDamage: 2 },
+                        info: "Deals 2 damage to enemies whenever they move. CURRENTLY 2 TO EVERY ENEMY"
                     }
                 ]
             },
@@ -2755,8 +4572,10 @@ var Script;
             this.position = _pos;
             //move stuff
             this.moved = false;
-            if (this.select(this.moves, true)[0]) {
-                this.currentDirection = this.select(this.moves, true)[0].currentDirection;
+            let moveData;
+            moveData = this.select(this.moves, false)[0];
+            if (moveData) {
+                this.currentDirection = moveData.currentDirection;
             }
             else {
                 this.currentDirection = [-1, 0];
@@ -2766,6 +4585,7 @@ var Script;
             Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_CREATE, target: this });
             Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_CREATED, target: this });
             this.registerEventListeners();
+            this.info = _entity.info;
         }
         get untargetable() {
             if (this.activeEffects.get(Script.SPELL_TYPE.UNTARGETABLE) > 0) {
@@ -2781,6 +4601,7 @@ var Script;
         }
         updateEntityData(_newData) {
             this.id = _newData.id;
+            this.info = _newData.info;
             let healthDifference = (_newData.health ?? 1) - (this.health ?? 0);
             this.currentHealth = (this.health ?? 0) + healthDifference;
             this.health = _newData.health ?? 1;
@@ -2876,9 +4697,7 @@ var Script;
             switch (_spell.type) {
                 case Script.SPELL_TYPE.HEAL: {
                     await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HEAL, detail: { level: amount }, trigger: _spell, target: this, cause: _cause });
-                    // TODO: call Visualizer
-                    // TODO: prevent overheal?
-                    this.currentHealth += amount;
+                    this.currentHealth = Math.min(this.health, this.currentHealth + amount);
                     await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HEALED, detail: { level: amount }, trigger: _spell, target: this, cause: _cause });
                     await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_AFFECTED, detail: { level: amount }, trigger: _spell, target: this, cause: _cause });
                     break;
@@ -2895,10 +4714,10 @@ var Script;
             }
         }
         async tryToMove(_grid, maxAlternatives) {
-            //check if the Entity has move data
             let moveData;
             //TODO: get all moves
-            moveData = this.select(this.moves, true)[0]; // @Björn das sucht dir alle moves raus die es machen soll - du nimmst aber nur den ersten. Im Moment geht das weil da immer nur einer zurück kommt.
+            moveData = this.select(this.moves, false)[0];
+            //check if the Entity has move data
             if (moveData) {
                 for (let i = 0; i <= maxAlternatives && i <= moveData.blocked.attempts; i++) {
                     let rotateBy = moveData.rotateBy + i * moveData.blocked.rotateBy;
@@ -3151,12 +4970,12 @@ var Script;
         let conditions = Array.isArray(_ability.conditions) ? _ability.conditions : [_ability.conditions];
         for (let condition of conditions) {
             if (condition.target && _arena && _ev.target) {
-                let validTargets = Script.getTargets(condition.target, _arena.home, _arena.away, this);
+                let validTargets = Script.getTargets(condition.target, _arena.home, _arena.away, this).targets;
                 if (!validTargets.includes(_ev.target))
                     return false;
             }
             if (condition.cause && _arena && _ev.cause) {
-                let validTargets = Script.getTargets(condition.cause, _arena.home, _arena.away, this);
+                let validTargets = Script.getTargets(condition.cause, _arena.home, _arena.away, this).targets;
                 if (_ev.cause instanceof Script.Entity && !validTargets.includes(_ev.cause))
                     return false;
             }
@@ -3189,7 +5008,7 @@ var Script;
             if (_ability.on !== _ev.type)
                 return;
         }
-        if (!areAbilityConditionsMet(_ability, _arena, _ev))
+        if (!areAbilityConditionsMet.call(this, _ability, _arena, _ev))
             return;
         // if we get here, we're ready to do the ability
         let targets = undefined;
@@ -3202,17 +5021,17 @@ var Script;
                 targets = [_ev.target];
         }
         else {
-            targets = Script.getTargets(_ability.target, _arena.home, _arena.away, this);
+            targets = Script.getTargets(_ability.target, _arena.home, _arena.away, this).targets;
         }
         // no targets found, no need to do the ability
         if (!targets || targets.length === 0)
             return;
         await Script.EventBus.dispatchEvent({ type: Script.EVENT.TRIGGER_ABILITY, cause: this, target: this, trigger: _ability });
         if (_ability.attack) {
-            await executeAttack([{ target: undefined, ..._ability.attack }], _arena.home, _arena.away, targets);
+            await executeAttack.call(this, [{ target: undefined, ..._ability.attack }], _arena.home, _arena.away, targets);
         }
         if (_ability.spell) {
-            await executeSpell([{ target: undefined, ..._ability.spell }], _arena.home, _arena.away, targets);
+            await executeSpell.call(this, [{ target: undefined, ..._ability.spell }], _arena.home, _arena.away, targets);
         }
         await Script.EventBus.dispatchEvent({ type: Script.EVENT.TRIGGERED_ABILITY, cause: this, target: this, trigger: _ability });
     }
@@ -3221,12 +5040,18 @@ var Script;
         if (!_spells)
             return;
         for (let spell of _spells) {
-            let targets = _targetsOverride ?? Script.getTargets(spell.target, _friendly, _opponent, this);
-            for (let target of targets) {
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target });
-                await target.affect(spell, this);
-                await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL, trigger: spell, cause: this, target });
+            let targets, side, positions;
+            if (_targetsOverride) {
+                targets = _targetsOverride;
             }
+            else {
+                ({ targets, side, positions } = Script.getTargets(spell.target, _friendly, _opponent, this));
+            }
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target: this, detail: { targets, side, positions } });
+            for (let target of targets) {
+                await target.affect(spell, this);
+            }
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL, trigger: spell, cause: this, target: this, detail: { targets, side, positions } });
         }
     }
     Script.executeSpell = executeSpell;
@@ -3234,15 +5059,20 @@ var Script;
         if (!_attacks || _attacks.length === 0)
             return;
         for (let attack of _attacks) {
-            // get the target(s)
-            let targets = _targetsOverride ?? Script.getTargets(attack.target, _friendly, _opponent, this);
-            // execute the attacks
             let attackDmg = this.getDamageOfAttacks([attack], true);
-            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } });
+            // get the target(s)
+            let targets, side, positions;
+            if (_targetsOverride) {
+                targets = _targetsOverride;
+            }
+            else {
+                ({ targets, side, positions } = Script.getTargets(attack.target, _friendly, _opponent, this));
+            }
+            await Promise.all(Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.ENTITY_ATTACK, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets, side, positions } }));
             for (let target of targets) {
                 await target.damage(attackDmg, attack.baseCritChance, this);
             }
-            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets } });
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ATTACKED, cause: this, target: this, trigger: attack, detail: { damage: attackDmg, targets, side, positions } });
         }
     }
     Script.executeAttack = executeAttack;
@@ -3413,75 +5243,72 @@ var Script;
 var Script;
 (function (Script) {
     var ƒ = FudgeCore;
-    function initEntitiesInGrid(_grid, _entity) {
-        const grid = new Script.Grid(_grid);
-        const newGrid = new Script.Grid();
-        const data = Script.Provider.data;
-        //const visualizer = Provider.visualizer;
-        grid.forEachElement((entityId, pos) => {
-            let entityData = data.getEntity(entityId);
-            if (!entityData)
-                throw new Error(`Entity ${entityId} not found.`);
-            newGrid.set(pos, new _entity(entityData, pos));
-        });
-        console.log("init Grid: " + newGrid);
-        return newGrid;
-    }
-    Script.initEntitiesInGrid = initEntitiesInGrid;
-    // TODO: replace this with a fudge timeout so it scales with gametime
-    // Alternatively, make a second one that does that and replace where reasonable
-    async function waitMS(_ms) {
-        return new Promise((resolve) => {
-            setTimeout(resolve, _ms);
-        });
-    }
-    Script.waitMS = waitMS;
-    async function getCloneNodeFromRegistry(id) {
-        let node = Script.DataLink.linkedNodes.get(id);
-        if (!node)
-            return undefined;
-        const newNode = new ƒ.Node("");
-        await newNode.deserialize(node.serialize());
-        return newNode;
-    }
-    Script.getCloneNodeFromRegistry = getCloneNodeFromRegistry;
-    function randomRange(min = 0, max = 1) {
-        const range = max - min;
-        return Math.random() * range + min;
-    }
-    Script.randomRange = randomRange;
-    function chooseRandomElementsFromArray(_array, _max, _exclude = []) {
-        let filteredOptions = _array.filter((element) => !_exclude.includes(element));
-        if (filteredOptions.length < _max) {
-            return filteredOptions;
-        }
-        let result = [];
-        for (let i = 0; i < _max; i++) {
-            const index = Math.floor(Math.random() * filteredOptions.length);
-            result.push(...filteredOptions.splice(index, 1));
-        }
-        return result;
-    }
-    Script.chooseRandomElementsFromArray = chooseRandomElementsFromArray;
-    function createElementAdvanced(_type, _options = {}) {
-        let el = document.createElement(_type);
-        if (_options.id) {
-            el.id = _options.id;
-        }
-        if (_options.classes) {
-            el.classList.add(..._options.classes);
-        }
-        if (_options.innerHTML) {
-            el.innerHTML = _options.innerHTML;
-        }
-        if (_options.attributes) {
-            for (let attribute of _options.attributes) {
-                el.setAttribute(attribute[0], attribute[1]);
+    let ComponentChangeMaterial = (() => {
+        var _a;
+        let _classDecorators = [(_a = FudgeCore).serialize.bind(_a)];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _classSuper = ƒ.ComponentScript;
+        let _changeMaterial_decorators;
+        let _changeMaterial_initializers = [];
+        let _changeMaterial_extraInitializers = [];
+        let _animationSprite_decorators;
+        let _animationSprite_initializers = [];
+        let _animationSprite_extraInitializers = [];
+        var ComponentChangeMaterial = class extends _classSuper {
+            static { _classThis = this; }
+            static {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                _changeMaterial_decorators = [FudgeCore.serialize(FudgeCore.Material)];
+                _animationSprite_decorators = [FudgeCore.serialize(FudgeCore.AnimationSprite)];
+                __esDecorate(null, null, _changeMaterial_decorators, { kind: "field", name: "changeMaterial", static: false, private: false, access: { has: obj => "changeMaterial" in obj, get: obj => obj.changeMaterial, set: (obj, value) => { obj.changeMaterial = value; } }, metadata: _metadata }, _changeMaterial_initializers, _changeMaterial_extraInitializers);
+                __esDecorate(null, null, _animationSprite_decorators, { kind: "field", name: "animationSprite", static: false, private: false, access: { has: obj => "animationSprite" in obj, get: obj => obj.animationSprite, set: (obj, value) => { obj.animationSprite = value; } }, metadata: _metadata }, _animationSprite_initializers, _animationSprite_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                ComponentChangeMaterial = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
             }
-        }
-        return el;
-    }
-    Script.createElementAdvanced = createElementAdvanced;
+            static { this.iSubclass = ƒ.Component.registerSubclass(ComponentChangeMaterial); }
+            constructor() {
+                super();
+                this.changeMaterial = __runInitializers(this, _changeMaterial_initializers, null);
+                this.animationSprite = (__runInitializers(this, _changeMaterial_extraInitializers), __runInitializers(this, _animationSprite_initializers, void 0));
+                // Activate the functions of this component as response to events
+                this.hndEvent = (__runInitializers(this, _animationSprite_extraInitializers), (_event) => {
+                    switch (_event.type) {
+                        case "componentAdd" /* ƒ.EVENT.COMPONENT_ADD */:
+                            break;
+                        case "componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */:
+                            this.removeEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
+                            this.removeEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
+                            break;
+                        case "nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */:
+                            this.switchMaterial();
+                            break;
+                    }
+                });
+                if (ƒ.Project.mode == ƒ.MODE.EDITOR)
+                    return;
+                // Listen to this component being added to or removed from a node
+                this.addEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
+                this.addEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
+                this.addEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
+            }
+            switchMaterial() {
+                for (const node of this.node) {
+                    if (node.getComponent(ƒ.ComponentMaterial) != null) {
+                        node.getComponent(ƒ.ComponentMaterial).material = this.changeMaterial;
+                        node.addComponent(new ƒ.ComponentAnimation(this.animationSprite));
+                    }
+                }
+            }
+            static {
+                __runInitializers(_classThis, _classExtraInitializers);
+            }
+        };
+        return ComponentChangeMaterial = _classThis;
+    })();
+    Script.ComponentChangeMaterial = ComponentChangeMaterial;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -3620,6 +5447,9 @@ var Script;
                 1,
                 0,
             ];
+            //#endregion
+            //#region Run
+            this.#lastStepWasShop = false;
             //#region Eventlisteners
             this.handleGoldAbility = async (_ev) => {
                 if (!_ev.trigger)
@@ -3674,14 +5504,17 @@ var Script;
         }
         //#endregion
         //#region Run
+        #lastStepWasShop;
         async runStep() {
             let encounter = await this.chooseNextEncounter();
             if (encounter < 0) { //shop
                 Script.EventBus.dispatchEvent({ type: Script.EVENT.SHOP_OPEN });
                 await Script.EventBus.awaitSpecificEvent(Script.EVENT.SHOP_CLOSE);
+                this.#lastStepWasShop = true;
                 return true;
             }
             let nextFight = await this.nextEncounter(encounter);
+            this.#lastStepWasShop = false;
             await this.prepareFight(nextFight);
             let result = await this.runFight();
             if (result === Script.FIGHT_RESULT.DEFEAT) {
@@ -3692,7 +5525,7 @@ var Script;
         }
         //#region >  Prepare Fight
         async chooseNextEncounter() {
-            const shopChance = this.#shopChance[this.progress];
+            const shopChance = this.#lastStepWasShop ? 0 : this.#shopChance[this.progress];
             const levelChances = this.#levelDifficultyChances[this.progress];
             const options = [];
             if (Math.random() < shopChance) {
@@ -3714,6 +5547,7 @@ var Script;
             return event.detail.encounter;
         }
         async nextEncounter(_difficulty) {
+            // _difficulty = 10;
             if (_difficulty === -1) { // shop
                 return undefined;
             }
@@ -3765,6 +5599,66 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
+    var ƒ = FudgeCore;
+    let SandSitter = (() => {
+        var _a;
+        let _classDecorators = [(_a = ƒ).serialize.bind(_a)];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _classSuper = ƒ.Component;
+        let _emerge_decorators;
+        let _emerge_initializers = [];
+        let _emerge_extraInitializers = [];
+        let _emerged_idle_decorators;
+        let _emerged_idle_initializers = [];
+        let _emerged_idle_extraInitializers = [];
+        var SandSitter = class extends _classSuper {
+            static { _classThis = this; }
+            static {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                _emerge_decorators = [ƒ.serialize(ƒ.Animation)];
+                _emerged_idle_decorators = [ƒ.serialize(ƒ.Animation)];
+                __esDecorate(null, null, _emerge_decorators, { kind: "field", name: "emerge", static: false, private: false, access: { has: obj => "emerge" in obj, get: obj => obj.emerge, set: (obj, value) => { obj.emerge = value; } }, metadata: _metadata }, _emerge_initializers, _emerge_extraInitializers);
+                __esDecorate(null, null, _emerged_idle_decorators, { kind: "field", name: "emerged_idle", static: false, private: false, access: { has: obj => "emerged_idle" in obj, get: obj => obj.emerged_idle, set: (obj, value) => { obj.emerged_idle = value; } }, metadata: _metadata }, _emerged_idle_initializers, _emerged_idle_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                SandSitter = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            }
+            constructor() {
+                super();
+                this.emerge = __runInitializers(this, _emerge_initializers, void 0);
+                this.emerged_idle = (__runInitializers(this, _emerge_extraInitializers), __runInitializers(this, _emerged_idle_initializers, void 0));
+                this.burried = (__runInitializers(this, _emerged_idle_extraInitializers), false);
+                this.buryNow = async (_ev) => {
+                    this.burried = true;
+                };
+                this.emergeNow = async (_ev) => {
+                    if (!this.burried)
+                        return;
+                    const vis = this.node.getParent();
+                    if (!vis)
+                        return;
+                    vis.defaultAnimation = this.emerged_idle;
+                    await vis.playAnimationIfPossible(this.emerge);
+                    this.burried = false;
+                };
+                this.addEventListener("componentActivate" /* ƒ.EVENT.COMPONENT_ACTIVATE */, () => {
+                    this.addEventListeners();
+                }, { once: true });
+            }
+            addEventListeners() {
+                Script.EventBus.addEventListener(Script.EVENT.FIGHT_START, this.buryNow);
+                Script.EventBus.addEventListener(Script.EVENT.ROUND_END, this.emergeNow);
+            }
+        };
+        return SandSitter = _classThis;
+    })();
+    Script.SandSitter = SandSitter;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
     class VisualizeFight {
         constructor(_fight) {
             this.#listeners = new Map();
@@ -3783,11 +5677,11 @@ var Script;
             this.home = new Script.VisualizeGrid(homeGrid, "home");
             Script.Provider.visualizer.addToScene(this.away);
             Script.Provider.visualizer.addToScene(this.home);
-            Script.Provider.visualizer.drawScene();
+            // Provider.visualizer.drawScene();
             this.addEventListeners();
         }
         async showGrid() {
-            let visualizer = Script.Provider.visualizer;
+            // let visualizer = Provider.visualizer;
             // let grid: string[][] = [[, , , , , , ,], [], []];
             // this.#home.grid.forEachElement((el, pos) => {
             //     if (!el) return;
@@ -3803,7 +5697,7 @@ var Script;
             // })
             // console.table(grid);
             //draw the 3D scene
-            visualizer.drawScene();
+            // visualizer.drawScene();
         }
         async nukeGrid() {
             this.home.nuke();
@@ -3846,6 +5740,18 @@ var Script;
             if (pos)
                 this.away.removeEntityFromGrid(pos, true);
         }
+        whereIsEntity(_entity) {
+            let found = false;
+            this.home.grid.forEachElement((el) => { if (el === _entity)
+                found = true; });
+            if (found)
+                return this.home;
+            this.away.grid.forEachElement((el) => { if (el === _entity)
+                found = true; });
+            if (found)
+                return this.away;
+            return undefined;
+        }
         addEventListeners() {
             this.#listeners.set(Script.EVENT.FIGHT_START, this.fightStart);
             this.#listeners.set(Script.EVENT.FIGHT_END, this.fightEnd);
@@ -3870,19 +5776,85 @@ var Script;
 var Script;
 (function (Script) {
     var ƒ = FudgeCore;
+    class VisualizeBench extends ƒ.Component {
+        constructor() {
+            super();
+            if (ƒ.Project.mode == ƒ.MODE.EDITOR)
+                return;
+        }
+        #entities = new Set();
+        addEntity(_entity) {
+            this.#entities.add(_entity);
+            this.arrangeEntities();
+            this.node.addChild(_entity);
+            _entity.activate(true);
+        }
+        hasEntity(_entity) {
+            return this.#entities.has(_entity);
+        }
+        removeEntity(_entity) {
+            this.#entities.delete(_entity);
+            this.arrangeEntities();
+            this.node.removeChild(_entity);
+            _entity.activate(false);
+        }
+        clear() {
+            const arr = Array.from(this.#entities);
+            for (let entity of arr) {
+                this.removeEntity(entity);
+            }
+        }
+        arrangeEntities() {
+            const distanceBetweenEntities = 1;
+            const arr = Array.from(this.#entities);
+            for (let i = 0; i < arr.length; i++) {
+                const entity = arr[i];
+                const newX = (i - (arr.length - 1) / 2) * distanceBetweenEntities;
+                entity.mtxLocal.translation = new ƒ.Vector3(newX);
+            }
+        }
+    }
+    Script.VisualizeBench = VisualizeBench;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    // export interface VisualizeEntity {
+    //     //idle(): Promise<void>;
+    //     attack(_ev: FightEvent): Promise<void>;
+    //     move(_move: MoveData): Promise<void>;
+    //     getHurt(_ev: FightEvent): Promise<void>;
+    //     resist(): Promise<void>;
+    //     useSpell(_ev: FightEvent): Promise<void>;
+    //     showPreview(): Promise<void>;
+    //     hidePreview(): Promise<void>;
+    //     /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
+    //     updateVisuals(): void;
+    // }
     class VisualizeEntity extends ƒ.Node /*implements VisualizeEntity*/ {
         constructor(_entity) {
             super("entity");
             this.updateTmpText = () => {
                 if (!this.tmpText)
                     return;
-                console.log("updateTmpText", this.entity);
                 let effectText = "";
                 this.entity.activeEffects.forEach((value, type) => { if (value > 0)
                     effectText += `${type}: ${value}\n`; });
                 effectText += `${this.entity.currentHealth} / ${this.entity.health} ♥️`;
-                console.log(effectText);
-                this.tmpText.texture.text = effectText;
+                this.tmpText.innerText = effectText;
+                let rect = this.tmpText.getBoundingClientRect();
+                const pos = Script.viewport.pointWorldToClient(this.mtxWorld.translation);
+                this.tmpText.style.left = (pos.x - rect.width / 2) + "px";
+                this.tmpText.style.top = pos.y + "px";
+                this.textUpdater = requestAnimationFrame(this.updateTmpText);
+            };
+            this.addText = () => {
+                document.getElementById("GameOverlayInfos").appendChild(this.tmpText);
+                requestAnimationFrame(this.updateTmpText);
+            };
+            this.removeText = () => {
+                this.tmpText.remove();
+                cancelAnimationFrame(this.textUpdater);
             };
             this.eventListener = async (_ev) => {
                 await this.handleEvent(_ev);
@@ -3897,9 +5869,13 @@ var Script;
             // this.addComponent(entityMat);
             // entityMesh.mtxPivot.scale(ƒ.Vector3.ONE(this.size));
             // entityMat.clrPrimary.setCSS("white");
+            this.tmpText = Script.createElementAdvanced("div", { classes: ["EntityOverlay"] });
+            this.updateTmpText();
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
             this.addEventListeners();
+            this.cmpAudio = new Script.ComponentAudioMixed(undefined, false, false, undefined, Script.AUDIO_CHANNEL.SOUNDS);
+            this.addComponent(this.cmpAudio);
         }
         // async idle(): Promise<void> {
         //     // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
@@ -3948,12 +5924,6 @@ var Script;
             console.log("entity visualizer null: hide preview", this.entity);
             await Script.waitMS(200);
         }
-        async updateVisuals() {
-            //TODO: remove the Entity from Scene Graph if this is an enemy, Player should not be removed just repositioned in the next run
-            // this.removeAllChildren();
-            // console.log("entity visualizer null: updateVisuals", this.entity);
-            // await waitMS(200);
-        }
         async loadModel(_id) {
             let model = new ƒ.Node(_id);
             let original = Script.DataLink.linkedNodes.get(_id);
@@ -3968,13 +5938,9 @@ var Script;
                 console.warn(`Model with ID: ${_id} not found, using placeholder instead 👉👈`);
             }
             this.addChild(model);
-            // TODO: this is a temp vis for all the info, we need to remove this
-            let entityInfoGraph = Script.DataLink.linkedNodes.get("entityInfo");
-            let textNode = new ƒ.Node("text");
-            await textNode.deserialize(entityInfoGraph.serialize());
-            this.addChild(textNode);
-            this.tmpText = textNode.getComponent(ƒ.ComponentText);
-            this.updateTmpText();
+            const pick = new Script.PickSphere();
+            pick.radius = 0.5;
+            this.addComponent(pick);
         }
         //retuns a placeholder if needed
         givePlaceholderPls() {
@@ -3987,16 +5953,42 @@ var Script;
             return placeholder;
         }
         async playAnimationIfPossible(_anim) {
-            if (!this.cmpAnimation)
-                return this.showFallbackText(_anim);
-            let animation = Script.AnimationLink.linkedAnimations.get(this.entity.id)?.get(_anim);
-            if (!animation)
-                return this.showFallbackText(_anim);
+            let animation;
+            let audio;
+            if (typeof _anim === "string") {
+                if (!this.cmpAnimation)
+                    return this.showFallbackText(_anim);
+                animation = Script.AnimationLink.linkedAnimations.get(this.entity.id)?.get(_anim);
+                if (!animation && this.entity.id.includes("Eumling"))
+                    animation = Script.AnimationLink.linkedAnimations.get("defaultEumling")?.get(_anim);
+                if (!animation)
+                    return this.showFallbackText(_anim);
+                audio = Script.chooseRandomElementsFromArray(Script.AnimationLink.linkedAudio.get(this.entity.id)?.get(_anim), 1)[0];
+                if (!audio && this.entity.id.includes("Eumling"))
+                    audio = Script.chooseRandomElementsFromArray(Script.AnimationLink.linkedAudio.get("defaultEumling")?.get(_anim), 1)[0];
+            }
+            else {
+                animation = _anim;
+            }
             this.cmpAnimation.animation = animation;
             this.cmpAnimation.time = 0;
-            console.log({ totalTime: animation.totalTime });
+            if (audio) {
+                this.cmpAudio.setAudio(audio);
+                this.cmpAudio.play(true);
+                this.cmpAudio.loop = false;
+            }
+            // console.log({ totalTime: animation.totalTime });
             await Script.waitMS(animation.totalTime);
+            this.cmpAudio.play(false);
             this.cmpAnimation.animation = this.defaultAnimation; // TODO: check if we should instead default back to idle or nothing at all
+            audio = Script.chooseRandomElementsFromArray(Script.AnimationLink.linkedAudio.get(this.entity.id)?.get(Script.ANIMATION.IDLE), 1)[0];
+            if (!audio && this.entity.id.includes("Eumling"))
+                audio = Script.chooseRandomElementsFromArray(Script.AnimationLink.linkedAudio.get("defaultEumling")?.get(Script.ANIMATION.IDLE), 1)[0];
+            if (audio) {
+                this.cmpAudio.setAudio(audio);
+                this.cmpAudio.play(true);
+                this.cmpAudio.loop = true;
+            }
         }
         async showFallbackText(_text) {
             let node = await Script.getCloneNodeFromRegistry(_text);
@@ -4021,6 +6013,9 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ROUND_END, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVE, this.eventListener);
+            Script.EventBus.addEventListener(Script.EVENT.EUMLING_LEVELUP, this.updateTmpText);
+            this.addEventListener("nodeActivate" /* ƒ.EVENT.NODE_ACTIVATE */, this.addText);
+            this.addEventListener("nodeDeactivate" /* ƒ.EVENT.NODE_DEACTIVATE */, this.removeText);
         }
         removeEventListeners() {
             Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.eventListener);
@@ -4030,6 +6025,13 @@ var Script;
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_AFFECTED, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_DIES, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_MOVE, this.eventListener);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_HURT, this.updateTmpText);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_AFFECTED, this.updateTmpText);
+            Script.EventBus.removeEventListener(Script.EVENT.ROUND_END, this.updateTmpText);
+            Script.EventBus.removeEventListener(Script.EVENT.ROUND_START, this.updateTmpText);
+            Script.EventBus.removeEventListener(Script.EVENT.EUMLING_LEVELUP, this.updateTmpText);
+            this.removeEventListener("nodeActivate" /* ƒ.EVENT.NODE_ACTIVATE */, this.addText);
+            this.removeEventListener("nodeDeactivate" /* ƒ.EVENT.NODE_DEACTIVATE */, this.removeText);
         }
         async handleEvent(_ev) {
             if (_ev.cause === this.entity) {
@@ -4078,6 +6080,61 @@ var Script;
         }
     }
     Script.VisualizeEntity = VisualizeEntity;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    class VisualizeVFX {
+        constructor(_node, _id, _delay = 0) {
+            this.delay = 0;
+            this.node = _node;
+            this.anim = this.findFirstAnimComp(this.node);
+            this.id = _id;
+            this.delay = _delay;
+            this.deactivate();
+        }
+        async addToAndActivate(_parent) {
+            _parent.addChild(this.node);
+            return this.activate();
+        }
+        async activate() {
+            this.node?.activate(true);
+            if (this.anim) {
+                this.anim.jumpTo(0);
+                return new Promise((resolve) => {
+                    ƒ.Time.game.setTimer(this.delay * 1000, 1, () => {
+                        this.anim.jumpTo(0);
+                        this.anim.playmode = ƒ.ANIMATION_PLAYMODE.PLAY_ONCE;
+                    });
+                    ƒ.Time.game.setTimer(this.delay * 1000 + this.anim.animation.totalTime, 1, () => {
+                        resolve();
+                    });
+                });
+            }
+        }
+        removeAndDeactivate() {
+            this.node?.getParent()?.removeChild(this.node);
+            this.deactivate();
+        }
+        deactivate() {
+            this.node?.activate(false);
+            if (this.anim) {
+                this.anim.playmode = ƒ.ANIMATION_PLAYMODE.STOP;
+            }
+        }
+        findFirstAnimComp(_node) {
+            const nodesToCheck = [_node];
+            while (nodesToCheck.length > 0) {
+                const node = nodesToCheck.shift();
+                let cmp = node.getComponent(ƒ.ComponentAnimation);
+                if (cmp)
+                    return cmp;
+                nodesToCheck.push(...node.getChildren());
+            }
+            return undefined;
+        }
+    }
+    Script.VisualizeVFX = VisualizeVFX;
 })(Script || (Script = {}));
 // namespace Script {
 //     export interface IVisualizeEntity {
@@ -4197,14 +6254,15 @@ var Script;
                 if (entity === _entity)
                     this.removeEntityFromGrid(pos, false);
             });
-            // if (!_anchor) {
-            //     /**Anchors are named from 0-8 */
-            //     _anchor = this.getAnchor(_pos[0], _pos[1]);
-            // }
+            if (!_anchor) {
+                /**Anchors are named from 0-8 */
+                _anchor = this.getAnchor(_pos[0], _pos[1]);
+            }
             //get the Positions from the placeholders and translate the entities to it
             this.moveEntityToAnchor(_entity, _pos);
             this.addChild(_entity);
             this.grid.set(_pos, _entity, true);
+            _entity.activate(true);
         }
         removeEntityFromGrid(_pos, _removeListeners) {
             if (Script.Grid.outOfBounds(_pos))
@@ -4214,6 +6272,7 @@ var Script;
                 return;
             this.grid.remove(_pos);
             this.removeChild(elementToRemove);
+            elementToRemove.activate(false);
             if (_removeListeners)
                 elementToRemove.removeEventListeners();
         }
@@ -4221,7 +6280,7 @@ var Script;
             let _anchor = this.getAnchor(position[0], position[1]);
             //get the Positions from the placeholders and translate the entity to it
             let pos3 = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
-            console.log(_entity);
+            //console.log(_entity);
             _entity.mtxLocal.translation = pos3.clone;
             this.grid.set(position, _entity, true);
         }
@@ -4262,537 +6321,6 @@ var Script;
         }
     }
     Script.VisualizeGrid = VisualizeGrid;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    class EumlingLevelupUI extends Script.UILayer {
-        static { this.orientationInfo = new Map([
-            ["R", "Realistisch"],
-            ["I", "Investigativ / Forschend"],
-            ["A", "Artistisch / Künstlerisch"],
-            ["S", "Sozial"],
-            ["E", "Enterprising / Unternehmerisch"],
-            ["C", "Conventional / Traditionell"],
-        ]); }
-        constructor() {
-            super();
-            this.selectOption = (_ev) => {
-                const element = _ev.currentTarget;
-                this.selectedOption = element.dataset.option;
-                this.confirmButton.disabled = false;
-                for (let element of document.querySelectorAll(".LevelupOption")) {
-                    element.classList.remove("selected");
-                }
-                element.classList.add("selected");
-            };
-            this.confirm = () => {
-                if (!this.selectedOption)
-                    return;
-                Script.Provider.GUI.removeTopmostUI();
-                Script.EventBus.dispatchEvent({ type: Script.EVENT.EUMLING_LEVELUP_CHOSEN, detail: { type: this.selectedOption } });
-            };
-            this.element = document.getElementById("EumlingLevelup");
-            this.eumlingElement = document.getElementById("EumlingLevelupEumling");
-            this.optionsElement = document.getElementById("EumlingLevelupOptions");
-            this.infoElement = document.getElementById("EumlingLevelupInfo");
-            this.confirmButton = document.getElementById("EumlingLevelupConfirm");
-        }
-        onAdd(_zindex, _ev) {
-            super.onAdd(_zindex, _ev);
-            this.confirmButton.disabled = true;
-            this.eumling = _ev.target;
-            let specialisationOptions = this.eumling.types.length === 1 ? ["A", "I"] : ["C", "E"];
-            this.eumlingElement.replaceChildren(Script.EumlingUIElement.getUIElement(this.eumling).element);
-            const optionElements = [];
-            for (let option of specialisationOptions) {
-                const elem = Script.createElementAdvanced("div", {
-                    classes: ["LevelupOption"],
-                    innerHTML: `<span>+ ${option}</span>
-                    <span>${EumlingLevelupUI.orientationInfo.get(option)}</span>`,
-                    attributes: [["data-option", option]],
-                });
-                optionElements.push(elem);
-                elem.addEventListener("click", this.selectOption);
-            }
-            this.optionsElement.replaceChildren(...optionElements);
-        }
-        addEventListeners() {
-            this.confirmButton.addEventListener("click", this.confirm);
-        }
-        removeEventListeners() {
-            this.confirmButton.removeEventListener("click", this.confirm);
-        }
-    }
-    Script.EumlingLevelupUI = EumlingLevelupUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    var ƒ = FudgeCore;
-    class FightPrepUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.eumlingElements = new Map();
-            this.pickEumling = (_ev) => {
-                const element = _ev.currentTarget;
-                let eumling;
-                this.eumlingElements.forEach((_element, _eumling) => {
-                    _element.classList.remove("selected");
-                    if (_element === element) {
-                        eumling = _eumling;
-                    }
-                });
-                if (!eumling)
-                    return;
-                element.classList.add("selected");
-                this.selectedEumling = eumling;
-                this.selectedSpace = undefined;
-            };
-            this.clickCanvas = (_ev) => {
-                const ray = Script.viewport.getRayFromClient(new ƒ.Vector2(_ev.clientX, _ev.clientY));
-                const picks = Script.PickSphere.pick(ray, { sortBy: "distanceToRay" });
-                if (!picks || picks.length === 0)
-                    return;
-                const pick = picks[0];
-                if (this.selectedEumling) {
-                    // place eumling in map
-                    const posId = parseInt(pick.node.name);
-                    Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_ADDED, target: this.selectedEumling, detail: { side: "home", pos: [posId % 3, Math.floor(posId / 3)] } });
-                    if (!this.selectedSpace) {
-                        // hide from UI
-                        let uiElement = this.eumlingElements.get(this.selectedEumling);
-                        uiElement.classList.remove("selected");
-                        uiElement.classList.add("hidden");
-                    }
-                    this.selectedSpace = pick.node;
-                    this.startButton.disabled = false;
-                }
-            };
-            this.returnEumling = (_ev) => {
-                if (_ev.target.id !== "FightPrepEumlings")
-                    return;
-                if (!this.selectedEumling)
-                    return;
-                // remove from field
-                Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_REMOVED, target: this.selectedEumling });
-                // add to UI
-                this.eumlingElements.get(this.selectedEumling).classList.remove("hidden");
-                this.selectedEumling = undefined;
-                this.selectedSpace = undefined;
-                if (this.eumlingElements.values().reduce((prev, curr) => prev + (curr.classList.contains("hidden") ? 1 : 0), 0) === 0) {
-                    this.startButton.disabled = true;
-                }
-            };
-            this.startFight = (_ev) => {
-                Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_PREPARE_COMPLETED });
-            };
-            this.element = document.getElementById("FightPrep");
-            this.stoneWrapper = document.getElementById("FightPrepStones");
-            this.eumlingWrapper = document.getElementById("FightPrepEumlings");
-            this.startButton = document.getElementById("FightStart");
-        }
-        onAdd(_zindex, _ev) {
-            super.onAdd(_zindex, _ev);
-            this.startButton.disabled = true;
-            this.initStones();
-            this.initEumlings();
-        }
-        initStones() {
-            const stones = [];
-            for (let stone of Script.Run.currentRun.stones) {
-                stones.push(Script.StoneUIElement.getUIElement(stone).element);
-            }
-            this.stoneWrapper.replaceChildren(...stones);
-        }
-        initEumlings() {
-            for (let eumling of Script.Run.currentRun.eumlings) {
-                const element = Script.EumlingUIElement.getUIElement(eumling).element;
-                this.eumlingElements.set(eumling, element);
-                element.addEventListener("click", this.pickEumling);
-            }
-            this.eumlingWrapper.replaceChildren(...this.eumlingElements.values());
-        }
-        addEventListeners() {
-            document.getElementById("GameCanvas").addEventListener("click", this.clickCanvas);
-            this.startButton.addEventListener("click", this.startFight);
-            document.getElementById("FightPrepEumlings").addEventListener("click", this.returnEumling);
-        }
-        removeEventListeners() {
-            document.getElementById("GameCanvas").removeEventListener("click", this.clickCanvas);
-            this.startButton.removeEventListener("click", this.startFight);
-            document.getElementById("FightPrepEumlings").removeEventListener("click", this.returnEumling);
-            this.eumlingElements.forEach(element => element.removeEventListener("click", this.pickEumling));
-        }
-    }
-    Script.FightPrepUI = FightPrepUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    class FightRewardUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.eumlings = new Map();
-            this.clickOnEumling = (_ev) => {
-                if (this.xp <= 0)
-                    return;
-                let target = _ev.target;
-                let eumling = this.eumlings.get(target);
-                eumling.addXP(1);
-                this.xp--;
-                this.updateXPText();
-                if (this.xp <= 0) {
-                    this.continueButton.disabled = false;
-                }
-            };
-            this.convert = () => {
-                Script.Run.currentRun.changeGold(this.xp);
-                this.gold += this.xp;
-                document.getElementById("FightRewardRewards").querySelector(".Gold").innerHTML = `+${this.gold} Gold`;
-                this.xp = 0;
-                this.continueButton.disabled = false;
-                this.updateXPText();
-            };
-            this.finishRewards = () => {
-                Script.EventBus.dispatchEvent({ type: Script.EVENT.REWARDS_CLOSE });
-            };
-            this.element = document.getElementById("FightReward");
-            this.rewardsOverivew = document.getElementById("FightRewardRewards");
-            this.continueButton = document.getElementById("FightRewardContinue");
-            this.convertButton = document.getElementById("FightRewardConvert");
-        }
-        onAdd(_zindex, _ev) {
-            super.onAdd(_zindex, _ev);
-            let { gold, xp, stones } = _ev.detail;
-            const rewardIcons = [];
-            if (gold) {
-                rewardIcons.push(Script.createElementAdvanced("div", {
-                    innerHTML: `+${gold} Gold`,
-                    classes: ["FightRewardIcon", "Gold"]
-                }));
-                this.gold = gold;
-            }
-            if (xp) {
-                rewardIcons.push(Script.createElementAdvanced("div", {
-                    innerHTML: `+${xp} XP`,
-                    classes: ["FightRewardIcon", "XP"]
-                }));
-                this.xp = xp;
-            }
-            if (stones) {
-                for (let stone of stones) {
-                    rewardIcons.push(Script.createElementAdvanced("div", {
-                        innerHTML: `${stone.id}`,
-                        classes: ["FightRewardIcon", "Stone"]
-                    }));
-                }
-            }
-            this.rewardsOverivew.replaceChildren(...rewardIcons);
-            for (let eumling of Script.Run.currentRun.eumlings) {
-                let uiElement = Script.EumlingUIElement.getUIElement(eumling);
-                this.eumlings.set(uiElement.element, uiElement.eumling);
-                uiElement.element.classList.remove("hidden");
-                uiElement.element.addEventListener("click", this.clickOnEumling);
-            }
-            document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
-            this.updateXPText();
-            this.continueButton.disabled = true;
-            this.convertButton.disabled = false;
-        }
-        onShow() {
-            super.onShow();
-            this.addEventListeners();
-            for (let element of this.eumlings.keys()) {
-                element.addEventListener("click", this.clickOnEumling);
-            }
-            document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
-        }
-        onHide() {
-            super.onHide();
-            this.removeEventListeners();
-        }
-        updateXPText() {
-            document.getElementById("FightRewardXPAmount").innerText = this.xp === 0 ?
-                `No more XP to distribute` :
-                `Distribute ${this.xp}XP`;
-            this.convertButton.disabled = this.xp === 0;
-        }
-        addEventListeners() {
-            this.continueButton.addEventListener("click", this.finishRewards);
-            this.convertButton.addEventListener("click", this.convert);
-        }
-        removeEventListeners() {
-            for (let element of this.eumlings.keys()) {
-                element.removeEventListener("click", this.clickOnEumling);
-            }
-            this.continueButton.removeEventListener("click", this.finishRewards);
-            this.convertButton.removeEventListener("click", this.convert);
-        }
-    }
-    Script.FightRewardUI = FightRewardUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    class MainMenuUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.element = document.getElementById("MainMenu");
-        }
-        addEventListeners() {
-        }
-        removeEventListeners() {
-        }
-    }
-    Script.MainMenuUI = MainMenuUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    class MapUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.selectionDone = async () => {
-                this.submitBtn.disabled = true;
-                for (let opt of this.optionElements) {
-                    if (opt.classList.contains("selected")) {
-                        opt.classList.add("center");
-                    }
-                    else {
-                        opt.classList.add("remove");
-                    }
-                }
-                this.optionElements.find((el) => el.classList.contains("selected"));
-                this.element.classList.add("no-interact");
-                await Script.waitMS(1000);
-                Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_ENCOUNTER, detail: { encounter: this.selectedEncounter } });
-            };
-            this.element = document.getElementById("Map");
-            this.submitBtn = document.getElementById("MapActionButton");
-        }
-        onAdd(_zindex, _ev) {
-            super.onAdd(_zindex);
-            this.updateProgress();
-            this.displayEncounters(_ev);
-            this.element.classList.remove("no-interact");
-        }
-        updateProgress() {
-            const inner = document.getElementById("MapProgressBarCurrent");
-            const progress = Script.Run.currentRun.progress / Script.Run.currentRun.encountersUntilBoss;
-            inner.style.height = progress * 100 + "";
-        }
-        displayEncounters(_ev) {
-            let options = _ev.detail.options;
-            this.optionElements = [];
-            for (let option of options) {
-                const elem = Script.createElementAdvanced("div", { classes: ["MapOption"] });
-                if (option < 0) {
-                    // shop
-                    elem.innerText = "Shop";
-                }
-                else {
-                    elem.innerText = `Fight lvl ${option + 1}`;
-                }
-                elem.addEventListener("click", () => {
-                    for (let opt of this.optionElements) {
-                        opt.classList.remove("selected");
-                    }
-                    elem.classList.add("selected");
-                    this.selectedEncounter = option;
-                    this.submitBtn.disabled = false;
-                });
-                this.optionElements.push(elem);
-            }
-            document.getElementById("MapOptions").replaceChildren(...this.optionElements);
-            this.submitBtn.disabled = true;
-        }
-        addEventListeners() {
-            this.submitBtn.addEventListener("click", this.selectionDone);
-        }
-        removeEventListeners() {
-        }
-    }
-    Script.MapUI = MapUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    class OptionsUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.element = document.getElementById("MainMenu");
-        }
-        addEventListeners() {
-        }
-        removeEventListeners() {
-        }
-    }
-    Script.OptionsUI = OptionsUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    class RunEndUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.close = () => {
-                location.reload();
-            };
-            this.element = document.getElementById("RunEnd");
-            this.continueButton = document.getElementById("Restart");
-        }
-        onAdd(_zindex, _ev) {
-            super.onAdd(_zindex, _ev);
-            document.getElementById("RunEndInner").innerHTML =
-                _ev.detail.success ?
-                    `<h2>Success!</h2>
-            <p>You won! :&gt;</p>
-            <p>Try again?</p>` :
-                    `<h2>Defeat!</h2>
-            <p>You lost. :(;</p>
-            <p>Try again?</p>`;
-        }
-        addEventListeners() {
-            this.continueButton.addEventListener("click", this.close);
-        }
-        removeEventListeners() {
-            this.continueButton.removeEventListener("click", this.close);
-        }
-    }
-    Script.RunEndUI = RunEndUI;
-})(Script || (Script = {}));
-/// <reference path="UILayer.ts" />
-var Script;
-/// <reference path="UILayer.ts" />
-(function (Script) {
-    const COST = {
-        HEAL_EUMLING: 1,
-        BUY_LVL1: 2,
-        BUY_LVL2: 3,
-        UPGRADE_STONE: 2,
-        REFRESH: 1,
-    };
-    class ShopUI extends Script.UILayer {
-        constructor() {
-            super();
-            this.close = () => {
-                Script.EventBus.dispatchEvent({ type: Script.EVENT.SHOP_CLOSE });
-            };
-            this.refresh = () => {
-                if (Script.Run.currentRun.gold < COST.REFRESH)
-                    return;
-                Script.Run.currentRun.changeGold(-COST.REFRESH);
-                this.setupStonesToBuy();
-            };
-            this.element = document.getElementById("Shop");
-            this.closeButton = document.getElementById("ShopClose");
-            this.stonesWrapper = document.getElementById("ShopStones");
-            this.stonesRefreshButton = document.getElementById("ShopStonesRefresh");
-            this.stoneUpgradeWrapper = document.getElementById("ShopStoneUpgrades");
-            this.eumlingHealWrapper = document.getElementById("ShopEumlingHeal");
-        }
-        onAdd(_zindex, _ev) {
-            super.onAdd(_zindex, _ev);
-            this.setupStonesToBuy();
-            this.setupStonesToUpgrade();
-            this.initEumlingHealing();
-        }
-        setupStonesToBuy() {
-            const existingStones = Script.Run.currentRun.stones.map((stone) => stone.data);
-            const newStones = Script.chooseRandomElementsFromArray(Script.Provider.data.stones, 2, existingStones);
-            if (newStones.length === 0) {
-                this.stonesWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No more stones available." }));
-                return;
-            }
-            const newStoneElements = [];
-            for (let stoneData of newStones) {
-                let level = (Math.random() < 0.2) ? 1 : 0;
-                let cost = level == 0 ? COST.BUY_LVL1 : COST.BUY_LVL2;
-                let stone = new Script.Stone(stoneData, level);
-                let uiStoneElement = Script.StoneUIElement.getUIElement(stone);
-                let wrapper = Script.createElementAdvanced("div", {
-                    classes: ["BuyStone", "ShopOption"],
-                    attributes: [["data-level", level.toString()]],
-                    innerHTML: `<span>${cost} Gold</span>`,
-                });
-                wrapper.prepend(uiStoneElement.element);
-                newStoneElements.push(wrapper);
-                wrapper.addEventListener("click", () => {
-                    if (Script.Run.currentRun.gold < cost)
-                        return;
-                    Script.Run.currentRun.changeGold(-cost);
-                    Script.EventBus.dispatchEvent({ type: Script.EVENT.CHOSEN_STONE, detail: { stone } });
-                    wrapper.remove();
-                });
-            }
-            this.stonesWrapper.replaceChildren(...newStoneElements);
-        }
-        setupStonesToUpgrade() {
-            const upgradeableStones = Script.chooseRandomElementsFromArray(Script.Run.currentRun.stones, Infinity, Script.Run.currentRun.stones.filter(stone => stone.level === 1));
-            if (upgradeableStones.length === 0) {
-                this.stoneUpgradeWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No more stones upgradeable." }));
-                return;
-            }
-            const upgradeStoneElements = [];
-            for (let stone of upgradeableStones) {
-                const element = Script.createElementAdvanced("div", {
-                    innerHTML: `<span>Levelup: ${COST.UPGRADE_STONE} Gold</span>`,
-                    classes: ["ShopOption"],
-                });
-                element.prepend(Script.StoneUIElement.getUIElement(stone).element);
-                upgradeStoneElements.push(element);
-                element.addEventListener("click", () => {
-                    if (Script.Run.currentRun.gold < COST.UPGRADE_STONE)
-                        return;
-                    stone.level++;
-                    Script.Run.currentRun.changeGold(-COST.UPGRADE_STONE);
-                    element.remove();
-                });
-            }
-            this.stoneUpgradeWrapper.replaceChildren(...upgradeStoneElements);
-        }
-        initEumlingHealing() {
-            const healableEumlings = Script.Run.currentRun.eumlings.filter(eumling => eumling.currentHealth < eumling.health);
-            if (healableEumlings.length === 0) {
-                this.eumlingHealWrapper.replaceChildren(Script.createElementAdvanced("p", { innerHTML: "No Eumlings need healing." }));
-                return;
-            }
-            const elements = [];
-            for (let eumling of healableEumlings) {
-                const wrapper = Script.createElementAdvanced("div", {
-                    classes: ["ShopOption"],
-                    innerHTML: `<span>+♥️: ${COST.HEAL_EUMLING} Gold</span>`,
-                });
-                wrapper.prepend(Script.EumlingUIElement.getUIElement(eumling).element);
-                wrapper.addEventListener("click", () => {
-                    if (Script.Run.currentRun.gold < COST.HEAL_EUMLING)
-                        return;
-                    Script.Run.currentRun.changeGold(-COST.HEAL_EUMLING);
-                    eumling.affect({ type: Script.SPELL_TYPE.HEAL, level: 1, target: undefined });
-                    if (eumling.currentHealth >= eumling.health)
-                        wrapper.remove();
-                });
-            }
-            this.eumlingHealWrapper.replaceChildren(...elements);
-        }
-        addEventListeners() {
-            this.closeButton.addEventListener("click", this.close);
-            this.stonesRefreshButton.addEventListener("click", this.refresh);
-        }
-        removeEventListeners() {
-            this.closeButton.removeEventListener("click", this.close);
-            this.stonesRefreshButton.removeEventListener("click", this.refresh);
-        }
-    }
-    Script.ShopUI = ShopUI;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -4850,16 +6378,40 @@ var Script;
 var Script;
 /// <reference path="UIElement.ts" />
 (function (Script) {
+    class GoldDisplayElement extends Script.UIElement {
+        static #element = Script.createElementAdvanced("div", {
+            classes: ["GoldDisplay"],
+            innerHTML: "0",
+        });
+        static { this.instance = new GoldDisplayElement(); }
+        constructor() {
+            super();
+            this.update = (_ev) => {
+                GoldDisplayElement.#element.innerText = Script.Run.currentRun.gold.toString();
+            };
+            this.addEventListeners();
+        }
+        static get element() {
+            return this.#element;
+        }
+        addEventListeners() {
+            // TODO: when to remove these listeners?
+            Script.EventBus.addEventListener(Script.EVENT.GOLD_CHANGE, this.update);
+        }
+    }
+    Script.GoldDisplayElement = GoldDisplayElement;
+})(Script || (Script = {}));
+/// <reference path="UIElement.ts" />
+var Script;
+/// <reference path="UIElement.ts" />
+(function (Script) {
     class StoneUIElement extends Script.UIElement {
         #element;
         #stone;
         constructor(_stone) {
             super();
             this.update = () => {
-                this.#element.innerHTML = `
-            <span class="">${this.#stone.id}</span>
-            <span class="">Level ${this.#stone.level + 1}</span>
-            `;
+                this.#element.dataset.level = this.#stone.level.toString();
             };
             this.animate = async (_ev) => {
                 if (_ev.cause !== this.#stone)
@@ -4871,6 +6423,7 @@ var Script;
             this.#stone = _stone;
             this.#element = Script.createElementAdvanced("div", {
                 classes: ["StoneUIElement"],
+                attributes: [["style", `--stone-url: url("./Assets/UIElemente/Stones/${this.#stone.id}.png")`]]
             });
             this.update();
             this.addEventListeners();

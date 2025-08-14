@@ -21,7 +21,7 @@ namespace Script {
 
         static setVisualizer(_vis?: Visualizer): void {
             if (!_vis) {
-                this.#visualizer = new Visualizer;
+                this.#visualizer = new Visualizer();
                 return;
             }
             this.#visualizer = _vis;

@@ -21,6 +21,7 @@ namespace Script {
         /** If it's in this list, this kind of spell is ignored by the entity.*/
         resistances?: SPELL_TYPE[],
         abilities?: AbilityData[],
+        info?: string,
     }
 
     export interface IEntity extends EntityData {
@@ -55,6 +56,7 @@ namespace Script {
         activeEffects = new Map<SPELL_TYPE, number>();
         moved: boolean;
         currentDirection: Position;
+        info?: string;
 
         #arena: Arena;
         #triggers: Set<EVENT> = new Set();
@@ -82,6 +84,7 @@ namespace Script {
             EventBus.dispatchEvent({ type: EVENT.ENTITY_CREATED, target: this });
 
             this.registerEventListeners();
+            this.info = _entity.info;
         }
 
         public get untargetable() {
@@ -100,6 +103,7 @@ namespace Script {
 
         updateEntityData(_newData: EntityData) {
             this.id = _newData.id;
+            this.info = _newData.info;
 
             let healthDifference = (_newData.health ?? 1) - (this.health ?? 0);
             this.currentHealth = (this.health ?? 0) + healthDifference;
@@ -210,9 +214,7 @@ namespace Script {
             switch (_spell.type) {
                 case SPELL_TYPE.HEAL: {
                     await EventBus.dispatchEvent({ type: EVENT.ENTITY_HEAL, detail: { level: amount }, trigger: _spell, target: this, cause: _cause })
-                    // TODO: call Visualizer
-                    // TODO: prevent overheal?
-                    this.currentHealth += amount;
+                    this.currentHealth = Math.min(this.health, this.currentHealth + amount);
                     await EventBus.dispatchEvent({ type: EVENT.ENTITY_HEALED, detail: { level: amount }, trigger: _spell, target: this, cause: _cause })
                     await EventBus.dispatchEvent({ type: EVENT.ENTITY_AFFECTED, detail: { level: amount }, trigger: _spell, target: this, cause: _cause })
                     break;
@@ -288,7 +290,7 @@ namespace Script {
         }
 
         selections = new Map<SelectableWithData<any>, any[]>(); // not sure how to make this type-safe
-        protected select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[] {
+        select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[] {
             if (!_options) return [];
             const selection: T[] = [];
             if ("options" in _options) {

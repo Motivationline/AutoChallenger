@@ -4,15 +4,17 @@ namespace Script {
     export class ChooseEumlingUI extends UILayer {
         optionElements: Map<HTMLElement, Eumling> = new Map();
         confirmButton: HTMLButtonElement;
+        infoElement: HTMLElement;
         selectedEumling: Eumling;
 
         constructor() {
             super();
             this.element = document.getElementById("ChooseEumling");
+            this.infoElement = document.getElementById("ChooseEumlingInfo");
             this.confirmButton = document.getElementById("ChooseEumlingConfirm") as HTMLButtonElement;
         }
 
-        onAdd(_zindex: number): void {
+        async onAdd(_zindex: number): Promise<void> {
             this.removeEventListeners();
             super.onAdd(_zindex);
             this.confirmButton.disabled = true;
@@ -39,6 +41,7 @@ namespace Script {
             element.classList.add("selected");
             this.selectedEumling = eumling;
             this.confirmButton.disabled = false;
+            this.infoElement.innerText = eumling.info;
         }
 
         private confirm = () => {

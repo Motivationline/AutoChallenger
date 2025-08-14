@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>AutoChallenger</title>
+    <title>Die Eumlinge³</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="styles.css" />
@@ -15,30 +15,47 @@
     <!--Load FUDGE. You may want to download local copies to work offline and be independent from future changes! Developers working on FUDGE itself may want to create symlinks-->
     <!-- <script type="text/javascript" src="https://hs-furtwangen.github.io/FUDGE/Distribution/FudgeCore.js"></script> -->
     <script type="text/javascript" src="Script/FudgeCore.js"></script>
-    <script type="text/javascript" src="Script/FudgeAid.js"></script>
+    <!-- <script type="text/javascript" src="Script/FudgeAid.js"></script> -->
 
 
     <!--Link internal resources. The editor only loads the first, but at runtime, multiple fi   les can contribute-->
     <link type="resources" src="Internal.json" />
 
     <!--Load custom scripts-->
-    <script type="text/javascript" src="Script/Build/Script.js" editor="true"></script>
+    <script type="text/javascript" src="Script/Build/Script.js" editor="true" defer=""></script>
 
     <!--Load Autoview script-->
-    <script type="text/javascript" src="Autoview.js"></script>
+    <!-- <script type="text/javascript" src="Autoview.js"></script> -->
 
 </head>
 
 <body>
     <!--Dialog shown at startup only-->
-    <dialog>
-        <p>FUDGE Autoview</p>
-        <h1>Title (will be replaced by Autoview)</h1>
-        <p>click to start</p>
-    </dialog>
+    <div id="StartScreen" class="UI center-center">
+        <div class="StartScreenScreen" id="StartScreen1">
+</div>
+        <div class="StartScreenScreen" id="StartScreen2">
+</div>
+        <div class="StartScreenScreen" id="StartScreen3">
+</div>
+    </div>
+
+    <div id="LoadingScreen" class="UI hidden center-center">
+        <div>Loading...</div>
+    </div>
 
     <div id="MainMenu" class="UI hidden">
         <!--Menu UI-->
+        <img src="./Assets/Pics/Logo_white.png" alt="Die Eumlinge">
+        <button id="MainStart" class="green">Start</button>
+        <button id="MainOptions">Options</button>
+    </div>
+
+    <div id="Options" class="UI hidden blur">
+        Options
+        <div id="OptionsWrapper">
+</div>
+        <button id="OptionsClose">Close</button>
     </div>
 
     <div id="ChooseEumling" class="UI hidden">
@@ -46,6 +63,8 @@
             <span>Choose an Eumling</span>
             <div id="ChooseEumlingOptions">
             </div>
+            <div id="ChooseEumlingInfo">
+</div>
             <button id="ChooseEumlingConfirm">confirm</button>
         </div>
     </div>
@@ -54,19 +73,25 @@
             <span>Choose a Stone</span>
             <div id="ChooseStoneOptions">
             </div>
+            <div id="ChooseStoneInfo">
+</div>
             <button id="ChooseStoneConfirm">confirm</button>
         </div>
     </div>
 
-    <div id="Map" class="UI blur hidden">
-        <h2>Map</h2>
+    <div id="Map" class="UI hidden">
         <!--Map UI-->
+        <div id="MapHeader">
+            <div id="LogoShieldWithSettings">
+                <img id="MapOptionButton" src="./Assets/UIElemente/IconEinstellungen.PNG" alt="Settings" class="clickable">
+            </div>
+        </div>
         <div id="MapOptions">
         </div>
-        <div id="MapCharacter">
-        </div>
-        <div id="MapActionButtonWrapper">
-            <button id="MapActionButton">Select</button>
+        <div id="MapHill">
+            <div id="MapActionButtonWrapper">
+                <button id="MapActionButton" class="green">Select</button>
+            </div>
         </div>
         <div id="MapProgressBarWrapper">
             <div id="MapProgressBar">
@@ -83,7 +108,9 @@
         <div id="FightStartWrapper" class="interact">
             <button id="FightStart">Start</button>
         </div>
-        <div id="FightPrepEumlings" class="interact">
+        <div id="FightPrepInfoWrapper">
+            <div id="FightPrepInfo">
+            </div>
         </div>
     </div>
     <div id="Fight" class="UI hidden">
@@ -98,7 +125,7 @@
         <div class="GoldCounter">Gold: 0</div>
         <div class="RoundCounter">
         </div>
-        <div id="FightPhaseOverlay" class="UI blur no-interact">
+        <div id="FightPhaseOverlay" class="UI no-interact">
             <div id="FightPhaseOverlayText" class="RoundCounter">
             </div>
         </div>
@@ -134,7 +161,7 @@
     <div id="RunEnd" class="UI blur hidden">
         <div id="RunEndInner">
         </div>
-        <button id="Restart">Restart</button>
+        <button id="RunEndMainMenu">Main Menu</button>
     </div>
 
     <div id="Shop" class="UI blur hidden">
@@ -144,10 +171,16 @@
         <h3>Buy Stones</h3>
         <div id="ShopStones">
         </div>
+        <div id="ShopStonesInfo">
+</div>
+        <button id="ShopStonesBuy" disabled="">Buy</button>
         <button id="ShopStonesRefresh">Refresh (1 Gold)</button>
         <h3>Upgrade Stones</h3>
         <div id="ShopStoneUpgrades">
         </div>
+        <div id="ShopStonesUpgradeInfo">
+</div>
+        <button id="ShopStonesUpgrade" disabled="">Upgrade (2 Gold)</button>
         <h3>Heal Eumlings</h3>
         <div id="ShopEumlingHeal">
         </div>
@@ -155,10 +188,10 @@
             <button id="ShopClose">Continue</button>
         </div>
     </div>
-    <div id="Options" class="UI blur hidden">
-    </div>
     <!--Canvas for FUDGE to render to-->
-    <canvas class="fullscreen" id="GameCanvas">
+    <canvas class="fullscreen" id="GameCanvas" draggable="false">
     </canvas>
+    <div class="UI no-interact" id="GameOverlayInfos">
+</div>
 </body>
 </html>

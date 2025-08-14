@@ -1,6 +1,17 @@
-/// <reference path="FightUI.ts" />
+/// <reference path="StartScreenUI.ts" />
+/// <reference path="LoadingScreenUI.ts" />
+/// <reference path="MainMenuUI.ts" />
+/// <reference path="OptionsUI.ts" />
 /// <reference path="ChooseEumlingUI.ts" />
 /// <reference path="ChooseStoneUI.ts" />
+/// <reference path="MapUI.ts" />
+/// <reference path="MapUI.ts" />
+/// <reference path="FightPrepUI.ts" />
+/// <reference path="FightUI.ts" />
+/// <reference path="FightRewardUI.ts" />
+/// <reference path="EumlingLevelupUI.ts" />
+/// <reference path="ShopUI.ts" />
+/// <reference path="RunEndUI.ts" />
 
 namespace Script {
 
@@ -11,6 +22,10 @@ namespace Script {
 
         constructor() {
             this.uis.clear();
+            this.uis.set("start", new StartScreenUI());
+            this.uis.set("loading", new LoadingScreenUI());
+            this.uis.set("mainMenu", new MainMenuUI());
+            this.uis.set("options", new OptionsUI());
             this.uis.set("chooseEumling", new ChooseEumlingUI());
             this.uis.set("chooseStone", new ChooseStoneUI());
             this.uis.set("chooseEncounter", new MapUI());
@@ -25,6 +40,7 @@ namespace Script {
             for(let ui of this.uis.values()){
                 ui.onRemove();
             }
+            this.replaceUI("start");
         }
 
         private get topmostLevel() {
@@ -32,24 +48,24 @@ namespace Script {
             return this.activeLayers[this.activeLayers.length - 1];
         }
 
-        addUI(_id: string, _ev?: FightEvent) {
+        async addUI(_id: string, _ev?: FightEvent) {
             let ui = this.uis.get(_id);
             if (!ui) return;
             let prevTop = this.topmostLevel;
-            if (prevTop) prevTop.onHide();
+            if (prevTop) await prevTop.onHide();
             this.activeLayers.push(ui);
-            ui.onAdd(1000 + this.activeLayers.length, _ev);
+            await ui.onAdd(1000 + this.activeLayers.length, _ev);
         }
-        replaceUI(_id: string, _ev?: FightEvent) {
-            this.removeTopmostUI();
-            this.addUI(_id, _ev);
+        async replaceUI(_id: string, _ev?: FightEvent) {
+            await this.removeTopmostUI();
+            await this.addUI(_id, _ev);
         }
-        removeTopmostUI() {
+        async removeTopmostUI() {
             let last = this.activeLayers.pop();
-            last?.onHide();
-            last?.onRemove();
+            await last?.onHide();
+            await last?.onRemove();
             let newTop = this.topmostLevel;
-            if (newTop) newTop.onShow();
+            if (newTop) await newTop.onShow();
         }
         removeAllLayers() {
             while (this.activeLayers.length > 0) {
@@ -76,42 +92,42 @@ namespace Script {
             EventBus.addEventListener(EVENT.RUN_END, this.switchUI);
         }
 
-        switchUI = (_ev: FightEvent) => {
+        switchUI = async (_ev: FightEvent) => {
             switch(_ev.type) {
                 case EVENT.FIGHT_START: {
-                    this.replaceUI("fight", _ev);
+                    await this.replaceUI("fight", _ev);
                     break;
                 }
                 case EVENT.CHOOSE_STONE: {
-                    this.replaceUI("chooseStone", _ev);
+                    await this.replaceUI("chooseStone", _ev);
                     break;
                 }
                 case EVENT.CHOOSE_EUMLING: {
-                    this.replaceUI("chooseEumling", _ev);
+                    await this.replaceUI("chooseEumling", _ev);
                     break;
                 }
                 case EVENT.CHOOSE_ENCOUNTER: {
-                    this.replaceUI("chooseEncounter", _ev);
+                    await this.replaceUI("chooseEncounter", _ev);
                     break;
                 }
                 case EVENT.FIGHT_PREPARE: {
-                    this.replaceUI("fightPrepare", _ev);
+                    await this.replaceUI("fightPrepare", _ev);
                     break;
                 }
                 case EVENT.REWARDS_OPEN: {
-                    this.replaceUI("fightReward", _ev);
+                    await this.replaceUI("fightReward", _ev);
                     break;
                 }
                 case EVENT.EUMLING_LEVELUP_CHOOSE: {
-                    this.addUI("eumlingLevelup", _ev);
+                    await this.addUI("eumlingLevelup", _ev);
                     break;
                 }
                 case EVENT.SHOP_OPEN: {
-                    this.replaceUI("shop", _ev);
+                    await this.replaceUI("shop", _ev);
                     break;
                 }
                 case EVENT.RUN_END: {
-                    this.replaceUI("runEnd", _ev);
+                    await this.replaceUI("runEnd", _ev);
                     break;
                 }
             }

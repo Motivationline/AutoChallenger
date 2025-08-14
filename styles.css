@@ -5,6 +5,8 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+  user-select: none;
 }
 
 dialog {
@@ -14,6 +16,12 @@ dialog {
 canvas.fullscreen {
   width: 100vw;
   height: 100vh;
+  user-drag: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
 }
 
 .UI {
@@ -21,15 +29,96 @@ canvas.fullscreen {
   inset: 0px;
 }
 
+/* Start Screen */
+#StartScreen {
+  --x: 0;
+  --y: 0;
+  --depth: 0;
+  cursor: pointer;
+}
+.StartScreenScreen {
+  position: absolute;
+  inset: 0;
+  background-position: center center;
+  background-size: 110% 110%;
+}
+
+#StartScreen1 {
+  background-image: url("./Assets/Pics/BackGround_TitleScreen.png");
+}
+#StartScreen2 {
+  --depth: 50%;
+  background-image: url("./Assets/Pics/MiddleGround_TitleScreen.png");
+  background-position: calc(50% + (var(--x) - 0.5) * var(--depth)) calc(50% + (var(--y) - 0.5) * var(--depth));
+}
+#StartScreen3 {
+  --depth: 100%;
+  background-image: url("./Assets/Pics/ForeGround_TitleScreen.png");
+  background-position: calc(50% + (var(--x) - 0.5) * var(--depth)) calc(50% + (var(--y) - 0.5) * var(--depth));
+}
+
+/* Main Menu */
+#MainMenu {
+  display: flex;
+  flex-direction: column;
+  font-size: 5vh;
+  align-items: center;
+  justify-content: center;
+  gap: 3vh;
+}
+
+/* Map but not really */
+#LogoShieldWithSettings {
+  width: 50vw;
+  position: relative;
+  background-position: center center;
+  background-size: 80%, contain;
+  background-image: url(./Assets/Pics/Logo_black.png), url(./Assets/UIElemente/HolzSchild.png);
+  background-repeat: no-repeat;
+  rotate: -15deg;
+  scale: 0.8;
+}
+#MapOptionButton {
+  position: absolute;
+  bottom: -3vh;
+  right: 3vh;
+  width: 7vh;
+  height: 7vh;
+  object-fit: contain;
+}
+
+#MapHeader > .GoldDisplay {
+  justify-self: end;
+  align-self: center;
+  margin-right: 2em;
+}
+
 /* Map */
-#MapOptions {}
+#Map {
+  display: flex;
+  flex-direction: column;
+  background-image: url("./Assets/UIElemente/HimmelBackground.PNG");
+  background-size: cover;
+}
+#MapHeader,
+#MapOptions {
+  height: 15vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  justify-items: center;
+}
 
 .MapOption {
-  padding: 10px;
-  margin: 10px;
+  width: 25vw;
+  height: 25vw;
   cursor: pointer;
-  border: 1px solid black;
   text-align: center;
+  z-index: 4;
+  background-position: center center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  transform-origin: 50% 100%;
+  transition: scale 0.2s ease, translate 0.2s ease;
 }
 
 .MapOption:hover:not(.selected) {
@@ -37,19 +126,76 @@ canvas.fullscreen {
 }
 
 .MapOption.selected {
-  scale: 1.2;
+  scale: 1.3;
+  z-index: 6;
+  /* translate: var(--transX) -4vh; */
 }
 
 .MapOption.remove {
   scale: 0;
-  transition: scale 1s;
+  transition: scale 1s, translate 1s;
 }
 
 .MapOption.center {
   scale: 1.5;
-  transition: scale 1s;
+  transition: scale 1s, translate 1s, rotate 1s;
+  translate: var(--transX2) 30vh;
+  rotate: 0deg !important;
+  z-index: 6;
 }
 
+.MapOption[data-type="-1"] {
+  background-image: url("./Assets/UIElemente/CoverShop.PNG");
+}
+.MapOption[data-type="0"] {
+  background-image: url("./Assets/UIElemente/CoverChallenge1.PNG");
+}
+.MapOption[data-type="1"] {
+  background-image: url("./Assets/UIElemente/CoverChallenge2.PNG");
+}
+.MapOption[data-type="2"] {
+  background-image: url("./Assets/UIElemente/CoverChallenge3.PNG");
+}
+.MapOption[data-type="3"] {
+  background-image: url("./Assets/UIElemente/CoverChallenge4.PNG");
+}
+
+.MapOption:first-of-type {
+  rotate: -15deg;
+  --transX: -1vh;
+  --transX2: 25vw;
+}
+.MapOption:last-of-type {
+  rotate: 15deg;
+  --transX: 1vh;
+  --transX2: -25vw;
+}
+
+#MapHill {
+  flex-grow: 1;
+  background-image: url("./Assets/UIElemente/LandschaftBackground.PNG");
+  background-position: center 0%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  align-items: center;
+  padding-bottom: 5vh;
+  font-size: 6vh;
+  margin-top: -5vh;
+  z-index: 5;
+  pointer-events: none;
+}
+#MapHill > * {
+  pointer-events: all;
+}
+#MapHill[data-selected="0"] {
+  background-image: url("./Assets/UIElemente/WegLinks.PNG"), url("./Assets/UIElemente/LandschaftBackground.PNG");
+}
+#MapHill[data-selected="1"] {
+  background-image: url("./Assets/UIElemente/WegRechts.PNG"), url("./Assets/UIElemente/LandschaftBackground.PNG");
+}
 
 #MapProgressBarWrapper {
   --height: 50vh;
@@ -59,6 +205,7 @@ canvas.fullscreen {
   flex-direction: column;
   justify-content: center;
   position: absolute;
+  bottom: 0;
 }
 
 #MapProgressBar {
@@ -132,6 +279,11 @@ canvas.fullscreen {
   place-items: center;
 }
 
+/* Game Overlay Info */
+.EntityOverlay {
+  position: absolute;
+}
+
 /* Reusables */
 
 .EumlingUIElement {
@@ -151,19 +303,36 @@ canvas.fullscreen {
 }
 
 .StoneUIElement {
+  --size: 20vw;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  background-color: lightgray;
-  padding: 10px;
+  background-image: url("./Assets/UIElemente/ItemBackdrop.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: var(--size);
+  height: var(--size);
   cursor: pointer;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.StoneUIElement::after {
+  content: '';
+  background-image: var(--stone-url);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: 80%;
+  height: 80%;
 }
 
 .StoneUIElement.animate {
   animation: stone-animate 1s linear;
 }
 .StoneUIElement.selected {
-  background-color: lightblue;
+  filter: drop-shadow(2px 2px 0 green) drop-shadow(-2px 2px 0 green) drop-shadow(2px -2px 0 green) drop-shadow(-2px -2px 0 green);
 }
 
 @keyframes stone-animate {
@@ -198,4 +367,76 @@ canvas.fullscreen {
 
 .blur {
   backdrop-filter: blur(40px);
+}
+
+.center-center {
+  display: grid;
+  place-items: center;
+}
+
+button {
+  background: none;
+  border: none;
+  padding: 0.5em 0.75em;
+  background-image: url("./Assets/UIElemente/ButtonGr.png");
+  background-size: 100% 100%;
+  color: white;
+  font-size: inherit;
+  font-family: inherit;
+  transition: filter 0.1s, translate 0.1s;
+}
+
+button,
+.clickable {
+  transition: filter 0.1s, translate 0.1s;
+  filter: drop-shadow(0.1em 0.1em 0 #3e2e1d);
+  cursor: pointer;
+}
+
+.clickable:not(:disabled):hover,
+button:not(:disabled):hover {
+  scale: 1.05;
+}
+
+.clickable:active,
+button:active {
+  filter: none;
+  translate: 0.1em 0.1em;
+}
+
+button:disabled,
+.clickable:disabled {
+  cursor: default;
+}
+
+button.green {
+  background-image: url("./Assets/UIElemente/ButtonGrGruen.png");
+}
+button.red {
+  background-image: url("./Assets/UIElemente/ButtonGrRot.PNG");
+}
+
+.GoldDisplay {
+  background-image: url("./Assets/UIElemente/ButtonGr.png");
+  background-size: 100% 100%;
+  width: 6em;
+  height: 3em;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding-left: 1em;
+}
+.GoldDisplay::before {
+  display: inline-block;
+  content: "";
+  background-image: url("./Assets/UIElemente/Muenze.PNG");
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  position: absolute;
+  left: -50%;
 }

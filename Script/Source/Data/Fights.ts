@@ -11,7 +11,7 @@ namespace Script {
                 // remember, opponents are usually to the left of this, so the eumling grid is mirrored internally.
                 // But for your convenience right now during the test it's the way you'd see it ingame.
                 entities: [
-                    ["defaultSkin", , ,],
+                    ["defaultEumling", , ,],
                     [, , ,],
                     [, , ,]],
             },
@@ -87,6 +87,30 @@ namespace Script {
                     [, "punchingPalmtree", ,]],
             },
             {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, , "floppyFish",],
+                    ["floppyFish", , ,],
+                    [, "floppyFish", ,]],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    [, "floppyFish", ,],
+                    [, , "boxingBush",],
+                    ["floppyFish", , ,]],
+            },
+            {
+                difficulty: 0,
+                rounds: 3,
+                entities: [
+                    ["floppyFish", "punchingPalmtree", ,],
+                    [, , ,],
+                    [, , "floppyFish",]],
+            },
+            {
                 difficulty: 1,
                 rounds: 3,
                 entities: [
@@ -111,6 +135,30 @@ namespace Script {
                     [, "cactusCrawler", "sandSitter",]],
             },
             {
+                difficulty: 1,
+                rounds: 3,
+                entities: [
+                    [, "floppyFish", "floppyFish",],
+                    [, "floppyFish", "floppyFish",],
+                    [, "floppyFish", "floppyFish",]],
+            },
+            {
+                difficulty: 1,
+                rounds: 3,
+                entities: [
+                    [, , ,],
+                    [, , ,],
+                    ["okayOyster", , "countdownCoconut",]],
+            },
+            {
+                difficulty: 1,
+                rounds: 3,
+                entities: [
+                    [, "okayOyster", "sandSitter",],
+                    [, , ,],
+                    [, "okayOyster", "punchingPalmtree",]],
+            },
+            {
                 difficulty: 2,
                 rounds: 3,
                 entities: [
@@ -133,6 +181,22 @@ namespace Script {
                     ["cactusCrawler", "countdownCoconut", "cactusCrawler",],
                     [, "cactusCrawler", ,],
                     ["cactusCrawler", , "countdownCoconut",]],
+            },
+            {
+                difficulty: 2,
+                rounds: 3,
+                entities: [
+                    ["floppyFish", "punchingPalmtree", "flameFlinger",],
+                    ["floppyFish", , "boxingBush",],
+                    ["floppyFish", "sandSitter", "flameFlinger",]],
+            },
+            {
+                difficulty: 2,
+                rounds: 3,
+                entities: [
+                    ["okayOyster", "worriedWall", "countdownCoconut",],
+                    ["okayOyster", "worriedWall", ,],
+                    ["okayOyster", "worriedWall", "countdownCoconut",]],
             },
         ]
     }

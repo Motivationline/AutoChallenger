@@ -199,15 +199,18 @@ namespace Script {
 
     //#region Implementation
 
-    export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self: IEntity): IEntity[] {
-        if (!_target) return [];
+    export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self: IEntity): { targets: IEntity[], positions?: Grid<boolean>, side?: TARGET_SIDE} {
+        if (!_target) return {targets: []};
         const targets: IEntity[] = [];
         const side: Grid<IEntity> = _target.side === TARGET_SIDE.ALLY ? _allies : _opponents;
 
         // entity selector
         if ("entity" in _target) {
             side.forEachElement((entity) => {
-                if (entity && !entity.untargetable) targets.push(entity);
+                if (!entity) return;
+                if (entity.untargetable) return;
+                if (_target.excludeSelf && entity === _self) return;
+                targets.push(entity);
             })
 
             switch (_target.entity.sortBy) {
@@ -237,116 +240,125 @@ namespace Script {
                 targets.length = _target.entity.maxNumTargets;
             }
 
-            return targets;
+            return {targets, side: _target.side};
         }
 
 
         // area selector
         else if ("area" in _target) {
-            let pos: Position;
-            if (_target.area.position !== AREA_POSITION_ABSOLUTE.ABSOLUTE && !_self) return [];
-            switch (_target.area.position) {
-                case AREA_POSITION.RELATIVE_FIRST_IN_ROW: {
-                    for (let i: number = 0; i < 3; i++) {
-                        if (side.get([i, _self.position[1]])) {
-                            pos = [i, _self.position[1]]
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case AREA_POSITION.RELATIVE_LAST_IN_ROW: {
-                    for (let i: number = 2; i >= 0; i--) {
-                        if (side.get([i, _self.position[1]])) {
-                            pos = [i, _self.position[1]]
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case AREA_POSITION.RELATIVE_SAME: {
-                    // intuitively for the designer "same" means "the same spot on the opposite side".
-                    // But because the own side is mirrored internally, "SAME" internally means mirrored and vice versa
-                    pos = [2 - _self.position[0], _self.position[1]];
-                    break;
-                }
-                case AREA_POSITION.RELATIVE_MIRRORED: {
-                    pos = [_self.position[0], _self.position[1]];
-                    break;
-                }
-                case AREA_POSITION.ABSOLUTE: {
-                    pos = _target.area.absolutePosition;
-                    break;
-                }
-            }
-            if (!pos) return [];
+            const pattern = getTargetPositions(_target, _self, side);
 
-            let pattern: Grid<boolean> = new Grid();
-            let patternIsRelative: boolean = true;
-            switch (_target.area.shape) {
-                case AREA_SHAPE.SINGLE:
-                    pattern.set(pos, true);
-                    patternIsRelative = false;
-                    break;
-                case AREA_SHAPE.ROW:
-                    pattern.set([0, pos[1]], true);
-                    pattern.set([1, pos[1]], true);
-                    pattern.set([2, pos[1]], true);
-                    patternIsRelative = false;
-                    break;
-                case AREA_SHAPE.COLUMN:
-                    pattern.set([pos[0], 0], true);
-                    pattern.set([pos[0], 1], true);
-                    pattern.set([pos[0], 2], true);
-                    patternIsRelative = false;
-                    break;
-                case AREA_SHAPE.PLUS:
-                    pattern.set([1, 0], true);
-                    pattern.set([0, 1], true);
-                    pattern.set([1, 1], true);
-                    pattern.set([2, 1], true);
-                    pattern.set([1, 2], true);
-                    break;
-                case AREA_SHAPE.DIAGONALS:
-                    pattern.set([0, 0], true);
-                    pattern.set([2, 0], true);
-                    pattern.set([0, 2], true);
-                    pattern.set([2, 2], true);
-                    break;
-                case AREA_SHAPE.SQUARE:
-                    pattern = new Grid([[true, true, true], [true, false, true], [true, true, true]]);
-                    break;
-                case AREA_SHAPE.PATTERN: {
-                    if (_target.area.shape === AREA_SHAPE.PATTERN) { // only so that TS doesn't complain.
-                        new Grid(_target.area.pattern).forEachPosition((element, pos) => {
-                            pattern.set(pos, !!element);
-                        });
-                    }
-                }
-            }
-            if (patternIsRelative && (pos[0] !== 1 || pos[1] !== 1)) {
-                // 1, 1 is the center, so the difference to that is how much the pattern is supposed to be moved
-                let delta: Position = [pos[0] - 1, pos[1] - 1];
-                let movedPattern: Grid<boolean> = new Grid();
-                pattern.forEachPosition((el, pos) => {
-                    let newPos: Position = [pos[0] + delta[0], pos[1] + delta[1]];
-
-                    movedPattern.set(newPos, !!el);
-                });
-                pattern = movedPattern;
-            }
-
-            // final pattern achieved, get the actual entities in these areas now
+            // get the actual entities in these areas now
             side.forEachElement((el, pos) => {
                 if (el.untargetable) return;
                 if (pattern.get(pos))
                     targets.push(el);
             });
 
-            return targets;
+            return {targets, side: _target.side, positions: pattern};
         }
 
-        return targets;
+        return {targets};
+    }
+
+    export function getTargetPositions(_target: TargetArea, _self: IEntity, _side: Grid<IEntity>): Grid<boolean> {
+        let pattern: Grid<boolean> = new Grid();
+        let pos: Position;
+
+        if (_target.area.position !== AREA_POSITION_ABSOLUTE.ABSOLUTE && !_self) return pattern;
+        switch (_target.area.position) {
+            case AREA_POSITION.RELATIVE_FIRST_IN_ROW: {
+                for (let i: number = 0; i < 3; i++) {
+                    const entity = _side.get([i, _self.position[1]]);
+                    if (entity && !entity.untargetable) {
+                        pos = [i, _self.position[1]]
+                        break;
+                    }
+                }
+                break;
+            }
+            case AREA_POSITION.RELATIVE_LAST_IN_ROW: {
+                for (let i: number = 2; i >= 0; i--) {
+                    const entity = _side.get([i, _self.position[1]]);
+                    if (entity && !entity.untargetable) {
+                        pos = [i, _self.position[1]]
+                        break;
+                    }
+                }
+                break;
+            }
+            case AREA_POSITION.RELATIVE_SAME: {
+                // intuitively for the designer "same" means "the same spot on the opposite side".
+                // But because the own side is mirrored internally, "SAME" internally means mirrored and vice versa
+                pos = [2 - _self.position[0], _self.position[1]];
+                break;
+            }
+            case AREA_POSITION.RELATIVE_MIRRORED: {
+                pos = [_self.position[0], _self.position[1]];
+                break;
+            }
+            case AREA_POSITION.ABSOLUTE: {
+                pos = _target.area.absolutePosition;
+                break;
+            }
+        }
+        if (!pos) return pattern;
+
+        let patternIsRelative: boolean = true;
+        switch (_target.area.shape) {
+            case AREA_SHAPE.SINGLE:
+                pattern.set(pos, true);
+                patternIsRelative = false;
+                break;
+            case AREA_SHAPE.ROW:
+                pattern.set([0, pos[1]], true);
+                pattern.set([1, pos[1]], true);
+                pattern.set([2, pos[1]], true);
+                patternIsRelative = false;
+                break;
+            case AREA_SHAPE.COLUMN:
+                pattern.set([pos[0], 0], true);
+                pattern.set([pos[0], 1], true);
+                pattern.set([pos[0], 2], true);
+                patternIsRelative = false;
+                break;
+            case AREA_SHAPE.PLUS:
+                pattern.set([1, 0], true);
+                pattern.set([0, 1], true);
+                pattern.set([1, 1], true);
+                pattern.set([2, 1], true);
+                pattern.set([1, 2], true);
+                break;
+            case AREA_SHAPE.DIAGONALS:
+                pattern.set([0, 0], true);
+                pattern.set([2, 0], true);
+                pattern.set([0, 2], true);
+                pattern.set([2, 2], true);
+                break;
+            case AREA_SHAPE.SQUARE:
+                pattern = new Grid([[true, true, true], [true, false, true], [true, true, true]]);
+                break;
+            case AREA_SHAPE.PATTERN: {
+                if (_target.area.shape === AREA_SHAPE.PATTERN) { // only so that TS doesn't complain.
+                    new Grid(_target.area.pattern).forEachPosition((element, pos) => {
+                        pattern.set(pos, !!element);
+                    });
+                }
+            }
+
+        }
+        if (patternIsRelative && (pos[0] !== 1 || pos[1] !== 1)) {
+            // 1, 1 is the center, so the difference to that is how much the pattern is supposed to be moved
+            let delta: Position = [pos[0] - 1, pos[1] - 1];
+            let movedPattern: Grid<boolean> = new Grid();
+            pattern.forEachPosition((el, pos) => {
+                let newPos: Position = [pos[0] + delta[0], pos[1] + delta[1]];
+
+                movedPattern.set(newPos, !!el);
+            });
+            pattern = movedPattern;
+        }
+        return pattern;
     }
 
     //#endregion

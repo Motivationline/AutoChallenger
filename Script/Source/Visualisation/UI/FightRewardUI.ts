@@ -16,7 +16,7 @@ namespace Script {
         eumlings: Map<HTMLElement, Eumling> = new Map();
         xp: number;
         gold: number;
-        onAdd(_zindex: number, _ev?: FightEvent): void {
+        async onAdd(_zindex: number, _ev?: FightEvent): Promise<void> {
             super.onAdd(_zindex, _ev);
             let { gold, xp, stones }: { gold: number, xp: number, stones: Stone[] } = _ev.detail;
             const rewardIcons: HTMLElement[] = [];
@@ -55,7 +55,7 @@ namespace Script {
             this.continueButton.disabled = true;
             this.convertButton.disabled = false;
         }
-        onShow(): void {
+        async onShow(): Promise<void> {
             super.onShow();
             this.addEventListeners();
             for(let element of this.eumlings.keys()) {
@@ -63,7 +63,7 @@ namespace Script {
             }
             document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
         }
-        onHide(): void {
+        async onHide(): Promise<void> {
             super.onHide();
             this.removeEventListeners();
         }

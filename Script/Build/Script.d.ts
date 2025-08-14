@@ -44,7 +44,9 @@ declare namespace Script {
         EUMLING_XP_GAIN = "eumlingXPGain",
         EUMLING_LEVELUP_CHOOSE = "eumlingLevelupChoose",
         EUMLING_LEVELUP_CHOSEN = "eumlingLevelupChosen",
-        EUMLING_LEVELUP = "eumlingLevelup"
+        EUMLING_LEVELUP = "eumlingLevelup",
+        SHOW_PREVIEW = "showPreview",
+        HIDE_PREVIEW = "hidePreview"
     }
     /**
      * There are a lot of callbacks / events that things inside the game can hook into to do something at a specific point in time.
@@ -64,13 +66,14 @@ declare namespace Script {
         /** Optional data with more details about this specific event. */
         detail?: T;
     }
-    type FightEventListener = (_ev?: FightEvent) => Promise<void> | void;
+    type FightEventListener = (_ev?: FightEvent) => Promise<any> | void;
     class EventBus {
         static listeners: Map<EVENT, FightEventListener[]>;
         static removeAllEventListeners(): void;
         static addEventListener(_ev: EVENT, _fn: FightEventListener): void;
         static removeEventListener(_ev: EVENT, _fn: FightEventListener): void;
         static dispatchEvent<T>(_ev: FightEvent<T>): Promise<void>;
+        static dispatchEventWithoutWaiting<T>(_ev: FightEvent<T>): Promise<void>[];
         static awaitSpecificEvent(_type: EVENT): Promise<FightEvent>;
     }
 }
@@ -269,7 +272,12 @@ declare namespace Script {
         const RANDOM_ENEMY: Readonly<Target>;
         const RANDOM_ALLY: Readonly<Target>;
     }
-    export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self: IEntity): IEntity[];
+    export function getTargets(_target: Target, _allies: Grid<IEntity>, _opponents: Grid<IEntity>, _self: IEntity): {
+        targets: IEntity[];
+        positions?: Grid<boolean>;
+        side?: TARGET_SIDE;
+    };
+    export function getTargetPositions(_target: TargetArea, _self: IEntity, _side: Grid<IEntity>): Grid<boolean>;
     export {};
 }
 declare namespace Script {
@@ -382,12 +390,29 @@ declare namespace Script {
     }
 }
 declare namespace Script {
+    class VisualizeTarget {
+        private nodePool;
+        private visibleNodes;
+        constructor();
+        private addEventListeners;
+        private showAttack;
+        private showPreview;
+        private getTargets;
+        private addNodesTo;
+        private getVFX;
+        private getAdditionalVisualizer;
+        private hideTargets;
+        private returnNode;
+    }
+}
+declare namespace Script {
     import ƒ = FudgeCore;
     class Visualizer {
         #private;
         root: ƒ.Node;
         camera: ƒ.ComponentCamera;
         viewport: ƒ.Viewport;
+        activeFight: VisualizeFight;
         private entities;
         private fights;
         constructor();
@@ -399,7 +424,6 @@ declare namespace Script {
         getCamera(): ƒ.ComponentCamera;
         getRoot(): ƒ.Node;
         getGraph(): ƒ.Graph;
-        drawScene(): void;
         private createEntity;
         private createEntityHandler;
         private fightPrepHandler;
@@ -410,21 +434,47 @@ declare namespace Script {
 declare namespace Script {
     abstract class UILayer {
         protected element: HTMLElement;
-        onAdd(_zindex: number, _ev?: FightEvent): void;
-        onShow(): void;
-        onHide(): void;
-        onRemove(): void;
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
+        onShow(): Promise<void>;
+        onHide(): Promise<void>;
+        onRemove(): Promise<void>;
         abstract addEventListeners(): void;
         abstract removeEventListeners(): void;
     }
 }
 declare namespace Script {
-    class FightUI extends UILayer {
-        stoneWrapper: HTMLElement;
+    class StartScreenUI extends UILayer {
         constructor();
-        onAdd(_zindex: number, _ev?: FightEvent): void;
-        private initStones;
-        private updateRoundCounter;
+        parallax: (_ev: MouseEvent) => void;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+    }
+}
+declare namespace Script {
+    class LoadingScreenUI extends UILayer {
+        constructor();
+        startLoad(): void;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+    }
+}
+declare namespace Script {
+    class MainMenuUI extends UILayer {
+        startButton: HTMLButtonElement;
+        optionsButton: HTMLButtonElement;
+        constructor();
+        start: () => void;
+        openOptions: () => void;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+    }
+}
+declare namespace Script {
+    class OptionsUI extends UILayer {
+        closeButton: HTMLButtonElement;
+        constructor();
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
+        close: () => void;
         addEventListeners(): void;
         removeEventListeners(): void;
     }
@@ -433,9 +483,10 @@ declare namespace Script {
     class ChooseEumlingUI extends UILayer {
         optionElements: Map<HTMLElement, Eumling>;
         confirmButton: HTMLButtonElement;
+        infoElement: HTMLElement;
         selectedEumling: Eumling;
         constructor();
-        onAdd(_zindex: number): void;
+        onAdd(_zindex: number): Promise<void>;
         private clickedEumling;
         private confirm;
         addEventListeners(): void;
@@ -445,12 +496,185 @@ declare namespace Script {
 declare namespace Script {
     class ChooseStoneUI extends UILayer {
         optionElements: Map<HTMLElement, Stone>;
+        infoElement: HTMLElement;
         confirmButton: HTMLButtonElement;
         selectedStone: Stone;
         constructor();
-        onAdd(_zindex: number): void;
+        onAdd(_zindex: number): Promise<void>;
         private clickedStone;
         private confirm;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+    }
+}
+declare namespace Script {
+    class MapUI extends UILayer {
+        submitBtn: HTMLButtonElement;
+        optionButton: HTMLElement;
+        optionElements: HTMLElement[];
+        selectedEncounter: number;
+        hill: HTMLElement;
+        constructor();
+        onAdd(_zindex: number, _ev: FightEvent): Promise<void>;
+        private updateProgress;
+        private displayEncounters;
+        private selectionDone;
+        private click;
+        private openOptions;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+    }
+}
+declare namespace Script {
+    import ƒ = FudgeCore;
+    class DataLink extends ƒ.ComponentScript {
+        static linkedNodes: Map<string, ƒ.Node>;
+        id: string;
+        constructor();
+        static getCopyOf(_id: string): Promise<ƒ.Node>;
+    }
+    enum ANIMATION {
+        IDLE = "idle",
+        MOVE = "move",
+        HURT = "hurt",
+        AFFECTED = "affected",
+        DIE = "die",
+        ATTACK = "attack",
+        SPELL = "spell"
+    }
+    class AnimationLink extends ƒ.Component {
+        static linkedAnimations: Map<string, Map<ANIMATION, ƒ.Animation>>;
+        static linkedAudio: Map<string, Map<ANIMATION, ƒ.Audio[]>>;
+        protected singleton: boolean;
+        animation: ƒ.Animation;
+        audio1: ƒ.Audio;
+        audio2: ƒ.Audio;
+        audio3: ƒ.Audio;
+        audio4: ƒ.Audio;
+        animType: ANIMATION;
+        constructor();
+    }
+    class VisualizationLink extends ƒ.Component {
+        static linkedVisuals: Map<string, Map<ANIMATION, VisualizationLink>>;
+        protected singleton: boolean;
+        get id(): string;
+        visualization: string;
+        for: ANIMATION;
+        delay: number;
+        constructor();
+    }
+}
+declare namespace Script {
+    import ƒ = FudgeCore;
+    class FightPrepUI extends UILayer {
+        #private;
+        stoneWrapper: HTMLElement;
+        infoElement: HTMLElement;
+        startButton: HTMLButtonElement;
+        highlightNode: ƒ.Node;
+        bench: VisualizeBench;
+        placedEumlings: Set<Eumling>;
+        constructor();
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
+        onRemove(): Promise<void>;
+        private initStones;
+        private initEumlings;
+        private returnEumling;
+        private moveEumlingToGrid;
+        private startFight;
+        pointerStartPosition: ƒ.Vector2;
+        readonly deadzone: number;
+        private pointerOnCanvas;
+        private clickCanvas;
+        private dragCanvas;
+        private showEntityInfo;
+        private hideEntityInfo;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+        private moveCamera;
+    }
+}
+declare namespace Script {
+    class FightUI extends UILayer {
+        stoneWrapper: HTMLElement;
+        constructor();
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
+        private initStones;
+        private updateRoundCounter;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+    }
+}
+declare namespace Script {
+    class FightRewardUI extends UILayer {
+        rewardsOverivew: HTMLElement;
+        convertButton: HTMLButtonElement;
+        continueButton: HTMLButtonElement;
+        constructor();
+        eumlings: Map<HTMLElement, Eumling>;
+        xp: number;
+        gold: number;
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
+        onShow(): Promise<void>;
+        onHide(): Promise<void>;
+        clickOnEumling: (_ev: MouseEvent) => void;
+        private updateXPText;
+        convert: () => void;
+        private finishRewards;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+    }
+}
+declare namespace Script {
+    class EumlingLevelupUI extends UILayer {
+        eumling: Eumling;
+        eumlingElement: HTMLElement;
+        optionsElement: HTMLElement;
+        infoElement: HTMLElement;
+        confirmButton: HTMLButtonElement;
+        selectedOption: string;
+        static orientationInfo: Map<string, string>;
+        constructor();
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
+        private selectOption;
+        private confirm;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+    }
+}
+declare namespace Script {
+    class ShopUI extends UILayer {
+        closeButton: HTMLButtonElement;
+        stonesWrapper: HTMLElement;
+        stonesInfo: HTMLElement;
+        stoneUpgradeInfo: HTMLElement;
+        stoneBuyButton: HTMLButtonElement;
+        stoneUpgradeButton: HTMLButtonElement;
+        stonesRefreshButton: HTMLButtonElement;
+        stoneUpgradeWrapper: HTMLElement;
+        eumlingHealWrapper: HTMLElement;
+        stoneToHtmlElement: Map<Stone, HTMLElement>;
+        constructor();
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
+        selectedStone: Stone;
+        private setupStonesToBuy;
+        private buyStone;
+        selectedStoneToUpgrade: Stone;
+        private setupStonesToUpgrade;
+        private upgradeStone;
+        private initEumlingHealing;
+        close: () => void;
+        refresh: () => void;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+    }
+}
+declare namespace Script {
+    class RunEndUI extends UILayer {
+        continueButton: HTMLButtonElement;
+        constructor();
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
+        close: () => void;
         addEventListeners(): void;
         removeEventListeners(): void;
     }
@@ -461,13 +685,13 @@ declare namespace Script {
         readonly activeLayers: UILayer[];
         constructor();
         private get topmostLevel();
-        addUI(_id: string, _ev?: FightEvent): void;
-        replaceUI(_id: string, _ev?: FightEvent): void;
-        removeTopmostUI(): void;
+        addUI(_id: string, _ev?: FightEvent): Promise<void>;
+        replaceUI(_id: string, _ev?: FightEvent): Promise<void>;
+        removeTopmostUI(): Promise<void>;
         removeAllLayers(): void;
         private updateGoldCounter;
         addFightListeners(): void;
-        switchUI: (_ev: FightEvent) => void;
+        switchUI: (_ev: FightEvent) => Promise<void>;
     }
 }
 declare namespace Script {
@@ -482,30 +706,121 @@ declare namespace Script {
 declare namespace Script {
     import ƒ = FudgeCore;
     let viewport: ƒ.Viewport;
+    function startLoading(): Promise<void>;
+    function run(): Promise<void>;
+    function setupSounds(camera: ƒ.Node): void;
 }
 declare namespace Script {
     import ƒ = FudgeCore;
-    class DataLink extends ƒ.ComponentScript {
-        static linkedNodes: Map<string, ƒ.Node>;
+    export function initEntitiesInGrid<T extends IEntity>(_grid: GridData<string>, _entity: new (...data: any) => T): Grid<T>;
+    export function waitMS(_ms: number): Promise<void>;
+    export function getCloneNodeFromRegistry(id: string): Promise<ƒ.Node | undefined>;
+    export function randomRange(min?: number, max?: number): number;
+    export function chooseRandomElementsFromArray<T>(_array: readonly T[], _max: number, _exclude?: T[]): T[];
+    interface CreateElementAdvancedOptions {
+        classes: string[];
         id: string;
+        innerHTML: string;
+        attributes: [string, string][];
+    }
+    export function createElementAdvanced<K extends keyof HTMLElementTagNameMap>(_type: K, _options?: Partial<CreateElementAdvancedOptions>): HTMLElementTagNameMap[K];
+    export function getDuplicateOfNode(_node: ƒ.Node): Promise<ƒ.Node>;
+    export function getPickableObjectsFromClientPos(_pos: ƒ.Vector2): PickSphere[];
+    export function randomString(length: number): string;
+    export function enumToArray<T extends object>(anEnum: T): T[keyof T][];
+    export function findFirstComponentInGraph<T extends ƒ.Component>(_graph: ƒ.Node, _cmp: new () => T): T;
+    export function loadResourcesAndInitViewport(canvas: HTMLCanvasElement): Promise<ƒ.Viewport>;
+    export {};
+}
+declare namespace Script {
+    export type Setting = SettingCategory | SettingNumber | SettingString;
+    interface SettingsBase {
+        type: string;
+        name: string;
+    }
+    export interface SettingCategory extends SettingsBase {
+        type: "category";
+        settings: Setting[];
+    }
+    export interface SettingString extends SettingsBase {
+        type: "string";
+        value: string;
+    }
+    export interface SettingNumber extends SettingsBase {
+        type: "number";
+        value: number;
+        min: number;
+        max: number;
+        step: number;
+        variant: "range" | "percent";
+    }
+    export class Settings {
+        private static settings;
+        static proxySetting<T extends Setting>(_setting: T, onValueChange: (_old: any, _new: any) => void): T;
+        static addSettings(..._settings: Setting[]): void;
+        static generateHTML(_settings?: Setting[]): HTMLElement;
+        private static generateSingleHTML;
+        private static generateStringInput;
+        private static generateNumberInput;
+    }
+    export {};
+}
+declare namespace Script {
+    enum AUDIO_CHANNEL {
+        MASTER = 0,
+        SOUNDS = 1,
+        MUSIC = 2
+    }
+    class AudioManager {
+        private static Instance;
+        private gainNodes;
+        private constructor();
+        static addAudioCmpToChannel(_cmpAudio: ComponentAudioMixed, _channel: AUDIO_CHANNEL): void;
+        static setChannelVolume(_channel: AUDIO_CHANNEL, _volume: number): void;
+    }
+}
+declare namespace Script {
+    import ƒ = FudgeCore;
+    class ComponentAudioMixed extends ƒ.ComponentAudio {
+        #private;
+        static readonly iSubclass: number;
+        private gainTarget;
+        private isConnected;
+        constructor(_audio?: ƒ.Audio, _loop?: boolean, _start?: boolean, _audioManager?: ƒ.AudioManager, _channel?: AUDIO_CHANNEL);
+        get channel(): AUDIO_CHANNEL;
+        set channel(_channel: AUDIO_CHANNEL);
+        setGainTarget(node: AudioNode): void;
+        connect(_on: boolean): void;
+        fadeTo(_volume: number, _duration: number): void;
+        drawGizmos(): void;
+        play(_on: boolean): void;
+    }
+}
+declare namespace Script {
+    enum MUSIC_TITLE {
+        COMBAT_INTRO = 0,
+        COMBAT_PICKUP = 1,
+        COMBAT_LOOP = 2,
+        SHOP_LOOP = 3,
+        TITLE_INTRO = 4,
+        TITLE_LOOP = 5
+    }
+    enum MUSIC {
+        COMBAT = 0,
+        SHOP = 1,
+        TITLE = 2
+    }
+    export class MusicManager {
+        sounds: Map<MUSIC_TITLE, ComponentAudioMixed>;
         constructor();
+        private setupIntros;
+        activeMusic: MUSIC;
+        activeComponent: ComponentAudioMixed;
+        private changeMusic;
+        private playTitle;
+        addEventListeners(): void;
     }
-    enum ANIMATION {
-        IDLE = "idle",
-        MOVE = "move",
-        HURT = "hurt",
-        AFFECTED = "affected",
-        DIE = "die",
-        ATTACK = "attack",
-        SPELL = "spell"
-    }
-    class AnimationLink extends ƒ.Component {
-        static linkedAnimations: Map<string, Map<ANIMATION, ƒ.Animation>>;
-        protected singleton: boolean;
-        animation: ƒ.Animation;
-        animType: ANIMATION;
-        constructor();
-    }
+    export {};
 }
 declare namespace Script {
     namespace DataContent {
@@ -534,6 +849,7 @@ declare namespace Script {
         /** If it's in this list, this kind of spell is ignored by the entity.*/
         resistances?: SPELL_TYPE[];
         abilities?: AbilityData[];
+        info?: string;
     }
     export interface IEntity extends EntityData {
         currentHealth: number;
@@ -566,6 +882,7 @@ declare namespace Script {
         activeEffects: Map<SPELL_TYPE, number>;
         moved: boolean;
         currentDirection: Position;
+        info?: string;
         constructor(_entity: EntityData, _pos?: Position);
         get untargetable(): boolean;
         get stunned(): boolean;
@@ -578,7 +895,7 @@ declare namespace Script {
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks?: AttackData[], _targetsOverride?: IEntity[]): Promise<void>;
         getOwnDamage(): number;
         selections: Map<any, any[]>;
-        protected select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[];
+        select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[];
         protected getDamageOfAttacks(_attacks: Readonly<AttackDataNoTarget[]>, _consumeEffects: boolean): number;
         setGrids(_home: Grid<Entity>, _away: Grid<Entity>): void;
         registerEventListeners(): void;
@@ -637,6 +954,7 @@ declare namespace Script {
         target: "target" | "cause" | Target;
         attack?: AttackDataNoTarget;
         spell?: SpellDataNoTarget;
+        info?: string;
     }
     function areAbilityConditionsMet(_ability: AbilityData, _arena: Arena, _ev: FightEvent): boolean;
     function executeAbility(_ability: AbilityData, _arena: Arena, _ev: FightEvent): Promise<void>;
@@ -657,6 +975,7 @@ declare namespace Script {
     interface StoneData {
         id: string;
         abilityLevels: AbilityData[];
+        info?: string;
     }
     class Stone {
         #private;
@@ -707,19 +1026,14 @@ declare namespace Script {
 }
 declare namespace Script {
     import ƒ = FudgeCore;
-    export function initEntitiesInGrid<T extends IEntity>(_grid: GridData<string>, _entity: new (...data: any) => T): Grid<T>;
-    export function waitMS(_ms: number): Promise<void>;
-    export function getCloneNodeFromRegistry(id: string): Promise<ƒ.Node | undefined>;
-    export function randomRange(min?: number, max?: number): number;
-    export function chooseRandomElementsFromArray<T>(_array: readonly T[], _max: number, _exclude?: T[]): T[];
-    interface CreateElementAdvancedOptions {
-        classes: string[];
-        id: string;
-        innerHTML: string;
-        attributes: [string, string][];
+    class ComponentChangeMaterial extends ƒ.ComponentScript {
+        static readonly iSubclass: number;
+        changeMaterial: ƒ.Material;
+        animationSprite: ƒ.AnimationSprite;
+        constructor();
+        hndEvent: (_event: Event) => void;
+        private switchMaterial;
     }
-    export function createElementAdvanced<K extends keyof HTMLElementTagNameMap>(_type: K, _options?: Partial<CreateElementAdvancedOptions>): HTMLElementTagNameMap[K];
-    export {};
 }
 declare namespace Script {
     import ƒ = FudgeCore;
@@ -777,6 +1091,18 @@ declare namespace Script {
     }
 }
 declare namespace Script {
+    import ƒ = FudgeCore;
+    class SandSitter extends ƒ.Component {
+        emerge: ƒ.Animation;
+        emerged_idle: ƒ.Animation;
+        constructor();
+        burried: boolean;
+        buryNow: (_ev: FightEvent) => Promise<void>;
+        emergeNow: (_ev: FightEvent) => Promise<void>;
+        addEventListeners(): void;
+    }
+}
+declare namespace Script {
     interface IVisualizeFight {
         showGrid(): Promise<void>;
         fightStart(): Promise<void>;
@@ -797,6 +1123,7 @@ declare namespace Script {
         fightEnd(): Promise<void>;
         entityAdded(_ev: FightEvent): void;
         entityRemoved(_ev: FightEvent): void;
+        whereIsEntity(_entity: VisualizeEntity): VisualizeGrid;
         addEventListeners(): void;
         removeEventListeners(): void;
         eventListener: (_ev: FightEvent) => void;
@@ -804,35 +1131,62 @@ declare namespace Script {
 }
 declare namespace Script {
     import ƒ = FudgeCore;
-    interface VisualizeEntity {
-        attack(_ev: FightEvent): Promise<void>;
-        move(_move: FightEvent): Promise<void>;
-        getHurt(_ev: FightEvent): Promise<void>;
-        resist(): Promise<void>;
-        useSpell(_ev: FightEvent): Promise<void>;
-        showPreview(): Promise<void>;
-        hidePreview(): Promise<void>;
-        /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
-        updateVisuals(): void;
+    class VisualizeBench extends ƒ.Component {
+        #private;
+        constructor();
+        addEntity(_entity: VisualizeEntity): void;
+        hasEntity(_entity: VisualizeEntity): boolean;
+        removeEntity(_entity: VisualizeEntity): void;
+        clear(): void;
+        private arrangeEntities;
     }
+}
+declare namespace Script {
+    import ƒ = FudgeCore;
     class VisualizeEntity extends ƒ.Node {
         private entity;
         private cmpAnimation;
-        private defaultAnimation;
+        private cmpAudio;
+        defaultAnimation: ƒ.Animation;
         private tmpText;
         constructor(_entity: IEntity);
+        attack(_ev: FightEvent): Promise<void>;
+        move(_ev: FightEvent): Promise<void>;
+        useSpell(_ev: FightEvent): Promise<void>;
+        getHurt(_ev: FightEvent): Promise<void>;
         getAffected(_ev: FightEvent): Promise<void>;
         die(_ev: FightEvent): Promise<void>;
+        resist(): Promise<void>;
+        showPreview(): Promise<void>;
+        hidePreview(): Promise<void>;
         loadModel(_id: string): Promise<void>;
         givePlaceholderPls(): ƒ.Node;
-        private playAnimationIfPossible;
+        playAnimationIfPossible(_anim: ANIMATION | ƒ.Animation): Promise<void>;
         private showFallbackText;
-        private updateTmpText;
+        updateTmpText: () => void;
+        textUpdater: number;
+        private addText;
+        private removeText;
         getEntity(): Readonly<IEntity>;
         addEventListeners(): void;
         removeEventListeners(): void;
         eventListener: (_ev: FightEvent) => Promise<void>;
         handleEvent(_ev: FightEvent): Promise<void>;
+    }
+}
+declare namespace Script {
+    import ƒ = FudgeCore;
+    class VisualizeVFX {
+        id: string;
+        node: ƒ.Node;
+        anim: ƒ.ComponentAnimation;
+        delay: number;
+        constructor(_node: ƒ.Node, _id: string, _delay?: number);
+        addToAndActivate(_parent: ƒ.Node): Promise<void>;
+        activate(): Promise<void>;
+        removeAndDeactivate(): void;
+        deactivate(): void;
+        private findFirstAnimComp;
     }
 }
 declare namespace Script {
@@ -855,120 +1209,6 @@ declare namespace Script {
     }
 }
 declare namespace Script {
-    class EumlingLevelupUI extends UILayer {
-        eumling: Eumling;
-        eumlingElement: HTMLElement;
-        optionsElement: HTMLElement;
-        infoElement: HTMLElement;
-        confirmButton: HTMLButtonElement;
-        selectedOption: string;
-        static orientationInfo: Map<string, string>;
-        constructor();
-        onAdd(_zindex: number, _ev?: FightEvent): void;
-        private selectOption;
-        private confirm;
-        addEventListeners(): void;
-        removeEventListeners(): void;
-    }
-}
-declare namespace Script {
-    import ƒ = FudgeCore;
-    class FightPrepUI extends UILayer {
-        stoneWrapper: HTMLElement;
-        eumlingWrapper: HTMLElement;
-        selectedEumling: Eumling;
-        startButton: HTMLButtonElement;
-        selectedSpace: ƒ.Node;
-        eumlingElements: Map<Eumling, HTMLElement>;
-        constructor();
-        onAdd(_zindex: number, _ev?: FightEvent): void;
-        private initStones;
-        private initEumlings;
-        private pickEumling;
-        private clickCanvas;
-        private returnEumling;
-        private startFight;
-        addEventListeners(): void;
-        removeEventListeners(): void;
-    }
-}
-declare namespace Script {
-    class FightRewardUI extends UILayer {
-        rewardsOverivew: HTMLElement;
-        convertButton: HTMLButtonElement;
-        continueButton: HTMLButtonElement;
-        constructor();
-        eumlings: Map<HTMLElement, Eumling>;
-        xp: number;
-        gold: number;
-        onAdd(_zindex: number, _ev?: FightEvent): void;
-        onShow(): void;
-        onHide(): void;
-        clickOnEumling: (_ev: MouseEvent) => void;
-        private updateXPText;
-        convert: () => void;
-        private finishRewards;
-        addEventListeners(): void;
-        removeEventListeners(): void;
-    }
-}
-declare namespace Script {
-    class MainMenuUI extends UILayer {
-        constructor();
-        addEventListeners(): void;
-        removeEventListeners(): void;
-    }
-}
-declare namespace Script {
-    class MapUI extends UILayer {
-        submitBtn: HTMLButtonElement;
-        optionElements: HTMLElement[];
-        selectedEncounter: number;
-        constructor();
-        onAdd(_zindex: number, _ev: FightEvent): void;
-        private updateProgress;
-        private displayEncounters;
-        private selectionDone;
-        addEventListeners(): void;
-        removeEventListeners(): void;
-    }
-}
-declare namespace Script {
-    class OptionsUI extends UILayer {
-        constructor();
-        addEventListeners(): void;
-        removeEventListeners(): void;
-    }
-}
-declare namespace Script {
-    class RunEndUI extends UILayer {
-        continueButton: HTMLButtonElement;
-        constructor();
-        onAdd(_zindex: number, _ev?: FightEvent): void;
-        close: () => void;
-        addEventListeners(): void;
-        removeEventListeners(): void;
-    }
-}
-declare namespace Script {
-    class ShopUI extends UILayer {
-        closeButton: HTMLButtonElement;
-        stonesWrapper: HTMLElement;
-        stonesRefreshButton: HTMLButtonElement;
-        stoneUpgradeWrapper: HTMLElement;
-        eumlingHealWrapper: HTMLElement;
-        constructor();
-        onAdd(_zindex: number, _ev?: FightEvent): void;
-        private setupStonesToBuy;
-        private setupStonesToUpgrade;
-        private initEumlingHealing;
-        close: () => void;
-        refresh: () => void;
-        addEventListeners(): void;
-        removeEventListeners(): void;
-    }
-}
-declare namespace Script {
     abstract class UIElement {
     }
 }
@@ -979,6 +1219,16 @@ declare namespace Script {
         static getUIElement(_obj: Eumling): EumlingUIElement;
         get element(): HTMLElement;
         get eumling(): Eumling;
+        private update;
+        addEventListeners(): void;
+    }
+}
+declare namespace Script {
+    class GoldDisplayElement extends UIElement {
+        #private;
+        static instance: GoldDisplayElement;
+        private constructor();
+        static get element(): HTMLElement;
         private update;
         addEventListeners(): void;
     }

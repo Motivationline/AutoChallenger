@@ -27,6 +27,7 @@ namespace Script {
                 this.sideNode = Provider.visualizer.getGraph().getChildByName("Grids").getChildByName("home");
             }
 
+
             this.addComponent(new ƒ.ComponentTransform());
             //set the positions of the entities in the grid
             this.grid.forEachElement((element, pos) => {
@@ -45,15 +46,15 @@ namespace Script {
                 if (entity === _entity) this.removeEntityFromGrid(pos, false);
             });
 
-            // if (!_anchor) {
-            //     /**Anchors are named from 0-8 */
-            //     _anchor = this.getAnchor(_pos[0], _pos[1]);
-            // }
-
+            if (!_anchor) {
+                /**Anchors are named from 0-8 */
+                _anchor = this.getAnchor(_pos[0], _pos[1]);
+            }
             //get the Positions from the placeholders and translate the entities to it
             this.moveEntityToAnchor(_entity, _pos);
             this.addChild(_entity);
             this.grid.set(_pos, _entity, true);
+            _entity.activate(true);
             
         }
 
@@ -63,6 +64,7 @@ namespace Script {
             if (!elementToRemove) return;
             this.grid.remove(_pos);
             this.removeChild(elementToRemove);
+            elementToRemove.activate(false);
             if (_removeListeners)
                 elementToRemove.removeEventListeners();
         }

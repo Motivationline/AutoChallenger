@@ -27,7 +27,7 @@ namespace Script {
             this.confirmButton = document.getElementById("EumlingLevelupConfirm") as HTMLButtonElement;
         }
 
-        onAdd(_zindex: number, _ev?: FightEvent): void {
+        async onAdd(_zindex: number, _ev?: FightEvent): Promise<void> {
             super.onAdd(_zindex, _ev);
             this.confirmButton.disabled = true;
             this.eumling = _ev.target as Eumling;
@@ -45,7 +45,12 @@ namespace Script {
                     attributes: [["data-option", option]],
                 });
                 optionElements.push(elem);
-                elem.addEventListener("click", this.selectOption);
+                elem.addEventListener("click", (_ev: MouseEvent) => {
+                    this.selectOption(_ev);
+
+                    const newEumlingType: string = this.eumling.types.join("") + option + "-Eumling";
+                    this.infoElement.innerText = Provider.data.getEntity(newEumlingType).info;
+                });
             }
 
             this.optionsElement.replaceChildren(...optionElements);

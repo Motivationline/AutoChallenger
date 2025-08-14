@@ -1,26 +1,27 @@
 namespace Script {
     import ƒ = FudgeCore;
-    export interface VisualizeEntity {
-        //idle(): Promise<void>;
-        attack(_ev: FightEvent): Promise<void>;
-        move(_move: FightEvent): Promise<void>;
-        getHurt(_ev: FightEvent): Promise<void>;
-        resist(): Promise<void>;
-        useSpell(_ev: FightEvent): Promise<void>;
-        showPreview(): Promise<void>;
-        hidePreview(): Promise<void>;
-        /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
-        updateVisuals(): void;
-    }
+    // export interface VisualizeEntity {
+    //     //idle(): Promise<void>;
+    //     attack(_ev: FightEvent): Promise<void>;
+    //     move(_move: MoveData): Promise<void>;
+    //     getHurt(_ev: FightEvent): Promise<void>;
+    //     resist(): Promise<void>;
+    //     useSpell(_ev: FightEvent): Promise<void>;
+    //     showPreview(): Promise<void>;
+    //     hidePreview(): Promise<void>;
+    //     /** Called at the end of the fight to "reset" the visuals in case something went wrong. */
+    //     updateVisuals(): void;
+    // }
 
     export class VisualizeEntity extends ƒ.Node /*implements VisualizeEntity*/ {
 
         private entity: IEntity;
         private cmpAnimation: ƒ.ComponentAnimation;
-        private defaultAnimation: ƒ.Animation;
+        private cmpAudio: ComponentAudioMixed;
+        public defaultAnimation: ƒ.Animation;
         //private grid: VisualizeGridNull;
         // TODO: remove this again when it's not needed anymore.
-        private tmpText: ƒ.ComponentText;
+        private tmpText: HTMLDivElement;
 
         constructor(_entity: IEntity) {
             super("entity");
@@ -36,9 +37,15 @@ namespace Script {
             // entityMesh.mtxPivot.scale(ƒ.Vector3.ONE(this.size));
             // entityMat.clrPrimary.setCSS("white");
 
+            this.tmpText = createElementAdvanced("div", { classes: ["EntityOverlay"] });
+            this.updateTmpText();
+
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
             this.addEventListeners();
+
+            this.cmpAudio = new ComponentAudioMixed(undefined, false, false, undefined, AUDIO_CHANNEL.SOUNDS);
+            this.addComponent(this.cmpAudio);
         }
 
         // async idle(): Promise<void> {
@@ -94,13 +101,6 @@ namespace Script {
             await waitMS(200);
         }
 
-        async updateVisuals(): Promise<void> {
-            //TODO: remove the Entity from Scene Graph if this is an enemy, Player should not be removed just repositioned in the next run
-            // this.removeAllChildren();
-            // console.log("entity visualizer null: updateVisuals", this.entity);
-            // await waitMS(200);
-        }
-
 
         async loadModel(_id: string) {
             let model: ƒ.Node = new ƒ.Node(_id);
@@ -116,13 +116,9 @@ namespace Script {
             }
             this.addChild(model);
 
-            // TODO: this is a temp vis for all the info, we need to remove this
-            let entityInfoGraph = DataLink.linkedNodes.get("entityInfo");
-            let textNode: ƒ.Node = new ƒ.Node("text");
-            await textNode.deserialize(entityInfoGraph.serialize());
-            this.addChild(textNode);
-            this.tmpText = textNode.getComponent(ƒ.ComponentText);
-            this.updateTmpText();
+            const pick = new PickSphere();
+            pick.radius = 0.5;
+            this.addComponent(pick);
         }
 
         //retuns a placeholder if needed
@@ -136,16 +132,37 @@ namespace Script {
             return placeholder;
         }
 
-        private async playAnimationIfPossible(_anim: ANIMATION) {
-            if (!this.cmpAnimation) return this.showFallbackText(_anim);
-            let animation = AnimationLink.linkedAnimations.get(this.entity.id)?.get(_anim);
-            if (!animation) return this.showFallbackText(_anim);
+        public async playAnimationIfPossible(_anim: ANIMATION | ƒ.Animation) {
+            let animation: ƒ.Animation;
+            let audio: ƒ.Audio;
+            if (typeof _anim === "string") {
+                if (!this.cmpAnimation) return this.showFallbackText(_anim);
+                animation = AnimationLink.linkedAnimations.get(this.entity.id)?.get(_anim);
+                if (!animation && this.entity.id.includes("Eumling")) animation = AnimationLink.linkedAnimations.get("defaultEumling")?.get(_anim);
+                if (!animation) return this.showFallbackText(_anim);
+                audio = chooseRandomElementsFromArray(AnimationLink.linkedAudio.get(this.entity.id)?.get(_anim), 1)[0];
+                if (!audio && this.entity.id.includes("Eumling")) audio = chooseRandomElementsFromArray(AnimationLink.linkedAudio.get("defaultEumling")?.get(_anim), 1)[0];
+            } else {
+                animation = _anim;
+            }
             this.cmpAnimation.animation = animation;
             this.cmpAnimation.time = 0;
-            console.log({ totalTime: animation.totalTime });
+            if (audio) {
+                this.cmpAudio.setAudio(audio);
+                this.cmpAudio.play(true);
+                this.cmpAudio.loop = false;
+            }
+            // console.log({ totalTime: animation.totalTime });
             await waitMS(animation.totalTime);
+            this.cmpAudio.play(false);
             this.cmpAnimation.animation = this.defaultAnimation; // TODO: check if we should instead default back to idle or nothing at all
-
+            audio = chooseRandomElementsFromArray(AnimationLink.linkedAudio.get(this.entity.id)?.get(ANIMATION.IDLE), 1)[0];
+            if (!audio && this.entity.id.includes("Eumling")) audio = chooseRandomElementsFromArray(AnimationLink.linkedAudio.get("defaultEumling")?.get(ANIMATION.IDLE), 1)[0];
+            if (audio) {
+                this.cmpAudio.setAudio(audio);
+                this.cmpAudio.play(true);
+                this.cmpAudio.loop = true;
+            }
         }
         private async showFallbackText(_text: string) {
             let node = await getCloneNodeFromRegistry(_text);
@@ -154,14 +171,29 @@ namespace Script {
             if (node) this.removeChild(node);
         }
 
-        private updateTmpText = () => {
+        public updateTmpText = () => {
             if (!this.tmpText) return;
-            console.log("updateTmpText", this.entity);
             let effectText = "";
-            (<Entity>this.entity).activeEffects.forEach((value, type) => { if(value > 0) effectText += `${type}: ${value}\n`});
+            (<Entity>this.entity).activeEffects.forEach((value, type) => { if (value > 0) effectText += `${type}: ${value}\n` });
             effectText += `${this.entity.currentHealth} / ${this.entity.health} ♥️`;
-            console.log(effectText);
-            this.tmpText.texture.text = effectText;
+            this.tmpText.innerText = effectText;
+
+            let rect = this.tmpText.getBoundingClientRect();
+
+            const pos = viewport.pointWorldToClient(this.mtxWorld.translation);
+            this.tmpText.style.left = (pos.x - rect.width / 2) + "px";
+            this.tmpText.style.top = pos.y + "px";
+            this.textUpdater = requestAnimationFrame(this.updateTmpText);
+        }
+
+        textUpdater: number;
+        private addText = () => {
+            document.getElementById("GameOverlayInfos").appendChild(this.tmpText);
+            requestAnimationFrame(this.updateTmpText);
+        }
+        private removeText = () => {
+            this.tmpText.remove();
+            cancelAnimationFrame(this.textUpdater);
         }
 
         getEntity(): Readonly<IEntity> {
@@ -181,6 +213,10 @@ namespace Script {
             EventBus.addEventListener(EVENT.ROUND_END, this.updateTmpText);
             EventBus.addEventListener(EVENT.ROUND_START, this.updateTmpText);
             EventBus.addEventListener(EVENT.ENTITY_MOVE, this.eventListener);
+            EventBus.addEventListener(EVENT.EUMLING_LEVELUP, this.updateTmpText);
+
+            this.addEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
+            this.addEventListener(ƒ.EVENT.NODE_DEACTIVATE, this.removeText);
         }
 
         removeEventListeners() {
@@ -191,6 +227,15 @@ namespace Script {
             EventBus.removeEventListener(EVENT.ENTITY_AFFECTED, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_DIES, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_MOVE, this.eventListener);
+
+            EventBus.removeEventListener(EVENT.ENTITY_HURT, this.updateTmpText);
+            EventBus.removeEventListener(EVENT.ENTITY_AFFECTED, this.updateTmpText);
+            EventBus.removeEventListener(EVENT.ROUND_END, this.updateTmpText);
+            EventBus.removeEventListener(EVENT.ROUND_START, this.updateTmpText);
+            EventBus.removeEventListener(EVENT.EUMLING_LEVELUP, this.updateTmpText);
+
+            this.removeEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
+            this.removeEventListener(ƒ.EVENT.NODE_DEACTIVATE, this.removeText);
         }
 
         eventListener = async (_ev: FightEvent) => {
