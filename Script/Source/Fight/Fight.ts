@@ -66,9 +66,6 @@ namespace Script {
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
                 await EventBus.dispatchEvent({ type: EVENT.ROUND_END, detail: { round: r }});
-                //output arena for debugging
-                console.log("Away Arena: ");
-                console.log(this.arena.away);
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {
                     return await this.fightEnd(FIGHT_RESULT.DEFEAT);

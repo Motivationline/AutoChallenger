@@ -169,14 +169,14 @@ var Script;
     // returns the new direction, the entity will move in
     function getNextDirection(_rotateBy, _direction) {
         let directions = [
-            [1, 0], // East
-            [1, 1], // North-East
-            [0, 1], // North
-            [-1, 1], // North-West
-            [-1, 0], // West
-            [-1, -1], // South-West
-            [0, -1], // South
-            [1, -1] // South-East
+            [1, 0], // North
+            [1, 1], // North-West
+            [0, 1], // West
+            [-1, 1], // South-West
+            [-1, 0], // South
+            [-1, -1], // South-East
+            [0, -1], // East
+            [1, -1] // North-East
         ];
         let i = directions.findIndex(dir => dir[0] === _direction[0] && dir[1] === _direction[1]);
         //get the index for the next rotation
@@ -1677,56 +1677,51 @@ var Script;
                 difficulty: 0,
                 rounds: 3,
                 entities: [
-                    ["boxingBush", , ,],
+                    ["boxingBush", , "cactusCrawler",],
                     [, "boxingBush", ,],
                     [, , "boxingBush",]
                 ],
             },
-            {
-                difficulty: 0,
-                rounds: 3,
-                entities: [
-                    [, , ,],
-                    [, "flameFlinger", "punchingPalmtree",],
-                    [, , ,]
-                ],
-            },
-            {
-                difficulty: 0,
-                rounds: 3,
-                entities: [
-                    ["flameFlinger", , ,],
-                    [, "sandSitter", "boxingBush",],
-                    ["flameFlinger", , ,]
-                ],
-            },
-            {
-                difficulty: 0,
-                rounds: 3,
-                entities: [
-                    [, "flameFlinger", ,],
-                    ["flameFlinger", "punchingPalmtree", "flameFlinger",],
-                    [, "flameFlinger", ,]
-                ],
-            },
-            {
-                difficulty: 0,
-                rounds: 3,
-                entities: [
-                    [, , "flameFlinger",],
-                    [, "sandSitter", ,],
-                    ["boxingBush", , "flameFlinger",]
-                ],
-            },
-            {
-                difficulty: 0,
-                rounds: 3,
-                entities: [
-                    [, "punchingPalmtree", ,],
-                    ["boxingBush", , ,],
-                    [, "punchingPalmtree", ,]
-                ],
-            },
+            // {
+            //     difficulty: 0,
+            //     rounds: 3,
+            //     entities: [
+            //         [, , ,],
+            //         [, "flameFlinger", "punchingPalmtree",],
+            //         [, , ,]],
+            // },
+            // {
+            //     difficulty: 0,
+            //     rounds: 3,
+            //     entities: [
+            //         ["flameFlinger", , ,],
+            //         [, "sandSitter", "boxingBush",],
+            //         ["flameFlinger", , ,]],
+            // },
+            // {
+            //     difficulty: 0,
+            //     rounds: 3,
+            //     entities: [
+            //         [, "flameFlinger", ,],
+            //         ["flameFlinger", "punchingPalmtree", "flameFlinger",],
+            //         [, "flameFlinger", ,]],
+            // },
+            // {
+            //     difficulty: 0,
+            //     rounds: 3,
+            //     entities: [
+            //         [, , "flameFlinger",],
+            //         [, "sandSitter", ,],
+            //         ["boxingBush", , "flameFlinger",]],
+            // },
+            // {
+            //     difficulty: 0,
+            //     rounds: 3,
+            //     entities: [
+            //         [, "punchingPalmtree", ,],
+            //         ["boxingBush", , ,],
+            //         [, "punchingPalmtree", ,]],
+            // },
             {
                 difficulty: 1,
                 rounds: 3,
@@ -1915,9 +1910,6 @@ var Script;
                 await this.runOneSide(this.arena.home, this.arena.away);
                 await this.runOneSide(this.arena.away, this.arena.home);
                 await Script.EventBus.dispatchEvent({ type: Script.EVENT.ROUND_END, detail: { round: r } });
-                //output arena for debugging
-                console.log("Away Arena: ");
-                console.log(this.arena.away);
                 // check if round is over
                 if (this.arena.home.occupiedSpots === 0) {
                     return await this.fightEnd(FIGHT_RESULT.DEFEAT);
@@ -2763,7 +2755,13 @@ var Script;
             this.position = _pos;
             //move stuff
             this.moved = false;
-            this.currentDirection = [-1, 0]; //facing towards player Side
+            if (this.select(this.moves, true)[0]) {
+                this.currentDirection = this.select(this.moves, true)[0].currentDirection;
+            }
+            else {
+                this.currentDirection = [-1, 0];
+            }
+            //this.currentDirection = [-1,0]; //facing towards player Side
             this.updateEntityData(_entity);
             Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_CREATE, target: this });
             Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_CREATED, target: this });
@@ -2895,8 +2893,6 @@ var Script;
             else {
                 this.activeEffects.delete(_spell);
             }
-        }
-        async move() {
         }
         async tryToMove(_grid, maxAlternatives) {
             //check if the Entity has move data
@@ -4254,14 +4250,13 @@ var Script;
             Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.eventListener);
         }
         async handleEvent(_ev) {
-            // this entity is doing something
             switch (_ev.type) {
                 case Script.EVENT.ENTITY_MOVED: {
                     await this.move(_ev);
                     break;
                 }
                 case Script.EVENT.RUN_END: {
-                    this.removeEventListeners;
+                    this.removeEventListeners();
                 }
             }
         }

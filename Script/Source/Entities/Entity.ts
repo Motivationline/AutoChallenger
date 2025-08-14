@@ -15,21 +15,21 @@ namespace Script {
          */
         startDirection?: number,
         moves?: Selectable<MoveData>,
+        currentDirection?: Position,
         spells?: Selectable<SpellData>,
         attacks?: Selectable<AttackData>,
         /** If it's in this list, this kind of spell is ignored by the entity.*/
         resistances?: SPELL_TYPE[],
         abilities?: AbilityData[],
-        //moved: boolean,// TODO: passt das so?
-        //currentDirection: Position;
     }
 
     export interface IEntity extends EntityData {
         currentHealth: number,
         position: Position,
         untargetable: boolean,
-        move(): Promise<void>,
-        //move(_friendly: Grid<IEntity>): Promise<void>, //TODO: warum friendly?
+        currentDirection: Position,
+        tryToMove(_grid: Grid<Entity>, maxAlternatives: number): Promise<boolean>
+        //move(_friendly: Grid<IEntity>): Promise<void>,
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>,
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>,
         damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
@@ -54,8 +54,7 @@ namespace Script {
         startDirection?: number;
         activeEffects = new Map<SPELL_TYPE, number>();
         moved: boolean;
-        // @Björn ich denke es wäre einfacher / besser die aktuelle rotation zu speichern
-        currentDirection: Position;//TODO add this to Entity Data, that they have the correct move data 
+        currentDirection: Position;
 
         #arena: Arena;
         #triggers: Set<EVENT> = new Set();
@@ -68,7 +67,12 @@ namespace Script {
 
             //move stuff
             this.moved = false;
-            this.currentDirection = [-1,0]; //facing towards player Side
+            if (this.select(this.moves, true)[0]) {
+                this.currentDirection = this.select(this.moves, true)[0].currentDirection;
+            }else{
+                this.currentDirection = [-1,0];
+            }
+            //this.currentDirection = [-1,0]; //facing towards player Side
 
             this.updateEntityData(_entity);
 
@@ -174,7 +178,7 @@ namespace Script {
                 await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIES, target: this, cause: _cause, detail: { amount } });
 
                 await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIED, target: this, cause: _cause, detail: { amount } });
-                
+
             }
             return this.currentHealth;
         }
@@ -223,9 +227,6 @@ namespace Script {
             }
         }
 
-        async move(): Promise<void> {
-        }
-
         async tryToMove(_grid: Grid<Entity>, maxAlternatives: number): Promise<boolean> {
             //check if the Entity has move data
             let moveData: MoveData;
@@ -237,7 +238,7 @@ namespace Script {
                     //get the new position
                     let nextPosition: Position = getPositionBasedOnMove(this.position, this.currentDirection, moveData.distance, rotateBy);
                     //get the new direction
-                    let nextDirection: Position =  getNextDirection(rotateBy, this.currentDirection);
+                    let nextDirection: Position = getNextDirection(rotateBy, this.currentDirection);
                     //check if the position is occupied or out of bounds
                     if (_grid.get(nextPosition) || Grid.outOfBounds(nextPosition)) {
                         continue;
@@ -248,8 +249,8 @@ namespace Script {
                         this.position = nextPosition;
                         this.currentDirection = nextDirection;
                         //call move events
-                        await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVE, cause: this, detail: {entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance}});
-                        await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVED, cause: this, detail: {entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance}});
+                        await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVE, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
+                        await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVED, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
                         this.moved = true;
                         return true;
                     }

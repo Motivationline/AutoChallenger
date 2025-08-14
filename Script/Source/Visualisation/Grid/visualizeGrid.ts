@@ -72,7 +72,7 @@ namespace Script {
 
             //get the Positions from the placeholders and translate the entity to it
             let pos3: ƒ.Vector3 = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
-            console.log(_entity);
+            //console.log(_entity);
             _entity.mtxLocal.translation = pos3.clone;
             this.grid.set(position, _entity, true);
         }
@@ -112,14 +112,13 @@ namespace Script {
 
         async handleEvent(_ev: FightEvent) {
 
-            // this entity is doing something
             switch (_ev.type) {
                 case EVENT.ENTITY_MOVED: {
                     await this.move(_ev);
                     break;
                 }
                 case EVENT.RUN_END: {
-                    this.removeEventListeners;
+                    this.removeEventListeners();
                 }
             }
         }

@@ -54,14 +54,14 @@ namespace Script {
     // returns the new direction, the entity will move in
     export function getNextDirection(_rotateBy: number, _direction: Position): Position {
         let directions: Position[] = [
-            [1, 0],    // East
-            [1, 1],    // North-East
-            [0, 1],    // North
-            [-1, 1],   // North-West
-            [-1, 0],   // West
-            [-1, -1],  // South-West
-            [0, -1],   // South
-            [1, -1]    // South-East
+            [1, 0],    // North
+            [1, 1],    // North-West
+            [0, 1],    // West
+            [-1, 1],   // South-West
+            [-1, 0],   // South
+            [-1, -1],  // South-East
+            [0, -1],   // East
+            [1, -1]    // North-East
         ];
         let i: number = directions.findIndex(dir => dir[0] === _direction[0] && dir[1] === _direction[1]);
         //get the index for the next rotation

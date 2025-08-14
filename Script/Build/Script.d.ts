@@ -528,6 +528,7 @@ declare namespace Script {
          */
         startDirection?: number;
         moves?: Selectable<MoveData>;
+        currentDirection?: Position;
         spells?: Selectable<SpellData>;
         attacks?: Selectable<AttackData>;
         /** If it's in this list, this kind of spell is ignored by the entity.*/
@@ -538,7 +539,8 @@ declare namespace Script {
         currentHealth: number;
         position: Position;
         untargetable: boolean;
-        move(): Promise<void>;
+        currentDirection: Position;
+        tryToMove(_grid: Grid<Entity>, maxAlternatives: number): Promise<boolean>;
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>): Promise<void>;
         damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
@@ -571,7 +573,6 @@ declare namespace Script {
         damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
         affect(_spell: SpellData, _cause?: IEntity): Promise<number>;
         setEffectLevel(_spell: SPELL_TYPE, value: number): Promise<void>;
-        move(): Promise<void>;
         tryToMove(_grid: Grid<Entity>, maxAlternatives: number): Promise<boolean>;
         useSpell(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _spells?: SpellData[], _targetsOverride?: IEntity[]): Promise<void>;
         useAttack(_friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _attacks?: AttackData[], _targetsOverride?: IEntity[]): Promise<void>;
