@@ -3855,6 +3855,8 @@ var Script;
     }
     Script.randomRange = randomRange;
     function chooseRandomElementsFromArray(_array, _max, _exclude = []) {
+        if (!_array)
+            return [];
         let filteredOptions = _array.filter((element) => !_exclude.includes(element));
         if (filteredOptions.length < _max) {
             return filteredOptions;

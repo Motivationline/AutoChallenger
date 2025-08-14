@@ -38,6 +38,7 @@ namespace Script {
     }
 
     export function chooseRandomElementsFromArray<T>(_array: readonly T[], _max: number, _exclude: T[] = []): T[] {
+        if(!_array) return [];
         let filteredOptions = _array.filter((element) => !_exclude.includes(element));
         if (filteredOptions.length < _max) {
             return filteredOptions;
