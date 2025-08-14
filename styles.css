@@ -367,9 +367,6 @@ canvas.fullscreen {
 .StoneUIElement.animate {
   animation: stone-animate 1s linear;
 }
-.StoneUIElement.selected {
-  filter: drop-shadow(2px 2px 0 green) drop-shadow(-2px 2px 0 green) drop-shadow(2px -2px 0 green) drop-shadow(-2px -2px 0 green);
-}
 
 @keyframes stone-animate {
   0% {scale: 1}
@@ -385,6 +382,44 @@ canvas.fullscreen {
   padding: 10px;
   margin: 10px;
   background-color: bisque;
+}
+
+/* OPTIONS */
+#OptionsWrapper {
+  background: url("./Assets/UIElemente/HolzRahmen.png") center no-repeat;
+  background-size: 100% 100%;
+  color: white;
+  width: 80vw;
+  height: 65vw;
+  padding: 10vw;
+}
+
+.settings-category-name {
+  display: block;
+  font-size: 1.2em;
+  margin: 1em 0;
+}
+.settings-label {
+  display: flex;
+  justify-content: space-evenly;
+  margin: 0.25em 0;
+}
+.settings-label-text {
+  flex-grow: 1;
+}
+.settings-number-input {
+  appearance: textfield;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  color: inherit;
+  font-size: medium;
+  text-align: center;
+  padding: 0 0.5em;
+  font: inherit;
+}
+#OptionsClose {
+  font-size: 3vh;
 }
 
 /* MISC */
@@ -460,9 +495,11 @@ button:disabled,
   padding: 1em;
 }
 
+.settings-number-input-button.plus,
 button.green {
   background-image: url("./Assets/UIElemente/ButtonGrGruen.png");
 }
+.settings-number-input-button.minus,
 button.red {
   background-image: url("./Assets/UIElemente/ButtonGrRot.PNG");
 }
