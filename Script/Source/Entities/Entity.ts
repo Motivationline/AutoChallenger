@@ -181,6 +181,7 @@ namespace Script {
 
             if (this.currentHealth <= 0) {
                 //this entity died
+                this.removeEventListeners();
                 await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIES, target: this, cause: _cause, detail: { amount } });
 
                 await EventBus.dispatchEvent({ type: EVENT.ENTITY_DIED, target: this, cause: _cause, detail: { amount } });
@@ -238,7 +239,7 @@ namespace Script {
             //check if the Entity has move data
             if (moveData) {
                 for (let i = 0; i <= maxAlternatives && i <= moveData.blocked.attempts; i++) {
-                    let rotateBy: number = moveData.rotateBy + i * moveData.blocked.rotateBy;
+                    let rotateBy: number = (moveData.rotateBy ?? 0) + i * moveData.blocked.rotateBy;
                     //get the new position
                     let nextPosition: Position = getPositionBasedOnMove(this.position, this.currentDirection, moveData.distance, rotateBy);
                     //get the new direction
@@ -253,8 +254,8 @@ namespace Script {
                         this.position = nextPosition;
                         this.currentDirection = nextDirection;
                         //call move events
-                        await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVE, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
-                        await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVED, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
+                        await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVE, cause: this, target: this, trigger: moveData, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
+                        await EventBus.dispatchEvent({ type: EVENT.ENTITY_MOVED, cause: this, target: this, trigger: moveData, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
                         this.moved = true;
                         return true;
                     }

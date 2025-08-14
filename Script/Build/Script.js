@@ -1551,7 +1551,7 @@ var Script;
             {
                 id: "cactusCrawler", // doesn't attack but gets thorns after moving
                 health: 1,
-                moves: { direction: Script.DIRECTION_RELATIVE.FORWARD, rotateBy: 4, currentDirection: [1, 0], distance: 1, blocked: { attempts: 8, rotateBy: 4 } },
+                moves: { direction: Script.DIRECTION_RELATIVE.FORWARD, currentDirection: [1, 0], distance: 1, blocked: { attempts: 8, rotateBy: 4 } },
                 //startDirection: 6, // down
                 abilities: [
                     {
@@ -1571,7 +1571,7 @@ var Script;
                         }
                     }
                 ],
-                info: "Moves left and right, and gains 1 Thorns after moving."
+                info: "Moves up and down, gains 1 Thorns after moving."
             },
             {
                 id: "flameFlinger", // low hp but massive single target damage
@@ -3993,6 +3993,30 @@ var Script;
         return viewport;
     }
     Script.loadResourcesAndInitViewport = loadResourcesAndInitViewport;
+    async function moveNodeOverTime(_node, _translationTarget, _rotationTarget, _timeMS) {
+        if (!_node)
+            return;
+        let elapsedTime = 0;
+        const translationStart = _node.mtxLocal.translation.clone;
+        const rotationStart = _node.mtxLocal.rotation.clone;
+        return new Promise((resolve) => {
+            const mover = () => {
+                const delta = ƒ.Loop.timeFrameGame;
+                elapsedTime += delta;
+                if (elapsedTime > _timeMS) {
+                    _node.mtxLocal.translation = _translationTarget;
+                    _node.mtxLocal.rotation = _rotationTarget;
+                    ƒ.Loop.removeEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, mover);
+                    resolve();
+                    return;
+                }
+                _node.mtxLocal.translation = ƒ.Vector3.LERP(translationStart, _translationTarget, elapsedTime / _timeMS);
+                _node.mtxLocal.rotation = ƒ.Vector3.LERP(rotationStart, _rotationTarget, elapsedTime / _timeMS);
+            };
+            ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, mover);
+        });
+    }
+    Script.moveNodeOverTime = moveNodeOverTime;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -4528,13 +4552,13 @@ var Script;
                 id: "steppingstone", // Should deal 1 damage to enemies that move (currently to everyone hehe)
                 abilityLevels: [
                     {
-                        on: Script.EVENT.ENTITY_MOVE,
+                        on: Script.EVENT.ENTITY_MOVED,
                         target: "target",
                         attack: { baseDamage: 1 },
                         info: "Deals 1 damage to enemies whenever they move. CURRENTLY 1 TO EVERY ENEMY"
                     },
                     {
-                        on: Script.EVENT.ENTITY_MOVE,
+                        on: Script.EVENT.ENTITY_MOVED,
                         target: "target",
                         attack: { baseDamage: 2 },
                         info: "Deals 2 damage to enemies whenever they move. CURRENTLY 2 TO EVERY ENEMY"
@@ -4670,6 +4694,7 @@ var Script;
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HURT, target: this, cause: _cause, detail: { amount, crit: wasCrit } });
             if (this.currentHealth <= 0) {
                 //this entity died
+                this.removeEventListeners();
                 await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_DIES, target: this, cause: _cause, detail: { amount } });
                 await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_DIED, target: this, cause: _cause, detail: { amount } });
             }
@@ -4720,7 +4745,7 @@ var Script;
             //check if the Entity has move data
             if (moveData) {
                 for (let i = 0; i <= maxAlternatives && i <= moveData.blocked.attempts; i++) {
-                    let rotateBy = moveData.rotateBy + i * moveData.blocked.rotateBy;
+                    let rotateBy = (moveData.rotateBy ?? 0) + i * moveData.blocked.rotateBy;
                     //get the new position
                     let nextPosition = Script.getPositionBasedOnMove(this.position, this.currentDirection, moveData.distance, rotateBy);
                     //get the new direction
@@ -4736,8 +4761,8 @@ var Script;
                         this.position = nextPosition;
                         this.currentDirection = nextDirection;
                         //call move events
-                        await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVE, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
-                        await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVED, cause: this, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
+                        await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVE, cause: this, target: this, trigger: moveData, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
+                        await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_MOVED, cause: this, target: this, trigger: moveData, detail: { entity: this, position: this.position, oldPosition: oldPos, direction: this.currentDirection, step: moveData.distance } });
                         this.moved = true;
                         return true;
                     }
@@ -5059,7 +5084,7 @@ var Script;
         if (!_attacks || _attacks.length === 0)
             return;
         for (let attack of _attacks) {
-            let attackDmg = this.getDamageOfAttacks([attack], true);
+            let attackDmg = this.getDamageOfAttacks?.([attack], false) ?? attack.baseDamage;
             // get the target(s)
             let targets, side, positions;
             if (_targetsOverride) {
@@ -6276,13 +6301,12 @@ var Script;
             if (_removeListeners)
                 elementToRemove.removeEventListeners();
         }
-        moveEntityToAnchor(_entity, position) {
+        async moveEntityToAnchor(_entity, position, _timeMS = 0) {
             let _anchor = this.getAnchor(position[0], position[1]);
             //get the Positions from the placeholders and translate the entity to it
-            let pos3 = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
-            //console.log(_entity);
-            _entity.mtxLocal.translation = pos3.clone;
+            let pos3 = _anchor.mtxLocal.translation;
             this.grid.set(position, _entity, true);
+            await Script.moveNodeOverTime(_entity, pos3, _entity.mtxLocal.rotation, _timeMS);
         }
         getAnchor(_x, _z) {
             let anchor;
@@ -6298,19 +6322,21 @@ var Script;
         }
         async move(_ev) {
             //gets the moving entity and moves it
-            this.moveEntityToAnchor(this.grid.get(_ev.detail.oldPosition), _ev.detail.position);
+            const visEntity = Script.Provider.visualizer.getEntity(_ev.cause);
+            if (this.grid.findElementPosition(visEntity))
+                await this.moveEntityToAnchor(visEntity, _ev.detail.position, 1000);
         }
         registerEventListeners() {
-            Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVED, this.eventListener);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVE, this.eventListener);
             Script.EventBus.addEventListener(Script.EVENT.RUN_END, this.eventListener);
         }
         removeEventListeners() {
-            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_MOVED, this.eventListener);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_MOVE, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.eventListener);
         }
         async handleEvent(_ev) {
             switch (_ev.type) {
-                case Script.EVENT.ENTITY_MOVED: {
+                case Script.EVENT.ENTITY_MOVE: {
                     await this.move(_ev);
                     break;
                 }

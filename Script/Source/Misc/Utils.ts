@@ -38,7 +38,7 @@ namespace Script {
     }
 
     export function chooseRandomElementsFromArray<T>(_array: readonly T[], _max: number, _exclude: T[] = []): T[] {
-        if(!_array) return [];
+        if (!_array) return [];
         let filteredOptions = _array.filter((element) => !_exclude.includes(element));
         if (filteredOptions.length < _max) {
             return filteredOptions;
@@ -131,5 +131,29 @@ namespace Script {
 
         viewport.initialize("game", graph, camera, canvas);
         return viewport;
+    }
+
+    export async function moveNodeOverTime(_node: ƒ.Node, _translationTarget: ƒ.Vector3, _rotationTarget: ƒ.Vector3, _timeMS: number): Promise<void> {
+        if (!_node) return;
+        let elapsedTime: number = 0;
+        const translationStart: ƒ.Vector3 = _node.mtxLocal.translation.clone;
+        const rotationStart: ƒ.Vector3 = _node.mtxLocal.rotation.clone;
+
+        return new Promise<void>((resolve) => {
+            const mover = () => {
+                const delta = ƒ.Loop.timeFrameGame;
+                elapsedTime += delta;
+                if (elapsedTime > _timeMS) {
+                    _node.mtxLocal.translation = _translationTarget;
+                    _node.mtxLocal.rotation = _rotationTarget;
+                    ƒ.Loop.removeEventListener(ƒ.EVENT.LOOP_FRAME, mover);
+                    resolve();
+                    return;
+                }
+                _node.mtxLocal.translation = ƒ.Vector3.LERP(translationStart, _translationTarget, elapsedTime / _timeMS);
+                _node.mtxLocal.rotation = ƒ.Vector3.LERP(rotationStart, _rotationTarget, elapsedTime / _timeMS);
+            };
+            ƒ.Loop.addEventListener(ƒ.EVENT.LOOP_FRAME, mover);
+        });
     }
 }

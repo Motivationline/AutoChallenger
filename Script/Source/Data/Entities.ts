@@ -1057,7 +1057,7 @@ namespace Script {
             {
                 id: "cactusCrawler", // doesn't attack but gets thorns after moving
                 health: 1,
-                moves: { direction: DIRECTION_RELATIVE.FORWARD, rotateBy: 4, currentDirection: [1, 0], distance: 1, blocked: { attempts: 8, rotateBy: 4 } },
+                moves: { direction: DIRECTION_RELATIVE.FORWARD, currentDirection: [1, 0], distance: 1, blocked: { attempts: 8, rotateBy: 4 } },
                 //startDirection: 6, // down
                 abilities: [
                     {   // gain thorns 1 after moving
@@ -1077,7 +1077,7 @@ namespace Script {
                         }
                     }
                 ],
-                info: "Moves left and right, and gains 1 Thorns after moving."
+                info: "Moves up and down, gains 1 Thorns after moving."
             },
             {
                 id: "flameFlinger", // low hp but massive single target damage

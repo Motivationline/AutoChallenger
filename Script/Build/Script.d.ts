@@ -730,6 +730,7 @@ declare namespace Script {
     export function enumToArray<T extends object>(anEnum: T): T[keyof T][];
     export function findFirstComponentInGraph<T extends ƒ.Component>(_graph: ƒ.Node, _cmp: new () => T): T;
     export function loadResourcesAndInitViewport(canvas: HTMLCanvasElement): Promise<ƒ.Viewport>;
+    export function moveNodeOverTime(_node: ƒ.Node, _translationTarget: ƒ.Vector3, _rotationTarget: ƒ.Vector3, _timeMS: number): Promise<void>;
     export {};
 }
 declare namespace Script {
@@ -1198,7 +1199,7 @@ declare namespace Script {
         constructor(_grid: Grid<VisualizeEntity>, _side: string);
         addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting?: boolean, _anchor?: ƒ.Node): void;
         removeEntityFromGrid(_pos: Position, _removeListeners: boolean): void;
-        moveEntityToAnchor(_entity: VisualizeEntity, position: Position): void;
+        moveEntityToAnchor(_entity: VisualizeEntity, position: Position, _timeMS?: number): Promise<void>;
         getAnchor(_x: number, _z: number): ƒ.Node;
         nuke(): void;
         move(_ev: FightEvent): Promise<void>;

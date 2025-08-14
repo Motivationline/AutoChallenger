@@ -178,13 +178,13 @@ namespace Script {
                 id: "steppingstone", // Should deal 1 damage to enemies that move (currently to everyone hehe)
                 abilityLevels: [
                     {
-                        on: EVENT.ENTITY_MOVE,
+                        on: EVENT.ENTITY_MOVED,
                         target: "target",
                         attack: { baseDamage: 1 },
                         info: "Deals 1 damage to enemies whenever they move. CURRENTLY 1 TO EVERY ENEMY"
                     },
                     {
-                        on: EVENT.ENTITY_MOVE,
+                        on: EVENT.ENTITY_MOVED,
                         target: "target",
                         attack: { baseDamage: 2 },
                         info: "Deals 2 damage to enemies whenever they move. CURRENTLY 2 TO EVERY ENEMY"

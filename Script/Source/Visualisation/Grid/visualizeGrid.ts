@@ -55,7 +55,7 @@ namespace Script {
             this.addChild(_entity);
             this.grid.set(_pos, _entity, true);
             _entity.activate(true);
-            
+
         }
 
         removeEntityFromGrid(_pos: Position, _removeListeners: boolean) {
@@ -69,14 +69,13 @@ namespace Script {
                 elementToRemove.removeEventListeners();
         }
 
-        moveEntityToAnchor(_entity: VisualizeEntity, position: Position) {
+        async moveEntityToAnchor(_entity: VisualizeEntity, position: Position, _timeMS: number = 0) {
             let _anchor = this.getAnchor(position[0], position[1]);
 
             //get the Positions from the placeholders and translate the entity to it
-            let pos3: ƒ.Vector3 = _anchor.getComponent(ƒ.ComponentTransform).mtxLocal.translation;
-            //console.log(_entity);
-            _entity.mtxLocal.translation = pos3.clone;
+            let pos3: ƒ.Vector3 = _anchor.mtxLocal.translation;
             this.grid.set(position, _entity, true);
+            await moveNodeOverTime(_entity, pos3, _entity.mtxLocal.rotation, _timeMS);
         }
 
         getAnchor(_x: number, _z: number): ƒ.Node {
@@ -95,16 +94,18 @@ namespace Script {
 
         async move(_ev: FightEvent) {
             //gets the moving entity and moves it
-            this.moveEntityToAnchor(this.grid.get(_ev.detail.oldPosition), _ev.detail.position);
+            const visEntity = Provider.visualizer.getEntity(_ev.cause as Entity);
+            if (this.grid.findElementPosition(visEntity))
+                await this.moveEntityToAnchor(visEntity, _ev.detail.position, 1000);
         }
 
         registerEventListeners(): void {
-            EventBus.addEventListener(EVENT.ENTITY_MOVED, this.eventListener);
+            EventBus.addEventListener(EVENT.ENTITY_MOVE, this.eventListener);
             EventBus.addEventListener(EVENT.RUN_END, this.eventListener);
         }
 
         removeEventListeners(): void {
-            EventBus.removeEventListener(EVENT.ENTITY_MOVED, this.eventListener);
+            EventBus.removeEventListener(EVENT.ENTITY_MOVE, this.eventListener);
             EventBus.removeEventListener(EVENT.RUN_END, this.eventListener);
         }
 
@@ -115,7 +116,7 @@ namespace Script {
         async handleEvent(_ev: FightEvent) {
 
             switch (_ev.type) {
-                case EVENT.ENTITY_MOVED: {
+                case EVENT.ENTITY_MOVE: {
                     await this.move(_ev);
                     break;
                 }

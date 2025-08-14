@@ -118,7 +118,7 @@ namespace Script {
     export async function executeAttack(_attacks: AttackData[], _friendly: Grid<IEntity>, _opponent: Grid<IEntity>, _targetsOverride?: IEntity[]) {
         if (!_attacks || _attacks.length === 0) return;
         for (let attack of _attacks) {
-            let attackDmg = this.getDamageOfAttacks([attack], true);
+            let attackDmg = this.getDamageOfAttacks?.([attack], false) ?? attack.baseDamage;
             // get the target(s)
             let targets: IEntity[], side: TARGET_SIDE, positions: Grid<boolean>;
             if (_targetsOverride) {
