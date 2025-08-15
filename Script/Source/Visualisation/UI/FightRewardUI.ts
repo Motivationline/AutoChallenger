@@ -3,14 +3,20 @@
 namespace Script {
     export class FightRewardUI extends UILayer {
         rewardsOverivew: HTMLElement;
+        infoElement: HTMLElement;
         convertButton: HTMLButtonElement;
-        continueButton: HTMLButtonElement;
+        cancelButton: HTMLButtonElement;
+        confirmButton: HTMLButtonElement;
+        continueButtonWrapper: HTMLElement;
         constructor() {
             super();
             this.element = document.getElementById("FightReward");
+            this.infoElement = document.getElementById("FightRewardInfo");
             this.rewardsOverivew = document.getElementById("FightRewardRewards") as HTMLElement;
-            this.continueButton = document.getElementById("FightRewardContinue") as HTMLButtonElement;
+            this.continueButtonWrapper = document.getElementById("FightRewardContinueWrapper") as HTMLButtonElement;
             this.convertButton = document.getElementById("FightRewardConvert") as HTMLButtonElement;
+            this.confirmButton = document.getElementById("FightRewardConfirm") as HTMLButtonElement;
+            this.cancelButton = document.getElementById("FightRewardCancel") as HTMLButtonElement;
         }
 
         eumlings: Map<HTMLElement, Eumling> = new Map();
@@ -22,14 +28,14 @@ namespace Script {
             const rewardIcons: HTMLElement[] = [];
             if (gold) {
                 rewardIcons.push(createElementAdvanced("div", {
-                    innerHTML: `+${gold} Gold`,
+                    innerHTML: `<span>${gold}</span>`,
                     classes: ["FightRewardIcon", "Gold"]
                 }));
                 this.gold = gold;
             }
             if (xp) {
                 rewardIcons.push(createElementAdvanced("div", {
-                    innerHTML: `+${xp} XP`,
+                    innerHTML: `<span>${xp}</span>`,
                     classes: ["FightRewardIcon", "XP"]
                 }));
                 this.xp = xp;
@@ -44,21 +50,25 @@ namespace Script {
             }
             this.rewardsOverivew.replaceChildren(...rewardIcons);
 
+            this.eumlings.clear();
             for (let eumling of Run.currentRun.eumlings) {
-                let uiElement = EumlingUIElement.getUIElement(eumling);
-                this.eumlings.set(uiElement.element, uiElement.eumling);
-                uiElement.element.classList.remove("hidden");
-                uiElement.element.addEventListener("click", this.clickOnEumling);
+                let uiElement = createElementAdvanced("div", { classes: ["selectable", "clickable"] });
+                uiElement.appendChild(EumlingUIElement.getUIElement(eumling).element);
+                this.eumlings.set(uiElement, eumling);
+                uiElement.classList.remove("hidden");
+                uiElement.addEventListener("click", this.clickOnEumling);
             }
             document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
             this.updateXPText();
-            this.continueButton.disabled = true;
+            this.continueButtonWrapper.classList.add("hidden");
             this.convertButton.disabled = false;
+            this.convertButton.classList.remove("hidden");
+            this.hideInfo();
         }
         async onShow(): Promise<void> {
             super.onShow();
             this.addEventListeners();
-            for(let element of this.eumlings.keys()) {
+            for (let element of this.eumlings.keys()) {
                 element.addEventListener("click", this.clickOnEumling);
             }
             document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
@@ -68,50 +78,90 @@ namespace Script {
             this.removeEventListeners();
         }
 
+        selectedEumling: Eumling;
         clickOnEumling = (_ev: MouseEvent) => {
             if (this.xp <= 0) return;
-            let target = _ev.target as HTMLElement;
+            let target = _ev.currentTarget as HTMLElement;
             let eumling = this.eumlings.get(target);
-            eumling.addXP(1);
+            if (!eumling) return;
+            this.eumlings.keys().forEach(el => el.classList.remove("selected"));
+            target.classList.add("selected");
+            this.showAndUpdateInfo(eumling);
+        }
+
+        clickOnConfirm = () => {
+            if (!this.selectedEumling) return;
+            this.selectedEumling.addXP(1);
             this.xp--;
             this.updateXPText();
+            this.showAndUpdateInfo(this.selectedEumling);
             if (this.xp <= 0) {
-                this.continueButton.disabled = false;
+                this.continueButtonWrapper.classList.remove("hidden");
+                this.hideInfo();
             }
         }
 
+        private showAndUpdateInfo(eumling: Eumling) {
+            this.selectedEumling = eumling;
+            this.infoElement.parentElement.classList.remove("hidden");
+            this.infoElement.innerHTML = `
+            <span class="InfoTitle">${eumling.type}</span>
+            <span class="Info">${eumling.currentHealth} / ${eumling.health}♥️</span>
+            <span class="Info">${eumling.xp} / ${eumling.requiredXPForLevelup}XP</span>
+            <span class="Info">${eumling.info}</span>`;
+        }
+
+        private hideInfo() {
+            this.infoElement.parentElement.classList.add("hidden");
+        }
+
         private updateXPText() {
-            document.getElementById("FightRewardXPAmount").innerText = this.xp === 0 ?
-                `No more XP to distribute` :
-                `Distribute ${this.xp}XP`
-                ;
+            document.getElementById("FightRewardXPAmount").innerText = this.xp.toString();
             this.convertButton.disabled = this.xp === 0;
+            this.convertButton.disabled ? this.convertButton.classList.add("hidden") : this.convertButton.classList.remove("hidden");
         }
 
         convert = () => {
             Run.currentRun.changeGold(this.xp);
             this.gold += this.xp;
-            document.getElementById("FightRewardRewards").querySelector(".Gold").innerHTML = `+${this.gold} Gold`;
+            document.getElementById("FightRewardRewards").querySelector(".Gold span").innerHTML = `${this.gold}`;
             this.xp = 0;
-            this.continueButton.disabled = false;
+            this.continueButtonWrapper.classList.remove("hidden");
+            this.convertButton.disabled = true;
+            this.convertButton.classList.add("hidden");
             this.updateXPText();
+            this.hideInfo();
         }
 
         private finishRewards = () => {
             EventBus.dispatchEvent({ type: EVENT.REWARDS_CLOSE });
         }
 
+        private removeOverlay = (_ev: MouseEvent) => {
+            const target = _ev.target as HTMLElement;
+            if (target.classList.contains("clickable")) return;
+            if (target.classList.contains("selectable")) return;
+            if (target.tagName === "button") return;
+            this.hideInfo();
+            this.selectedEumling = undefined;
+            this.eumlings.keys().forEach(el => el.classList.remove("selected"));
+        }
+
 
         addEventListeners(): void {
-            this.continueButton.addEventListener("click", this.finishRewards);
+            this.cancelButton.addEventListener("click", this.removeOverlay);
+            this.continueButtonWrapper.addEventListener("click", this.finishRewards);
             this.convertButton.addEventListener("click", this.convert);
+            this.confirmButton.addEventListener("click", this.clickOnConfirm);
         }
         removeEventListeners(): void {
             for (let element of this.eumlings.keys()) {
                 element.removeEventListener("click", this.clickOnEumling);
             }
-            this.continueButton.removeEventListener("click", this.finishRewards);
+            this.cancelButton.removeEventListener("click", this.removeOverlay);
+            this.continueButtonWrapper.removeEventListener("click", this.finishRewards);
             this.convertButton.removeEventListener("click", this.convert);
+            this.confirmButton.removeEventListener("click", this.clickOnConfirm);
         }
 
     }

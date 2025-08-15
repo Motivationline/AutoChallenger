@@ -608,8 +608,11 @@ declare namespace Script {
 declare namespace Script {
     class FightRewardUI extends UILayer {
         rewardsOverivew: HTMLElement;
+        infoElement: HTMLElement;
         convertButton: HTMLButtonElement;
-        continueButton: HTMLButtonElement;
+        cancelButton: HTMLButtonElement;
+        confirmButton: HTMLButtonElement;
+        continueButtonWrapper: HTMLElement;
         constructor();
         eumlings: Map<HTMLElement, Eumling>;
         xp: number;
@@ -617,10 +620,15 @@ declare namespace Script {
         onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
         onShow(): Promise<void>;
         onHide(): Promise<void>;
+        selectedEumling: Eumling;
         clickOnEumling: (_ev: MouseEvent) => void;
+        clickOnConfirm: () => void;
+        private showAndUpdateInfo;
+        private hideInfo;
         private updateXPText;
         convert: () => void;
         private finishRewards;
+        private removeOverlay;
         addEventListeners(): void;
         removeEventListeners(): void;
     }

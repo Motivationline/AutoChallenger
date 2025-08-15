@@ -29,8 +29,9 @@ namespace Script {
             this.initEumlings();
             this.placedEumlings.clear();
             await this.moveCamera(ƒ.Vector3.Z(-3), ƒ.Vector3.X(10), 1000);
-            const center = viewport.pointWorldToClient(ƒ.Vector3.ZERO());
+            const center = viewport.pointWorldToClient(ƒ.Vector3.Z(-0.3));
             document.getElementById("FightPrepInfoWrapper").style.top = center.y + "px";
+            document.getElementById("FightPrepGoldCounterWrapper").appendChild(GoldDisplayElement.element);
         }
 
         async onRemove(): Promise<void> {

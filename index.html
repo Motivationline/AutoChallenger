@@ -130,6 +130,7 @@
             <div id="FightPrepInfo">
             </div>
         </div>
+        <div id="FightPrepGoldCounterWrapper"></div>
     </div>
     <div id="Fight" class="UI hidden">
         <!--Fight UI-->
@@ -139,26 +140,36 @@
         </div>
         <div id="FightSpeedOptions">
         </div>
-        <div class="GoldCounter">Gold: 0</div>
-        <div class="RoundCounter">
-        </div>
+        <div id="FightGoldCounterWrapper"></div>
         <div id="FightPhaseOverlay" class="UI no-interact">
             <div id="FightPhaseOverlayText" class="RoundCounter">
             </div>
         </div>
     </div>
     <div id="FightReward" class="UI hidden blur">
+        <div id="FightRewardTitle">Victory</div>
         <div id="FightRewardRewards">
         </div>
         <div id="FightRewardXP">
             <div id="FightRewardXPAmount">
             </div>
+            <span>Choose an Eumling to grant XP to</span>
             <div id="FightRewardXPEumlings">
+            </div>
+            <span>- or -</span>
+            <button id="FightRewardConvert" class="green">Convert remaining XP to Gold</button>
+        </div>
+        <div id="FightRewardInfoWrapperWrapper">
+            <div id="FightRewardInfoWrapper">
+                <div id="FightRewardInfo"></div>
+                <div id="FightRewardInfoButtons">
+                    <button id="FightRewardConfirm" class="green">Grant XP</button>
+                    <button id="FightRewardCancel" class="red">Cancel</button>
+                </div>
             </div>
         </div>
         <div id="FightRewardContinueWrapper">
-            <button id="FightRewardConvert">Convert remaining XP to Gold</button>
-            <button id="FightRewardContinue">Continue</button>
+            <button id="FightRewardContinue" class="green">Continue</button>
         </div>
     </div>
 

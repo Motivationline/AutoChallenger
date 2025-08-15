@@ -15,6 +15,7 @@ namespace Script {
             super.onAdd(_zindex, _ev);
 
             this.initStones();
+            document.getElementById("FightGoldCounterWrapper").appendChild(GoldDisplayElement.element);
         }
 
 

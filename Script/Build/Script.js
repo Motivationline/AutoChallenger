@@ -3074,8 +3074,9 @@ var Script;
             this.initEumlings();
             this.placedEumlings.clear();
             await this.moveCamera(ƒ.Vector3.Z(-3), ƒ.Vector3.X(10), 1000);
-            const center = Script.viewport.pointWorldToClient(ƒ.Vector3.ZERO());
+            const center = Script.viewport.pointWorldToClient(ƒ.Vector3.Z(-0.3));
             document.getElementById("FightPrepInfoWrapper").style.top = center.y + "px";
+            document.getElementById("FightPrepGoldCounterWrapper").appendChild(Script.GoldDisplayElement.element);
         }
         async onRemove() {
             super.onRemove();
@@ -3277,6 +3278,7 @@ var Script;
         async onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
             this.initStones();
+            document.getElementById("FightGoldCounterWrapper").appendChild(Script.GoldDisplayElement.element);
         }
         initStones() {
             const stones = [];
@@ -3305,30 +3307,59 @@ var Script;
             this.clickOnEumling = (_ev) => {
                 if (this.xp <= 0)
                     return;
-                let target = _ev.target;
+                let target = _ev.currentTarget;
                 let eumling = this.eumlings.get(target);
-                eumling.addXP(1);
+                if (!eumling)
+                    return;
+                this.eumlings.keys().forEach(el => el.classList.remove("selected"));
+                target.classList.add("selected");
+                this.showAndUpdateInfo(eumling);
+            };
+            this.clickOnConfirm = () => {
+                if (!this.selectedEumling)
+                    return;
+                this.selectedEumling.addXP(1);
                 this.xp--;
                 this.updateXPText();
+                this.showAndUpdateInfo(this.selectedEumling);
                 if (this.xp <= 0) {
-                    this.continueButton.disabled = false;
+                    this.continueButtonWrapper.classList.remove("hidden");
+                    this.hideInfo();
                 }
             };
             this.convert = () => {
                 Script.Run.currentRun.changeGold(this.xp);
                 this.gold += this.xp;
-                document.getElementById("FightRewardRewards").querySelector(".Gold").innerHTML = `+${this.gold} Gold`;
+                document.getElementById("FightRewardRewards").querySelector(".Gold span").innerHTML = `${this.gold}`;
                 this.xp = 0;
-                this.continueButton.disabled = false;
+                this.continueButtonWrapper.classList.remove("hidden");
+                this.convertButton.disabled = true;
+                this.convertButton.classList.add("hidden");
                 this.updateXPText();
+                this.hideInfo();
             };
             this.finishRewards = () => {
                 Script.EventBus.dispatchEvent({ type: Script.EVENT.REWARDS_CLOSE });
             };
+            this.removeOverlay = (_ev) => {
+                const target = _ev.target;
+                if (target.classList.contains("clickable"))
+                    return;
+                if (target.classList.contains("selectable"))
+                    return;
+                if (target.tagName === "button")
+                    return;
+                this.hideInfo();
+                this.selectedEumling = undefined;
+                this.eumlings.keys().forEach(el => el.classList.remove("selected"));
+            };
             this.element = document.getElementById("FightReward");
+            this.infoElement = document.getElementById("FightRewardInfo");
             this.rewardsOverivew = document.getElementById("FightRewardRewards");
-            this.continueButton = document.getElementById("FightRewardContinue");
+            this.continueButtonWrapper = document.getElementById("FightRewardContinueWrapper");
             this.convertButton = document.getElementById("FightRewardConvert");
+            this.confirmButton = document.getElementById("FightRewardConfirm");
+            this.cancelButton = document.getElementById("FightRewardCancel");
         }
         async onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
@@ -3336,14 +3367,14 @@ var Script;
             const rewardIcons = [];
             if (gold) {
                 rewardIcons.push(Script.createElementAdvanced("div", {
-                    innerHTML: `+${gold} Gold`,
+                    innerHTML: `<span>${gold}</span>`,
                     classes: ["FightRewardIcon", "Gold"]
                 }));
                 this.gold = gold;
             }
             if (xp) {
                 rewardIcons.push(Script.createElementAdvanced("div", {
-                    innerHTML: `+${xp} XP`,
+                    innerHTML: `<span>${xp}</span>`,
                     classes: ["FightRewardIcon", "XP"]
                 }));
                 this.xp = xp;
@@ -3357,16 +3388,20 @@ var Script;
                 }
             }
             this.rewardsOverivew.replaceChildren(...rewardIcons);
+            this.eumlings.clear();
             for (let eumling of Script.Run.currentRun.eumlings) {
-                let uiElement = Script.EumlingUIElement.getUIElement(eumling);
-                this.eumlings.set(uiElement.element, uiElement.eumling);
-                uiElement.element.classList.remove("hidden");
-                uiElement.element.addEventListener("click", this.clickOnEumling);
+                let uiElement = Script.createElementAdvanced("div", { classes: ["selectable", "clickable"] });
+                uiElement.appendChild(Script.EumlingUIElement.getUIElement(eumling).element);
+                this.eumlings.set(uiElement, eumling);
+                uiElement.classList.remove("hidden");
+                uiElement.addEventListener("click", this.clickOnEumling);
             }
             document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
             this.updateXPText();
-            this.continueButton.disabled = true;
+            this.continueButtonWrapper.classList.add("hidden");
             this.convertButton.disabled = false;
+            this.convertButton.classList.remove("hidden");
+            this.hideInfo();
         }
         async onShow() {
             super.onShow();
@@ -3380,22 +3415,37 @@ var Script;
             super.onHide();
             this.removeEventListeners();
         }
+        showAndUpdateInfo(eumling) {
+            this.selectedEumling = eumling;
+            this.infoElement.parentElement.classList.remove("hidden");
+            this.infoElement.innerHTML = `
+            <span class="InfoTitle">${eumling.type}</span>
+            <span class="Info">${eumling.currentHealth} / ${eumling.health}♥️</span>
+            <span class="Info">${eumling.xp} / ${eumling.requiredXPForLevelup}XP</span>
+            <span class="Info">${eumling.info}</span>`;
+        }
+        hideInfo() {
+            this.infoElement.parentElement.classList.add("hidden");
+        }
         updateXPText() {
-            document.getElementById("FightRewardXPAmount").innerText = this.xp === 0 ?
-                `No more XP to distribute` :
-                `Distribute ${this.xp}XP`;
+            document.getElementById("FightRewardXPAmount").innerText = this.xp.toString();
             this.convertButton.disabled = this.xp === 0;
+            this.convertButton.disabled ? this.convertButton.classList.add("hidden") : this.convertButton.classList.remove("hidden");
         }
         addEventListeners() {
-            this.continueButton.addEventListener("click", this.finishRewards);
+            this.cancelButton.addEventListener("click", this.removeOverlay);
+            this.continueButtonWrapper.addEventListener("click", this.finishRewards);
             this.convertButton.addEventListener("click", this.convert);
+            this.confirmButton.addEventListener("click", this.clickOnConfirm);
         }
         removeEventListeners() {
             for (let element of this.eumlings.keys()) {
                 element.removeEventListener("click", this.clickOnEumling);
             }
-            this.continueButton.removeEventListener("click", this.finishRewards);
+            this.cancelButton.removeEventListener("click", this.removeOverlay);
+            this.continueButtonWrapper.removeEventListener("click", this.finishRewards);
             this.convertButton.removeEventListener("click", this.convert);
+            this.confirmButton.removeEventListener("click", this.clickOnConfirm);
         }
     }
     Script.FightRewardUI = FightRewardUI;
