@@ -14,9 +14,9 @@ namespace Script {
             document.getElementById("RunEndInner").innerHTML = 
             _ev.detail.success ?
             `<h2>Success!</h2>
-            <p>You won! :&gt;</p>`:
+            <p>You won! :)</p>`:
             `<h2>Defeat!</h2>
-            <p>You lost. :(;</p>`;
+            <p>You lost. :(</p>`;
         }
 
         close = () => {

@@ -815,6 +815,28 @@ canvas.fullscreen {
   font-size: 3vh;
 }
 
+/* END SCREEN */
+#RunEnd {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#RunEndInner {
+  background: url("./Assets/UIElemente/HolzSchild.png") center no-repeat;
+  background-size: contain;
+  font-size: 6vh;
+  padding: 1.5em;
+  color: white;
+  text-align: center;
+  animation: scale-in 0.7s cubic-bezier(.81, 1.48, .64, 1);
+}
+#RunEndMainMenu {
+  opacity: 0;
+  animation: fade-in 0.4s 0.7s cubic-bezier(.81, 1.48, .64, 1) forwards;
+  font-size: 3vh;
+}
+
 /* MISC */
 
 .no-interact {
@@ -947,9 +969,10 @@ button.red {
   color: white;
   display: grid;
   place-items: center;
-  padding: 1em 3em;
+  padding: 1em 2em;
   font-weight: 700;
   margin-bottom: 3vh;
+  text-align: center;
 }
 
 .ChoiceScreen>div {
