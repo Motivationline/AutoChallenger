@@ -68,9 +68,9 @@ namespace Script {
         async onShow(): Promise<void> {
             super.onShow();
             this.addEventListeners();
-            for (let element of this.eumlings.keys()) {
-                element.addEventListener("click", this.clickOnEumling);
-            }
+            this.eumlings.forEach((eum, el) => {
+                el.appendChild(EumlingUIElement.getUIElement(eum).element);
+            })
             document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
         }
         async onHide(): Promise<void> {
@@ -99,6 +99,12 @@ namespace Script {
                 this.continueButtonWrapper.classList.remove("hidden");
                 this.hideInfo();
             }
+        }
+
+        eumlingLevelup = () => {
+            this.eumlings.forEach((eum, el) => {
+                el.appendChild(EumlingUIElement.getUIElement(eum).element);
+            })
         }
 
         private showAndUpdateInfo(eumling: Eumling) {
@@ -153,6 +159,7 @@ namespace Script {
             this.continueButtonWrapper.addEventListener("click", this.finishRewards);
             this.convertButton.addEventListener("click", this.convert);
             this.confirmButton.addEventListener("click", this.clickOnConfirm);
+            EventBus.addEventListener(EVENT.EUMLING_LEVELUP_CHOSEN, this.eumlingLevelup);
         }
         removeEventListeners(): void {
             for (let element of this.eumlings.keys()) {
@@ -162,6 +169,7 @@ namespace Script {
             this.continueButtonWrapper.removeEventListener("click", this.finishRewards);
             this.convertButton.removeEventListener("click", this.convert);
             this.confirmButton.removeEventListener("click", this.clickOnConfirm);
+            EventBus.removeEventListener(EVENT.EUMLING_LEVELUP_CHOSEN, this.eumlingLevelup);
         }
 
     }

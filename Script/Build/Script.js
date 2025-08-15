@@ -3327,6 +3327,11 @@ var Script;
                     this.hideInfo();
                 }
             };
+            this.eumlingLevelup = () => {
+                this.eumlings.forEach((eum, el) => {
+                    el.appendChild(Script.EumlingUIElement.getUIElement(eum).element);
+                });
+            };
             this.convert = () => {
                 Script.Run.currentRun.changeGold(this.xp);
                 this.gold += this.xp;
@@ -3406,9 +3411,9 @@ var Script;
         async onShow() {
             super.onShow();
             this.addEventListeners();
-            for (let element of this.eumlings.keys()) {
-                element.addEventListener("click", this.clickOnEumling);
-            }
+            this.eumlings.forEach((eum, el) => {
+                el.appendChild(Script.EumlingUIElement.getUIElement(eum).element);
+            });
             document.getElementById("FightRewardXPEumlings").replaceChildren(...this.eumlings.keys());
         }
         async onHide() {
@@ -3437,6 +3442,7 @@ var Script;
             this.continueButtonWrapper.addEventListener("click", this.finishRewards);
             this.convertButton.addEventListener("click", this.convert);
             this.confirmButton.addEventListener("click", this.clickOnConfirm);
+            Script.EventBus.addEventListener(Script.EVENT.EUMLING_LEVELUP_CHOSEN, this.eumlingLevelup);
         }
         removeEventListeners() {
             for (let element of this.eumlings.keys()) {
@@ -3446,6 +3452,7 @@ var Script;
             this.continueButtonWrapper.removeEventListener("click", this.finishRewards);
             this.convertButton.removeEventListener("click", this.convert);
             this.confirmButton.removeEventListener("click", this.clickOnConfirm);
+            Script.EventBus.removeEventListener(Script.EVENT.EUMLING_LEVELUP_CHOSEN, this.eumlingLevelup);
         }
     }
     Script.FightRewardUI = FightRewardUI;
@@ -3456,19 +3463,19 @@ var Script;
 (function (Script) {
     class EumlingLevelupUI extends Script.UILayer {
         static { this.orientationInfo = new Map([
-            ["R", "Realistisch"],
-            ["I", "Investigativ / Forschend"],
-            ["A", "Artistisch / Künstlerisch"],
-            ["S", "Sozial"],
-            ["E", "Enterprising / Unternehmerisch"],
-            ["C", "Conventional / Traditionell"],
+            ["R", "Realistic"],
+            ["I", "Investigating"],
+            ["A", "Artistic"],
+            ["S", "Social"],
+            ["E", "Enterprising"],
+            ["C", "Conventional"],
         ]); }
         constructor() {
             super();
             this.selectOption = (_ev) => {
                 const element = _ev.currentTarget;
                 this.selectedOption = element.dataset.option;
-                this.confirmButton.disabled = false;
+                this.confirmButton.classList.remove("hidden");
                 for (let element of document.querySelectorAll(".LevelupOption")) {
                     element.classList.remove("selected");
                 }
@@ -3488,15 +3495,15 @@ var Script;
         }
         async onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
-            this.confirmButton.disabled = true;
+            this.confirmButton.classList.add("hidden");
             this.eumling = _ev.target;
             let specialisationOptions = this.eumling.types.length === 1 ? ["A", "I"] : ["C", "E"];
             this.eumlingElement.replaceChildren(Script.EumlingUIElement.getUIElement(this.eumling).element);
             const optionElements = [];
             for (let option of specialisationOptions) {
                 const elem = Script.createElementAdvanced("div", {
-                    classes: ["LevelupOption"],
-                    innerHTML: `<span>+ ${option}</span>
+                    classes: ["LevelupOption", "selectable", "clickable"],
+                    innerHTML: `<span class="LevelupLetter">+ ${option}</span>
                     <span>${EumlingLevelupUI.orientationInfo.get(option)}</span>`,
                     attributes: [["data-option", option]],
                 });

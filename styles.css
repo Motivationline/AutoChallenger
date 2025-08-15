@@ -534,6 +534,7 @@ canvas.fullscreen {
 }
 
 /* Other */
+#EumlingLevelupInner,
 #ChooseStoneInner,
 #ChooseEumlingInner {
   display: flex;
@@ -542,6 +543,7 @@ canvas.fullscreen {
   gap: 3vh;
 }
 
+#EumlingLevelupInfo,
 #ChooseEumlingInfo,
 #ChooseStoneInfo {
   display: flex;
@@ -563,6 +565,7 @@ canvas.fullscreen {
   font-size: 0.8em;
 }
 
+#EumlingLevelupConfirm,
 #ChooseStoneConfirm,
 #ChooseEumlingConfirm {
   font-size: 3vh;
@@ -837,6 +840,18 @@ canvas.fullscreen {
   font-size: 3vh;
 }
 
+/* LEVELUP */
+.LevelupOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.LevelupLetter {
+  font-size: 2em;
+}
+
 /* MISC */
 
 .no-interact {
@@ -969,7 +984,7 @@ button.red {
   color: white;
   display: grid;
   place-items: center;
-  padding: 1em 2em;
+  padding: 1em 1em;
   font-weight: 700;
   margin-bottom: 3vh;
   text-align: center;

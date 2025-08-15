@@ -174,15 +174,16 @@
     </div>
 
     <div id="EumlingLevelup" class="UI blur hidden">
-        <h2>Eumling Levelup</h2>
-        <div id="EumlingLevelupEumling">
+        <div id="EumlingLevelupInner">
+
+            <div class="ChoiceScreen">
+                <span>Choose a Specialisation</span>
+                <div id="EumlingLevelupOptions"></div>
+            </div>
+            <div id="EumlingLevelupEumling"></div>
+            <div id="EumlingLevelupInfo" class="InfoScreen"></div>
+            <button id="EumlingLevelupConfirm" class="green">Confirm</button>
         </div>
-        <p>Which Specialisation do you want to add?</p>
-        <div id="EumlingLevelupOptions">
-        </div>
-        <div id="EumlingLevelupInfo">
-        </div>
-        <button id="EumlingLevelupConfirm">confirm</button>
     </div>
 
     <div id="RunEnd" class="UI blur hidden">
@@ -196,7 +197,7 @@
         <div id="ShopHeader"></div>
         <h3>Buy Stones</h3>
         <div id="ShopStonesWrapper">
-            <div id="ShopStonesRefresh" class="clickable selectable center-center ShopOption" data-cost="1"]>
+            <div id="ShopStonesRefresh" class="clickable selectable center-center ShopOption" data-cost="1" ]>
                 <img src="./Assets/UIElemente/refresh.svg" alt="Refresh">
                 <div class="GoldDisplay">1</div>
             </div>

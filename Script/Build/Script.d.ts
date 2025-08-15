@@ -623,6 +623,7 @@ declare namespace Script {
         selectedEumling: Eumling;
         clickOnEumling: (_ev: MouseEvent) => void;
         clickOnConfirm: () => void;
+        eumlingLevelup: () => void;
         private showAndUpdateInfo;
         private hideInfo;
         private updateXPText;

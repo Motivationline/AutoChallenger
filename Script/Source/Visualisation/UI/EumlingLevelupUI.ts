@@ -10,12 +10,12 @@ namespace Script {
         selectedOption: string;
 
         static orientationInfo: Map<string, string> = new Map([
-            ["R", "Realistisch"],
-            ["I", "Investigativ / Forschend"],
-            ["A", "Artistisch / Künstlerisch"],
-            ["S", "Sozial"],
-            ["E", "Enterprising / Unternehmerisch"],
-            ["C", "Conventional / Traditionell"],
+            ["R", "Realistic"],
+            ["I", "Investigating"],
+            ["A", "Artistic"],
+            ["S", "Social"],
+            ["E", "Enterprising"],
+            ["C", "Conventional"],
         ])
 
         constructor() {
@@ -29,7 +29,7 @@ namespace Script {
 
         async onAdd(_zindex: number, _ev?: FightEvent): Promise<void> {
             super.onAdd(_zindex, _ev);
-            this.confirmButton.disabled = true;
+            this.confirmButton.classList.add("hidden");
             this.eumling = _ev.target as Eumling;
 
             let specialisationOptions: string[] = this.eumling.types.length === 1 ? ["A", "I"] : ["C", "E"];
@@ -39,8 +39,8 @@ namespace Script {
             const optionElements: HTMLElement[] = [];
             for (let option of specialisationOptions) {
                 const elem = createElementAdvanced("div", {
-                    classes: ["LevelupOption"],
-                    innerHTML: `<span>+ ${option}</span>
+                    classes: ["LevelupOption", "selectable", "clickable"],
+                    innerHTML: `<span class="LevelupLetter">+ ${option}</span>
                     <span>${EumlingLevelupUI.orientationInfo.get(option)}</span>`,
                     attributes: [["data-option", option]],
                 });
@@ -59,7 +59,7 @@ namespace Script {
         private selectOption = (_ev: MouseEvent) => {
             const element = _ev.currentTarget as HTMLElement;
             this.selectedOption = element.dataset.option;
-            this.confirmButton.disabled = false;
+            this.confirmButton.classList.remove("hidden");
             for (let element of document.querySelectorAll(".LevelupOption")) {
                 element.classList.remove("selected");
             }
