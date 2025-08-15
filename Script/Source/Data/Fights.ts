@@ -42,9 +42,9 @@ namespace Script {
                 difficulty: 0,
                 rounds: 3,
                 entities: [
-                    ["boxingBush", , ,],
-                    [, "boxingBush", ,],
-                    [, , "boxingBush",]],
+                    ["idioticIcicle", , ,],
+                    [, "idioticIcicle", ,],
+                    [, , "idioticIcicle",]],
             },
             {
                 difficulty: 0,
@@ -59,7 +59,7 @@ namespace Script {
                 rounds: 3,
                 entities: [
                     ["flameFlinger", , ,],
-                    [, "sandSitter", "boxingBush",],
+                    [, "sandSitter", "idioticIcicle",],
                     ["flameFlinger", , ,]],
             },
             {
@@ -76,14 +76,14 @@ namespace Script {
                 entities: [
                     [, , "flameFlinger",],
                     [, "sandSitter", ,],
-                    ["boxingBush", , "flameFlinger",]],
+                    ["idioticIcicle", , "flameFlinger",]],
             },
             {
                 difficulty: 0,
                 rounds: 3,
                 entities: [
                     [, "punchingPalmtree", ,],
-                    ["boxingBush", , ,],
+                    ["idioticIcicle", , ,],
                     [, "punchingPalmtree", ,]],
             },
             {
@@ -99,7 +99,7 @@ namespace Script {
                 rounds: 3,
                 entities: [
                     [, "floppyFish", ,],
-                    [, , "boxingBush",],
+                    [, , "idioticIcicle",],
                     ["floppyFish", , ,]],
             },
             {
@@ -162,7 +162,7 @@ namespace Script {
                 difficulty: 2,
                 rounds: 3,
                 entities: [
-                    ["worriedWall", "boxingBush", "sandSitter",],
+                    ["worriedWall", "idioticIcicle", "sandSitter",],
                     ["worriedWall", "cactusCrawler", "countdownCoconut",],
                     [, , ,]],
             },
@@ -170,9 +170,9 @@ namespace Script {
                 difficulty: 2,
                 rounds: 3,
                 entities: [
-                    ["boxingBush", , "flameFlinger",],
+                    ["idioticIcicle", , "flameFlinger",],
                     ["cactusCrawler", "sandSitter", ,],
-                    ["flameFlinger", , "boxingBush",]],
+                    ["flameFlinger", , "idioticIcicle",]],
             },
             {
                 difficulty: 2,
@@ -187,7 +187,7 @@ namespace Script {
                 rounds: 3,
                 entities: [
                     ["floppyFish", "punchingPalmtree", "flameFlinger",],
-                    ["floppyFish", , "boxingBush",],
+                    ["floppyFish", , "idioticIcicle",],
                     ["floppyFish", "sandSitter", "flameFlinger",]],
             },
             {

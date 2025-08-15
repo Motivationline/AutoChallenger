@@ -42,6 +42,7 @@ canvas.fullscreen {
   --depth: 0;
   cursor: pointer;
 }
+
 .StartScreenScreen {
   position: absolute;
   inset: 0;
@@ -52,11 +53,13 @@ canvas.fullscreen {
 #StartScreen1 {
   background-image: url("./Assets/Pics/BackGround_TitleScreen.png");
 }
+
 #StartScreen2 {
   --depth: 50%;
   background-image: url("./Assets/Pics/MiddleGround_TitleScreen.png");
   background-position: calc(50% + (var(--x) - 0.5) * var(--depth)) calc(50% + (var(--y) - 0.5) * var(--depth));
 }
+
 #StartScreen3 {
   --depth: 100%;
   background-image: url("./Assets/Pics/ForeGround_TitleScreen.png");
@@ -84,6 +87,7 @@ canvas.fullscreen {
   rotate: -15deg;
   scale: 0.8;
 }
+
 #MapOptionButton {
   position: absolute;
   bottom: -3vh;
@@ -93,7 +97,7 @@ canvas.fullscreen {
   object-fit: contain;
 }
 
-#MapHeader > .GoldDisplay {
+#MapHeader>.GoldDisplay {
   justify-self: end;
   align-self: center;
   margin-right: 2em;
@@ -106,6 +110,7 @@ canvas.fullscreen {
   background-image: url("./Assets/UIElemente/HimmelBackground.PNG");
   background-size: cover;
 }
+
 #MapHeader,
 #MapOptions {
   height: 15vh;
@@ -125,6 +130,10 @@ canvas.fullscreen {
   background-repeat: no-repeat;
   transform-origin: 50% 100%;
   transition: scale 0.2s ease, translate 0.2s ease;
+}
+
+.MapOption:not(.selected) {
+  animation: wiggle 2.5s infinite ease;
 }
 
 .MapOption:hover:not(.selected) {
@@ -153,15 +162,19 @@ canvas.fullscreen {
 .MapOption[data-type="-1"] {
   background-image: url("./Assets/UIElemente/CoverShop.PNG");
 }
+
 .MapOption[data-type="0"] {
   background-image: url("./Assets/UIElemente/CoverChallenge1.PNG");
 }
+
 .MapOption[data-type="1"] {
   background-image: url("./Assets/UIElemente/CoverChallenge2.PNG");
 }
+
 .MapOption[data-type="2"] {
   background-image: url("./Assets/UIElemente/CoverChallenge3.PNG");
 }
+
 .MapOption[data-type="3"] {
   background-image: url("./Assets/UIElemente/CoverChallenge4.PNG");
 }
@@ -171,6 +184,7 @@ canvas.fullscreen {
   --transX: -1vh;
   --transX2: 25vw;
 }
+
 .MapOption:last-of-type {
   rotate: 15deg;
   --transX: 1vh;
@@ -193,12 +207,15 @@ canvas.fullscreen {
   z-index: 5;
   pointer-events: none;
 }
-#MapHill > * {
+
+#MapHill>* {
   pointer-events: all;
 }
+
 #MapHill[data-selected="0"] {
   background-image: url("./Assets/UIElemente/WegLinks.PNG"), url("./Assets/UIElemente/LandschaftBackground.PNG");
 }
+
 #MapHill[data-selected="1"] {
   background-image: url("./Assets/UIElemente/WegRechts.PNG"), url("./Assets/UIElemente/LandschaftBackground.PNG");
 }
@@ -235,6 +252,44 @@ canvas.fullscreen {
   padding: 10px;
   background-color: brown;
   cursor: pointer;
+}
+
+#FightPrepStones,
+#FightStones {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1vh;
+}
+
+#FightStartWrapper {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding-bottom: 3vh;
+}
+
+#FightStart {
+  font-size: 3vh;
+}
+
+#FightPrepInfoWrapper {
+  position: absolute;
+  left: 50%;
+}
+#FightPrepInfo {
+  background: url("./Assets/UIElemente/ButtonGr.png") center no-repeat;
+  background-size: 100% 100%;
+  padding: 2em;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(-50%) translateX(-50%);
+  position: relative;
 }
 
 
@@ -310,15 +365,21 @@ canvas.fullscreen {
   gap: 1vh;
 }
 
-.ChooseEumlingType {
+.InfoTitle {
+  text-transform: capitalize;
   font-size: 1.2em;
   font-weight: 700;
+}
+
+.InfoSmaller {
+  font-size: 0.8em;
 }
 
 #ChooseStoneConfirm,
 #ChooseEumlingConfirm {
   font-size: 3vh;
 }
+
 
 /* Reusables */
 
@@ -330,7 +391,7 @@ canvas.fullscreen {
   /* background-color: wheat; */
 }
 
-.EumlingUIElement > * {
+.EumlingUIElement>* {
   pointer-events: none;
 }
 
@@ -354,6 +415,11 @@ canvas.fullscreen {
   display: grid;
   place-items: center;
 }
+
+.StoneUIElement[data-level="1"] {
+  background-image: url("./Assets/UIElemente/ItemBackdrop2.png");
+}
+
 .StoneUIElement::after {
   content: '';
   background-image: var(--stone-url);
@@ -364,14 +430,22 @@ canvas.fullscreen {
   height: 80%;
 }
 
-.StoneUIElement.animate {
+.StoneUIElement.animate::after {
   animation: stone-animate 1s linear;
 }
 
 @keyframes stone-animate {
-  0% {scale: 1}
-  50% {scale: 1.2}
-  100% {scale: 1}
+  0% {
+    scale: 1
+  }
+
+  50% {
+    scale: 1.2
+  }
+
+  100% {
+    scale: 1
+  }
 }
 
 /* SHOP */
@@ -381,7 +455,7 @@ canvas.fullscreen {
   cursor: pointer;
   padding: 10px;
   margin: 10px;
-  background-color: bisque;
+  /* background-color: bisque; */
 }
 
 /* OPTIONS */
@@ -392,6 +466,7 @@ canvas.fullscreen {
   width: 80vw;
   height: 65vw;
   padding: 10vw;
+  font-size: 2vh;
 }
 
 .settings-category-name {
@@ -399,14 +474,17 @@ canvas.fullscreen {
   font-size: 1.2em;
   margin: 1em 0;
 }
+
 .settings-label {
   display: flex;
   justify-content: space-evenly;
   margin: 0.25em 0;
 }
+
 .settings-label-text {
   flex-grow: 1;
 }
+
 .settings-number-input {
   appearance: textfield;
   background-color: transparent;
@@ -418,6 +496,7 @@ canvas.fullscreen {
   padding: 0 0.5em;
   font: inherit;
 }
+
 #OptionsClose {
   font-size: 3vh;
 }
@@ -435,6 +514,7 @@ canvas.fullscreen {
 .hidden {
   display: none !important;
 }
+
 button.hidden {
   display: block !important;
   visibility: hidden;
@@ -499,6 +579,7 @@ button:disabled,
 button.green {
   background-image: url("./Assets/UIElemente/ButtonGrGruen.png");
 }
+
 .settings-number-input-button.minus,
 button.red {
   background-image: url("./Assets/UIElemente/ButtonGrRot.PNG");
@@ -516,6 +597,7 @@ button.red {
   position: relative;
   padding-left: 1em;
 }
+
 .GoldDisplay::before {
   display: inline-block;
   content: "";
@@ -539,13 +621,14 @@ button.red {
   justify-content: center;
   align-items: center;
   margin: auto;
+  font-size: 3vh;
 }
 
-.ChoiceScreen > span {
+.ChoiceScreen>span {
   display: block;
   background: url("./Assets/UIElemente/ButtonKl.png") center no-repeat;
   background-size: 100% 100%;
-  height: 6vh;
+  /* height: 6vh; */
   color: white;
   display: grid;
   place-items: center;
@@ -554,7 +637,7 @@ button.red {
   margin-bottom: 3vh;
 }
 
-.ChoiceScreen > div {
+.ChoiceScreen>div {
   display: flex;
   flex-direction: row;
   gap: 1em;
@@ -567,4 +650,26 @@ button.red {
   width: 80vw;
   height: 65vw;
   padding: 10vw;
+}
+
+@keyframes wiggle {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  90% {
+    transform: rotate(0deg);
+  }
+
+  93% {
+    transform: rotate(5deg);
+  }
+
+  96% {
+    transform: rotate(-5deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
 }

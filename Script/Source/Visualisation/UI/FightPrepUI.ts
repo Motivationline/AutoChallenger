@@ -24,10 +24,13 @@ namespace Script {
         async onAdd(_zindex: number, _ev?: FightEvent): Promise<void> {
             super.onAdd(_zindex, _ev);
             this.startButton.disabled = true;
+            this.startButton.classList.add("hidden");
             this.initStones();
             this.initEumlings();
             this.placedEumlings.clear();
             await this.moveCamera(ƒ.Vector3.Z(-3), ƒ.Vector3.X(10), 1000);
+            const center = viewport.pointWorldToClient(ƒ.Vector3.ZERO());
+            document.getElementById("FightPrepInfoWrapper").style.top = center.y + "px";
         }
 
         async onRemove(): Promise<void> {
@@ -39,12 +42,15 @@ namespace Script {
         private initStones() {
             const stones: HTMLElement[] = [];
             for (let stone of Run.currentRun.stones) {
-                const element = createElementAdvanced("div");
+                const element = createElementAdvanced("div", {classes: ["clickable"]});
                 stones.push(element);
                 element.appendChild(StoneUIElement.getUIElement(stone).element);
                 element.addEventListener("click", () => {
                     this.hideEntityInfo();
-                    this.infoElement.innerText = stone.data.abilityLevels[stone.level].info;
+                    this.infoElement.innerHTML = `
+                    <span class="InfoTitle">${stone.id}</span>
+                    <span class="InfoSmaller">Level ${stone.level + 1}</span>
+                    <span class="Info">${stone.data.abilityLevels[stone.level].info}</span>`;
                     this.infoElement.classList.remove("hidden");
                 });
             }
@@ -71,6 +77,7 @@ namespace Script {
             // can we start?
             if (this.placedEumlings.size <= 0) {
                 this.startButton.disabled = true;
+                this.startButton.classList.add("hidden");
             }
             // update visuals
             if (vis === this.#highlightedEntity) {
@@ -85,6 +92,8 @@ namespace Script {
             EventBus.dispatchEventWithoutWaiting({ type: EVENT.ENTITY_ADDED, target: _eumling, detail: { side: "home", pos: [posId % 3, Math.floor(posId / 3)] } });
             this.placedEumlings.add(_eumling);
             this.startButton.disabled = false;
+            
+            this.startButton.classList.remove("hidden");
             // update visuals
             if (vis === this.#highlightedEntity) {
                 this.showEntityInfo(vis);
@@ -160,8 +169,13 @@ namespace Script {
 
         private showEntityInfo(_entity: VisualizeEntity) {
             this.hideEntityInfo();
+            const entity = _entity.getEntity() as Entity;
+
             this.infoElement.classList.remove("hidden");
-            this.infoElement.innerText = _entity.getEntity().info ?? "PLACEHOLDER TEXT";
+            this.infoElement.innerHTML =`
+                <span class="InfoTitle">${entity.id}</span>
+                <span class="InfoSmaller">${entity.currentHealth} / ${entity.health}♥️</span>
+                <span class="Info">${entity.info}</span>`;
 
             if (this.highlightNode && !this.bench.hasEntity(_entity)) {
                 _entity.addChild(this.highlightNode);
@@ -169,7 +183,6 @@ namespace Script {
             }
             this.#highlightedEntity = _entity;
 
-            const entity = _entity.getEntity() as Entity;
             const attacks = entity.select(entity.attacks, false);
 
             for (let attack of attacks) {

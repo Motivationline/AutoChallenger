@@ -45,9 +45,9 @@ namespace Script {
             this.confirmButton.disabled = false;
             this.confirmButton.classList.remove("hidden");
             this.infoElement.innerHTML = `
-            <span class="ChooseEumlingType">${eumling.type}</span>
-            <span class="ChooseEumlingHealth">${eumling.health}♥️</span>
-            <span class="ChooseEumlingInfo">${eumling.info}</span>`;
+            <span class="InfoTitle">${eumling.type}</span>
+            <span class="Info">${eumling.health}♥️</span>
+            <span class="Info">${eumling.info}</span>`;
         }
 
         private confirm = () => {

@@ -1095,7 +1095,7 @@ namespace Script {
                 info: "Attacks the opposite field for 2 damage."
             },
             {
-                id: "boxingBush", // enemy that attacks the entire mirrored row for 1
+                id: "idioticIcicle", // enemy that attacks the entire mirrored row for 1
                 health: 2,
                 attacks: {
                     options: [

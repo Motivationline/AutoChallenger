@@ -28,6 +28,21 @@
 
     <!--Load Autoview script-->
     <!-- <script type="text/javascript" src="Autoview.js"></script> -->
+    <!-- preload images -->
+
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/HimmelBackground.PNG">
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/WegLinks.PNG">
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/WegRechts.PNG">
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/LandschaftBackground.PNG">
+
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/CoverShop.PNG">
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/CoverChallenge1.PNG">
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/CoverChallenge2.PNG">
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/CoverChallenge3.PNG">
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/CoverChallenge4.PNG">
+
+    <link rel="prefetch" as="image" href="./Assets/Pics/Logo_black.png">
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/HolzSchild.png">
 
 </head>
 
@@ -106,11 +121,10 @@
     </div>
 
     <div id="FightPrep" class="UI hidden no-interact">
-        <h2>Fight Preparation</h2>
         <div id="FightPrepStones" class="interact">
         </div>
-        <div id="FightStartWrapper" class="interact">
-            <button id="FightStart">Start</button>
+        <div id="FightStartWrapper" class="interact center-center">
+            <button id="FightStart" class="green">Start</button>
         </div>
         <div id="FightPrepInfoWrapper">
             <div id="FightPrepInfo">
@@ -118,7 +132,6 @@
         </div>
     </div>
     <div id="Fight" class="UI hidden">
-        <h2>Fight</h2>
         <!--Fight UI-->
         <div id="FightStones">
         </div>
@@ -135,7 +148,6 @@
         </div>
     </div>
     <div id="FightReward" class="UI hidden blur">
-        <h2>Rewards</h2>
         <div id="FightRewardRewards">
         </div>
         <div id="FightRewardXP">
@@ -169,7 +181,6 @@
     </div>
 
     <div id="Shop" class="UI blur hidden">
-        <h2>Shop</h2>
         <div class="GoldCounter">Gold: 0</div>
         <!--Shop UI-->
         <h3>Buy Stones</h3>

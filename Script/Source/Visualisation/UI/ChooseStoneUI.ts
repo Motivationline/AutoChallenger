@@ -44,7 +44,10 @@ namespace Script {
             this.selectedStone = stone;
             this.confirmButton.disabled = false;
             this.confirmButton.classList.remove("hidden");
-            this.infoElement.innerText = stone.data.abilityLevels[stone.level].info;
+            this.infoElement.innerHTML = `
+            <span class="InfoTitle">${stone.id}</span>
+            <span class="InfoSmaller">Level ${stone.level + 1}</span>
+            <span class="Info">${stone.data.abilityLevels[stone.level].info}</span>`;
         }
 
 

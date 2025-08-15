@@ -1589,7 +1589,7 @@ var Script;
                 info: "Attacks the opposite field for 2 damage."
             },
             {
-                id: "boxingBush", // enemy that attacks the entire mirrored row for 1
+                id: "idioticIcicle", // enemy that attacks the entire mirrored row for 1
                 health: 2,
                 attacks: {
                     options: [
@@ -1914,9 +1914,9 @@ var Script;
                 difficulty: 0,
                 rounds: 3,
                 entities: [
-                    ["boxingBush", , ,],
-                    [, "boxingBush", ,],
-                    [, , "boxingBush",]
+                    ["idioticIcicle", , ,],
+                    [, "idioticIcicle", ,],
+                    [, , "idioticIcicle",]
                 ],
             },
             {
@@ -1933,7 +1933,7 @@ var Script;
                 rounds: 3,
                 entities: [
                     ["flameFlinger", , ,],
-                    [, "sandSitter", "boxingBush",],
+                    [, "sandSitter", "idioticIcicle",],
                     ["flameFlinger", , ,]
                 ],
             },
@@ -1952,7 +1952,7 @@ var Script;
                 entities: [
                     [, , "flameFlinger",],
                     [, "sandSitter", ,],
-                    ["boxingBush", , "flameFlinger",]
+                    ["idioticIcicle", , "flameFlinger",]
                 ],
             },
             {
@@ -1960,7 +1960,7 @@ var Script;
                 rounds: 3,
                 entities: [
                     [, "punchingPalmtree", ,],
-                    ["boxingBush", , ,],
+                    ["idioticIcicle", , ,],
                     [, "punchingPalmtree", ,]
                 ],
             },
@@ -1978,7 +1978,7 @@ var Script;
                 rounds: 3,
                 entities: [
                     [, "floppyFish", ,],
-                    [, , "boxingBush",],
+                    [, , "idioticIcicle",],
                     ["floppyFish", , ,]
                 ],
             },
@@ -2049,7 +2049,7 @@ var Script;
                 difficulty: 2,
                 rounds: 3,
                 entities: [
-                    ["worriedWall", "boxingBush", "sandSitter",],
+                    ["worriedWall", "idioticIcicle", "sandSitter",],
                     ["worriedWall", "cactusCrawler", "countdownCoconut",],
                     [, , ,]
                 ],
@@ -2058,9 +2058,9 @@ var Script;
                 difficulty: 2,
                 rounds: 3,
                 entities: [
-                    ["boxingBush", , "flameFlinger",],
+                    ["idioticIcicle", , "flameFlinger",],
                     ["cactusCrawler", "sandSitter", ,],
-                    ["flameFlinger", , "boxingBush",]
+                    ["flameFlinger", , "idioticIcicle",]
                 ],
             },
             {
@@ -2077,7 +2077,7 @@ var Script;
                 rounds: 3,
                 entities: [
                     ["floppyFish", "punchingPalmtree", "flameFlinger",],
-                    ["floppyFish", , "boxingBush",],
+                    ["floppyFish", , "idioticIcicle",],
                     ["floppyFish", "sandSitter", "flameFlinger",]
                 ],
             },
@@ -2605,9 +2605,9 @@ var Script;
                 this.confirmButton.disabled = false;
                 this.confirmButton.classList.remove("hidden");
                 this.infoElement.innerHTML = `
-            <span class="ChooseEumlingType">${eumling.type}</span>
-            <span class="ChooseEumlingHealth">${eumling.health}♥️</span>
-            <span class="ChooseEumlingInfo">${eumling.info}</span>`;
+            <span class="InfoTitle">${eumling.type}</span>
+            <span class="Info">${eumling.health}♥️</span>
+            <span class="Info">${eumling.info}</span>`;
             };
             this.confirm = () => {
                 if (!this.selectedEumling)
@@ -2670,7 +2670,10 @@ var Script;
                 this.selectedStone = stone;
                 this.confirmButton.disabled = false;
                 this.confirmButton.classList.remove("hidden");
-                this.infoElement.innerText = stone.data.abilityLevels[stone.level].info;
+                this.infoElement.innerHTML = `
+            <span class="InfoTitle">${stone.id}</span>
+            <span class="InfoSmaller">Level ${stone.level + 1}</span>
+            <span class="Info">${stone.data.abilityLevels[stone.level].info}</span>`;
             };
             this.confirm = () => {
                 if (!this.selectedStone)
@@ -3066,10 +3069,13 @@ var Script;
         async onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
             this.startButton.disabled = true;
+            this.startButton.classList.add("hidden");
             this.initStones();
             this.initEumlings();
             this.placedEumlings.clear();
             await this.moveCamera(ƒ.Vector3.Z(-3), ƒ.Vector3.X(10), 1000);
+            const center = Script.viewport.pointWorldToClient(ƒ.Vector3.ZERO());
+            document.getElementById("FightPrepInfoWrapper").style.top = center.y + "px";
         }
         async onRemove() {
             super.onRemove();
@@ -3079,12 +3085,15 @@ var Script;
         initStones() {
             const stones = [];
             for (let stone of Script.Run.currentRun.stones) {
-                const element = Script.createElementAdvanced("div");
+                const element = Script.createElementAdvanced("div", { classes: ["clickable"] });
                 stones.push(element);
                 element.appendChild(Script.StoneUIElement.getUIElement(stone).element);
                 element.addEventListener("click", () => {
                     this.hideEntityInfo();
-                    this.infoElement.innerText = stone.data.abilityLevels[stone.level].info;
+                    this.infoElement.innerHTML = `
+                    <span class="InfoTitle">${stone.id}</span>
+                    <span class="InfoSmaller">Level ${stone.level + 1}</span>
+                    <span class="Info">${stone.data.abilityLevels[stone.level].info}</span>`;
                     this.infoElement.classList.remove("hidden");
                 });
             }
@@ -3110,6 +3119,7 @@ var Script;
             // can we start?
             if (this.placedEumlings.size <= 0) {
                 this.startButton.disabled = true;
+                this.startButton.classList.add("hidden");
             }
             // update visuals
             if (vis === this.#highlightedEntity) {
@@ -3123,6 +3133,7 @@ var Script;
             Script.EventBus.dispatchEventWithoutWaiting({ type: Script.EVENT.ENTITY_ADDED, target: _eumling, detail: { side: "home", pos: [posId % 3, Math.floor(posId / 3)] } });
             this.placedEumlings.add(_eumling);
             this.startButton.disabled = false;
+            this.startButton.classList.remove("hidden");
             // update visuals
             if (vis === this.#highlightedEntity) {
                 this.showEntityInfo(vis);
@@ -3174,14 +3185,17 @@ var Script;
         #highlightedEntity;
         showEntityInfo(_entity) {
             this.hideEntityInfo();
+            const entity = _entity.getEntity();
             this.infoElement.classList.remove("hidden");
-            this.infoElement.innerText = _entity.getEntity().info ?? "PLACEHOLDER TEXT";
+            this.infoElement.innerHTML = `
+                <span class="InfoTitle">${entity.id}</span>
+                <span class="InfoSmaller">${entity.currentHealth} / ${entity.health}♥️</span>
+                <span class="Info">${entity.info}</span>`;
             if (this.highlightNode && !this.bench.hasEntity(_entity)) {
                 _entity.addChild(this.highlightNode);
                 this.highlightNode.mtxLocal.translation = ƒ.Vector3.ZERO();
             }
             this.#highlightedEntity = _entity;
-            const entity = _entity.getEntity();
             const attacks = entity.select(entity.attacks, false);
             for (let attack of attacks) {
                 const allies = entity instanceof Script.Eumling ? Script.Fight.activeFight.arena.home : Script.Fight.activeFight.arena.away;
@@ -4559,19 +4573,21 @@ var Script;
                 ]
             },
             {
-                id: "steppingstone", // Should deal 1 damage to enemies that move (currently to everyone hehe)
+                id: "steppingstone", // Deals 1 damage to enemies that move
                 abilityLevels: [
                     {
                         on: Script.EVENT.ENTITY_MOVED,
+                        conditions: { target: { side: Script.TARGET_SIDE.OPPONENT, entity: {} } },
                         target: "target",
                         attack: { baseDamage: 1 },
-                        info: "Deals 1 damage to enemies whenever they move. CURRENTLY 1 TO EVERY ENEMY"
+                        info: "Deals 1 damage to enemies whenever they move."
                     },
                     {
                         on: Script.EVENT.ENTITY_MOVED,
+                        conditions: { target: { side: Script.TARGET_SIDE.OPPONENT, entity: {} } },
                         target: "target",
                         attack: { baseDamage: 2 },
-                        info: "Deals 2 damage to enemies whenever they move. CURRENTLY 2 TO EVERY ENEMY"
+                        info: "Deals 2 damage to enemies whenever they move."
                     }
                 ]
             },
