@@ -192,27 +192,34 @@
     </div>
 
     <div id="Shop" class="UI blur hidden">
-        <div class="GoldCounter">Gold: 0</div>
         <!--Shop UI-->
+        <div id="ShopHeader"></div>
         <h3>Buy Stones</h3>
-        <div id="ShopStones">
+        <div id="ShopStonesWrapper">
+            <div id="ShopStonesRefresh" class="clickable selectable center-center ShopOption" data-cost="1"]>
+                <img src="./Assets/UIElemente/refresh.svg" alt="Refresh">
+                <div class="GoldDisplay">1</div>
+            </div>
+            <div id="ShopStones">
+            </div>
         </div>
-        <div id="ShopStonesInfo">
-        </div>
-        <button id="ShopStonesBuy" disabled="">Buy</button>
-        <button id="ShopStonesRefresh">Refresh (1 Gold)</button>
         <h3>Upgrade Stones</h3>
         <div id="ShopStoneUpgrades">
         </div>
-        <div id="ShopStonesUpgradeInfo">
-        </div>
-        <button id="ShopStonesUpgrade" disabled="">Upgrade (2 Gold)</button>
         <h3>Heal Eumlings</h3>
         <div id="ShopEumlingHeal">
         </div>
         <div id="ShopCloseWrapper">
-            <button id="ShopClose">Continue</button>
+            <button id="ShopClose" class="green">Continue</button>
         </div>
+        <div id="ShopInfoOverlayWrapper" class="UI blur center-center">
+            <div id="ShopInfoOverlay">
+                <div id="ShopInfo"></div>
+                <button id="ShopStonesBuy" class="green">Buy</button>
+                <button id="ShopStonesCancel" class="red">Cancel</button>
+            </div>
+        </div>
+        <div id="ShopGoldWrapper"></div>
     </div>
     <!--Canvas for FUDGE to render to-->
     <canvas class="fullscreen" id="GameCanvas" draggable="false">

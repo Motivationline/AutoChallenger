@@ -412,6 +412,7 @@ canvas.fullscreen {
   gap: 1em;
   font-size: 2vh;
 }
+
 #FightRewardXP>* {
   opacity: 0;
   animation: fade-in 0.4s 1.1s cubic-bezier(.81, 1.48, .64, 1) forwards;
@@ -478,6 +479,7 @@ canvas.fullscreen {
   width: 100%;
   justify-content: center;
 }
+
 #FightRewardInfoWrapper {
   height: 30vh;
   width: 40vh;
@@ -586,7 +588,7 @@ canvas.fullscreen {
 }
 
 .StoneUIElement {
-  --size: 20vw;
+  --size: 18vw;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
@@ -635,6 +637,20 @@ canvas.fullscreen {
 }
 
 /* SHOP */
+#Shop {
+  padding: 2vh;
+}
+#ShopHeader {
+  height: 20vh;
+  background: url("./Assets/UIElemente/ShopHeader.png") center no-repeat;
+  background-size: contain;
+}
+
+#Shop :not(#ShopGoldWrapper) .GoldDisplay {
+  font-size: 2.5vh;
+  position: absolute;
+}
+
 .ShopOption {
   display: inline-flex;
   flex-direction: column;
@@ -642,6 +658,118 @@ canvas.fullscreen {
   padding: 10px;
   margin: 10px;
   /* background-color: bisque; */
+}
+
+#ShopStonesWrapper {
+  display: flex;
+  flex-direction: row;
+}
+
+#ShopStonesRefresh {
+  margin: 10px;
+  /* display: flex; */
+  position: relative;
+}
+
+#ShopStonesRefresh>img {
+  width: 18vw;
+  height: 18vw;
+}
+
+#ShopGoldWrapper {
+  position: absolute;
+  top: 3vh;
+  right: 3vh;
+}
+
+#ShopInfoOverlay {
+  background: url("./Assets/UIElemente/HolzRahmen.png") center no-repeat;
+  background-size: 100% 100%;
+  aspect-ratio: 1;
+  width: 50vw;
+  height: 40vw;
+  padding: 4vw;
+  color: white;
+  font-size: 2.5vw;
+  display: grid;
+  grid-template-areas: "info info" "confirm cancel";
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr auto;
+  gap: 1em;
+  position: relative;
+}
+
+#ShopInfoOverlay::before,
+#ShopInfoOverlay::after {
+  content: '';
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  position: absolute;
+}
+
+#ShopInfoOverlay::before {
+  background-image: url("./Assets/UIElemente/PostIt.png");
+  width: 30%;
+  height: 30%;
+  right: 5%;
+  top: 10%;
+}
+
+#ShopInfoOverlay::after {
+  background-image: var(--stone-url);
+  width: 15%;
+  height: 15%;
+  right: 12.5%;
+  top: 15%;
+}
+
+#ShopInfo {
+  grid-area: info;
+  display: flex;
+  flex-direction: column;
+  width: 80%;
+  gap: 1em;
+}
+
+#ShopInfo>.GoldDisplay {
+  top: 50%;
+  right: 10%;
+}
+
+.ShopOption>.GoldDisplay {
+  top: -2vh;
+  right: -1vh;
+  rotate: 10deg;
+}
+
+#Shop p {
+  height: 18vw;
+  display: grid;
+  place-items: center;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 1em;
+  margin: 10px;
+}
+
+#Shop h3 {
+  margin: 1em 0;
+  font-size: 2.5vh;
+}
+
+#ShopCloseWrapper {
+  font-size: 3vh;
+  position: absolute;
+  bottom: 2vh;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.too-expensive {
+  filter: grayscale(1) !important;
+  opacity: 0.5;
 }
 
 /* OPTIONS */
@@ -774,15 +902,15 @@ button.red {
 .GoldDisplay {
   background-image: url("./Assets/UIElemente/ButtonGr.png");
   background-size: 100% 100%;
-  width: 4em;
-  height: 2em;
+  width: 3em;
+  height: 1.5em;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   padding-left: 0.75em;
-  font-size: 3vh;
+  font-size: 4vh;
 }
 
 .GoldDisplay::before {

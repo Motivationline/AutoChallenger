@@ -654,11 +654,11 @@ declare namespace Script {
     class ShopUI extends UILayer {
         closeButton: HTMLButtonElement;
         stonesWrapper: HTMLElement;
-        stonesInfo: HTMLElement;
+        info: HTMLElement;
+        infoOverlay: HTMLElement;
         stoneUpgradeInfo: HTMLElement;
-        stoneBuyButton: HTMLButtonElement;
-        stoneUpgradeButton: HTMLButtonElement;
-        stonesRefreshButton: HTMLButtonElement;
+        stoneRefreshButton: HTMLButtonElement;
+        confirmButton: HTMLButtonElement;
         stoneUpgradeWrapper: HTMLElement;
         eumlingHealWrapper: HTMLElement;
         stoneToHtmlElement: Map<Stone, HTMLElement>;
@@ -667,10 +667,14 @@ declare namespace Script {
         selectedStone: Stone;
         private setupStonesToBuy;
         private buyStone;
-        selectedStoneToUpgrade: Stone;
         private setupStonesToUpgrade;
         private upgradeStone;
         private initEumlingHealing;
+        private hideOverlay;
+        currentSelectedStoneIsAnUpgrade: boolean;
+        private showOverlay;
+        private updateCostDisplays;
+        private confirm;
         close: () => void;
         refresh: () => void;
         addEventListeners(): void;
