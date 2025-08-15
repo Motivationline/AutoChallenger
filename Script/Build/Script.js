@@ -4699,7 +4699,7 @@ var Script;
                 this.setEffectLevel(Script.SPELL_TYPE.THORNS, 0);
             }
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HURT_BEFORE, target: this, detail: { amount, crit: wasCrit }, cause: _cause });
-            this.currentHealth -= amount;
+            this.currentHealth = Math.max(0, this.currentHealth - amount);
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_HURT, target: this, cause: _cause, detail: { amount, crit: wasCrit } });
             if (this.currentHealth <= 0) {
                 //this entity died

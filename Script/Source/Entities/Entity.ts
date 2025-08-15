@@ -175,7 +175,7 @@ namespace Script {
 
 
             await EventBus.dispatchEvent({ type: EVENT.ENTITY_HURT_BEFORE, target: this, detail: { amount, crit: wasCrit }, cause: _cause });
-            this.currentHealth -= amount;
+            this.currentHealth = Math.max(0, this.currentHealth - amount);
 
             await EventBus.dispatchEvent({ type: EVENT.ENTITY_HURT, target: this, cause: _cause, detail: { amount, crit: wasCrit } });
 
