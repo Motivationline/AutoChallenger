@@ -21,6 +21,7 @@ namespace Script {
 
         close = () => {
             Provider.GUI.removeAllLayers();
+            Provider.GUI.addUI("start");
             Provider.GUI.addUI("mainMenu");
         }
 

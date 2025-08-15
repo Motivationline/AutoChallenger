@@ -3631,6 +3631,7 @@ var Script;
             super();
             this.close = () => {
                 Script.Provider.GUI.removeAllLayers();
+                Script.Provider.GUI.addUI("start");
                 Script.Provider.GUI.addUI("mainMenu");
             };
             this.element = document.getElementById("RunEnd");
