@@ -25,9 +25,6 @@ namespace Script {
 
             this.updateEntityData(newData);
 
-            this.removeEventListeners();
-            this.registerEventListeners();
-
             this.#types.push(_type);
         }
 

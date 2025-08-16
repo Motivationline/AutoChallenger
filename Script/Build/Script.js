@@ -2192,6 +2192,10 @@ var Script;
                         this.arena.away.remove(pos);
                 }
             };
+            this.registerEntityListeners = () => {
+                this.arena.away.forEachElement(el => el.registerEventListeners());
+                this.arena.home.forEachElement(el => el.registerEventListeners());
+            };
             this.rounds = _fight.rounds;
             this.arena = {
                 away: Script.initEntitiesInGrid(_fight.entities, Script.Entity),
@@ -2257,11 +2261,13 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_DIED, this.handleDeadEntity);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_ADDED, this.handleEntityChange);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_REMOVED, this.handleEntityChange);
+            Script.EventBus.addEventListener(Script.EVENT.FIGHT_PREPARE_COMPLETED, this.registerEntityListeners);
         }
         removeEventListeners() {
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_DIED, this.handleDeadEntity);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_ADDED, this.handleEntityChange);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_REMOVED, this.handleEntityChange);
+            Script.EventBus.removeEventListener(Script.EVENT.FIGHT_PREPARE_COMPLETED, this.registerEntityListeners);
         }
     }
     Script.Fight = Fight;
@@ -4727,7 +4733,6 @@ var Script;
             this.updateEntityData(_entity);
             Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_CREATE, target: this });
             Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_CREATED, target: this });
-            this.registerEventListeners();
             this.info = _entity.info;
         }
         get untargetable() {
@@ -4998,14 +5003,14 @@ var Script;
             // register end of turn effects
             Script.EventBus.addEventListener(Script.EVENT.ROUND_END, this.endOfRoundEventListener);
             // register end of fight effects
-            Script.EventBus.addEventListener(Script.EVENT.FIGHT_END, this.endOfFightEventListener);
+            Script.EventBus.addEventListener(Script.EVENT.FIGHT_ENDED, this.endOfFightEventListener);
         }
         removeEventListeners() {
             for (let trigger of this.#triggers.values()) {
                 Script.EventBus.removeEventListener(trigger, this.abilityEventListener);
             }
             Script.EventBus.removeEventListener(Script.EVENT.ROUND_END, this.endOfRoundEventListener);
-            Script.EventBus.removeEventListener(Script.EVENT.FIGHT_END, this.endOfFightEventListener);
+            Script.EventBus.removeEventListener(Script.EVENT.FIGHT_ENDED, this.endOfFightEventListener);
         }
         async runAbility(_ev) {
             if (!this.abilities)
@@ -5067,8 +5072,6 @@ var Script;
             if (!newData)
                 throw new Error("Tried to create an invalid eumling: " + newType);
             this.updateEntityData(newData);
-            this.removeEventListeners();
-            this.registerEventListeners();
             this.#types.push(_type);
         }
         get type() {
@@ -5811,12 +5814,14 @@ var Script;
             };
             let awayGrid = new Script.Grid();
             _fight.arena.away.forEachElement((entity, pos) => {
-                awayGrid.set(pos, Script.Provider.visualizer.getEntity(entity), true);
+                const entityVis = Script.Provider.visualizer.getEntity(entity);
+                awayGrid.set(pos, entityVis, true);
             });
             this.away = new Script.VisualizeGrid(awayGrid, "away");
             let homeGrid = new Script.Grid();
             _fight.arena.home.forEachElement((entity, pos) => {
-                homeGrid.set(pos, Script.Provider.visualizer.getEntity(entity), true);
+                const entityVis = Script.Provider.visualizer.getEntity(entity);
+                homeGrid.set(pos, entityVis, true);
             });
             this.home = new Script.VisualizeGrid(homeGrid, "home");
             Script.Provider.visualizer.addToScene(this.away);
@@ -5824,38 +5829,19 @@ var Script;
             // Provider.visualizer.drawScene();
             this.addEventListeners();
         }
-        async showGrid() {
-            // let visualizer = Provider.visualizer;
-            // let grid: string[][] = [[, , , , , , ,], [], []];
-            // this.#home.grid.forEachElement((el, pos) => {
-            //     if (!el) return;
-            //     let entity = (<VisualizeEntity>el).getEntity();
-            //     grid[pos[1]][2 - pos[0]] = `${entity.id}\n${entity.currentHealth} ♥️`;
-            //     el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
-            // })
-            // this.#away.grid.forEachElement((el, pos) => {
-            //     if (!el) return;
-            //     let entity = (<VisualizeEntity>el).getEntity();
-            //     grid[pos[1]][pos[0] + 4] = `${entity.id}\n${entity.currentHealth} ♥️`;
-            //     el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
-            // })
-            // console.table(grid);
-            //draw the 3D scene
-            // visualizer.drawScene();
-        }
         async nukeGrid() {
             this.home.nuke();
             this.away.nuke();
         }
         async fightStart() {
             console.log("Fight Start!");
-            await this.showGrid();
+            this.home.grid.forEachElement(el => el.addEventListeners());
+            this.away.grid.forEachElement(el => el.addEventListeners());
         }
         async roundStart() {
             console.log("Round Start!");
         }
         async roundEnd() {
-            await this.showGrid();
             console.log("Round End");
         }
         async fightEnd() {
@@ -5879,10 +5865,10 @@ var Script;
             let entityVis = Script.Provider.visualizer.getEntity(entity);
             let pos = this.home.grid.findElementPosition(entityVis);
             if (pos)
-                this.home.removeEntityFromGrid(pos, true);
+                this.home.removeEntityFromGrid(pos);
             pos = this.away.grid.findElementPosition(entityVis);
             if (pos)
-                this.away.removeEntityFromGrid(pos, true);
+                this.away.removeEntityFromGrid(pos);
         }
         whereIsEntity(_entity) {
             let found = false;
@@ -5897,8 +5883,8 @@ var Script;
             return undefined;
         }
         addEventListeners() {
-            this.#listeners.set(Script.EVENT.FIGHT_START, this.fightStart);
-            this.#listeners.set(Script.EVENT.FIGHT_END, this.fightEnd);
+            this.#listeners.set(Script.EVENT.FIGHT_PREPARE_COMPLETED, this.fightStart);
+            this.#listeners.set(Script.EVENT.FIGHT_ENDED, this.fightEnd);
             this.#listeners.set(Script.EVENT.ROUND_START, this.roundStart);
             this.#listeners.set(Script.EVENT.ROUND_END, this.roundEnd);
             this.#listeners.set(Script.EVENT.ENTITY_ADDED, this.entityAdded);
@@ -6017,9 +6003,11 @@ var Script;
             this.updateTmpText();
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
-            this.addEventListeners();
             this.cmpAudio = new Script.ComponentAudioMixed(undefined, false, false, undefined, Script.AUDIO_CHANNEL.SOUNDS);
             this.addComponent(this.cmpAudio);
+            this.addEventListener("nodeActivate" /* ƒ.EVENT.NODE_ACTIVATE */, this.addText);
+            this.addEventListener("nodeDeactivate" /* ƒ.EVENT.NODE_DEACTIVATE */, this.removeText);
+            Script.EventBus.addEventListener(Script.EVENT.RUN_END, this.eventListener);
         }
         // async idle(): Promise<void> {
         //     // this.getComponent(ƒ.ComponentMaterial).clrPrimary.setCSS("white");
@@ -6158,11 +6146,8 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVE, this.eventListener);
             Script.EventBus.addEventListener(Script.EVENT.EUMLING_LEVELUP, this.updateTmpText);
-            this.addEventListener("nodeActivate" /* ƒ.EVENT.NODE_ACTIVATE */, this.addText);
-            this.addEventListener("nodeDeactivate" /* ƒ.EVENT.NODE_DEACTIVATE */, this.removeText);
         }
         removeEventListeners() {
-            Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_ATTACK, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_HURT, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
@@ -6174,8 +6159,6 @@ var Script;
             Script.EventBus.removeEventListener(Script.EVENT.ROUND_END, this.updateTmpText);
             Script.EventBus.removeEventListener(Script.EVENT.ROUND_START, this.updateTmpText);
             Script.EventBus.removeEventListener(Script.EVENT.EUMLING_LEVELUP, this.updateTmpText);
-            this.removeEventListener("nodeActivate" /* ƒ.EVENT.NODE_ACTIVATE */, this.addText);
-            this.removeEventListener("nodeDeactivate" /* ƒ.EVENT.NODE_DEACTIVATE */, this.removeText);
         }
         async handleEvent(_ev) {
             if (_ev.cause === this.entity) {
@@ -6217,6 +6200,9 @@ var Script;
                 switch (_ev.type) {
                     case Script.EVENT.RUN_END: {
                         this.removeEventListeners();
+                        this.removeEventListener("nodeActivate" /* ƒ.EVENT.NODE_ACTIVATE */, this.addText);
+                        this.removeEventListener("nodeDeactivate" /* ƒ.EVENT.NODE_DEACTIVATE */, this.removeText);
+                        Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.eventListener);
                         break;
                     }
                 }
@@ -6391,12 +6377,12 @@ var Script;
             if (Script.Grid.outOfBounds(_pos))
                 return;
             if (_removeExisting) {
-                this.removeEntityFromGrid(_pos, false);
+                this.removeEntityFromGrid(_pos);
             }
             // remove this entity if it's already somewhere in the grid
             this.grid.forEachElement((entity, pos) => {
                 if (entity === _entity)
-                    this.removeEntityFromGrid(pos, false);
+                    this.removeEntityFromGrid(pos);
             });
             if (!_anchor) {
                 /**Anchors are named from 0-8 */
@@ -6408,7 +6394,7 @@ var Script;
             this.grid.set(_pos, _entity, true);
             _entity.activate(true);
         }
-        removeEntityFromGrid(_pos, _removeListeners) {
+        removeEntityFromGrid(_pos) {
             if (Script.Grid.outOfBounds(_pos))
                 return;
             let elementToRemove = this.grid.get(_pos);
@@ -6417,8 +6403,6 @@ var Script;
             this.grid.remove(_pos);
             this.removeChild(elementToRemove);
             elementToRemove.activate(false);
-            if (_removeListeners)
-                elementToRemove.removeEventListeners();
         }
         async moveEntityToAnchor(_entity, position, _timeMS = 0) {
             let _anchor = this.getAnchor(position[0], position[1]);
@@ -6436,7 +6420,9 @@ var Script;
         }
         nuke() {
             this.grid.forEachElement((_el, pos) => {
-                this.removeEntityFromGrid(pos, true);
+                _el.activate(false);
+                _el.removeEventListeners();
+                this.removeEntityFromGrid(pos);
             });
         }
         async move(_ev) {

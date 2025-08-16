@@ -73,8 +73,8 @@ namespace Script {
             moveData = this.select(this.moves, false)[0];
             if (moveData) {
                 this.currentDirection = moveData.currentDirection;
-            }else{
-                this.currentDirection = [-1,0];
+            } else {
+                this.currentDirection = [-1, 0];
             }
             //this.currentDirection = [-1,0]; //facing towards player Side
 
@@ -83,7 +83,6 @@ namespace Script {
             EventBus.dispatchEvent({ type: EVENT.ENTITY_CREATE, target: this });
             EventBus.dispatchEvent({ type: EVENT.ENTITY_CREATED, target: this });
 
-            this.registerEventListeners();
             this.info = _entity.info;
         }
 
@@ -378,7 +377,7 @@ namespace Script {
             // register end of turn effects
             EventBus.addEventListener(EVENT.ROUND_END, this.endOfRoundEventListener);
             // register end of fight effects
-            EventBus.addEventListener(EVENT.FIGHT_END, this.endOfFightEventListener);
+            EventBus.addEventListener(EVENT.FIGHT_ENDED, this.endOfFightEventListener);
         }
 
         public removeEventListeners() {
@@ -387,7 +386,7 @@ namespace Script {
             }
 
             EventBus.removeEventListener(EVENT.ROUND_END, this.endOfRoundEventListener);
-            EventBus.removeEventListener(EVENT.FIGHT_END, this.endOfFightEventListener);
+            EventBus.removeEventListener(EVENT.FIGHT_ENDED, this.endOfFightEventListener);
         }
 
         private abilityEventListener = async (_ev: FightEvent) => {

@@ -1,6 +1,5 @@
 namespace Script {
     export interface IVisualizeFight {
-        showGrid(): Promise<void>;
         fightStart(): Promise<void>;
         roundStart(): Promise<void>;
         roundEnd(): Promise<void>;
@@ -13,12 +12,14 @@ namespace Script {
         constructor(_fight: Fight) {
             let awayGrid = new Grid<VisualizeEntity>();
             _fight.arena.away.forEachElement((entity, pos) => {
-                awayGrid.set(pos, Provider.visualizer.getEntity(entity), true);
+                const entityVis = Provider.visualizer.getEntity(entity);
+                awayGrid.set(pos, entityVis, true);
             });
             this.away = new VisualizeGrid(awayGrid, "away");
             let homeGrid = new Grid<VisualizeEntity>();
             _fight.arena.home.forEachElement((entity, pos) => {
-                homeGrid.set(pos, Provider.visualizer.getEntity(entity), true);
+                const entityVis = Provider.visualizer.getEntity(entity);
+                homeGrid.set(pos, entityVis, true);
             });
             this.home = new VisualizeGrid(homeGrid, "home");
 
@@ -28,28 +29,6 @@ namespace Script {
             this.addEventListeners();
         }
 
-        async showGrid(): Promise<void> {
-            // let visualizer = Provider.visualizer;
-
-            // let grid: string[][] = [[, , , , , , ,], [], []];
-
-            // this.#home.grid.forEachElement((el, pos) => {
-            //     if (!el) return;
-            //     let entity = (<VisualizeEntity>el).getEntity();
-            //     grid[pos[1]][2 - pos[0]] = `${entity.id}\n${entity.currentHealth} ♥️`;
-            //     el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
-            // })
-            // this.#away.grid.forEachElement((el, pos) => {
-            //     if (!el) return;
-            //     let entity = (<VisualizeEntity>el).getEntity();
-            //     grid[pos[1]][pos[0] + 4] = `${entity.id}\n${entity.currentHealth} ♥️`;
-            //     el.mtxLocal.translation = new ƒ.Vector3(pos[0], 0, pos[1]);
-            // })
-
-            // console.table(grid);
-            //draw the 3D scene
-            // visualizer.drawScene();
-        }
         async nukeGrid(): Promise<void> {
             this.home.nuke();
             this.away.nuke();
@@ -57,7 +36,8 @@ namespace Script {
 
         async fightStart(): Promise<void> {
             console.log("Fight Start!");
-            await this.showGrid();
+            this.home.grid.forEachElement(el => el.addEventListeners());
+            this.away.grid.forEachElement(el => el.addEventListeners());
         }
 
         async roundStart(): Promise<void> {
@@ -65,7 +45,6 @@ namespace Script {
         }
 
         async roundEnd(): Promise<void> {
-            await this.showGrid();
             console.log("Round End");
         }
 
@@ -89,9 +68,9 @@ namespace Script {
             if (!entity) return;
             let entityVis = Provider.visualizer.getEntity(entity);
             let pos = this.home.grid.findElementPosition(entityVis);
-            if (pos) this.home.removeEntityFromGrid(pos, true);
+            if (pos) this.home.removeEntityFromGrid(pos);
             pos = this.away.grid.findElementPosition(entityVis);
-            if (pos) this.away.removeEntityFromGrid(pos, true);
+            if (pos) this.away.removeEntityFromGrid(pos);
         }
         whereIsEntity(_entity: VisualizeEntity): VisualizeGrid {
             let found = false;
@@ -103,8 +82,8 @@ namespace Script {
         }
 
         addEventListeners() {
-            this.#listeners.set(EVENT.FIGHT_START, this.fightStart);
-            this.#listeners.set(EVENT.FIGHT_END, this.fightEnd);
+            this.#listeners.set(EVENT.FIGHT_PREPARE_COMPLETED, this.fightStart);
+            this.#listeners.set(EVENT.FIGHT_ENDED, this.fightEnd);
             this.#listeners.set(EVENT.ROUND_START, this.roundStart);
             this.#listeners.set(EVENT.ROUND_END, this.roundEnd);
             this.#listeners.set(EVENT.ENTITY_ADDED, this.entityAdded);

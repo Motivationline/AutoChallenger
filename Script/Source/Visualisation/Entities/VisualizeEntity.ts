@@ -42,10 +42,14 @@ namespace Script {
 
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
-            this.addEventListeners();
 
             this.cmpAudio = new ComponentAudioMixed(undefined, false, false, undefined, AUDIO_CHANNEL.SOUNDS);
             this.addComponent(this.cmpAudio);
+
+            this.addEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
+            this.addEventListener(ƒ.EVENT.NODE_DEACTIVATE, this.removeText);
+            
+            EventBus.addEventListener(EVENT.RUN_END, this.eventListener);
         }
 
         // async idle(): Promise<void> {
@@ -60,7 +64,7 @@ namespace Script {
         }
 
         async move(_ev: FightEvent): Promise<void> {
-            console.log("entity visualizer: move", {entity: _ev.detail.entity, oldPosition: _ev.detail.oldPosition, position: _ev.detail.position, direction: _ev.detail.direction, step: _ev.detail.step});
+            console.log("entity visualizer: move", { entity: _ev.detail.entity, oldPosition: _ev.detail.oldPosition, position: _ev.detail.position, direction: _ev.detail.direction, step: _ev.detail.step });
             await this.playAnimationIfPossible(ANIMATION.MOVE);
         }
 
@@ -214,13 +218,9 @@ namespace Script {
             EventBus.addEventListener(EVENT.ROUND_START, this.updateTmpText);
             EventBus.addEventListener(EVENT.ENTITY_MOVE, this.eventListener);
             EventBus.addEventListener(EVENT.EUMLING_LEVELUP, this.updateTmpText);
-
-            this.addEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
-            this.addEventListener(ƒ.EVENT.NODE_DEACTIVATE, this.removeText);
         }
 
         removeEventListeners() {
-            EventBus.removeEventListener(EVENT.RUN_END, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_ATTACK, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_HURT, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
@@ -233,9 +233,6 @@ namespace Script {
             EventBus.removeEventListener(EVENT.ROUND_END, this.updateTmpText);
             EventBus.removeEventListener(EVENT.ROUND_START, this.updateTmpText);
             EventBus.removeEventListener(EVENT.EUMLING_LEVELUP, this.updateTmpText);
-
-            this.removeEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
-            this.removeEventListener(ƒ.EVENT.NODE_DEACTIVATE, this.removeText);
         }
 
         eventListener = async (_ev: FightEvent) => {
@@ -254,7 +251,7 @@ namespace Script {
                         await this.useSpell(_ev);
                         break;
                     }
-                    case EVENT.ENTITY_MOVE:{
+                    case EVENT.ENTITY_MOVE: {
                         await this.move(_ev)
                         break;
                     }
@@ -280,6 +277,9 @@ namespace Script {
                 switch (_ev.type) {
                     case EVENT.RUN_END: {
                         this.removeEventListeners();
+                        this.removeEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
+                        this.removeEventListener(ƒ.EVENT.NODE_DEACTIVATE, this.removeText);
+                        EventBus.removeEventListener(EVENT.RUN_END, this.eventListener);
                         break;
                     }
                 }

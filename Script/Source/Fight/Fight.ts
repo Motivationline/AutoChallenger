@@ -103,7 +103,7 @@ namespace Script {
         }
 
         private handleDeadEntity = async (_ev: FightEvent) => {
-            let deadEntity = _ev.target;
+            let deadEntity = _ev.target as Entity;
             this.arena.home.forEachElement((el, pos) => {
                 if (el !== deadEntity) return;
                 this.arena.home.remove(pos);
@@ -135,15 +135,22 @@ namespace Script {
 
         }
 
+        private registerEntityListeners = () => {
+            this.arena.away.forEachElement(el => el.registerEventListeners());
+            this.arena.home.forEachElement(el => el.registerEventListeners());
+        }
+
         private addEventListeners() {
             EventBus.addEventListener(EVENT.ENTITY_DIED, this.handleDeadEntity);
             EventBus.addEventListener(EVENT.ENTITY_ADDED, this.handleEntityChange);
             EventBus.addEventListener(EVENT.ENTITY_REMOVED, this.handleEntityChange);
+            EventBus.addEventListener(EVENT.FIGHT_PREPARE_COMPLETED, this.registerEntityListeners);
         }
         private removeEventListeners() {
             EventBus.removeEventListener(EVENT.ENTITY_DIED, this.handleDeadEntity);
             EventBus.removeEventListener(EVENT.ENTITY_ADDED, this.handleEntityChange);
             EventBus.removeEventListener(EVENT.ENTITY_REMOVED, this.handleEntityChange);
+            EventBus.removeEventListener(EVENT.FIGHT_PREPARE_COMPLETED, this.registerEntityListeners);
         }
     }
 }

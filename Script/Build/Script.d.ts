@@ -385,6 +385,7 @@ declare namespace Script {
         private runOneSide;
         private handleDeadEntity;
         private handleEntityChange;
+        private registerEntityListeners;
         private addEventListeners;
         private removeEventListeners;
     }
@@ -1118,7 +1119,6 @@ declare namespace Script {
 }
 declare namespace Script {
     interface IVisualizeFight {
-        showGrid(): Promise<void>;
         fightStart(): Promise<void>;
         roundStart(): Promise<void>;
         roundEnd(): Promise<void>;
@@ -1129,7 +1129,6 @@ declare namespace Script {
         home: VisualizeGrid;
         away: VisualizeGrid;
         constructor(_fight: Fight);
-        showGrid(): Promise<void>;
         nukeGrid(): Promise<void>;
         fightStart(): Promise<void>;
         roundStart(): Promise<void>;
@@ -1211,7 +1210,7 @@ declare namespace Script {
         sideNode: ƒ.Node;
         constructor(_grid: Grid<VisualizeEntity>, _side: string);
         addEntityToGrid(_entity: VisualizeEntity, _pos: Position, _removeExisting?: boolean, _anchor?: ƒ.Node): void;
-        removeEntityFromGrid(_pos: Position, _removeListeners: boolean): void;
+        removeEntityFromGrid(_pos: Position): void;
         moveEntityToAnchor(_entity: VisualizeEntity, position: Position, _timeMS?: number): Promise<void>;
         getAnchor(_x: number, _z: number): ƒ.Node;
         nuke(): void;
