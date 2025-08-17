@@ -23,6 +23,7 @@ namespace Script {
             this.node?.activate(true);
             if (this.anim) {
                 this.anim.jumpTo(0);
+                this.anim.playmode = ƒ.ANIMATION_PLAYMODE.STOP;
                 return new Promise<void>((resolve) => {
                     ƒ.Time.game.setTimer(this.delay * 1000, 1, () => {
                         this.anim.jumpTo(0);

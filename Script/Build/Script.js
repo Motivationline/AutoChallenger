@@ -836,7 +836,7 @@ var Script;
                 health: 4,
                 attacks: {
                     baseDamage: 1,
-                    baseCritChance: 50,
+                    baseCritChance: 0.5,
                     target: {
                         side: Script.TARGET_SIDE.OPPONENT,
                         area: {
@@ -951,7 +951,7 @@ var Script;
                 health: 5,
                 attacks: {
                     baseDamage: 1,
-                    baseCritChance: 75,
+                    baseCritChance: 0.75,
                     target: {
                         side: Script.TARGET_SIDE.OPPONENT,
                         area: {
@@ -967,7 +967,7 @@ var Script;
                 health: 5,
                 attacks: {
                     baseDamage: 2,
-                    baseCritChance: 50,
+                    baseCritChance: 0.5,
                     target: {
                         side: Script.TARGET_SIDE.OPPONENT,
                         area: {
@@ -1265,7 +1265,7 @@ var Script;
                 abilities: [{
                         on: Script.EVENT.ENTITY_HEALED,
                         conditions: [{
-                                target: { side: Script.TARGET_SIDE.ALLY, entity: {}, excludeSelf: false }
+                                target: { side: Script.TARGET_SIDE.ALLY, entity: {}, excludeSelf: false },
                             }],
                         target: "target",
                         spell: {
@@ -1397,9 +1397,10 @@ var Script;
                 abilities: [{
                         on: Script.EVENT.ENTITY_HEALED,
                         conditions: [{
-                                target: { side: Script.TARGET_SIDE.ALLY, entity: {}, excludeSelf: false }
+                                target: { side: Script.TARGET_SIDE.ALLY, entity: {}, excludeSelf: false },
+                                cause: Script.TARGET.SELF,
                             }],
-                        target: "target",
+                        target: "cause",
                         spell: {
                             type: Script.SPELL_TYPE.GOLD,
                             level: 1,
@@ -1539,7 +1540,8 @@ var Script;
                 abilities: [{
                         on: Script.EVENT.ENTITY_HEALED,
                         conditions: [{
-                                target: { side: Script.TARGET_SIDE.ALLY, entity: {}, excludeSelf: false }
+                                target: { side: Script.TARGET_SIDE.ALLY, entity: {}, excludeSelf: false },
+                                cause: Script.TARGET.SELF,
                             }],
                         target: "target",
                         spell: {
@@ -4573,7 +4575,7 @@ var Script;
                 abilityLevels: [
                     {
                         on: Script.EVENT.FIGHT_START,
-                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1, sortBy: Script.TARGET_SORT.RANDOM } },
                         spell: {
                             type: Script.SPELL_TYPE.SHIELD, level: 1
                         },
@@ -4581,7 +4583,7 @@ var Script;
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
-                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2 } },
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2, sortBy: Script.TARGET_SORT.RANDOM } },
                         spell: { type: Script.SPELL_TYPE.GOLD, level: 1 },
                         info: "SHOULD give a random buff to two random allies at the start of the fight. CURRENTLY JUST 1 GOLD?"
                     }
@@ -4609,7 +4611,7 @@ var Script;
                 abilityLevels: [
                     {
                         on: Script.EVENT.FIGHT_START,
-                        target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1 } },
+                        target: { side: Script.TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1, sortBy: Script.TARGET_SORT.RANDOM } },
                         spell: { type: Script.SPELL_TYPE.WEAKNESS, level: 1 },
                         info: "Gives 1 weakness to a random enemy at the start of the fight."
                     },
@@ -6257,6 +6259,7 @@ var Script;
             this.node?.activate(true);
             if (this.anim) {
                 this.anim.jumpTo(0);
+                this.anim.playmode = ƒ.ANIMATION_PLAYMODE.STOP;
                 return new Promise((resolve) => {
                     ƒ.Time.game.setTimer(this.delay * 1000, 1, () => {
                         this.anim.jumpTo(0);

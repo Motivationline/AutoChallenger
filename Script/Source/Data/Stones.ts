@@ -57,7 +57,7 @@ namespace Script {
                 abilityLevels: [
                     {
                         on: EVENT.NEVER,
-                        target: {side: TARGET_SIDE.ALLY, entity: {}},
+                        target: { side: TARGET_SIDE.ALLY, entity: {} },
                         info: "Gives 1 additional xp at the end of the fight."
                     },
                     {
@@ -72,7 +72,7 @@ namespace Script {
                 abilityLevels: [
                     {
                         on: EVENT.FIGHT_START,
-                        target: { side: TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
+                        target: { side: TARGET_SIDE.ALLY, entity: { maxNumTargets: 1, sortBy: TARGET_SORT.RANDOM } },
                         spell: {
                             type: SPELL_TYPE.SHIELD, level: 1
                         },
@@ -81,7 +81,7 @@ namespace Script {
                     },
                     {
                         on: EVENT.FIGHT_START,
-                        target: { side: TARGET_SIDE.ALLY, entity: { maxNumTargets: 2 } },
+                        target: { side: TARGET_SIDE.ALLY, entity: { maxNumTargets: 2, sortBy: TARGET_SORT.RANDOM } },
                         spell: { type: SPELL_TYPE.GOLD, level: 1 },
                         info: "SHOULD give a random buff to two random allies at the start of the fight. CURRENTLY JUST 1 GOLD?"
                     }
@@ -109,7 +109,7 @@ namespace Script {
                 abilityLevels: [
                     {
                         on: EVENT.FIGHT_START,
-                        target: { side: TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1 } },
+                        target: { side: TARGET_SIDE.OPPONENT, entity: { maxNumTargets: 1, sortBy: TARGET_SORT.RANDOM } },
                         spell: { type: SPELL_TYPE.WEAKNESS, level: 1 },
                         info: "Gives 1 weakness to a random enemy at the start of the fight."
                     },
@@ -177,14 +177,14 @@ namespace Script {
                 abilityLevels: [
                     {
                         on: EVENT.ENTITY_MOVED,
-                        conditions: {target: {side: TARGET_SIDE.OPPONENT, entity: {}}},
+                        conditions: { target: { side: TARGET_SIDE.OPPONENT, entity: {} } },
                         target: "target",
                         attack: { baseDamage: 1 },
                         info: "Deals 1 damage to enemies whenever they move."
                     },
                     {
                         on: EVENT.ENTITY_MOVED,
-                        conditions: {target: {side: TARGET_SIDE.OPPONENT, entity: {}}},
+                        conditions: { target: { side: TARGET_SIDE.OPPONENT, entity: {} } },
                         target: "target",
                         attack: { baseDamage: 2 },
                         info: "Deals 2 damage to enemies whenever they move."

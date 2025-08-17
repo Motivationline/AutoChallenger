@@ -341,7 +341,7 @@ namespace Script {
                 health: 4,
                 attacks: {
                     baseDamage: 1,
-                    baseCritChance: 50,
+                    baseCritChance: 0.5,
                     target: {
                         side: TARGET_SIDE.OPPONENT,
                         area: {
@@ -456,7 +456,7 @@ namespace Script {
                 health: 5,
                 attacks: {
                     baseDamage: 1,
-                    baseCritChance: 75,
+                    baseCritChance: 0.75,
                     target: {
                         side: TARGET_SIDE.OPPONENT,
                         area: {
@@ -472,7 +472,7 @@ namespace Script {
                 health: 5,
                 attacks: {
                     baseDamage: 2,
-                    baseCritChance: 50,
+                    baseCritChance: 0.5,
                     target: {
                         side: TARGET_SIDE.OPPONENT,
                         area: {
@@ -770,7 +770,7 @@ namespace Script {
                 abilities: [{
                     on: EVENT.ENTITY_HEALED,
                     conditions: [{
-                        target: { side: TARGET_SIDE.ALLY, entity: {}, excludeSelf: false }
+                        target: { side: TARGET_SIDE.ALLY, entity: {}, excludeSelf: false },
                     }],
                     target: "target",
                     spell: {
@@ -902,9 +902,10 @@ namespace Script {
                 abilities: [{
                     on: EVENT.ENTITY_HEALED,
                     conditions: [{
-                        target: { side: TARGET_SIDE.ALLY, entity: {}, excludeSelf: false }
+                        target: { side: TARGET_SIDE.ALLY, entity: {}, excludeSelf: false },
+                        cause: TARGET.SELF,
                     }],
-                    target: "target",
+                    target: "cause",
                     spell: {
                         type: SPELL_TYPE.GOLD,
                         level: 1,
@@ -1044,7 +1045,8 @@ namespace Script {
                 abilities: [{
                     on: EVENT.ENTITY_HEALED,
                     conditions: [{
-                        target: { side: TARGET_SIDE.ALLY, entity: {}, excludeSelf: false }
+                        target: { side: TARGET_SIDE.ALLY, entity: {}, excludeSelf: false },
+                        cause: TARGET.SELF,
                     }],
                     target: "target",
                     spell: {
