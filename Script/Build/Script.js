@@ -5624,7 +5624,7 @@ var Script;
         async changeGold(_amt) {
             // if (this.#gold < -_amt) throw new Error("Can't spend more than you have!");
             this.#gold = Math.max(0, this.#gold + _amt);
-            await Script.EventBus.dispatchEvent({ type: Script.EVENT.GOLD_CHANGE, detail: { amount: this.#gold } });
+            await Script.EventBus.dispatchEvent({ type: Script.EVENT.GOLD_CHANGE, detail: { amount: this.#gold, change: _amt } });
         }
         //#region Prepare Run
         async start() {
@@ -6541,14 +6541,23 @@ var Script;
     class GoldDisplayElement extends Script.UIElement {
         static #element = Script.createElementAdvanced("div", {
             classes: ["GoldDisplay"],
-            innerHTML: "0",
         });
+        static #innerElement = Script.createElementAdvanced("span", { innerHTML: "0" });
+        static #popovers = Script.createElementAdvanced("div", { classes: ["GoldDisplayPopovers"] });
         static { this.instance = new GoldDisplayElement(); }
         constructor() {
             super();
             this.update = (_ev) => {
-                GoldDisplayElement.#element.innerText = Script.Run.currentRun.gold.toString();
+                GoldDisplayElement.#innerElement.innerText = Script.Run.currentRun.gold.toString();
+                const popup = Script.createElementAdvanced("div", {
+                    innerHTML: `${_ev.detail.change}`,
+                    classes: ["GoldDisplayPopover", Math.sign(_ev.detail.change) > 0 ? "positive" : "negative"],
+                });
+                GoldDisplayElement.#popovers.appendChild(popup);
+                setTimeout(() => { popup.remove(); }, 2000);
             };
+            GoldDisplayElement.#element.appendChild(GoldDisplayElement.#innerElement);
+            GoldDisplayElement.#element.appendChild(GoldDisplayElement.#popovers);
             this.addEventListeners();
         }
         static get element() {

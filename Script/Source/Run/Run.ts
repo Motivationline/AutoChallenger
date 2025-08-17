@@ -47,7 +47,7 @@ namespace Script {
         async changeGold(_amt: number) {
             // if (this.#gold < -_amt) throw new Error("Can't spend more than you have!");
             this.#gold = Math.max(0, this.#gold + _amt);
-            await EventBus.dispatchEvent({ type: EVENT.GOLD_CHANGE, detail: { amount: this.#gold } })
+            await EventBus.dispatchEvent({ type: EVENT.GOLD_CHANGE, detail: { amount: this.#gold, change: _amt } })
         }
 
         //#region Prepare Run
