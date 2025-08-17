@@ -2483,6 +2483,102 @@
       "events": {}
     }
   },
+  "Audio|2025-08-14T13:20:02.622Z|67333": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_1.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.622Z|67333",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.622Z|10892": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_10.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.622Z|10892",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_10.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.622Z|86466": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_2.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.622Z|86466",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.622Z|56115": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_3.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.622Z|56115",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.620Z|37034": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_1.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.620Z|37034",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.620Z|86725": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_2.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.620Z|86725",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.621Z|33656": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_3.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.621Z|33656",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.621Z|23201": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_4.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.621Z|23201",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_4.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.619Z|86452": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_1.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.619Z|86452",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_1.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.619Z|25212": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_2.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.619Z|25212",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_2.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.620Z|16215": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_3.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.620Z|16215",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_3.mp3",
+      "type": "Audio"
+    }
+  },
+  "Audio|2025-08-14T13:20:02.620Z|83783": {
+    "ƒ.Audio": {
+      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_4.mp3",
+      "idResource": "Audio|2025-08-14T13:20:02.620Z|83783",
+      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_4.mp3",
+      "type": "Audio"
+    }
+  },
   "Graph|2025-06-27T09:57:03.456Z|96888": {
     "ƒ.Graph": {
       "name": "StandardEumling",
@@ -3070,6 +3166,10 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-21T10:18:40.051Z|19771",
+              "audio1": "Audio|2025-08-14T13:20:02.622Z|56115",
+              "audio2": "Audio|2025-08-14T13:20:02.622Z|86466",
+              "audio3": "Audio|2025-08-14T13:20:02.622Z|10892",
+              "audio4": "Audio|2025-08-14T13:20:02.622Z|67333",
               "animType": "hurt"
             }
           },
@@ -3077,6 +3177,10 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-07-21T10:18:40.013Z|11520",
+              "audio1": "Audio|2025-08-14T13:20:02.620Z|37034",
+              "audio2": "Audio|2025-08-14T13:20:02.620Z|86725",
+              "audio3": "Audio|2025-08-14T13:20:02.621Z|33656",
+              "audio4": "Audio|2025-08-14T13:20:02.621Z|23201",
               "animType": "affected"
             }
           },
@@ -3084,6 +3188,10 @@
             "Script.AnimationLink": {
               "active": true,
               "animation": "AnimationGLTF|2025-06-06T13:07:59.175Z|76196",
+              "audio1": "Audio|2025-08-14T13:20:02.619Z|86452",
+              "audio2": "Audio|2025-08-14T13:20:02.619Z|25212",
+              "audio3": "Audio|2025-08-14T13:20:02.620Z|16215",
+              "audio4": "Audio|2025-08-14T13:20:02.620Z|83783",
               "animType": "attack"
             }
           }
@@ -5280,38 +5388,6 @@
       "type": "Audio"
     }
   },
-  "Audio|2025-08-14T13:20:02.619Z|86452": {
-    "ƒ.Audio": {
-      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_1.mp3",
-      "idResource": "Audio|2025-08-14T13:20:02.619Z|86452",
-      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_1.mp3",
-      "type": "Audio"
-    }
-  },
-  "Audio|2025-08-14T13:20:02.619Z|25212": {
-    "ƒ.Audio": {
-      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_2.mp3",
-      "idResource": "Audio|2025-08-14T13:20:02.619Z|25212",
-      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_2.mp3",
-      "type": "Audio"
-    }
-  },
-  "Audio|2025-08-14T13:20:02.620Z|16215": {
-    "ƒ.Audio": {
-      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_3.mp3",
-      "idResource": "Audio|2025-08-14T13:20:02.620Z|16215",
-      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_3.mp3",
-      "type": "Audio"
-    }
-  },
-  "Audio|2025-08-14T13:20:02.620Z|83783": {
-    "ƒ.Audio": {
-      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_4.mp3",
-      "idResource": "Audio|2025-08-14T13:20:02.620Z|83783",
-      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_4.mp3",
-      "type": "Audio"
-    }
-  },
   "Audio|2025-08-14T13:20:02.620Z|32073": {
     "ƒ.Audio": {
       "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_5.mp3",
@@ -5333,38 +5409,6 @@
       "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_7.mp3",
       "idResource": "Audio|2025-08-14T13:20:02.620Z|09088",
       "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_attack_7.mp3",
-      "type": "Audio"
-    }
-  },
-  "Audio|2025-08-14T13:20:02.620Z|37034": {
-    "ƒ.Audio": {
-      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_1.mp3",
-      "idResource": "Audio|2025-08-14T13:20:02.620Z|37034",
-      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_1.mp3",
-      "type": "Audio"
-    }
-  },
-  "Audio|2025-08-14T13:20:02.620Z|86725": {
-    "ƒ.Audio": {
-      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_2.mp3",
-      "idResource": "Audio|2025-08-14T13:20:02.620Z|86725",
-      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_2.mp3",
-      "type": "Audio"
-    }
-  },
-  "Audio|2025-08-14T13:20:02.621Z|33656": {
-    "ƒ.Audio": {
-      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_3.mp3",
-      "idResource": "Audio|2025-08-14T13:20:02.621Z|33656",
-      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_3.mp3",
-      "type": "Audio"
-    }
-  },
-  "Audio|2025-08-14T13:20:02.621Z|23201": {
-    "ƒ.Audio": {
-      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_4.mp3",
-      "idResource": "Audio|2025-08-14T13:20:02.621Z|23201",
-      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_clicked_4.mp3",
       "type": "Audio"
     }
   },
@@ -5429,38 +5473,6 @@
       "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_death_6.mp3",
       "idResource": "Audio|2025-08-14T13:20:02.622Z|35952",
       "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_death_6.mp3",
-      "type": "Audio"
-    }
-  },
-  "Audio|2025-08-14T13:20:02.622Z|67333": {
-    "ƒ.Audio": {
-      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_1.mp3",
-      "idResource": "Audio|2025-08-14T13:20:02.622Z|67333",
-      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_1.mp3",
-      "type": "Audio"
-    }
-  },
-  "Audio|2025-08-14T13:20:02.622Z|10892": {
-    "ƒ.Audio": {
-      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_10.mp3",
-      "idResource": "Audio|2025-08-14T13:20:02.622Z|10892",
-      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_10.mp3",
-      "type": "Audio"
-    }
-  },
-  "Audio|2025-08-14T13:20:02.622Z|86466": {
-    "ƒ.Audio": {
-      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_2.mp3",
-      "idResource": "Audio|2025-08-14T13:20:02.622Z|86466",
-      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_2.mp3",
-      "type": "Audio"
-    }
-  },
-  "Audio|2025-08-14T13:20:02.622Z|56115": {
-    "ƒ.Audio": {
-      "url": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_3.mp3",
-      "idResource": "Audio|2025-08-14T13:20:02.622Z|56115",
-      "name": "Assets\\Sounds\\Eumlinge_mp3\\eumling_hurt_3.mp3",
       "type": "Audio"
     }
   },

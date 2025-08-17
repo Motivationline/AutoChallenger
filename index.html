@@ -1,15 +1,13 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
-
 <head>
-    <title>Die Eumlinge³</title>
+    <title>AutoChallenger</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="styles.css" />
 
     <!--Editor settings of this project-->
-    <meta type="settings" autoview="Graph|2025-05-23T08:52:13.386Z|08098"
-        project="{'name':'AutoChallenger','graphAutoView':'Graph|2025-05-23T08:52:13.386Z|08098'}" />
+    <meta type="settings" autoview="Graph|2025-05-23T08:52:13.386Z|08098" project="{'name':'AutoChallenger','graphAutoView':'Graph|2025-05-23T08:52:13.386Z|08098'}" />
 
     <!--Activate the following line to include the FUDGE-version of Oimo-Physics. You may want to download a local copy to work offline and be independent from future changes!-->
     <!--<script type="text/javascript" src="https://hs-furtwangen.github.io/FUDGE/Distribution/OimoPhysics.js"></script>-->
@@ -30,19 +28,19 @@
     <!-- <script type="text/javascript" src="Autoview.js"></script> -->
     <!-- preload images -->
 
-    <link rel="prefetch" as="image" href="./Assets/UIElemente/HimmelBackground.PNG">
-    <link rel="prefetch" as="image" href="./Assets/UIElemente/WegLinks.PNG">
-    <link rel="prefetch" as="image" href="./Assets/UIElemente/WegRechts.PNG">
-    <link rel="prefetch" as="image" href="./Assets/UIElemente/LandschaftBackground.PNG">
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/HimmelBackground.PNG" />
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/WegLinks.PNG" />
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/WegRechts.PNG" />
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/LandschaftBackground.PNG" />
 
-    <link rel="prefetch" as="image" href="./Assets/UIElemente/CoverShop.PNG">
-    <link rel="prefetch" as="image" href="./Assets/UIElemente/CoverChallenge1.PNG">
-    <link rel="prefetch" as="image" href="./Assets/UIElemente/CoverChallenge2.PNG">
-    <link rel="prefetch" as="image" href="./Assets/UIElemente/CoverChallenge3.PNG">
-    <link rel="prefetch" as="image" href="./Assets/UIElemente/CoverChallenge4.PNG">
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/CoverShop.PNG" />
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/CoverChallenge1.PNG" />
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/CoverChallenge2.PNG" />
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/CoverChallenge3.PNG" />
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/CoverChallenge4.PNG" />
 
-    <link rel="prefetch" as="image" href="./Assets/Pics/Logo_black.png">
-    <link rel="prefetch" as="image" href="./Assets/UIElemente/HolzSchild.png">
+    <link rel="prefetch" as="image" href="./Assets/Pics/Logo_black.png" />
+    <link rel="prefetch" as="image" href="./Assets/UIElemente/HolzSchild.png" />
 
 </head>
 
@@ -63,7 +61,7 @@
 
     <div id="MainMenu" class="UI hidden">
         <!--Menu UI-->
-        <img src="./Assets/Pics/Logo_white.png" alt="Die Eumlinge">
+        <img src="./Assets/Pics/Logo_white.png" alt="Die Eumlinge" />
         <button id="MainStart" class="green">Start</button>
         <button id="MainOptions">Options</button>
     </div>
@@ -81,7 +79,8 @@
                 <div id="ChooseEumlingOptions">
                 </div>
             </div>
-            <div id="ChooseEumlingInfo" class="InfoScreen"></div>
+            <div id="ChooseEumlingInfo" class="InfoScreen">
+</div>
             <button id="ChooseEumlingConfirm" class="ConfirmButton green">Confirm</button>
         </div>
     </div>
@@ -92,7 +91,8 @@
                 <div id="ChooseStoneOptions">
                 </div>
             </div>
-            <div id="ChooseStoneInfo" class="InfoScreen"></div>
+            <div id="ChooseStoneInfo" class="InfoScreen">
+</div>
             <button id="ChooseStoneConfirm" class="ConfirmButton green">Confirm</button>
         </div>
     </div>
@@ -101,8 +101,7 @@
         <!--Map UI-->
         <div id="MapHeader">
             <div id="LogoShieldWithSettings">
-                <img id="MapOptionButton" src="./Assets/UIElemente/IconEinstellungen.PNG" alt="Settings"
-                    class="clickable">
+                <img id="MapOptionButton" src="./Assets/UIElemente/IconEinstellungen.PNG" alt="Settings" class="clickable" />
             </div>
         </div>
         <div id="MapOptions">
@@ -130,7 +129,8 @@
             <div id="FightPrepInfo">
             </div>
         </div>
-        <div id="FightPrepGoldCounterWrapper"></div>
+        <div id="FightPrepGoldCounterWrapper">
+</div>
     </div>
     <div id="Fight" class="UI hidden">
         <!--Fight UI-->
@@ -140,7 +140,8 @@
         </div>
         <div id="FightSpeedOptions">
         </div>
-        <div id="FightGoldCounterWrapper"></div>
+        <div id="FightGoldCounterWrapper">
+</div>
         <div id="FightPhaseOverlay" class="UI no-interact">
             <div id="FightPhaseOverlayText" class="RoundCounter">
             </div>
@@ -161,7 +162,8 @@
         </div>
         <div id="FightRewardInfoWrapperWrapper">
             <div id="FightRewardInfoWrapper">
-                <div id="FightRewardInfo"></div>
+                <div id="FightRewardInfo">
+</div>
                 <div id="FightRewardInfoButtons">
                     <button id="FightRewardConfirm" class="green">Grant XP</button>
                     <button id="FightRewardCancel" class="red">Cancel</button>
@@ -178,10 +180,13 @@
 
             <div class="ChoiceScreen">
                 <span>Choose a Specialisation</span>
-                <div id="EumlingLevelupOptions"></div>
+                <div id="EumlingLevelupOptions">
+</div>
             </div>
-            <div id="EumlingLevelupEumling"></div>
-            <div id="EumlingLevelupInfo" class="InfoScreen"></div>
+            <div id="EumlingLevelupEumling">
+</div>
+            <div id="EumlingLevelupInfo" class="InfoScreen">
+</div>
             <button id="EumlingLevelupConfirm" class="green">Confirm</button>
         </div>
     </div>
@@ -194,11 +199,12 @@
 
     <div id="Shop" class="UI blur hidden">
         <!--Shop UI-->
-        <div id="ShopHeader"></div>
+        <div id="ShopHeader">
+</div>
         <h3>Buy Stones</h3>
         <div id="ShopStonesWrapper">
-            <div id="ShopStonesRefresh" class="clickable selectable center-center ShopOption" data-cost="1" ]>
-                <img src="./Assets/UIElemente/refresh.svg" alt="Refresh">
+            <div id="ShopStonesRefresh" class="clickable selectable center-center ShopOption" data-cost="1" ]="">
+                <img src="./Assets/UIElemente/refresh.svg" alt="Refresh" />
                 <div class="GoldDisplay">1</div>
             </div>
             <div id="ShopStones">
@@ -215,12 +221,14 @@
         </div>
         <div id="ShopInfoOverlayWrapper" class="UI blur center-center">
             <div id="ShopInfoOverlay">
-                <div id="ShopInfo"></div>
+                <div id="ShopInfo">
+</div>
                 <button id="ShopStonesBuy" class="green">Buy</button>
                 <button id="ShopStonesCancel" class="red">Cancel</button>
             </div>
         </div>
-        <div id="ShopGoldWrapper"></div>
+        <div id="ShopGoldWrapper">
+</div>
     </div>
     <!--Canvas for FUDGE to render to-->
     <canvas class="fullscreen" id="GameCanvas" draggable="false">
@@ -228,5 +236,4 @@
     <div class="UI no-interact" id="GameOverlayInfos">
     </div>
 </body>
-
 </html>
