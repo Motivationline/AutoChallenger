@@ -3418,6 +3418,7 @@ var Script;
             this.convertButton.disabled = false;
             this.convertButton.classList.remove("hidden");
             this.hideInfo();
+            document.getElementById("FightRewardGoldWrapper").appendChild(Script.GoldDisplayElement.element);
         }
         async onShow() {
             super.onShow();
@@ -5732,8 +5733,8 @@ var Script;
                 xp += knowledgestone.level + 1;
             }
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.REWARDS_OPEN, detail: { gold, xp } });
-            await Script.EventBus.awaitSpecificEvent(Script.EVENT.REWARDS_CLOSE);
             await this.changeGold(gold);
+            await Script.EventBus.awaitSpecificEvent(Script.EVENT.REWARDS_CLOSE);
         }
         //#endregion
         //#endregion

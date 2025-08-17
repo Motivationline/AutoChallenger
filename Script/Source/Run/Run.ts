@@ -178,9 +178,9 @@ namespace Script {
             }
 
             await EventBus.dispatchEvent({ type: EVENT.REWARDS_OPEN, detail: { gold, xp } });
+            await this.changeGold(gold);
             await EventBus.awaitSpecificEvent(EVENT.REWARDS_CLOSE);
 
-            await this.changeGold(gold);
         }
         //#endregion
         //#endregion

@@ -64,6 +64,8 @@ namespace Script {
             this.convertButton.disabled = false;
             this.convertButton.classList.remove("hidden");
             this.hideInfo();
+
+            document.getElementById("FightRewardGoldWrapper").appendChild(GoldDisplayElement.element);
         }
         async onShow(): Promise<void> {
             super.onShow();

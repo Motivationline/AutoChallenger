@@ -293,6 +293,7 @@ canvas.fullscreen {
   position: relative;
 }
 
+#FightRewardGoldWrapper,
 #FightPrepGoldCounterWrapper,
 #FightGoldCounterWrapper {
   position: absolute;
