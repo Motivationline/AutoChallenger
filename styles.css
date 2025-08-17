@@ -1091,4 +1091,31 @@ button.red {
   100% {
     transform: rotate(0deg);
   }
+
+}
+.DamageNumber {
+  position: absolute;
+  z-index: 10;
+  font-size: 3vh;
+  color: rgb(187, 1, 1);
+  font-weight: bold;
+  animation: damage-number 1.2s ease-out forwards;
+  text-shadow: 0 0 5px white;
+}
+
+.DamageNumber.Critical::after {
+  content: "!";
+}
+
+.DamageNumber.heal {
+  color: green;
+}
+.DamageNumber.zero {
+  color: white;
+  text-shadow: 0 0 5px black;
+}
+
+@keyframes damage-number {
+  0% {transform: translateY(0) rotate(0) translateX(0); opacity: 1;}
+  100% {transform: translateY(-3em) rotate(calc(var(--random) * 10deg)) translateX(calc(var(--random) * 1em)); opacity: 0.5;}
 }

@@ -79,10 +79,24 @@ namespace Script {
 
         //#region Something happened
         async getHurt(_ev: FightEvent): Promise<void> {
+            this.showDamageNumber(_ev.detail.amount, _ev.detail.wasCrit);
             await this.playAnimationIfPossible(ANIMATION.HURT);
+        }
+        async showDamageNumber(_amount: number, _crit: boolean, _heal: boolean = false) {
+            const pos = viewport.pointWorldToClient(ƒ.Vector3.SUM(this.mtxWorld.translation, ƒ.Vector3.Z(0.0)));
+            const element = createElementAdvanced("div", {
+                classes: ["DamageNumber", _crit ? "Critical" : "Normal", _heal ? "heal" : "noheal", _amount === 0 ? "zero" : "nozero"], innerHTML: `${_amount}`,
+                attributes: [["style", `left: ${pos.x}px; top: ${pos.y}px; --random: ${Math.random() * 2 - 1}`]]
+            });
+
+            document.getElementById("GameOverlayInfos").appendChild(element);
+            setTimeout(() => { element.remove() }, 1200);
         }
         async getAffected(_ev: FightEvent): Promise<void> {
             await this.playAnimationIfPossible(ANIMATION.AFFECTED);
+        }
+        async getHealed(_ev: FightEvent): Promise<void> {
+            this.showDamageNumber(_ev.detail.level, false, true);
         }
         async die(_ev: FightEvent): Promise<void> {
             await this.playAnimationIfPossible(ANIMATION.DIE);
@@ -194,9 +208,9 @@ namespace Script {
             let index = 0;
             (<Entity>this.entity).activeEffects.forEach((value, type) => {
                 if (value <= 0) return;
-                effectObjects.push(createElementAdvanced("img", {attributes: [["src", `./Assets/UIElemente/InGameUI/${VisualizeEntity.typeToName.get(type)}`], ["alt", type], ["style", `--index: ${index++}`]]}))
+                effectObjects.push(createElementAdvanced("img", { attributes: [["src", `./Assets/UIElemente/InGameUI/${VisualizeEntity.typeToName.get(type)}`], ["alt", type], ["style", `--index: ${index++}`]] }))
             });
-            effectObjects.push(createElementAdvanced("div", {innerHTML: `<span>${this.entity.currentHealth} / ${this.entity.health}</span>`}));
+            effectObjects.push(createElementAdvanced("div", { innerHTML: `<span>${this.entity.currentHealth} / ${this.entity.health}</span>` }));
             this.tmpText.replaceChildren(...effectObjects);
 
             const pos = viewport.pointWorldToClient(ƒ.Vector3.SUM(this.mtxWorld.translation, ƒ.Vector3.Z(0.4)));
@@ -225,6 +239,7 @@ namespace Script {
             EventBus.addEventListener(EVENT.ENTITY_HURT, this.eventListener);
             EventBus.addEventListener(EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
             EventBus.addEventListener(EVENT.ENTITY_AFFECTED, this.eventListener);
+            EventBus.addEventListener(EVENT.ENTITY_HEALED, this.eventListener);
             EventBus.addEventListener(EVENT.ENTITY_DIES, this.eventListener);
 
             EventBus.addEventListener(EVENT.ENTITY_HURT, this.updateTmpText);
@@ -271,7 +286,8 @@ namespace Script {
                         break;
                     }
                 }
-            } else if (_ev.target === this.entity) {
+            }
+            if (_ev.target === this.entity) {
                 // this entity is affected by something
                 switch (_ev.type) {
                     case EVENT.ENTITY_HURT: {
@@ -282,27 +298,31 @@ namespace Script {
                         await this.getAffected(_ev);
                         break;
                     }
+                    case EVENT.ENTITY_HEALED: {
+                        await this.getHealed(_ev);
+                        break;
+                    }
                     case EVENT.ENTITY_DIES: {
                         await this.die(_ev);
                         break;
                     }
                 }
-            } else {
-                // independent events
-                switch (_ev.type) {
-                    case EVENT.RUN_END: {
-                        this.removeEventListeners();
-                        this.removeEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
-                        this.removeEventListener(ƒ.EVENT.NODE_DEACTIVATE, this.removeText);
-                        EventBus.removeEventListener(EVENT.RUN_END, this.eventListener);
-                        break;
-                    }
-                    case EVENT.FIGHT_ENDED: {
-                        this.removeEventListeners();
-                        break;
-                    }
+            }
+            // independent events
+            switch (_ev.type) {
+                case EVENT.RUN_END: {
+                    this.removeEventListeners();
+                    this.removeEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
+                    this.removeEventListener(ƒ.EVENT.NODE_DEACTIVATE, this.removeText);
+                    EventBus.removeEventListener(EVENT.RUN_END, this.eventListener);
+                    break;
+                }
+                case EVENT.FIGHT_ENDED: {
+                    this.removeEventListeners();
+                    break;
                 }
             }
+
             this.updateTmpText();
         }
     }

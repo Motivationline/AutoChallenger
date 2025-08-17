@@ -1169,7 +1169,9 @@ declare namespace Script {
         move(_ev: FightEvent): Promise<void>;
         useSpell(_ev: FightEvent): Promise<void>;
         getHurt(_ev: FightEvent): Promise<void>;
+        showDamageNumber(_amount: number, _crit: boolean, _heal?: boolean): Promise<void>;
         getAffected(_ev: FightEvent): Promise<void>;
+        getHealed(_ev: FightEvent): Promise<void>;
         die(_ev: FightEvent): Promise<void>;
         resist(): Promise<void>;
         showPreview(): Promise<void>;

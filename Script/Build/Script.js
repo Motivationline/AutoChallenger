@@ -6043,10 +6043,23 @@ var Script;
         //#endregion
         //#region Something happened
         async getHurt(_ev) {
+            this.showDamageNumber(_ev.detail.amount, _ev.detail.wasCrit);
             await this.playAnimationIfPossible(Script.ANIMATION.HURT);
+        }
+        async showDamageNumber(_amount, _crit, _heal = false) {
+            const pos = Script.viewport.pointWorldToClient(ƒ.Vector3.SUM(this.mtxWorld.translation, ƒ.Vector3.Z(0.0)));
+            const element = Script.createElementAdvanced("div", {
+                classes: ["DamageNumber", _crit ? "Critical" : "Normal", _heal ? "heal" : "noheal", _amount === 0 ? "zero" : "nozero"], innerHTML: `${_amount}`,
+                attributes: [["style", `left: ${pos.x}px; top: ${pos.y}px; --random: ${Math.random() * 2 - 1}`]]
+            });
+            document.getElementById("GameOverlayInfos").appendChild(element);
+            setTimeout(() => { element.remove(); }, 1200);
         }
         async getAffected(_ev) {
             await this.playAnimationIfPossible(Script.ANIMATION.AFFECTED);
+        }
+        async getHealed(_ev) {
+            this.showDamageNumber(_ev.detail.level, false, true);
         }
         async die(_ev) {
             await this.playAnimationIfPossible(Script.ANIMATION.DIE);
@@ -6162,6 +6175,7 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_HURT, this.eventListener);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_AFFECTED, this.eventListener);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_HEALED, this.eventListener);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_DIES, this.eventListener);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_HURT, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_AFFECTED, this.updateTmpText);
@@ -6201,7 +6215,7 @@ var Script;
                     }
                 }
             }
-            else if (_ev.target === this.entity) {
+            if (_ev.target === this.entity) {
                 // this entity is affected by something
                 switch (_ev.type) {
                     case Script.EVENT.ENTITY_HURT: {
@@ -6212,26 +6226,28 @@ var Script;
                         await this.getAffected(_ev);
                         break;
                     }
+                    case Script.EVENT.ENTITY_HEALED: {
+                        await this.getHealed(_ev);
+                        break;
+                    }
                     case Script.EVENT.ENTITY_DIES: {
                         await this.die(_ev);
                         break;
                     }
                 }
             }
-            else {
-                // independent events
-                switch (_ev.type) {
-                    case Script.EVENT.RUN_END: {
-                        this.removeEventListeners();
-                        this.removeEventListener("nodeActivate" /* ƒ.EVENT.NODE_ACTIVATE */, this.addText);
-                        this.removeEventListener("nodeDeactivate" /* ƒ.EVENT.NODE_DEACTIVATE */, this.removeText);
-                        Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.eventListener);
-                        break;
-                    }
-                    case Script.EVENT.FIGHT_ENDED: {
-                        this.removeEventListeners();
-                        break;
-                    }
+            // independent events
+            switch (_ev.type) {
+                case Script.EVENT.RUN_END: {
+                    this.removeEventListeners();
+                    this.removeEventListener("nodeActivate" /* ƒ.EVENT.NODE_ACTIVATE */, this.addText);
+                    this.removeEventListener("nodeDeactivate" /* ƒ.EVENT.NODE_DEACTIVATE */, this.removeText);
+                    Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.eventListener);
+                    break;
+                }
+                case Script.EVENT.FIGHT_ENDED: {
+                    this.removeEventListeners();
+                    break;
                 }
             }
             this.updateTmpText();
