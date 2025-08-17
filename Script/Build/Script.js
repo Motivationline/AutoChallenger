@@ -5967,23 +5967,27 @@ var Script;
             this.updateTmpText = () => {
                 if (!this.tmpText)
                     return;
-                let effectText = "";
-                this.entity.activeEffects.forEach((value, type) => { if (value > 0)
-                    effectText += `${type}: ${value}\n`; });
-                effectText += `${this.entity.currentHealth} / ${this.entity.health} ♥️`;
-                this.tmpText.innerText = effectText;
-                let rect = this.tmpText.getBoundingClientRect();
-                const pos = Script.viewport.pointWorldToClient(this.mtxWorld.translation);
-                this.tmpText.style.left = (pos.x - rect.width / 2) + "px";
-                this.tmpText.style.top = pos.y + "px";
+                let effectObjects = [];
+                let index = 0;
+                this.entity.activeEffects.forEach((value, type) => {
+                    if (value <= 0)
+                        return;
+                    effectObjects.push(Script.createElementAdvanced("img", { attributes: [["src", `./Assets/UIElemente/InGameUI/${VisualizeEntity.typeToName.get(type)}`], ["alt", type], ["style", `--index: ${index++}`]] }));
+                });
+                effectObjects.push(Script.createElementAdvanced("div", { innerHTML: `<span>${this.entity.currentHealth} / ${this.entity.health}</span>` }));
+                this.tmpText.replaceChildren(...effectObjects);
+                const pos = Script.viewport.pointWorldToClient(ƒ.Vector3.SUM(this.mtxWorld.translation, ƒ.Vector3.Z(0.4)));
+                this.tmpTextWrapper.style.left = pos.x + "px";
+                this.tmpTextWrapper.style.top = pos.y + "px";
                 this.textUpdater = requestAnimationFrame(this.updateTmpText);
             };
+            // textUpdater: number;
             this.addText = () => {
-                document.getElementById("GameOverlayInfos").appendChild(this.tmpText);
+                document.getElementById("GameOverlayInfos").appendChild(this.tmpTextWrapper);
                 requestAnimationFrame(this.updateTmpText);
             };
             this.removeText = () => {
-                this.tmpText.remove();
+                this.tmpTextWrapper.remove();
                 cancelAnimationFrame(this.textUpdater);
             };
             this.eventListener = async (_ev) => {
@@ -5999,7 +6003,9 @@ var Script;
             // this.addComponent(entityMat);
             // entityMesh.mtxPivot.scale(ƒ.Vector3.ONE(this.size));
             // entityMat.clrPrimary.setCSS("white");
-            this.tmpText = Script.createElementAdvanced("div", { classes: ["EntityOverlay"] });
+            this.tmpText = Script.createElementAdvanced("div", { classes: ["EntityOverlayInner"], innerHTML: "<span></span>" });
+            this.tmpTextWrapper = Script.createElementAdvanced("div", { classes: ["EntityOverlay"] });
+            this.tmpTextWrapper.appendChild(this.tmpText);
             this.updateTmpText();
             this.addComponent(new ƒ.ComponentTransform());
             this.mtxLocal.scaling = ƒ.Vector3.ONE(1.0);
@@ -6130,6 +6136,15 @@ var Script;
             if (node)
                 this.removeChild(node);
         }
+        static { this.typeToName = new Map([
+            [Script.SPELL_TYPE.SHIELD, "IconDefenseUp.png"],
+            [Script.SPELL_TYPE.MIRROR, "IconSpiegel.png"],
+            [Script.SPELL_TYPE.THORNS, "IconDornen.png"],
+            [Script.SPELL_TYPE.VULNERABLE, "IconDefenseDown.png"],
+            [Script.SPELL_TYPE.SHIELD, "IconDefenseUp.png"],
+            [Script.SPELL_TYPE.STUN, "IconStun.png"],
+            [Script.SPELL_TYPE.UNTARGETABLE, "IconUntargetable.png"],
+        ]); }
         getEntity() {
             return this.entity;
         }
@@ -6207,6 +6222,7 @@ var Script;
                     }
                 }
             }
+            this.updateTmpText();
         }
     }
     Script.VisualizeEntity = VisualizeEntity;

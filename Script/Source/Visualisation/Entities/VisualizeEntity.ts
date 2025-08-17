@@ -22,6 +22,7 @@ namespace Script {
         //private grid: VisualizeGridNull;
         // TODO: remove this again when it's not needed anymore.
         private tmpText: HTMLDivElement;
+        private tmpTextWrapper: HTMLDivElement;
 
         constructor(_entity: IEntity) {
             super("entity");
@@ -37,7 +38,9 @@ namespace Script {
             // entityMesh.mtxPivot.scale(ƒ.Vector3.ONE(this.size));
             // entityMat.clrPrimary.setCSS("white");
 
-            this.tmpText = createElementAdvanced("div", { classes: ["EntityOverlay"] });
+            this.tmpText = createElementAdvanced("div", { classes: ["EntityOverlayInner"], innerHTML: "<span></span>" });
+            this.tmpTextWrapper = createElementAdvanced("div", { classes: ["EntityOverlay"] });
+            this.tmpTextWrapper.appendChild(this.tmpText);
             this.updateTmpText();
 
             this.addComponent(new ƒ.ComponentTransform());
@@ -48,7 +51,7 @@ namespace Script {
 
             this.addEventListener(ƒ.EVENT.NODE_ACTIVATE, this.addText);
             this.addEventListener(ƒ.EVENT.NODE_DEACTIVATE, this.removeText);
-            
+
             EventBus.addEventListener(EVENT.RUN_END, this.eventListener);
         }
 
@@ -175,28 +178,40 @@ namespace Script {
             if (node) this.removeChild(node);
         }
 
+        static typeToName = new Map([
+            [SPELL_TYPE.SHIELD, "IconDefenseUp.png"],
+            [SPELL_TYPE.MIRROR, "IconSpiegel.png"],
+            [SPELL_TYPE.THORNS, "IconDornen.png"],
+            [SPELL_TYPE.VULNERABLE, "IconDefenseDown.png"],
+            [SPELL_TYPE.SHIELD, "IconDefenseUp.png"],
+            [SPELL_TYPE.STUN, "IconStun.png"],
+            [SPELL_TYPE.UNTARGETABLE, "IconUntargetable.png"],
+        ])
+        textUpdater: number;
         public updateTmpText = () => {
             if (!this.tmpText) return;
-            let effectText = "";
-            (<Entity>this.entity).activeEffects.forEach((value, type) => { if (value > 0) effectText += `${type}: ${value}\n` });
-            effectText += `${this.entity.currentHealth} / ${this.entity.health} ♥️`;
-            this.tmpText.innerText = effectText;
+            let effectObjects: HTMLElement[] = [];
+            let index = 0;
+            (<Entity>this.entity).activeEffects.forEach((value, type) => {
+                if (value <= 0) return;
+                effectObjects.push(createElementAdvanced("img", {attributes: [["src", `./Assets/UIElemente/InGameUI/${VisualizeEntity.typeToName.get(type)}`], ["alt", type], ["style", `--index: ${index++}`]]}))
+            });
+            effectObjects.push(createElementAdvanced("div", {innerHTML: `<span>${this.entity.currentHealth} / ${this.entity.health}</span>`}));
+            this.tmpText.replaceChildren(...effectObjects);
 
-            let rect = this.tmpText.getBoundingClientRect();
-
-            const pos = viewport.pointWorldToClient(this.mtxWorld.translation);
-            this.tmpText.style.left = (pos.x - rect.width / 2) + "px";
-            this.tmpText.style.top = pos.y + "px";
+            const pos = viewport.pointWorldToClient(ƒ.Vector3.SUM(this.mtxWorld.translation, ƒ.Vector3.Z(0.4)));
+            this.tmpTextWrapper.style.left = pos.x + "px";
+            this.tmpTextWrapper.style.top = pos.y + "px";
             this.textUpdater = requestAnimationFrame(this.updateTmpText);
         }
 
-        textUpdater: number;
+        // textUpdater: number;
         private addText = () => {
-            document.getElementById("GameOverlayInfos").appendChild(this.tmpText);
+            document.getElementById("GameOverlayInfos").appendChild(this.tmpTextWrapper);
             requestAnimationFrame(this.updateTmpText);
         }
         private removeText = () => {
-            this.tmpText.remove();
+            this.tmpTextWrapper.remove();
             cancelAnimationFrame(this.textUpdater);
         }
 
@@ -284,6 +299,7 @@ namespace Script {
                     }
                 }
             }
+            this.updateTmpText();
         }
     }
 }

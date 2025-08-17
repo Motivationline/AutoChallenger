@@ -1162,6 +1162,7 @@ declare namespace Script {
         private cmpAudio;
         defaultAnimation: ƒ.Animation;
         private tmpText;
+        private tmpTextWrapper;
         constructor(_entity: IEntity);
         attack(_ev: FightEvent): Promise<void>;
         move(_ev: FightEvent): Promise<void>;
@@ -1176,8 +1177,9 @@ declare namespace Script {
         givePlaceholderPls(): ƒ.Node;
         playAnimationIfPossible(_anim: ANIMATION | ƒ.Animation): Promise<void>;
         private showFallbackText;
-        updateTmpText: () => void;
+        static typeToName: Map<SPELL_TYPE, string>;
         textUpdater: number;
+        updateTmpText: () => void;
         private addText;
         private removeText;
         getEntity(): Readonly<IEntity>;

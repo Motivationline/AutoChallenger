@@ -533,6 +533,36 @@ canvas.fullscreen {
   position: absolute;
 }
 
+.EntityOverlayInner {
+  background: url("./Assets/UIElemente/InGameUI/InfoKastenFrame.png") center no-repeat;
+  background-size: 100% 100%;
+  padding: 0.1em 0.1em 0.1em 1em;
+  position: relative;
+  color: white;
+  font-size: 1.5vh;
+  left: -50%;
+}
+.EntityOverlayInner::after {
+  content: "";
+  height: 1.5em;
+  width: 1.5em;
+  background: url("./Assets/UIElemente/InGameUI/IconHerz.png") center no-repeat;
+  background-size: contain;
+  display: block;
+  position: absolute;
+  left: -0.55em;
+  top: 0;
+}
+.EntityOverlayInner img {
+  position: absolute;
+  height: 1.5em;
+  width: 1.5em;
+  display: block;
+  object-fit: contain;
+  top: -1.3em;
+  right: calc(var(--index) * 1em);
+}
+
 /* Other */
 #EumlingLevelupInner,
 #ChooseStoneInner,
