@@ -33,9 +33,9 @@ namespace Script {
             return Promise.all(promises);
         }
 
-        private showPreview = async(_ev: FightEvent) => {
+        private showPreview = async (_ev: FightEvent) => {
             const nodes = this.getTargets(_ev);
-            for(let node of nodes){
+            for (let node of nodes) {
                 this.addNodesTo(node);
             }
         }
@@ -54,6 +54,7 @@ namespace Script {
                     opponentSide = vis.activeFight.away;
                 } else {
                     const visGrid = vis.activeFight.whereIsEntity(vis.getEntity(_ev.cause));
+                    if (!visGrid) return [];
                     if (visGrid.side === "home") {
                         allySide = vis.activeFight.home;
                         opponentSide = vis.activeFight.away;

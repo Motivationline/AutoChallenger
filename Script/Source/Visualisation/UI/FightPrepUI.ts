@@ -43,7 +43,7 @@ namespace Script {
         private initStones() {
             const stones: HTMLElement[] = [];
             for (let stone of Run.currentRun.stones) {
-                const element = createElementAdvanced("div", {classes: ["clickable"]});
+                const element = createElementAdvanced("div", { classes: ["clickable"] });
                 stones.push(element);
                 element.appendChild(StoneUIElement.getUIElement(stone).element);
                 element.addEventListener("click", () => {
@@ -93,7 +93,7 @@ namespace Script {
             EventBus.dispatchEventWithoutWaiting({ type: EVENT.ENTITY_ADDED, target: _eumling, detail: { side: "home", pos: [posId % 3, Math.floor(posId / 3)] } });
             this.placedEumlings.add(_eumling);
             this.startButton.disabled = false;
-            
+
             this.startButton.classList.remove("hidden");
             // update visuals
             if (vis === this.#highlightedEntity) {
@@ -173,7 +173,7 @@ namespace Script {
             const entity = _entity.getEntity() as Entity;
 
             this.infoElement.classList.remove("hidden");
-            this.infoElement.innerHTML =`
+            this.infoElement.innerHTML = `
                 <span class="InfoTitle">${entity.id}</span>
                 <span class="InfoSmaller">${entity.currentHealth} / ${entity.health}♥️</span>
                 <span class="Info">${entity.info}</span>`;
@@ -219,7 +219,7 @@ namespace Script {
 
         private async moveCamera(_translate: ƒ.Vector3, _rotate: ƒ.Vector3, _timeMS: number): Promise<void> {
             const camera = viewport?.camera;
-            if(!camera) return;
+            if (!camera) return;
             let elapsedTime: number = 0;
             const translationStart: ƒ.Vector3 = camera.mtxPivot.translation.clone;
             const rotationStart: ƒ.Vector3 = camera.mtxPivot.rotation.clone;

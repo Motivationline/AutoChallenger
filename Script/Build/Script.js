@@ -2330,6 +2330,8 @@ var Script;
                 }
                 else {
                     const visGrid = vis.activeFight.whereIsEntity(vis.getEntity(_ev.cause));
+                    if (!visGrid)
+                        return [];
                     if (visGrid.side === "home") {
                         allySide = vis.activeFight.home;
                         opponentSide = vis.activeFight.away;
