@@ -46,7 +46,8 @@ declare namespace Script {
         EUMLING_LEVELUP_CHOSEN = "eumlingLevelupChosen",
         EUMLING_LEVELUP = "eumlingLevelup",
         SHOW_PREVIEW = "showPreview",
-        HIDE_PREVIEW = "hidePreview"
+        HIDE_PREVIEW = "hidePreview",
+        NEVER = "never"
     }
     /**
      * There are a lot of callbacks / events that things inside the game can hook into to do something at a specific point in time.

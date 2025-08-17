@@ -171,6 +171,11 @@ namespace Script {
             let defeatedEnemyAmt = prevEnemyAmt - remainingEnemyAmt;
             gold += remainingEnemyAmt;
             xp += defeatedEnemyAmt;
+            
+            let knowledgestone = this.stones.find(s => s.id == "knowledgestone");
+            if(knowledgestone) {
+                xp += knowledgestone.level + 1;
+            }
 
             await EventBus.dispatchEvent({ type: EVENT.REWARDS_OPEN, detail: { gold, xp } });
             await EventBus.awaitSpecificEvent(EVENT.REWARDS_CLOSE);

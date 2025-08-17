@@ -6,13 +6,13 @@ namespace Script {
                 abilityLevels: [
                     {
                         on: EVENT.FIGHT_END,
-                        target: { side: TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
+                        target: { side: TARGET_SIDE.ALLY, entity: { maxNumTargets: 1, sortBy: TARGET_SORT.RANDOM } },
                         spell: { type: SPELL_TYPE.HEAL, level: 1 },
                         info: "Heals a random ally for 1 health at the end of the fight."
                     },
                     {
                         on: EVENT.FIGHT_END,
-                        target: { side: TARGET_SIDE.ALLY, entity: { maxNumTargets: 2 } },
+                        target: { side: TARGET_SIDE.ALLY, entity: { maxNumTargets: 2, sortBy: TARGET_SORT.RANDOM } },
                         spell: { type: SPELL_TYPE.HEAL, level: 1 },
                         info: "Heals two random allies for 1 health at the end of the fight."
                     }
@@ -53,19 +53,17 @@ namespace Script {
                 ]
             },
             {
-                id: "knowledgestone", //TODO - 1 / 2 additional exp points
+                id: "knowledgestone", //1 / 2 additional exp points
                 abilityLevels: [
                     {
-                        on: EVENT.FIGHT_END,
-                        target: { side: TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
-                        spell: { type: SPELL_TYPE.GOLD, level: 1 },
-                        info: "SHOULD give 1 xp at the end of the fight. CURRENTLY JUST 1 GOLD"
+                        on: EVENT.NEVER,
+                        target: {side: TARGET_SIDE.ALLY, entity: {}},
+                        info: "Gives 1 additional xp at the end of the fight."
                     },
                     {
-                        on: EVENT.FIGHT_END,
+                        on: EVENT.NEVER,
                         target: { side: TARGET_SIDE.ALLY, entity: { maxNumTargets: 2 } },
-                        spell: { type: SPELL_TYPE.GOLD, level: 1 },
-                        info: "SHOULD give 2 xp at the end of the fight. CURRENTLY JUST 1 GOLD"
+                        info: "Give 2 additional xp at the end of the fight."
                     }
                 ]
             },

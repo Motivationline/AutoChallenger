@@ -84,6 +84,7 @@ var Script;
         EVENT["EUMLING_LEVELUP"] = "eumlingLevelup";
         EVENT["SHOW_PREVIEW"] = "showPreview";
         EVENT["HIDE_PREVIEW"] = "hidePreview";
+        EVENT["NEVER"] = "never";
     })(EVENT = Script.EVENT || (Script.EVENT = {}));
     class EventBus {
         static { this.listeners = new Map(); }
@@ -4506,13 +4507,13 @@ var Script;
                 abilityLevels: [
                     {
                         on: Script.EVENT.FIGHT_END,
-                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1, sortBy: Script.TARGET_SORT.RANDOM } },
                         spell: { type: Script.SPELL_TYPE.HEAL, level: 1 },
                         info: "Heals a random ally for 1 health at the end of the fight."
                     },
                     {
                         on: Script.EVENT.FIGHT_END,
-                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2 } },
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2, sortBy: Script.TARGET_SORT.RANDOM } },
                         spell: { type: Script.SPELL_TYPE.HEAL, level: 1 },
                         info: "Heals two random allies for 1 health at the end of the fight."
                     }
@@ -4553,19 +4554,17 @@ var Script;
                 ]
             },
             {
-                id: "knowledgestone", //TODO - 1 / 2 additional exp points
+                id: "knowledgestone", //1 / 2 additional exp points
                 abilityLevels: [
                     {
-                        on: Script.EVENT.FIGHT_END,
-                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1 } },
-                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 },
-                        info: "SHOULD give 1 xp at the end of the fight. CURRENTLY JUST 1 GOLD"
+                        on: Script.EVENT.NEVER,
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: {} },
+                        info: "Gives 1 additional xp at the end of the fight."
                     },
                     {
-                        on: Script.EVENT.FIGHT_END,
+                        on: Script.EVENT.NEVER,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2 } },
-                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 },
-                        info: "SHOULD give 2 xp at the end of the fight. CURRENTLY JUST 1 GOLD"
+                        info: "Give 2 additional xp at the end of the fight."
                     }
                 ]
             },
@@ -5726,6 +5725,10 @@ var Script;
             let defeatedEnemyAmt = prevEnemyAmt - remainingEnemyAmt;
             gold += remainingEnemyAmt;
             xp += defeatedEnemyAmt;
+            let knowledgestone = this.stones.find(s => s.id == "knowledgestone");
+            if (knowledgestone) {
+                xp += knowledgestone.level + 1;
+            }
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.REWARDS_OPEN, detail: { gold, xp } });
             await Script.EventBus.awaitSpecificEvent(Script.EVENT.REWARDS_CLOSE);
             await this.changeGold(gold);
