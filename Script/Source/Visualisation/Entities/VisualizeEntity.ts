@@ -297,6 +297,10 @@ namespace Script {
                         EventBus.removeEventListener(EVENT.RUN_END, this.eventListener);
                         break;
                     }
+                    case EVENT.FIGHT_ENDED: {
+                        this.removeEventListeners();
+                        break;
+                    }
                 }
             }
             this.updateTmpText();

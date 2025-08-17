@@ -2633,6 +2633,7 @@ var Script;
             super.onAdd(_zindex);
             this.confirmButton.disabled = true;
             this.confirmButton.classList.add("hidden");
+            this.infoElement.innerHTML = "";
             const optionElement = document.getElementById("ChooseEumlingOptions");
             const options = ["R", "S"];
             this.optionElements.clear();
@@ -2699,6 +2700,7 @@ var Script;
             super.onAdd(_zindex);
             this.confirmButton.disabled = true;
             this.confirmButton.classList.add("hidden");
+            this.infoElement.innerHTML = "";
             const optionElement = document.getElementById("ChooseStoneOptions");
             this.optionElements.clear();
             const options = Script.chooseRandomElementsFromArray(Script.Provider.data.stones, 3);
@@ -5848,6 +5850,7 @@ var Script;
             // TODO @Björn clean up visible entities
             await this.nukeGrid();
             console.log("Fight End!");
+            this.removeEventListeners();
         }
         entityAdded(_ev) {
             const entity = _ev.target;
@@ -6218,6 +6221,10 @@ var Script;
                         this.removeEventListener("nodeActivate" /* ƒ.EVENT.NODE_ACTIVATE */, this.addText);
                         this.removeEventListener("nodeDeactivate" /* ƒ.EVENT.NODE_DEACTIVATE */, this.removeText);
                         Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.eventListener);
+                        break;
+                    }
+                    case Script.EVENT.FIGHT_ENDED: {
+                        this.removeEventListeners();
                         break;
                     }
                 }

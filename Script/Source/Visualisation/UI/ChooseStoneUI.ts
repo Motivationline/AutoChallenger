@@ -19,6 +19,7 @@ namespace Script {
             super.onAdd(_zindex);
             this.confirmButton.disabled = true;
             this.confirmButton.classList.add("hidden");
+            this.infoElement.innerHTML = "";
 
             const optionElement = document.getElementById("ChooseStoneOptions");
             this.optionElements.clear();

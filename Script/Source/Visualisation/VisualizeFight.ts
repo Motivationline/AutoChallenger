@@ -52,6 +52,7 @@ namespace Script {
             // TODO @Björn clean up visible entities
             await this.nukeGrid();
             console.log("Fight End!");
+            this.removeEventListeners();
         }
 
         entityAdded(_ev: FightEvent) {
