@@ -6610,6 +6610,10 @@ var Script;
                 await Script.waitMS(1000);
                 this.#element.classList.remove("animate");
             };
+            this.removeEventListeners = () => {
+                Script.EventBus.removeEventListener(Script.EVENT.TRIGGER_ABILITY, this.animate);
+                Script.EventBus.removeEventListener(Script.EVENT.RUN_END, this.removeEventListeners);
+            };
             this.#stone = _stone;
             this.#element = Script.createElementAdvanced("div", {
                 classes: ["StoneUIElement"],
@@ -6626,14 +6630,15 @@ var Script;
             return this.#elements.get(_obj);
         }
         get element() {
+            this.update();
             return this.#element;
         }
         get stone() {
             return this.#stone;
         }
         addEventListeners() {
-            // TODO: when to remove these listeners?
             Script.EventBus.addEventListener(Script.EVENT.TRIGGER_ABILITY, this.animate);
+            Script.EventBus.addEventListener(Script.EVENT.RUN_END, this.removeEventListeners);
         }
     }
     Script.StoneUIElement = StoneUIElement;

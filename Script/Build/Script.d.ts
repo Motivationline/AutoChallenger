@@ -1261,5 +1261,6 @@ declare namespace Script {
         private update;
         private animate;
         addEventListeners(): void;
+        removeEventListeners: () => void;
     }
 }

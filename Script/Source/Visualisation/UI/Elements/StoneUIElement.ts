@@ -25,6 +25,7 @@ namespace Script {
         }
 
         get element() {
+            this.update();
             return this.#element;
         }
 
@@ -44,8 +45,12 @@ namespace Script {
         }
 
         addEventListeners() {
-            // TODO: when to remove these listeners?
             EventBus.addEventListener(EVENT.TRIGGER_ABILITY, this.animate);
+            EventBus.addEventListener(EVENT.RUN_END, this.removeEventListeners);
+        }
+        removeEventListeners = () => {
+            EventBus.removeEventListener(EVENT.TRIGGER_ABILITY, this.animate);
+            EventBus.removeEventListener(EVENT.RUN_END, this.removeEventListeners);
         }
     }
 }
