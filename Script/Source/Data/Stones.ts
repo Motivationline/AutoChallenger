@@ -88,18 +88,20 @@ namespace Script {
                     },
                     {
                         on: EVENT.FIGHT_START,
-                        target: { side: TARGET_SIDE.ALLY, entity: { maxNumTargets: 2, sortBy: TARGET_SORT.RANDOM } },
+                        target: { side: TARGET_SIDE.ALLY, entity: { maxNumTargets: 1, sortBy: TARGET_SORT.RANDOM } },
                         spell: { 
                             type: SPELL_TYPE.CUSTOM,
                             custom: async (_caster, _targets) => {
                                 const buffsToPickFrom = [SPELL_TYPE.SHIELD, SPELL_TYPE.STRENGTH, SPELL_TYPE.THORNS, SPELL_TYPE.MIRROR];
-                                const buff = chooseRandomElementsFromArray(buffsToPickFrom, 1)[0];
+                                const buffs = chooseRandomElementsFromArray(buffsToPickFrom, 2);
                                 for (let target of _targets) {
-                                    await target.affect({ type: buff, level: 1, target: undefined }, undefined);
+                                    for(let buff of buffs) {
+                                        await target.affect({ type: buff, level: 1, target: undefined }, undefined);
+                                    }
                                 }
                             },
                         },
-                        info: "Gives a random buff to two random allies at the start of the fight."
+                        info: "Gives two random buffs to a random ally at the start of the fight."
                     }
                 ]
             },

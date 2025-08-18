@@ -4597,18 +4597,20 @@ var Script;
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
-                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2, sortBy: Script.TARGET_SORT.RANDOM } },
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1, sortBy: Script.TARGET_SORT.RANDOM } },
                         spell: {
                             type: Script.SPELL_TYPE.CUSTOM,
                             custom: async (_caster, _targets) => {
                                 const buffsToPickFrom = [Script.SPELL_TYPE.SHIELD, Script.SPELL_TYPE.STRENGTH, Script.SPELL_TYPE.THORNS, Script.SPELL_TYPE.MIRROR];
-                                const buff = Script.chooseRandomElementsFromArray(buffsToPickFrom, 1)[0];
+                                const buffs = Script.chooseRandomElementsFromArray(buffsToPickFrom, 2);
                                 for (let target of _targets) {
-                                    await target.affect({ type: buff, level: 1, target: undefined }, undefined);
+                                    for (let buff of buffs) {
+                                        await target.affect({ type: buff, level: 1, target: undefined }, undefined);
+                                    }
                                 }
                             },
                         },
-                        info: "Gives a random buff to two random allies at the start of the fight."
+                        info: "Gives two random buffs to a random ally at the start of the fight."
                     }
                 ]
             },
