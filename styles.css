@@ -68,6 +68,11 @@ canvas.fullscreen {
   background-position: calc(50% + (var(--x) - 0.5) * var(--depth)) calc(50% + (var(--y) - 0.5) * var(--depth));
 }
 
+#LoadingScreen {
+  color: white;
+  font-size: 4vh;
+}
+
 /* Main Menu */
 #MainMenu {
   display: flex;
