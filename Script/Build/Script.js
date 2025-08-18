@@ -2244,6 +2244,8 @@ var Script;
         async fightEnd(_result) {
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_END, detail: { result: _result } });
             Fight.activeFight = undefined;
+            if (_result !== FIGHT_RESULT.DEFEAT && this.arena.home.occupiedSpots === 0)
+                _result = FIGHT_RESULT.DEFEAT;
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.FIGHT_ENDED, detail: { result: _result } });
             this.removeEventListeners();
             return _result;

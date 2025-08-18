@@ -81,6 +81,7 @@ namespace Script {
         private async fightEnd(_result: FIGHT_RESULT): Promise<FIGHT_RESULT> {
             await EventBus.dispatchEvent({ type: EVENT.FIGHT_END, detail: { result: _result } });
             Fight.activeFight = undefined;
+            if(_result !== FIGHT_RESULT.DEFEAT && this.arena.home.occupiedSpots === 0) _result = FIGHT_RESULT.DEFEAT;
 
             await EventBus.dispatchEvent({ type: EVENT.FIGHT_ENDED, detail: { result: _result } });
             this.removeEventListeners();
