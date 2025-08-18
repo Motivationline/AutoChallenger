@@ -71,6 +71,7 @@ canvas.fullscreen {
 #LoadingScreen {
   color: white;
   font-size: 4vh;
+  cursor: wait;
 }
 
 /* Main Menu */
@@ -255,6 +256,15 @@ canvas.fullscreen {
 }
 
 /* Fight Prep */
+#GameCanvas.info {
+  cursor: help;
+}
+#GameCanvas.pickup {
+  cursor: grab;
+}
+#GameCanvas.dragging {
+  cursor: grabbing;
+}
 #FightPrepEumlings {
   padding: 10px;
   background-color: brown;

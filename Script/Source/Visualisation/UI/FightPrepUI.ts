@@ -10,6 +10,7 @@ namespace Script {
         highlightNode: ƒ.Node;
         bench: VisualizeBench;
         placedEumlings: Set<Eumling> = new Set();
+        canvas: HTMLCanvasElement;
 
         constructor() {
             super();
@@ -17,6 +18,8 @@ namespace Script {
             this.stoneWrapper = document.getElementById("FightPrepStones");
             this.infoElement = document.getElementById("FightPrepInfo");
             this.startButton = document.getElementById("FightStart") as HTMLButtonElement;
+
+            this.canvas = document.getElementById("GameCanvas") as HTMLCanvasElement;
 
             DataLink.getCopyOf("PreviewHighlight").then(node => this.highlightNode = node);
         }
@@ -107,11 +110,23 @@ namespace Script {
 
         pointerStartPosition: ƒ.Vector2 = new ƒ.Vector2();
         readonly deadzone: number = 20;
+        pointerActive: boolean = false;
         private pointerOnCanvas = (_ev: PointerEvent) => {
             if (_ev.type === "pointerdown") {
                 this.pointerStartPosition.x = _ev.clientX;
                 this.pointerStartPosition.y = _ev.clientY;
+                this.pointerActive = true;
+                const picks = getPickableObjectsFromClientPos(this.pointerStartPosition);
+                if (picks && picks.length > 0) {
+                    for (let pick of picks) {
+                        if (pick.node instanceof VisualizeEntity && pick.node.getEntity() instanceof Eumling) {
+                            this.canvas.classList.add("dragging");
+                        }
+                    }
+                }
             } else if (_ev.type === "pointerup") {
+                this.pointerActive = false;
+                this.canvas.classList.remove("dragging");
                 const pointerEndPosition = new ƒ.Vector2(_ev.clientX, _ev.clientY);
                 const distance = pointerEndPosition.getDistance(this.pointerStartPosition);
                 if (distance > this.deadzone) {
@@ -121,6 +136,10 @@ namespace Script {
                     // click
                     this.clickCanvas(pointerEndPosition);
                 }
+            } else if (_ev.type === "pointermove") {
+                if (this.pointerActive) return;
+                const pointerPosition = new ƒ.Vector2(_ev.clientX, _ev.clientY);
+                this.moveOverCanvas(pointerPosition);
             }
         }
 
@@ -166,6 +185,19 @@ namespace Script {
             }
         }
 
+        private moveOverCanvas(_pos: ƒ.Vector2) {
+            const picks = getPickableObjectsFromClientPos(_pos);
+            if (!picks || picks.length === 0) {
+                this.canvas.classList.remove("info", "pickup");
+                return;
+            }
+            for (let pick of picks) {
+                if (!(pick.node instanceof VisualizeEntity)) continue;
+                this.canvas.classList.add("info");
+                if (pick.node.getEntity() instanceof Eumling) this.canvas.classList.add("pickup");
+            }
+        }
+
         #highlightedEntity: VisualizeEntity;
 
         private showEntityInfo(_entity: VisualizeEntity) {
@@ -203,16 +235,16 @@ namespace Script {
 
 
         addEventListeners(): void {
-            const canvas = document.getElementById("GameCanvas");
-            canvas.addEventListener("pointerdown", this.pointerOnCanvas);
-            canvas.addEventListener("pointerup", this.pointerOnCanvas);
+            this.canvas.addEventListener("pointerdown", this.pointerOnCanvas);
+            this.canvas.addEventListener("pointermove", this.pointerOnCanvas);
+            this.canvas.addEventListener("pointerup", this.pointerOnCanvas);
 
             this.startButton.addEventListener("click", this.startFight);
         }
         removeEventListeners(): void {
-            const canvas = document.getElementById("GameCanvas");
-            canvas.removeEventListener("pointerdown", this.pointerOnCanvas);
-            canvas.removeEventListener("pointerup", this.pointerOnCanvas);
+            this.canvas.removeEventListener("pointerdown", this.pointerOnCanvas);
+            this.canvas.removeEventListener("pointermove", this.pointerOnCanvas);
+            this.canvas.removeEventListener("pointerup", this.pointerOnCanvas);
             this.startButton.removeEventListener("click", this.startFight);
         }
 

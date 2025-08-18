@@ -3059,12 +3059,24 @@ var Script;
             };
             this.pointerStartPosition = new ƒ.Vector2();
             this.deadzone = 20;
+            this.pointerActive = false;
             this.pointerOnCanvas = (_ev) => {
                 if (_ev.type === "pointerdown") {
                     this.pointerStartPosition.x = _ev.clientX;
                     this.pointerStartPosition.y = _ev.clientY;
+                    this.pointerActive = true;
+                    const picks = Script.getPickableObjectsFromClientPos(this.pointerStartPosition);
+                    if (picks && picks.length > 0) {
+                        for (let pick of picks) {
+                            if (pick.node instanceof Script.VisualizeEntity && pick.node.getEntity() instanceof Script.Eumling) {
+                                this.canvas.classList.add("dragging");
+                            }
+                        }
+                    }
                 }
                 else if (_ev.type === "pointerup") {
+                    this.pointerActive = false;
+                    this.canvas.classList.remove("dragging");
                     const pointerEndPosition = new ƒ.Vector2(_ev.clientX, _ev.clientY);
                     const distance = pointerEndPosition.getDistance(this.pointerStartPosition);
                     if (distance > this.deadzone) {
@@ -3076,11 +3088,18 @@ var Script;
                         this.clickCanvas(pointerEndPosition);
                     }
                 }
+                else if (_ev.type === "pointermove") {
+                    if (this.pointerActive)
+                        return;
+                    const pointerPosition = new ƒ.Vector2(_ev.clientX, _ev.clientY);
+                    this.moveOverCanvas(pointerPosition);
+                }
             };
             this.element = document.getElementById("FightPrep");
             this.stoneWrapper = document.getElementById("FightPrepStones");
             this.infoElement = document.getElementById("FightPrepInfo");
             this.startButton = document.getElementById("FightStart");
+            this.canvas = document.getElementById("GameCanvas");
             Script.DataLink.getCopyOf("PreviewHighlight").then(node => this.highlightNode = node);
         }
         async onAdd(_zindex, _ev) {
@@ -3200,6 +3219,20 @@ var Script;
                 }
             }
         }
+        moveOverCanvas(_pos) {
+            const picks = Script.getPickableObjectsFromClientPos(_pos);
+            if (!picks || picks.length === 0) {
+                this.canvas.classList.remove("info", "pickup");
+                return;
+            }
+            for (let pick of picks) {
+                if (!(pick.node instanceof Script.VisualizeEntity))
+                    continue;
+                this.canvas.classList.add("info");
+                if (pick.node.getEntity() instanceof Script.Eumling)
+                    this.canvas.classList.add("pickup");
+            }
+        }
         #highlightedEntity;
         showEntityInfo(_entity) {
             this.hideEntityInfo();
@@ -3229,15 +3262,15 @@ var Script;
             this.#highlightedEntity = undefined;
         }
         addEventListeners() {
-            const canvas = document.getElementById("GameCanvas");
-            canvas.addEventListener("pointerdown", this.pointerOnCanvas);
-            canvas.addEventListener("pointerup", this.pointerOnCanvas);
+            this.canvas.addEventListener("pointerdown", this.pointerOnCanvas);
+            this.canvas.addEventListener("pointermove", this.pointerOnCanvas);
+            this.canvas.addEventListener("pointerup", this.pointerOnCanvas);
             this.startButton.addEventListener("click", this.startFight);
         }
         removeEventListeners() {
-            const canvas = document.getElementById("GameCanvas");
-            canvas.removeEventListener("pointerdown", this.pointerOnCanvas);
-            canvas.removeEventListener("pointerup", this.pointerOnCanvas);
+            this.canvas.removeEventListener("pointerdown", this.pointerOnCanvas);
+            this.canvas.removeEventListener("pointermove", this.pointerOnCanvas);
+            this.canvas.removeEventListener("pointerup", this.pointerOnCanvas);
             this.startButton.removeEventListener("click", this.startFight);
         }
         async moveCamera(_translate, _rotate, _timeMS) {

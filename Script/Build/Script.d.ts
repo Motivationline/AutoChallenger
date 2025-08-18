@@ -578,6 +578,7 @@ declare namespace Script {
         highlightNode: ƒ.Node;
         bench: VisualizeBench;
         placedEumlings: Set<Eumling>;
+        canvas: HTMLCanvasElement;
         constructor();
         onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
         onRemove(): Promise<void>;
@@ -588,9 +589,11 @@ declare namespace Script {
         private startFight;
         pointerStartPosition: ƒ.Vector2;
         readonly deadzone: number;
+        pointerActive: boolean;
         private pointerOnCanvas;
         private clickCanvas;
         private dragCanvas;
+        private moveOverCanvas;
         private showEntityInfo;
         private hideEntityInfo;
         addEventListeners(): void;
