@@ -305,12 +305,14 @@ declare namespace Script {
         FIRE = "fire",
         /** Entity cannot act at all this turn */
         STUN = "stun",
-        GOLD = "gold"
+        GOLD = "gold",
+        CUSTOM = "custom"
     }
     interface SpellDataNoTarget {
         type: SPELL_TYPE;
         /** Strength of the spell. Default: 1 */
         level?: number;
+        custom?: (caster: Entity | Stone, targets: IEntity[]) => Promise<void>;
     }
     interface SpellData extends SpellDataNoTarget {
         target: Target;

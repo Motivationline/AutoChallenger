@@ -30,16 +30,20 @@ namespace Script {
 
         // not fight related
         GOLD = "gold",
+
+        // something custom
+        CUSTOM = "custom",
     }
 
     export interface SpellDataNoTarget {
         type: SPELL_TYPE,
         /** Strength of the spell. Default: 1 */
         level?: number,
+        custom?: (caster: Entity | Stone, targets: IEntity[]) => Promise<void>;
     }
     export interface SpellData extends SpellDataNoTarget {
         target: Target,
     }
 
-    
+
 }

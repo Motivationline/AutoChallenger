@@ -74,16 +74,32 @@ namespace Script {
                         on: EVENT.FIGHT_START,
                         target: { side: TARGET_SIDE.ALLY, entity: { maxNumTargets: 1, sortBy: TARGET_SORT.RANDOM } },
                         spell: {
-                            type: SPELL_TYPE.SHIELD, level: 1
+                            type: SPELL_TYPE.CUSTOM,
+                            custom: async (_caster, _targets) => {
+                                const buffsToPickFrom = [SPELL_TYPE.SHIELD, SPELL_TYPE.STRENGTH, SPELL_TYPE.THORNS, SPELL_TYPE.MIRROR];
+                                const buff = chooseRandomElementsFromArray(buffsToPickFrom, 1)[0];
+                                for (let target of _targets) {
+                                    await target.affect({ type: buff, level: 1, target: undefined }, undefined);
+                                }
+                            },
                         },
-                        info: "SHOULD give a random buff to a random ally at the start of the fight. CURRENTLY JUST SHIELD 1"
+                        info: "Gives a random buff to a random ally at the start of the fight."
 
                     },
                     {
                         on: EVENT.FIGHT_START,
                         target: { side: TARGET_SIDE.ALLY, entity: { maxNumTargets: 2, sortBy: TARGET_SORT.RANDOM } },
-                        spell: { type: SPELL_TYPE.GOLD, level: 1 },
-                        info: "SHOULD give a random buff to two random allies at the start of the fight. CURRENTLY JUST 1 GOLD?"
+                        spell: { 
+                            type: SPELL_TYPE.CUSTOM,
+                            custom: async (_caster, _targets) => {
+                                const buffsToPickFrom = [SPELL_TYPE.SHIELD, SPELL_TYPE.STRENGTH, SPELL_TYPE.THORNS, SPELL_TYPE.MIRROR];
+                                const buff = chooseRandomElementsFromArray(buffsToPickFrom, 1)[0];
+                                for (let target of _targets) {
+                                    await target.affect({ type: buff, level: 1, target: undefined }, undefined);
+                                }
+                            },
+                        },
+                        info: "Gives a random buff to two random allies at the start of the fight."
                     }
                 ]
             },
@@ -155,23 +171,23 @@ namespace Script {
                     }
                 ]
             },
-            {
-                id: "luckystone", // TODO - doubles the chance for rare stones
-                abilityLevels: [
-                    {
-                        on: EVENT.CHOOSE_STONE,
-                        target: { side: TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: AREA_SHAPE.COLUMN, position: AREA_POSITION.ABSOLUTE } },
-                        spell: { type: SPELL_TYPE.THORNS, level: 1 },
-                        info: "SHOULD Double the chance for rare stones to appear in the shop. CURRENTLY BROKEN",
-                    },
-                    {
-                        on: EVENT.CHOOSE_STONE,
-                        target: { side: TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: AREA_SHAPE.COLUMN, position: AREA_POSITION.ABSOLUTE } },
-                        spell: { type: SPELL_TYPE.THORNS, level: 2 },
-                        info: "SHOULD Triple the chance for rare stones to appear in the shop. CURRENTLY BROKEN",
-                    }
-                ]
-            },
+            // {
+            //     id: "luckystone", // TODO - doubles the chance for rare stones
+            //     abilityLevels: [
+            //         {
+            //             on: EVENT.CHOOSE_STONE,
+            //             target: { side: TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: AREA_SHAPE.COLUMN, position: AREA_POSITION.ABSOLUTE } },
+            //             spell: { type: SPELL_TYPE.THORNS, level: 1 },
+            //             info: "SHOULD Double the chance for rare stones to appear in the shop. CURRENTLY BROKEN",
+            //         },
+            //         {
+            //             on: EVENT.CHOOSE_STONE,
+            //             target: { side: TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: AREA_SHAPE.COLUMN, position: AREA_POSITION.ABSOLUTE } },
+            //             spell: { type: SPELL_TYPE.THORNS, level: 2 },
+            //             info: "SHOULD Triple the chance for rare stones to appear in the shop. CURRENTLY BROKEN",
+            //         }
+            //     ]
+            // },
             {
                 id: "steppingstone", // Deals 1 damage to enemies that move
                 abilityLevels: [

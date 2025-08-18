@@ -484,6 +484,8 @@ var Script;
         SPELL_TYPE["STUN"] = "stun";
         // not fight related
         SPELL_TYPE["GOLD"] = "gold";
+        // something custom
+        SPELL_TYPE["CUSTOM"] = "custom";
     })(SPELL_TYPE = Script.SPELL_TYPE || (Script.SPELL_TYPE = {}));
 })(Script || (Script = {}));
 /// <reference path="../Fight/Move.ts" />
@@ -4582,15 +4584,31 @@ var Script;
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 1, sortBy: Script.TARGET_SORT.RANDOM } },
                         spell: {
-                            type: Script.SPELL_TYPE.SHIELD, level: 1
+                            type: Script.SPELL_TYPE.CUSTOM,
+                            custom: async (_caster, _targets) => {
+                                const buffsToPickFrom = [Script.SPELL_TYPE.SHIELD, Script.SPELL_TYPE.STRENGTH, Script.SPELL_TYPE.THORNS, Script.SPELL_TYPE.MIRROR];
+                                const buff = Script.chooseRandomElementsFromArray(buffsToPickFrom, 1)[0];
+                                for (let target of _targets) {
+                                    await target.affect({ type: buff, level: 1, target: undefined }, undefined);
+                                }
+                            },
                         },
-                        info: "SHOULD give a random buff to a random ally at the start of the fight. CURRENTLY JUST SHIELD 1"
+                        info: "Gives a random buff to a random ally at the start of the fight."
                     },
                     {
                         on: Script.EVENT.FIGHT_START,
                         target: { side: Script.TARGET_SIDE.ALLY, entity: { maxNumTargets: 2, sortBy: Script.TARGET_SORT.RANDOM } },
-                        spell: { type: Script.SPELL_TYPE.GOLD, level: 1 },
-                        info: "SHOULD give a random buff to two random allies at the start of the fight. CURRENTLY JUST 1 GOLD?"
+                        spell: {
+                            type: Script.SPELL_TYPE.CUSTOM,
+                            custom: async (_caster, _targets) => {
+                                const buffsToPickFrom = [Script.SPELL_TYPE.SHIELD, Script.SPELL_TYPE.STRENGTH, Script.SPELL_TYPE.THORNS, Script.SPELL_TYPE.MIRROR];
+                                const buff = Script.chooseRandomElementsFromArray(buffsToPickFrom, 1)[0];
+                                for (let target of _targets) {
+                                    await target.affect({ type: buff, level: 1, target: undefined }, undefined);
+                                }
+                            },
+                        },
+                        info: "Gives a random buff to two random allies at the start of the fight."
                     }
                 ]
             },
@@ -4662,23 +4680,23 @@ var Script;
                     }
                 ]
             },
-            {
-                id: "luckystone", // TODO - doubles the chance for rare stones
-                abilityLevels: [
-                    {
-                        on: Script.EVENT.CHOOSE_STONE,
-                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.THORNS, level: 1 },
-                        info: "SHOULD Double the chance for rare stones to appear in the shop. CURRENTLY BROKEN",
-                    },
-                    {
-                        on: Script.EVENT.CHOOSE_STONE,
-                        target: { side: Script.TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: Script.AREA_SHAPE.COLUMN, position: Script.AREA_POSITION.ABSOLUTE } },
-                        spell: { type: Script.SPELL_TYPE.THORNS, level: 2 },
-                        info: "SHOULD Triple the chance for rare stones to appear in the shop. CURRENTLY BROKEN",
-                    }
-                ]
-            },
+            // {
+            //     id: "luckystone", // TODO - doubles the chance for rare stones
+            //     abilityLevels: [
+            //         {
+            //             on: EVENT.CHOOSE_STONE,
+            //             target: { side: TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: AREA_SHAPE.COLUMN, position: AREA_POSITION.ABSOLUTE } },
+            //             spell: { type: SPELL_TYPE.THORNS, level: 1 },
+            //             info: "SHOULD Double the chance for rare stones to appear in the shop. CURRENTLY BROKEN",
+            //         },
+            //         {
+            //             on: EVENT.CHOOSE_STONE,
+            //             target: { side: TARGET_SIDE.ALLY, area: { absolutePosition: [2, 2], shape: AREA_SHAPE.COLUMN, position: AREA_POSITION.ABSOLUTE } },
+            //             spell: { type: SPELL_TYPE.THORNS, level: 2 },
+            //             info: "SHOULD Triple the chance for rare stones to appear in the shop. CURRENTLY BROKEN",
+            //         }
+            //     ]
+            // },
             {
                 id: "steppingstone", // Deals 1 damage to enemies that move
                 abilityLevels: [
@@ -5203,8 +5221,13 @@ var Script;
                 ({ targets, side, positions } = Script.getTargets(spell.target, _friendly, _opponent, this));
             }
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target: this, detail: { targets, side, positions } });
-            for (let target of targets) {
-                await target.affect(spell, this);
+            if (spell.type === Script.SPELL_TYPE.CUSTOM) {
+                spell.custom?.(this, targets);
+            }
+            else {
+                for (let target of targets) {
+                    await target.affect(spell, this);
+                }
             }
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL, trigger: spell, cause: this, target: this, detail: { targets, side, positions } });
         }

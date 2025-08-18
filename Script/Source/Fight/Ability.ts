@@ -108,8 +108,12 @@ namespace Script {
                 ({ targets, side, positions } = getTargets(spell.target, _friendly, _opponent, this));
             }
             await EventBus.dispatchEvent({ type: EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target: this, detail: { targets, side, positions } });
-            for (let target of targets) {
-                await target.affect(spell, this);
+            if(spell.type === SPELL_TYPE.CUSTOM){
+                spell.custom?.(this, targets);
+            } else {
+                for (let target of targets) {
+                    await target.affect(spell, this);
+                }
             }
             await EventBus.dispatchEvent({ type: EVENT.ENTITY_SPELL, trigger: spell, cause: this, target: this, detail: { targets, side, positions } });
         }
