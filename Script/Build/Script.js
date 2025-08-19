@@ -4751,6 +4751,48 @@ var Script;
                     }
                 ]
             },
+            {
+                id: "glasstone", // grants various levels of crit to yourself and your enemies
+                abilityLevels: [
+                    { info: "All Eumlings have a 50% crit chance, all opponents have a 25% crit chance.", on: Script.EVENT.NEVER, target: "cause" },
+                    { info: "All Eumlings have a 75% crit chance, all opponents have a 25% crit chance.", on: Script.EVENT.NEVER, target: "cause" },
+                ]
+            },
+            {
+                id: "lifestone",
+                abilityLevels: [
+                    {
+                        info: "Heals every Eumling that killed an enemy for 1 heart.",
+                        on: Script.EVENT.FIGHT_END,
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: {} },
+                        spell: {
+                            type: Script.SPELL_TYPE.CUSTOM,
+                            custom: async (caster, targets) => {
+                                for (let target of targets) {
+                                    if (target.roundKills > 0) {
+                                        await target.affect({ target: Script.TARGET.SELF, type: Script.SPELL_TYPE.HEAL, level: 1 });
+                                    }
+                                }
+                            },
+                        }
+                    },
+                    {
+                        info: "Heals every Eumling the amount of damage they dealt during this fight.",
+                        on: Script.EVENT.FIGHT_END,
+                        target: { side: Script.TARGET_SIDE.ALLY, entity: {} },
+                        spell: {
+                            type: Script.SPELL_TYPE.CUSTOM,
+                            custom: async (caster, targets) => {
+                                for (let target of targets) {
+                                    if (target.roundDamage > 0) {
+                                        await target.affect({ target: Script.TARGET.SELF, type: Script.SPELL_TYPE.HEAL, level: target.roundDamage });
+                                    }
+                                }
+                            },
+                        }
+                    },
+                ]
+            }
         ];
     })(DataContent = Script.DataContent || (Script.DataContent = {}));
 })(Script || (Script = {}));
@@ -4762,8 +4804,18 @@ var Script;
         constructor(_entity, _pos = [0, 0]) {
             this.resistancesSet = new Set();
             this.activeEffects = new Map();
+            this.roundKills = 0;
+            this.roundDamage = 0;
             this.#triggers = new Set();
             this.selections = new Map(); // not sure how to make this type-safe
+            this.counters = (_ev) => {
+                if (_ev.cause !== this)
+                    return;
+                if (_ev.type === Script.EVENT.ENTITY_DIED)
+                    this.roundKills++;
+                if (_ev.type === Script.EVENT.ENTITY_HURT)
+                    this.roundDamage += _ev.detail.amount ?? 0;
+            };
             this.abilityEventListener = async (_ev) => {
                 // this extra step seems pointless, but this way we can
                 // overwrite `runAbility` in a derived class, which we can't do with
@@ -4824,7 +4876,7 @@ var Script;
             this.resistances = _newData.resistances;
             this.resistancesSet = new Set(_newData.resistances);
         }
-        async damage(_amt, _critChance, _cause) {
+        async damage(_amt, _critChance = 0, _cause) {
             if (this.untargetable) {
                 return this.health;
             }
@@ -4843,6 +4895,15 @@ var Script;
                 this.activeEffects.set(Script.SPELL_TYPE.MIRROR, 0);
             }
             // crit
+            const glasstone = Script.Run.currentRun.stones.find((s) => s.id === "glasstone");
+            if (glasstone) {
+                if (_cause instanceof Script.Eumling) {
+                    _critChance += glasstone.level * 0.25 + 0.5;
+                }
+                else {
+                    _critChance += 0.25;
+                }
+            }
             if (_critChance > Math.random()) {
                 amount *= 2;
                 wasCrit = true;
@@ -5065,6 +5126,8 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ROUND_END, this.endOfRoundEventListener);
             // register end of fight effects
             Script.EventBus.addEventListener(Script.EVENT.FIGHT_ENDED, this.endOfFightEventListener);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_DIED, this.counters);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_HURT, this.counters);
         }
         removeEventListeners() {
             for (let trigger of this.#triggers.values()) {
@@ -5072,6 +5135,8 @@ var Script;
             }
             Script.EventBus.removeEventListener(Script.EVENT.ROUND_END, this.endOfRoundEventListener);
             Script.EventBus.removeEventListener(Script.EVENT.FIGHT_ENDED, this.endOfFightEventListener);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_DIED, this.counters);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_HURT, this.counters);
         }
         async runAbility(_ev) {
             if (!this.abilities)
@@ -5101,6 +5166,8 @@ var Script;
             this.activeEffects.clear();
             this.selections.clear();
             this.removeEventListeners();
+            this.roundDamage = 0;
+            this.roundKills = 0;
         }
     }
     Script.Entity = Entity;
@@ -5257,7 +5324,7 @@ var Script;
             }
             await Script.EventBus.dispatchEvent({ type: Script.EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target: this, detail: { targets, side, positions } });
             if (spell.type === Script.SPELL_TYPE.CUSTOM) {
-                spell.custom?.(this, targets);
+                await spell.custom?.(this, targets);
             }
             else {
                 for (let target of targets) {
@@ -6106,7 +6173,7 @@ var Script;
         //#endregion
         //#region Something happened
         async getHurt(_ev) {
-            this.showDamageNumber(_ev.detail.amount, _ev.detail.wasCrit);
+            this.showDamageNumber(_ev.detail.amount, _ev.detail.crit);
             await this.playAnimationIfPossible(Script.ANIMATION.HURT);
         }
         async showDamageNumber(_amount, _crit, _heal = false) {

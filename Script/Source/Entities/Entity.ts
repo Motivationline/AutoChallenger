@@ -57,6 +57,8 @@ namespace Script {
         moved: boolean;
         currentDirection: Position;
         info?: string;
+        roundKills: number = 0;
+        roundDamage: number = 0;
 
         #arena: Arena;
         #triggers: Set<EVENT> = new Set();
@@ -116,7 +118,7 @@ namespace Script {
             this.resistancesSet = new Set(_newData.resistances);
         }
 
-        async damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number> {
+        async damage(_amt: number, _critChance: number = 0, _cause?: IEntity): Promise<number> {
             if (this.untargetable) {
                 return this.health;
             }
@@ -137,6 +139,14 @@ namespace Script {
             }
 
             // crit
+            const glasstone = Run.currentRun.stones.find((s) => s.id === "glasstone");
+            if (glasstone) {
+                if (_cause instanceof Eumling) {
+                    _critChance += glasstone.level * 0.25 + 0.5;
+                } else {
+                    _critChance += 0.25;
+                }
+            }
             if (_critChance > Math.random()) {
                 amount *= 2;
                 wasCrit = true;
@@ -356,6 +366,12 @@ namespace Script {
             };
         }
 
+        counters = (_ev: FightEvent) => {
+            if (_ev.cause !== this) return;
+            if (_ev.type === EVENT.ENTITY_DIED) this.roundKills++;
+            if (_ev.type === EVENT.ENTITY_HURT) this.roundDamage += _ev.detail.amount ?? 0;
+        }
+
         public registerEventListeners() {
             // register abilities
             this.#triggers = new Set(); // get all triggers first to avoid duplication
@@ -378,6 +394,8 @@ namespace Script {
             EventBus.addEventListener(EVENT.ROUND_END, this.endOfRoundEventListener);
             // register end of fight effects
             EventBus.addEventListener(EVENT.FIGHT_ENDED, this.endOfFightEventListener);
+            EventBus.addEventListener(EVENT.ENTITY_DIED, this.counters);
+            EventBus.addEventListener(EVENT.ENTITY_HURT, this.counters);
         }
 
         public removeEventListeners() {
@@ -387,6 +405,8 @@ namespace Script {
 
             EventBus.removeEventListener(EVENT.ROUND_END, this.endOfRoundEventListener);
             EventBus.removeEventListener(EVENT.FIGHT_ENDED, this.endOfFightEventListener);
+            EventBus.removeEventListener(EVENT.ENTITY_DIED, this.counters);
+            EventBus.removeEventListener(EVENT.ENTITY_HURT, this.counters);
         }
 
         private abilityEventListener = async (_ev: FightEvent) => {
@@ -432,6 +452,8 @@ namespace Script {
             this.activeEffects.clear();
             this.selections.clear();
             this.removeEventListeners();
+            this.roundDamage = 0;
+            this.roundKills = 0;
         }
 
     }

@@ -904,11 +904,13 @@ declare namespace Script {
         moved: boolean;
         currentDirection: Position;
         info?: string;
+        roundKills: number;
+        roundDamage: number;
         constructor(_entity: EntityData, _pos?: Position);
         get untargetable(): boolean;
         get stunned(): boolean;
         updateEntityData(_newData: EntityData): void;
-        damage(_amt: number, _critChance: number, _cause?: IEntity): Promise<number>;
+        damage(_amt: number, _critChance?: number, _cause?: IEntity): Promise<number>;
         affect(_spell: SpellData, _cause?: IEntity): Promise<number>;
         setEffectLevel(_spell: SPELL_TYPE, value: number): Promise<void>;
         tryToMove(_grid: Grid<Entity>, maxAlternatives: number): Promise<boolean>;
@@ -919,6 +921,7 @@ declare namespace Script {
         select<T extends Object>(_options: SelectableWithData<T>, _use: boolean): T[];
         protected getDamageOfAttacks(_attacks: Readonly<AttackDataNoTarget[]>, _consumeEffects: boolean): number;
         setGrids(_home: Grid<Entity>, _away: Grid<Entity>): void;
+        counters: (_ev: FightEvent) => void;
         registerEventListeners(): void;
         removeEventListeners(): void;
         private abilityEventListener;

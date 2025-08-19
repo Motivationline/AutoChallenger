@@ -109,7 +109,7 @@ namespace Script {
             }
             await EventBus.dispatchEvent({ type: EVENT.ENTITY_SPELL_BEFORE, trigger: spell, cause: this, target: this, detail: { targets, side, positions } });
             if(spell.type === SPELL_TYPE.CUSTOM){
-                spell.custom?.(this, targets);
+                await spell.custom?.(this, targets);
             } else {
                 for (let target of targets) {
                     await target.affect(spell, this);

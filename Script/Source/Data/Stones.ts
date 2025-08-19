@@ -209,6 +209,48 @@ namespace Script {
                     }
                 ]
             },
+            {
+                id: "glasstone", // grants various levels of crit to yourself and your enemies
+                abilityLevels: [
+                    { info: "All Eumlings have a 50% crit chance, all opponents have a 25% crit chance.", on: EVENT.NEVER, target: "cause" },
+                    { info: "All Eumlings have a 75% crit chance, all opponents have a 25% crit chance.", on: EVENT.NEVER, target: "cause" },
+                ]
+            },
+            {
+                id: "lifestone",
+                abilityLevels: [
+                    {
+                        info: "Heals every Eumling that killed an enemy for 1 heart.",
+                        on: EVENT.FIGHT_END,
+                        target: { side: TARGET_SIDE.ALLY, entity: {} },
+                        spell: {
+                            type: SPELL_TYPE.CUSTOM,
+                            custom: async (caster, targets) => {
+                                for (let target of targets) {
+                                    if ((<Entity>target).roundKills > 0) {
+                                        await target.affect({ target: TARGET.SELF, type: SPELL_TYPE.HEAL, level: 1 });
+                                    }
+                                }
+                            },
+                        }
+                    },
+                    {
+                        info: "Heals every Eumling the amount of damage they dealt during this fight.",
+                        on: EVENT.FIGHT_END,
+                        target: { side: TARGET_SIDE.ALLY, entity: {} },
+                        spell: {
+                            type: SPELL_TYPE.CUSTOM,
+                            custom: async (caster, targets) => {
+                                for (let target of targets) {
+                                    if ((<Entity>target).roundDamage > 0) {
+                                        await target.affect({ target: TARGET.SELF, type: SPELL_TYPE.HEAL, level: (<Entity>target).roundDamage });
+                                    }
+                                }
+                            },
+                        }
+                    },
+                ]
+            }
         ]
     }
 }

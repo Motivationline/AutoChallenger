@@ -79,7 +79,7 @@ namespace Script {
 
         //#region Something happened
         async getHurt(_ev: FightEvent): Promise<void> {
-            this.showDamageNumber(_ev.detail.amount, _ev.detail.wasCrit);
+            this.showDamageNumber(_ev.detail.amount, _ev.detail.crit);
             await this.playAnimationIfPossible(ANIMATION.HURT);
         }
         async showDamageNumber(_amount: number, _crit: boolean, _heal: boolean = false) {
