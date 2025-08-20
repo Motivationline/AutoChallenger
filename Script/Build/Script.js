@@ -2278,6 +2278,7 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
+    var ƒ = FudgeCore;
     // This whole VFX effect thing is convoluted and I'm unhappy with how it turned out.
     // All those nested promises and shit... we should probably rewrite that at some point.
     // But for now it seems to be doing its job decently.
@@ -2291,6 +2292,12 @@ var Script;
                 for (let node of nodes) {
                     promises.push(this.addNodesTo(node, this.getAdditionalVisualizer(_ev.cause, _ev.type)));
                 }
+                if (_ev.cause instanceof Script.Entity) {
+                    if (this.highlightNode) {
+                        Script.Provider.visualizer.getEntity(_ev.cause).addChild(this.highlightNode);
+                        this.highlightNode.mtxLocal.translation = ƒ.Vector3.ZERO();
+                    }
+                }
                 return Promise.all(promises);
             };
             this.showPreview = async (_ev) => {
@@ -2303,6 +2310,9 @@ var Script;
                 while (this.visibleNodes.length > 0) {
                     this.returnNode(this.visibleNodes.pop());
                 }
+                if (this.highlightNode) {
+                    this.highlightNode.getParent()?.removeChild(this.highlightNode);
+                }
             };
             this.addEventListeners();
         }
@@ -2313,6 +2323,9 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_SPELL, this.hideTargets);
             Script.EventBus.addEventListener(Script.EVENT.SHOW_PREVIEW, this.showPreview);
             Script.EventBus.addEventListener(Script.EVENT.HIDE_PREVIEW, this.hideTargets);
+        }
+        loadElement() {
+            Script.DataLink.getCopyOf("PreviewHighlight").then(node => this.highlightNode = node);
         }
         getTargets(_ev) {
             if (!_ev.detail)
@@ -2420,7 +2433,7 @@ var Script;
                 this.activeFight = fightVis;
             };
             this.root = new ƒ.Node("Root");
-            new Script.VisualizeTarget();
+            Visualizer.visualizerTarget = new Script.VisualizeTarget();
             this.getGUI();
             this.addEventListeners();
         }
@@ -3097,7 +3110,6 @@ var Script;
             this.infoElement = document.getElementById("FightPrepInfo");
             this.startButton = document.getElementById("FightStart");
             this.canvas = document.getElementById("GameCanvas");
-            Script.DataLink.getCopyOf("PreviewHighlight").then(node => this.highlightNode = node);
         }
         async onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
@@ -3110,6 +3122,7 @@ var Script;
             const center = Script.viewport.pointWorldToClient(ƒ.Vector3.Z(-0.3));
             document.getElementById("FightPrepInfoWrapper").style.top = center.y + "px";
             document.getElementById("FightPrepGoldCounterWrapper").appendChild(Script.GoldDisplayElement.element);
+            Script.DataLink.getCopyOf("PreviewHighlight").then(node => this.highlightNode = node);
         }
         async onRemove() {
             super.onRemove();
@@ -4012,6 +4025,7 @@ var Script;
         Script.Provider.GUI.replaceUI("mainMenu");
         ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
         ƒ.Loop.start(); // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
+        Script.Visualizer.visualizerTarget.loadElement();
     }
     Script.startLoading = startLoading;
     async function initProvider() {

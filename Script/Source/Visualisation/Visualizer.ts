@@ -12,10 +12,11 @@ namespace Script {
         #gui: VisualizeGUI;
         private entities: Map<IEntity, VisualizeEntity> = new Map();
         private fights: Map<Fight, VisualizeFight> = new Map();
+        static visualizerTarget: VisualizeTarget;
 
         constructor() {
             this.root = new ƒ.Node("Root");
-            new VisualizeTarget();
+            Visualizer.visualizerTarget = new VisualizeTarget();
             this.getGUI();
             this.addEventListeners();
         }

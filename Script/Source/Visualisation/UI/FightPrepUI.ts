@@ -21,9 +21,8 @@ namespace Script {
 
             this.canvas = document.getElementById("GameCanvas") as HTMLCanvasElement;
 
-            DataLink.getCopyOf("PreviewHighlight").then(node => this.highlightNode = node);
         }
-
+        
         async onAdd(_zindex: number, _ev?: FightEvent): Promise<void> {
             super.onAdd(_zindex, _ev);
             this.startButton.disabled = true;
@@ -35,6 +34,7 @@ namespace Script {
             const center = viewport.pointWorldToClient(ƒ.Vector3.Z(-0.3));
             document.getElementById("FightPrepInfoWrapper").style.top = center.y + "px";
             document.getElementById("FightPrepGoldCounterWrapper").appendChild(GoldDisplayElement.element);
+            DataLink.getCopyOf("PreviewHighlight").then(node => this.highlightNode = node);
         }
 
         async onRemove(): Promise<void> {

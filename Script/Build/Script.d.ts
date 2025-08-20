@@ -397,8 +397,10 @@ declare namespace Script {
     class VisualizeTarget {
         private nodePool;
         private visibleNodes;
+        private highlightNode;
         constructor();
         private addEventListeners;
+        loadElement(): void;
         private showAttack;
         private showPreview;
         private getTargets;
@@ -419,6 +421,7 @@ declare namespace Script {
         activeFight: VisualizeFight;
         private entities;
         private fights;
+        static visualizerTarget: VisualizeTarget;
         constructor();
         getEntity(_entity: IEntity): VisualizeEntity;
         getFight(_fight: Fight): VisualizeFight;

@@ -10,6 +10,7 @@ namespace Script {
     export class VisualizeTarget {
         private nodePool: Map<string, VisualizeVFX[]> = new Map();
         private visibleNodes: VisualizeVFX[] = [];
+        private highlightNode: ƒ.Node;
 
         constructor() {
             this.addEventListeners();
@@ -24,11 +25,21 @@ namespace Script {
             EventBus.addEventListener(EVENT.HIDE_PREVIEW, this.hideTargets);
         }
 
+        public loadElement() {
+            DataLink.getCopyOf("PreviewHighlight").then(node => this.highlightNode = node);
+        }
+
         private showAttack = async (_ev: FightEvent) => {
             const nodes = this.getTargets(_ev);
             const promises: Promise<any>[] = [];
             for (let node of nodes) {
                 promises.push(this.addNodesTo(node, this.getAdditionalVisualizer(_ev.cause as Entity, _ev.type)));
+            }
+            if (_ev.cause instanceof Entity) {
+                if (this.highlightNode) {
+                    Provider.visualizer.getEntity(_ev.cause).addChild(this.highlightNode);
+                    this.highlightNode.mtxLocal.translation = ƒ.Vector3.ZERO();
+                }
             }
             return Promise.all(promises);
         }
@@ -95,6 +106,7 @@ namespace Script {
             if (this.nodePool.get(id)?.length > 0) vfx = this.nodePool.get(id).pop();
             else vfx = new VisualizeVFX(await DataLink.getCopyOf(id), id, delay);
             this.visibleNodes.push(vfx);
+            
             return vfx;
         }
 
@@ -114,6 +126,9 @@ namespace Script {
         private hideTargets = async (_ev: FightEvent) => {
             while (this.visibleNodes.length > 0) {
                 this.returnNode(this.visibleNodes.pop());
+            }
+            if(this.highlightNode){
+                this.highlightNode.getParent()?.removeChild(this.highlightNode);
             }
         }
 
