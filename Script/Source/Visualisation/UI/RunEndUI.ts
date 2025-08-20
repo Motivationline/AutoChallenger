@@ -23,6 +23,7 @@ namespace Script {
             Provider.GUI.removeAllLayers();
             Provider.GUI.addUI("start");
             Provider.GUI.addUI("mainMenu");
+            window.location.reload();
         }
 
         addEventListeners(): void {

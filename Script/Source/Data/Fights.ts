@@ -142,22 +142,22 @@ namespace Script {
                     [, "floppyFish", "floppyFish",],
                     [, "floppyFish", "floppyFish",]],
             },
-            {
-                difficulty: 1,
-                rounds: 3,
-                entities: [
-                    [, , ,],
-                    [, , ,],
-                    ["okayOyster", , "countdownCoconut",]],
-            },
-            {
-                difficulty: 1,
-                rounds: 3,
-                entities: [
-                    [, "okayOyster", "sandSitter",],
-                    [, , ,],
-                    [, "okayOyster", "punchingPalmtree",]],
-            },
+            // {
+            //     difficulty: 1,
+            //     rounds: 3,
+            //     entities: [
+            //         [, , ,],
+            //         [, , ,],
+            //         ["okayOyster", , "countdownCoconut",]],
+            // },
+            // {
+            //     difficulty: 1,
+            //     rounds: 3,
+            //     entities: [
+            //         [, "okayOyster", "sandSitter",],
+            //         [, , ,],
+            //         [, "okayOyster", "punchingPalmtree",]],
+            // },
             {
                 difficulty: 2,
                 rounds: 3,
@@ -190,14 +190,14 @@ namespace Script {
                     ["floppyFish", , "idioticIcicle",],
                     ["floppyFish", "sandSitter", "flameFlinger",]],
             },
-            {
-                difficulty: 2,
-                rounds: 3,
-                entities: [
-                    ["okayOyster", "worriedWall", "countdownCoconut",],
-                    ["okayOyster", "worriedWall", ,],
-                    ["okayOyster", "worriedWall", "countdownCoconut",]],
-            },
+            // {
+            //     difficulty: 2,
+            //     rounds: 3,
+            //     entities: [
+            //         ["okayOyster", "worriedWall", "countdownCoconut",],
+            //         ["okayOyster", "worriedWall", ,],
+            //         ["okayOyster", "worriedWall", "countdownCoconut",]],
+            // },
         ]
     }
 }

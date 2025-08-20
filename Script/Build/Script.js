@@ -2032,24 +2032,22 @@ var Script;
                     [, "floppyFish", "floppyFish",]
                 ],
             },
-            {
-                difficulty: 1,
-                rounds: 3,
-                entities: [
-                    [, , ,],
-                    [, , ,],
-                    ["okayOyster", , "countdownCoconut",]
-                ],
-            },
-            {
-                difficulty: 1,
-                rounds: 3,
-                entities: [
-                    [, "okayOyster", "sandSitter",],
-                    [, , ,],
-                    [, "okayOyster", "punchingPalmtree",]
-                ],
-            },
+            // {
+            //     difficulty: 1,
+            //     rounds: 3,
+            //     entities: [
+            //         [, , ,],
+            //         [, , ,],
+            //         ["okayOyster", , "countdownCoconut",]],
+            // },
+            // {
+            //     difficulty: 1,
+            //     rounds: 3,
+            //     entities: [
+            //         [, "okayOyster", "sandSitter",],
+            //         [, , ,],
+            //         [, "okayOyster", "punchingPalmtree",]],
+            // },
             {
                 difficulty: 2,
                 rounds: 3,
@@ -2086,15 +2084,14 @@ var Script;
                     ["floppyFish", "sandSitter", "flameFlinger",]
                 ],
             },
-            {
-                difficulty: 2,
-                rounds: 3,
-                entities: [
-                    ["okayOyster", "worriedWall", "countdownCoconut",],
-                    ["okayOyster", "worriedWall", ,],
-                    ["okayOyster", "worriedWall", "countdownCoconut",]
-                ],
-            },
+            // {
+            //     difficulty: 2,
+            //     rounds: 3,
+            //     entities: [
+            //         ["okayOyster", "worriedWall", "countdownCoconut",],
+            //         ["okayOyster", "worriedWall", ,],
+            //         ["okayOyster", "worriedWall", "countdownCoconut",]],
+            // },
         ];
     })(DataContent = Script.DataContent || (Script.DataContent = {}));
 })(Script || (Script = {}));
@@ -3791,6 +3788,7 @@ var Script;
                 Script.Provider.GUI.removeAllLayers();
                 Script.Provider.GUI.addUI("start");
                 Script.Provider.GUI.addUI("mainMenu");
+                window.location.reload();
             };
             this.element = document.getElementById("RunEnd");
             this.continueButton = document.getElementById("RunEndMainMenu");
@@ -6307,11 +6305,11 @@ var Script;
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_AFFECTED, this.eventListener);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_HEALED, this.eventListener);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_DIES, this.eventListener);
+            Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVE, this.eventListener);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_HURT, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ENTITY_AFFECTED, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ROUND_END, this.updateTmpText);
             Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateTmpText);
-            Script.EventBus.addEventListener(Script.EVENT.ENTITY_MOVE, this.eventListener);
             Script.EventBus.addEventListener(Script.EVENT.EUMLING_LEVELUP, this.updateTmpText);
         }
         removeEventListeners() {
@@ -6320,6 +6318,7 @@ var Script;
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_AFFECTED, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_DIES, this.eventListener);
+            Script.EventBus.removeEventListener(Script.EVENT.ENTITY_HEALED, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_MOVE, this.eventListener);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_HURT, this.updateTmpText);
             Script.EventBus.removeEventListener(Script.EVENT.ENTITY_AFFECTED, this.updateTmpText);

@@ -241,12 +241,12 @@ namespace Script {
             EventBus.addEventListener(EVENT.ENTITY_AFFECTED, this.eventListener);
             EventBus.addEventListener(EVENT.ENTITY_HEALED, this.eventListener);
             EventBus.addEventListener(EVENT.ENTITY_DIES, this.eventListener);
+            EventBus.addEventListener(EVENT.ENTITY_MOVE, this.eventListener);
 
             EventBus.addEventListener(EVENT.ENTITY_HURT, this.updateTmpText);
             EventBus.addEventListener(EVENT.ENTITY_AFFECTED, this.updateTmpText);
             EventBus.addEventListener(EVENT.ROUND_END, this.updateTmpText);
             EventBus.addEventListener(EVENT.ROUND_START, this.updateTmpText);
-            EventBus.addEventListener(EVENT.ENTITY_MOVE, this.eventListener);
             EventBus.addEventListener(EVENT.EUMLING_LEVELUP, this.updateTmpText);
         }
 
@@ -256,6 +256,7 @@ namespace Script {
             EventBus.removeEventListener(EVENT.ENTITY_SPELL_BEFORE, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_AFFECTED, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_DIES, this.eventListener);
+            EventBus.removeEventListener(EVENT.ENTITY_HEALED, this.eventListener);
             EventBus.removeEventListener(EVENT.ENTITY_MOVE, this.eventListener);
 
             EventBus.removeEventListener(EVENT.ENTITY_HURT, this.updateTmpText);
