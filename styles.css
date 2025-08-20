@@ -920,7 +920,7 @@ button.hidden {
 }
 
 .blur {
-  backdrop-filter: blur(40px);
+  backdrop-filter: blur(100vh);
 }
 
 .center-center {
