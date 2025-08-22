@@ -2564,8 +2564,7 @@ var Script;
         constructor() {
             super();
             this.start = () => {
-                Script.run();
-                Script.Provider.GUI.removeTopmostUI();
+                Script.Provider.GUI.replaceUI("intro");
             };
             this.openOptions = () => {
                 Script.Provider.GUI.addUI("options");
@@ -3829,6 +3828,47 @@ var Script;
     }
     Script.RunEndUI = RunEndUI;
 })(Script || (Script = {}));
+/// <reference path="UILayer.ts" />
+var Script;
+/// <reference path="UILayer.ts" />
+(function (Script) {
+    class IntroUI extends Script.UILayer {
+        constructor() {
+            super();
+            this.start = () => {
+                Script.run();
+                Script.Provider.GUI.removeTopmostUI();
+            };
+            this.progress = 0;
+            this.next = () => {
+                clearTimeout(this.timeout);
+                let element = this.elements[this.progress++];
+                if (!element)
+                    return;
+                element.classList.add("visible");
+                this.timeout = setTimeout(this.next, 1000);
+            };
+            this.element = document.getElementById("Introduction");
+            this.continueButton = document.getElementById("IntroContinue");
+            this.elements = Array.from(document.querySelectorAll(".IntroInner"));
+        }
+        async onAdd(_zindex, _ev) {
+            super.onAdd(_zindex, _ev);
+            this.elements.forEach(el => el.classList.remove("visible"));
+            this.progress = 0;
+            this.next();
+        }
+        addEventListeners() {
+            this.element.addEventListener("click", this.next);
+            this.continueButton.addEventListener("click", this.start);
+        }
+        removeEventListeners() {
+            this.element.removeEventListener("click", this.next);
+            this.continueButton.removeEventListener("click", this.start);
+        }
+    }
+    Script.IntroUI = IntroUI;
+})(Script || (Script = {}));
 /// <reference path="StartScreenUI.ts" />
 /// <reference path="LoadingScreenUI.ts" />
 /// <reference path="MainMenuUI.ts" />
@@ -3843,6 +3883,7 @@ var Script;
 /// <reference path="EumlingLevelupUI.ts" />
 /// <reference path="ShopUI.ts" />
 /// <reference path="RunEndUI.ts" />
+/// <reference path="IntroUI.ts" />
 var Script;
 /// <reference path="StartScreenUI.ts" />
 /// <reference path="LoadingScreenUI.ts" />
@@ -3858,6 +3899,7 @@ var Script;
 /// <reference path="EumlingLevelupUI.ts" />
 /// <reference path="ShopUI.ts" />
 /// <reference path="RunEndUI.ts" />
+/// <reference path="IntroUI.ts" />
 (function (Script) {
     // TODO: add Provider to pass UI elements without hardcoding???
     class VisualizeGUI {
@@ -3908,6 +3950,7 @@ var Script;
             this.uis.set("start", new Script.StartScreenUI());
             this.uis.set("loading", new Script.LoadingScreenUI());
             this.uis.set("mainMenu", new Script.MainMenuUI());
+            this.uis.set("intro", new Script.IntroUI());
             this.uis.set("options", new Script.OptionsUI());
             this.uis.set("chooseEumling", new Script.ChooseEumlingUI());
             this.uis.set("chooseStone", new Script.ChooseStoneUI());

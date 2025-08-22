@@ -1137,3 +1137,27 @@ button.red {
   0% {transform: translateY(0) rotate(0) translateX(0); opacity: 1;}
   100% {transform: translateY(-3em) rotate(calc(var(--random) * 10deg)) translateX(calc(var(--random) * 1em)); opacity: 0.5;}
 }
+
+#Introduction {
+  padding: 2em;
+  font-size: 2.5vh;
+  text-align: center;
+  color: white;
+}
+
+.IntroInner {
+  visibility: none;
+  opacity: 0;
+  padding: 1em;
+}
+
+.IntroInner:not(:last-of-type){
+  background: url("./Assets/UIElemente/HolzRahmen.png") center no-repeat;
+  background-size: 100% 100%;
+}
+
+.IntroInner.visible {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 1s;
+}

@@ -704,6 +704,20 @@ declare namespace Script {
     }
 }
 declare namespace Script {
+    class IntroUI extends UILayer {
+        continueButton: HTMLElement;
+        elements: HTMLElement[];
+        constructor();
+        onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
+        start: () => void;
+        timeout: number;
+        progress: number;
+        next: () => void;
+        addEventListeners(): void;
+        removeEventListeners(): void;
+    }
+}
+declare namespace Script {
     class VisualizeGUI {
         readonly uis: Map<string, UILayer>;
         readonly activeLayers: UILayer[];

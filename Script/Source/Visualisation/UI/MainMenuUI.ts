@@ -12,8 +12,7 @@ namespace Script {
         }
 
         start = () => {
-            run();
-            Provider.GUI.removeTopmostUI();
+            Provider.GUI.replaceUI("intro")
         }
         openOptions = () => {
             Provider.GUI.addUI("options");

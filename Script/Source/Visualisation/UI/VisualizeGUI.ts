@@ -12,6 +12,7 @@
 /// <reference path="EumlingLevelupUI.ts" />
 /// <reference path="ShopUI.ts" />
 /// <reference path="RunEndUI.ts" />
+/// <reference path="IntroUI.ts" />
 
 namespace Script {
 
@@ -25,6 +26,7 @@ namespace Script {
             this.uis.set("start", new StartScreenUI());
             this.uis.set("loading", new LoadingScreenUI());
             this.uis.set("mainMenu", new MainMenuUI());
+            this.uis.set("intro", new IntroUI());
             this.uis.set("options", new OptionsUI());
             this.uis.set("chooseEumling", new ChooseEumlingUI());
             this.uis.set("chooseStone", new ChooseStoneUI());
