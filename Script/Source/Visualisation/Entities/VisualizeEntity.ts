@@ -208,7 +208,9 @@ namespace Script {
             let index = 0;
             (<Entity>this.entity).activeEffects.forEach((value, type) => {
                 if (value <= 0) return;
-                effectObjects.push(createElementAdvanced("img", { attributes: [["src", `./Assets/UIElemente/InGameUI/${VisualizeEntity.typeToName.get(type)}`], ["alt", type], ["style", `--index: ${index++}`]] }))
+                for(let i: number = 0; i < value; i++){
+                    effectObjects.push(createElementAdvanced("img", { attributes: [["src", `./Assets/UIElemente/InGameUI/${VisualizeEntity.typeToName.get(type)}`], ["alt", type], ["style", `--index: ${index++}`]] }))
+                }
             });
             effectObjects.push(createElementAdvanced("div", { innerHTML: `<span>${this.entity.currentHealth} / ${this.entity.health}</span>` }));
             this.tmpText.replaceChildren(...effectObjects);

@@ -1185,7 +1185,7 @@ namespace Script {
                 health: 6,
                 abilities: [
                     {   // if an ally dies, kill itself
-                        on: EVENT.ENTITY_DIED,
+                        on: EVENT.ENTITY_DIES,
                         conditions: [{
                             target: { side: TARGET_SIDE.ALLY, entity: {}, excludeSelf: true }
                         }],

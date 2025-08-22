@@ -1682,7 +1682,7 @@ var Script;
                 health: 6,
                 abilities: [
                     {
-                        on: Script.EVENT.ENTITY_DIED,
+                        on: Script.EVENT.ENTITY_DIES,
                         conditions: [{
                                 target: { side: Script.TARGET_SIDE.ALLY, entity: {}, excludeSelf: true }
                             }],
@@ -6213,7 +6213,9 @@ var Script;
                 this.entity.activeEffects.forEach((value, type) => {
                     if (value <= 0)
                         return;
-                    effectObjects.push(Script.createElementAdvanced("img", { attributes: [["src", `./Assets/UIElemente/InGameUI/${VisualizeEntity.typeToName.get(type)}`], ["alt", type], ["style", `--index: ${index++}`]] }));
+                    for (let i = 0; i < value; i++) {
+                        effectObjects.push(Script.createElementAdvanced("img", { attributes: [["src", `./Assets/UIElemente/InGameUI/${VisualizeEntity.typeToName.get(type)}`], ["alt", type], ["style", `--index: ${index++}`]] }));
+                    }
                 });
                 effectObjects.push(Script.createElementAdvanced("div", { innerHTML: `<span>${this.entity.currentHealth} / ${this.entity.health}</span>` }));
                 this.tmpText.replaceChildren(...effectObjects);
