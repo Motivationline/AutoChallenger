@@ -2619,6 +2619,10 @@ var Script;
         constructor() {
             super();
             this.optionElements = new Map();
+            this.typeDescription = new Map([
+                ["R-Eumling", "Realistic"],
+                ["S-Eumling", "Social"],
+            ]);
             this.clickedEumling = (_ev) => {
                 let element = _ev.currentTarget;
                 let eumling = this.optionElements.get(element);
@@ -2631,6 +2635,7 @@ var Script;
                 this.confirmButton.classList.remove("hidden");
                 this.infoElement.innerHTML = `
             <span class="InfoTitle">${eumling.type}</span>
+            <span class="Info">${this.typeDescription.get(eumling.type)}</span>
             <span class="Info">${eumling.health}♥️</span>
             <span class="Info">${eumling.info}</span>`;
             };
@@ -4779,7 +4784,7 @@ var Script;
                         target: { side: Script.TARGET_SIDE.ALLY, entity: {} },
                         spell: {
                             type: Script.SPELL_TYPE.CUSTOM,
-                            custom: async (caster, targets) => {
+                            custom: async (_caster, targets) => {
                                 for (let target of targets) {
                                     if (target.roundKills > 0) {
                                         await target.affect({ target: Script.TARGET.SELF, type: Script.SPELL_TYPE.HEAL, level: 1 });
@@ -4794,7 +4799,7 @@ var Script;
                         target: { side: Script.TARGET_SIDE.ALLY, entity: {} },
                         spell: {
                             type: Script.SPELL_TYPE.CUSTOM,
-                            custom: async (caster, targets) => {
+                            custom: async (_caster, targets) => {
                                 for (let target of targets) {
                                     if (target.roundDamage > 0) {
                                         await target.affect({ target: Script.TARGET.SELF, type: Script.SPELL_TYPE.HEAL, level: target.roundDamage });

@@ -225,7 +225,7 @@ namespace Script {
                         target: { side: TARGET_SIDE.ALLY, entity: {} },
                         spell: {
                             type: SPELL_TYPE.CUSTOM,
-                            custom: async (caster, targets) => {
+                            custom: async (_caster, targets) => {
                                 for (let target of targets) {
                                     if ((<Entity>target).roundKills > 0) {
                                         await target.affect({ target: TARGET.SELF, type: SPELL_TYPE.HEAL, level: 1 });
@@ -240,7 +240,7 @@ namespace Script {
                         target: { side: TARGET_SIDE.ALLY, entity: {} },
                         spell: {
                             type: SPELL_TYPE.CUSTOM,
-                            custom: async (caster, targets) => {
+                            custom: async (_caster, targets) => {
                                 for (let target of targets) {
                                     if ((<Entity>target).roundDamage > 0) {
                                         await target.affect({ target: TARGET.SELF, type: SPELL_TYPE.HEAL, level: (<Entity>target).roundDamage });

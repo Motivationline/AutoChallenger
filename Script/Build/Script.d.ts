@@ -492,6 +492,7 @@ declare namespace Script {
         confirmButton: HTMLButtonElement;
         infoElement: HTMLElement;
         selectedEumling: Eumling;
+        typeDescription: Map<string, string>;
         constructor();
         onAdd(_zindex: number): Promise<void>;
         private clickedEumling;

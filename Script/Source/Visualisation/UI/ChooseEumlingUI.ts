@@ -7,6 +7,10 @@ namespace Script {
         infoElement: HTMLElement;
         selectedEumling: Eumling;
 
+        typeDescription = new Map<string, string>([
+            ["R-Eumling", "Realistic"],
+            ["S-Eumling", "Social"],
+        ])
         constructor() {
             super();
             this.element = document.getElementById("ChooseEumling");
@@ -47,6 +51,7 @@ namespace Script {
             this.confirmButton.classList.remove("hidden");
             this.infoElement.innerHTML = `
             <span class="InfoTitle">${eumling.type}</span>
+            <span class="Info">${this.typeDescription.get(eumling.type)}</span>
             <span class="Info">${eumling.health}♥️</span>
             <span class="Info">${eumling.info}</span>`;
         }
