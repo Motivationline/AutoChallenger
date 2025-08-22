@@ -50,6 +50,7 @@ namespace Script {
 
         async fightEnd(): Promise<void> {
             // TODO @Björn clean up visible entities
+            // await waitMS(10000); // why doesn't this one work?!?
             await this.nukeGrid();
             console.log("Fight End!");
             this.removeEventListeners();

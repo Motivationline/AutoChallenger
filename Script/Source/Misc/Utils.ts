@@ -19,7 +19,7 @@ namespace Script {
     // Alternatively, make a second one that does that and replace where reasonable
     export async function waitMS(_ms: number): Promise<void> {
         return new Promise((resolve) => {
-            setTimeout(resolve, _ms);
+            ƒ.Time.game.setTimer(_ms, 1, () => {resolve()});
         })
     }
 

@@ -3320,9 +3320,12 @@ var Script;
 var Script;
 /// <reference path="UILayer.ts" />
 (function (Script) {
+    var ƒ = FudgeCore;
     class FightUI extends Script.UILayer {
         constructor() {
             super();
+            this.currentSpeed = 1;
+            this.progressPoints = [];
             this.updateRoundCounter = async (_ev) => {
                 let round = _ev.detail.round;
                 const roundCounters = document.querySelectorAll(".RoundCounter");
@@ -3330,11 +3333,28 @@ var Script;
                 for (let roundCounter of roundCounters) {
                     roundCounter.innerText = `Round: ${round + 1}`;
                 }
+                this.progressPoints[round].classList.add("active");
+                this.progressPoints[round - 1]?.classList.remove("active");
+                this.progressPoints[round - 1]?.classList.add("done");
                 const overlay = document.getElementById("FightPhaseOverlay");
                 overlay.classList.add("active");
                 await Script.waitMS(1000);
                 overlay.classList.remove("active");
                 await Script.waitMS(500);
+            };
+            this.changeSpeed = (_ev) => {
+                const speed = parseInt(_ev.currentTarget.dataset.speed);
+                if (!speed || isNaN(speed))
+                    return;
+                if (speed <= 0)
+                    return;
+                ƒ.Time.game.setScale(speed);
+                document.documentElement.style = `--speed: ${speed}`;
+                this.currentSpeed = speed;
+                document.getElementById("SpeedOptionNormal").classList.remove("active");
+                document.getElementById("SpeedOptionFast").classList.remove("active");
+                document.getElementById("SpeedOptionFastest").classList.remove("active");
+                _ev.currentTarget.classList.add("active");
             };
             this.element = document.getElementById("Fight");
             this.stoneWrapper = document.getElementById("FightStones");
@@ -3342,7 +3362,23 @@ var Script;
         async onAdd(_zindex, _ev) {
             super.onAdd(_zindex, _ev);
             this.initStones();
+            this.initProgress();
             document.getElementById("FightGoldCounterWrapper").appendChild(Script.GoldDisplayElement.element);
+            ƒ.Time.game.setScale(this.currentSpeed);
+            document.documentElement.style = `--speed: ${this.currentSpeed}`;
+        }
+        async onRemove() {
+            super.onRemove();
+            ƒ.Time.game.setScale(1);
+            document.documentElement.style = `--speed: 1`;
+        }
+        initProgress() {
+            const wrapper = document.getElementById("FightProgress");
+            this.progressPoints.length = 0;
+            for (let i = 0; i < Script.Fight.activeFight.rounds; i++) {
+                this.progressPoints.push(Script.createElementAdvanced("div", { classes: ["FightProgressElement"] }));
+            }
+            wrapper.replaceChildren(...this.progressPoints);
         }
         initStones() {
             const stones = [];
@@ -3353,9 +3389,15 @@ var Script;
         }
         addEventListeners() {
             Script.EventBus.addEventListener(Script.EVENT.ROUND_START, this.updateRoundCounter);
+            document.getElementById("SpeedOptionNormal").addEventListener("click", this.changeSpeed);
+            document.getElementById("SpeedOptionFast").addEventListener("click", this.changeSpeed);
+            document.getElementById("SpeedOptionFastest").addEventListener("click", this.changeSpeed);
         }
         removeEventListeners() {
             Script.EventBus.removeEventListener(Script.EVENT.ROUND_START, this.updateRoundCounter);
+            document.getElementById("SpeedOptionNormal").removeEventListener("click", this.changeSpeed);
+            document.getElementById("SpeedOptionFast").removeEventListener("click", this.changeSpeed);
+            document.getElementById("SpeedOptionFastest").removeEventListener("click", this.changeSpeed);
         }
     }
     Script.FightUI = FightUI;
@@ -4119,7 +4161,7 @@ var Script;
     // Alternatively, make a second one that does that and replace where reasonable
     async function waitMS(_ms) {
         return new Promise((resolve) => {
-            setTimeout(resolve, _ms);
+            ƒ.Time.game.setTimer(_ms, 1, () => { resolve(); });
         });
     }
     Script.waitMS = waitMS;
@@ -6043,6 +6085,7 @@ var Script;
         }
         async fightEnd() {
             // TODO @Björn clean up visible entities
+            // await waitMS(10000); // why doesn't this one work?!?
             await this.nukeGrid();
             console.log("Fight End!");
             this.removeEventListeners();

@@ -609,9 +609,14 @@ declare namespace Script {
     class FightUI extends UILayer {
         stoneWrapper: HTMLElement;
         constructor();
+        currentSpeed: number;
         onAdd(_zindex: number, _ev?: FightEvent): Promise<void>;
+        onRemove(): Promise<void>;
+        progressPoints: HTMLElement[];
+        private initProgress;
         private initStones;
         private updateRoundCounter;
+        changeSpeed: (_ev: MouseEvent) => void;
         addEventListeners(): void;
         removeEventListeners(): void;
     }
